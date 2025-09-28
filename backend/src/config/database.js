@@ -1,17 +1,17 @@
 const { Pool } = require('pg');
-require('dotenv').config();
+const { config } = require('./config');
 
-// Configuración de la base de datos
+// Configuración de la base de datos desde config centralizado
 const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'sistema_ventas_multiempresa',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'password',
+  host: config.database.host,
+  port: config.database.port,
+  database: config.database.name,
+  user: config.database.user,
+  password: config.database.password,
   // Configuraciones adicionales para producción
-  max: 20, // Máximo número de conexiones en el pool
-  idleTimeoutMillis: 30000, // Tiempo antes de cerrar conexiones inactivas
-  connectionTimeoutMillis: 2000, // Tiempo máximo para establecer conexión
+  max: config.database.max,
+  idleTimeoutMillis: config.database.idleTimeoutMillis,
+  connectionTimeoutMillis: config.database.connectionTimeoutMillis,
 };
 
 // Crear el pool de conexiones
