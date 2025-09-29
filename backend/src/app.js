@@ -6,6 +6,9 @@ const { requestLogger } = require('./middlewares/auth');
 
 // Importar rutas
 const authRoutes = require('./routes/auth');
+const productsRoutes = require('./routes/products');
+const categoriesRoutes = require('./routes/categories');
+const savedProductsRoutes = require('./routes/savedProducts');
 
 const app = express();
 
@@ -33,6 +36,9 @@ app.get('/', (req, res) => {
 
 // Rutas de la API
 app.use('/api/auth', authRoutes);
+app.use('/api/products', productsRoutes);
+app.use('/api/categories', categoriesRoutes);
+app.use('/api/saved-products', savedProductsRoutes);
 
 // Ruta de documentación básica
 app.get('/api/docs', (req, res) => {
