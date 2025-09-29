@@ -9,6 +9,8 @@ const authRoutes = require('./routes/auth');
 const productsRoutes = require('./routes/products');
 const categoriesRoutes = require('./routes/categories');
 const savedProductsRoutes = require('./routes/savedProducts');
+const imagesRoutes = require('./routes/images');
+const locationsRoutes = require('./routes/locations');
 
 const app = express();
 
@@ -32,6 +34,8 @@ app.get('/', (req, res) => {
       products: '/api/products',
       categories: '/api/categories',
       savedProducts: '/api/saved-products',
+      images: '/api/images',
+      locations: '/api/locations',
       docs: '/api/docs'
     }
   });
@@ -42,6 +46,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/categories', categoriesRoutes);
 app.use('/api/saved-products', savedProductsRoutes);
+app.use('/api/images', imagesRoutes);
+app.use('/api/locations', locationsRoutes);
 
 // Ruta de documentación básica
 app.get('/api/docs', (req, res) => {
@@ -81,6 +87,24 @@ app.get('/api/docs', (req, res) => {
         'GET /api/saved-products': 'Obtener productos guardados',
         'GET /api/saved-products/stats': 'Estadísticas de favoritos',
         'GET /api/saved-products/check/:id': 'Verificar si está guardado'
+      },
+      images: {
+        'POST /api/images/products/:id': 'Subir imágenes de producto',
+        'GET /api/images/products/:id': 'Obtener imágenes de producto',
+        'DELETE /api/images/products/:id/:imageId': 'Eliminar imagen específica',
+        'PATCH /api/images/products/:id/:imageId/main': 'Marcar imagen como principal',
+        'PATCH /api/images/products/:id/reorder': 'Reordenar imágenes'
+      },
+      locations: {
+        'GET /api/locations': 'Listar ubicaciones con filtros',
+        'GET /api/locations/stats': 'Estadísticas de ubicaciones',
+        'GET /api/locations/provinces': 'Listar provincias',
+        'GET /api/locations/provinces/:provincia/cantons': 'Cantones por provincia',
+        'GET /api/locations/provinces/:provincia/cantons/:canton/districts': 'Distritos por cantón',
+        'GET /api/locations/:id': 'Obtener ubicación específica',
+        'POST /api/locations': 'Crear ubicación (admin)',
+        'PUT /api/locations/:id': 'Actualizar ubicación (admin)',
+        'DELETE /api/locations/:id': 'Eliminar ubicación (admin)'
       }
     },
     authentication: {
