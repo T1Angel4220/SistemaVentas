@@ -29,6 +29,9 @@ app.get('/', (req, res) => {
     status: 'running',
     endpoints: {
       auth: '/api/auth',
+      products: '/api/products',
+      categories: '/api/categories',
+      savedProducts: '/api/saved-products',
       docs: '/api/docs'
     }
   });
@@ -54,6 +57,30 @@ app.get('/api/docs', (req, res) => {
         'POST /api/auth/reset-password': 'Resetear contraseña',
         'GET /api/auth/profile': 'Obtener perfil del usuario (requiere autenticación)',
         'GET /api/auth/test': 'Probar autenticación'
+      },
+      products: {
+        'GET /api/products': 'Listar productos con filtros',
+        'GET /api/products/:id': 'Obtener producto específico',
+        'POST /api/products': 'Crear producto (vendedores)',
+        'PUT /api/products/:id': 'Actualizar producto',
+        'DELETE /api/products/:id': 'Eliminar producto',
+        'PATCH /api/products/:id/availability': 'Cambiar disponibilidad',
+        'GET /api/products/my/products': 'Mis productos (vendedor)'
+      },
+      categories: {
+        'GET /api/categories': 'Listar categorías activas',
+        'GET /api/categories/stats': 'Estadísticas de categorías',
+        'GET /api/categories/:id': 'Obtener categoría específica',
+        'POST /api/categories': 'Crear categoría (admin)',
+        'PUT /api/categories/:id': 'Actualizar categoría (admin)',
+        'DELETE /api/categories/:id': 'Eliminar categoría (admin)'
+      },
+      savedProducts: {
+        'POST /api/saved-products/:id': 'Guardar producto como favorito',
+        'DELETE /api/saved-products/:id': 'Quitar producto de favoritos',
+        'GET /api/saved-products': 'Obtener productos guardados',
+        'GET /api/saved-products/stats': 'Estadísticas de favoritos',
+        'GET /api/saved-products/check/:id': 'Verificar si está guardado'
       }
     },
     authentication: {
