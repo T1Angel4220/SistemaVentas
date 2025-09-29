@@ -1,0 +1,237 @@
+// Configuración de la API
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+
+// Tipos de datos
+export interface User {
+  id: number;
+  cedula: string;
+  nombre: string;
+  apellido: string;
+  correo: string;
+  telefono?: string;
+  direccion?: string;
+  genero?: 'masculino' | 'femenino' | 'otro';
+  tipo_usuario: 'comprador' | 'vendedor' | 'moderador' | 'administrador';
+  estado: 'activo' | 'inactivo' | 'suspendido' | 'pendiente_verificacion';
+  email_verificado: boolean;
+  fecha_registro: string;
+  fecha_ultimo_acceso?: string;
+}
+
+export interface LoginRequest {
+  correo: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  cedula: string;
+  nombre: string;
+  apellido: string;
+  correo: string;
+  telefono?: string;
+  direccion?: string;
+  genero?: 'masculino' | 'femenino' | 'otro';
+  password: string;
+  tipo_usuario?: 'comprador' | 'vendedor';
+}
+
+export interface AuthResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    user: User;
+    tokens: {
+      accessToken: string;
+      refreshToken: string;
+      expiresIn: string;
+    };
+  };
+}
+
+export interface ApiResponse<T = any> {
+  success: boolean;
+  message: string;
+  data?: T;
+  errors?: Array<{
+    field: string;
+    message: string;
+  }>;
+}
+
+// Clase para manejar la API
+class ApiService {
+  private baseURL: string;
+  private token: string | null = null;
+
+  constructor(baseURL: string) {
+    this.baseURL = baseURL;
+    this.token = localStorage.getItem('accessToken');
+  }
+
+  // Método para establecer el token
+  setToken(token: string | null) {
+    this.token = token;
+    if (token) {
+      localStorage.setItem('accessToken', token);
+    } else {
+      localStorage.removeItem('accessToken');
+    }
+  }
+
+  // Método para obtener el token
+  getToken(): string | null {
+    return this.token || localStorage.getItem('accessToken');
+  }
+
+  // Método para hacer requests HTTP
+  private async request<T>(
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<ApiResponse<T>> {
+    const url = `${this.baseURL}${endpoint}`;
+    const token = this.getToken();
+
+    const config: RequestInit = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+        ...options.headers,
+      },
+      ...options,
+    };
+
+    try {
+      const response = await fetch(url, config);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Error en la petición');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error en API request:', error);
+      throw error;
+    }
+  }
+
+  // Métodos de autenticación
+  async login(credentials: LoginRequest): Promise<AuthResponse> {
+    const response = await this.request<AuthResponse['data']>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
+
+    if (response.data?.tokens?.accessToken) {
+      this.setToken(response.data.tokens.accessToken);
+    }
+
+    return response as AuthResponse;
+  }
+
+  async register(userData: RegisterRequest): Promise<ApiResponse<User>> {
+    return this.request<User>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    });
+  }
+
+  async verifyEmail(token: string): Promise<ApiResponse> {
+    return this.request('/auth/verify-email', {
+      method: 'GET',
+      // Agregar token como query parameter
+    });
+  }
+
+  async requestPasswordReset(correo: string): Promise<ApiResponse> {
+    return this.request('/auth/request-password-reset', {
+      method: 'POST',
+      body: JSON.stringify({ correo }),
+    });
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<ApiResponse> {
+    return this.request('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, newPassword }),
+    });
+  }
+
+  async getProfile(): Promise<ApiResponse<User>> {
+    return this.request<User>('/auth/profile');
+  }
+
+  async logout(): Promise<ApiResponse> {
+    const response = await this.request('/auth/logout', {
+      method: 'POST',
+    });
+    
+    this.setToken(null);
+    return response;
+  }
+
+  async testAuth(): Promise<ApiResponse> {
+    return this.request('/auth/test');
+  }
+
+  // Métodos de gestión de sesiones
+  async getSessions(): Promise<ApiResponse<Array<{
+    id: number;
+    fecha_inicio: string;
+    fecha_expiracion: string;
+    ip_address: string;
+    user_agent: string;
+    activa: boolean;
+  }>>> {
+    return this.request('/auth/sessions');
+  }
+
+  async closeSession(sessionId: number): Promise<ApiResponse> {
+    return this.request(`/auth/sessions/${sessionId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Métodos de administración (solo para moderadores/administradores)
+  async registerModerator(userData: RegisterRequest): Promise<ApiResponse<User>> {
+    return this.request<User>('/auth/register-moderator', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    });
+  }
+
+  async activateUser(userId: number, motivo?: string): Promise<ApiResponse> {
+    return this.request(`/auth/activate-user/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ motivo }),
+    });
+  }
+
+  async deactivateUser(userId: number, motivo?: string): Promise<ApiResponse> {
+    return this.request(`/auth/deactivate-user/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ motivo }),
+    });
+  }
+
+  async suspendUser(userId: number, motivo?: string): Promise<ApiResponse> {
+    return this.request(`/auth/suspend-user/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ motivo }),
+    });
+  }
+}
+
+// Instancia singleton del servicio API
+export const apiService = new ApiService(API_BASE_URL);
+
+// Función helper para verificar si el usuario está autenticado
+export const isAuthenticated = (): boolean => {
+  return !!apiService.getToken();
+};
+
+// Función helper para obtener el token
+export const getAuthToken = (): string | null => {
+  return apiService.getToken();
+};
+

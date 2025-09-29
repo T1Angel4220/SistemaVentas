@@ -1,91 +1,156 @@
 const jwt = require('jsonwebtoken');
 const { config } = require('../config/config');
 
-// Función para generar token JWT
-const generateToken = (payload, options = {}) => {
-  const defaultOptions = {
-    expiresIn: config.jwt.expiresIn,
-    issuer: 'sistema-ventas-multiempresa',
-    audience: 'sistema-ventas-users'
-  };
-
-  return jwt.sign(payload, config.jwt.secret, { ...defaultOptions, ...options });
+/**
+ * Genera un token JWT para un usuario
+ * @param {Object} payload - Datos del usuario
+ * @param {string} expiresIn - Tiempo de expiración (opcional)
+ * @returns {string} Token JWT
+ */
+const generateToken = (payload, expiresIn = config.jwt.expiresIn) => {
+  try {
+    return jwt.sign(payload, config.jwt.secret, { expiresIn });
+  } catch (error) {
+    console.error('❌ Error al generar token:', error.message);
+    throw new Error('Error al generar token');
+  }
 };
 
-// Función para generar refresh token
+/**
+ * Genera un token de refresh para renovar sesiones
+ * @param {Object} payload - Datos del usuario
+ * @returns {string} Token de refresh
+ */
 const generateRefreshToken = (payload) => {
-  return jwt.sign(payload, config.jwt.secret, {
-    expiresIn: config.jwt.refreshExpiresIn,
-    issuer: 'sistema-ventas-multiempresa',
-    audience: 'sistema-ventas-refresh'
-  });
-};
-
-// Función para verificar token JWT
-const verifyToken = (token, options = {}) => {
   try {
-    return jwt.verify(token, config.jwt.secret, {
-      issuer: 'sistema-ventas-multiempresa',
-      audience: 'sistema-ventas-users',
-      ...options
+    return jwt.sign(payload, config.jwt.secret, { 
+      expiresIn: config.jwt.refreshExpiresIn 
     });
   } catch (error) {
-    throw new Error(`Token inválido: ${error.message}`);
+    console.error('❌ Error al generar refresh token:', error.message);
+    throw new Error('Error al generar refresh token');
   }
 };
 
-// Función para verificar refresh token
-const verifyRefreshToken = (token) => {
+/**
+ * Verifica y decodifica un token JWT
+ * @param {string} token - Token a verificar
+ * @returns {Object} Datos decodificados del token
+ */
+const verifyToken = (token) => {
   try {
-    return jwt.verify(token, config.jwt.secret, {
-      issuer: 'sistema-ventas-multiempresa',
-      audience: 'sistema-ventas-refresh'
-    });
+    return jwt.verify(token, config.jwt.secret);
   } catch (error) {
-    throw new Error(`Refresh token inválido: ${error.message}`);
+    if (error.name === 'TokenExpiredError') {
+      throw new Error('Token expirado');
+    } else if (error.name === 'JsonWebTokenError') {
+      throw new Error('Token inválido');
+    } else {
+      throw new Error('Error al verificar token');
+    }
   }
 };
 
-// Función para decodificar token sin verificar (útil para debugging)
-const decodeToken = (token) => {
-  return jwt.decode(token);
+/**
+ * Genera un token de verificación de email
+ * @param {number} userId - ID del usuario
+ * @param {string} email - Email del usuario
+ * @returns {string} Token de verificación
+ */
+const generateEmailVerificationToken = (userId, email) => {
+  const payload = {
+    userId,
+    email,
+    type: 'email_verification',
+    timestamp: Date.now()
+  };
+  
+  return generateToken(payload, '24h');
 };
 
-// Función para extraer token del header Authorization
+/**
+ * Genera un token de recuperación de contraseña
+ * @param {number} userId - ID del usuario
+ * @param {string} email - Email del usuario
+ * @returns {string} Token de recuperación
+ */
+const generatePasswordResetToken = (userId, email) => {
+  const payload = {
+    userId,
+    email,
+    type: 'password_reset',
+    timestamp: Date.now()
+  };
+  
+  return generateToken(payload, '1h');
+};
+
+/**
+ * Verifica un token de verificación de email
+ * @param {string} token - Token a verificar
+ * @returns {Object} Datos del token
+ */
+const verifyEmailVerificationToken = (token) => {
+  const decoded = verifyToken(token);
+  
+  if (decoded.type !== 'email_verification') {
+    throw new Error('Token de tipo incorrecto');
+  }
+  
+  return decoded;
+};
+
+/**
+ * Verifica un token de recuperación de contraseña
+ * @param {string} token - Token a verificar
+ * @returns {Object} Datos del token
+ */
+const verifyPasswordResetToken = (token) => {
+  const decoded = verifyToken(token);
+  
+  if (decoded.type !== 'password_reset') {
+    throw new Error('Token de tipo incorrecto');
+  }
+  
+  return decoded;
+};
+
+/**
+ * Extrae el token del header Authorization
+ * @param {string} authHeader - Header Authorization
+ * @returns {string|null} Token extraído o null
+ */
 const extractTokenFromHeader = (authHeader) => {
-  if (!authHeader) {
-    throw new Error('Header Authorization no encontrado');
-  }
-
+  if (!authHeader) return null;
+  
   const parts = authHeader.split(' ');
   if (parts.length !== 2 || parts[0] !== 'Bearer') {
-    throw new Error('Formato de Authorization header inválido. Use: Bearer <token>');
+    return null;
   }
-
+  
   return parts[1];
 };
 
-// Función para generar payload estándar para usuarios
-const generateUserPayload = (user) => {
-  return {
+/**
+ * Genera un token de sesión para el usuario
+ * @param {Object} user - Datos del usuario
+ * @returns {Object} Tokens generados
+ */
+const generateSessionTokens = (user) => {
+  const payload = {
     id: user.id,
-    cedula: user.cedula,
-    correo: user.correo,
+    email: user.correo,
     tipo_usuario: user.tipo_usuario,
-    estado: user.estado,
-    email_verificado: user.email_verificado
+    estado: user.estado
   };
-};
-
-// Función para generar tokens completos (access + refresh)
-const generateTokenPair = (user) => {
-  const payload = generateUserPayload(user);
+  
+  const accessToken = generateToken(payload);
+  const refreshToken = generateRefreshToken(payload);
   
   return {
-    accessToken: generateToken(payload),
-    refreshToken: generateRefreshToken({ id: user.id }),
-    expiresIn: config.jwt.expiresIn,
-    tokenType: 'Bearer'
+    accessToken,
+    refreshToken,
+    expiresIn: config.jwt.expiresIn
   };
 };
 
@@ -93,9 +158,10 @@ module.exports = {
   generateToken,
   generateRefreshToken,
   verifyToken,
-  verifyRefreshToken,
-  decodeToken,
+  generateEmailVerificationToken,
+  generatePasswordResetToken,
+  verifyEmailVerificationToken,
+  verifyPasswordResetToken,
   extractTokenFromHeader,
-  generateUserPayload,
-  generateTokenPair
+  generateSessionTokens
 };
