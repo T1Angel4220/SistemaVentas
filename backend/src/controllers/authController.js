@@ -23,7 +23,7 @@ const register = async (req, res) => {
     const { cedula, nombre, apellido, correo, telefono, direccion, genero, password, tipo_usuario = 'comprador' } = req.body;
     
     // Validar que el tipo de usuario sea válido para registro
-    if (!['comprador', 'vendedor'].includes(tipo_usuario)) {
+    if (!['comprador', 'vendedor', 'moderador'].includes(tipo_usuario)) {
       return res.status(400).json({
         success: false,
         message: 'Tipo de usuario inválido para registro'
@@ -62,31 +62,41 @@ const register = async (req, res) => {
     // Generar token de verificación
     const verificationToken = generateEmailVerificationToken(null, correo);
     
+    // Determinar estado inicial según el tipo de usuario
+    const estadoInicial = tipo_usuario === 'moderador' ? 'activo' : 'pendiente_verificacion';
+    const tokenVerificacion = tipo_usuario === 'moderador' ? null : verificationToken;
+    
     // Insertar usuario
     const result = await query(`
       INSERT INTO usuarios (
         cedula, nombre, apellido, correo, telefono, direccion, genero, 
-        password_hash, tipo_usuario, estado, token_verificacion
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        password_hash, tipo_usuario, estado, token_verificacion, email_verificado
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       RETURNING id, cedula, nombre, apellido, correo, tipo_usuario, estado
     `, [
       cedula, nombre, apellido, correo, telefono, direccion, genero,
-      passwordHash, tipo_usuario, 'pendiente_verificacion', verificationToken
+      passwordHash, tipo_usuario, estadoInicial, tokenVerificacion, tipo_usuario === 'moderador'
     ]);
     
     const user = result.rows[0];
     
-    // Enviar email de verificación
-    try {
-      await sendVerificationEmail(correo, nombre, verificationToken);
-    } catch (emailError) {
-      console.error('❌ Error enviando email de verificación:', emailError.message);
-      // No fallar el registro si el email falla
+    // Enviar email de verificación solo si no es moderador
+    if (tipo_usuario !== 'moderador') {
+      try {
+        await sendVerificationEmail(correo, nombre, verificationToken);
+      } catch (emailError) {
+        console.error('❌ Error enviando email de verificación:', emailError.message);
+        // No fallar el registro si el email falla
+      }
     }
+    
+    const mensaje = tipo_usuario === 'moderador' 
+      ? 'Moderador registrado exitosamente. Puede iniciar sesión inmediatamente.'
+      : 'Usuario registrado exitosamente. Revisa tu email para verificar la cuenta.';
     
     res.status(201).json({
       success: true,
-      message: 'Usuario registrado exitosamente. Revisa tu email para verificar la cuenta.',
+      message: mensaje,
       data: {
         user: {
           id: user.id,
@@ -438,6 +448,88 @@ const resetPassword = async (req, res) => {
 };
 
 /**
+ * Obtener lista de usuarios (solo para moderadores y administradores)
+ */
+const getUsers = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, search = '', role = 'all', status = 'all' } = req.query;
+    const offset = (page - 1) * limit;
+    
+    // Construir query base
+    let whereConditions = [];
+    let queryParams = [];
+    let paramCount = 0;
+    
+    // Filtro de búsqueda
+    if (search) {
+      paramCount++;
+      whereConditions.push(`(nombre ILIKE $${paramCount} OR apellido ILIKE $${paramCount} OR correo ILIKE $${paramCount} OR cedula ILIKE $${paramCount})`);
+      queryParams.push(`%${search}%`);
+    }
+    
+    // Filtro de rol
+    if (role !== 'all') {
+      paramCount++;
+      whereConditions.push(`tipo_usuario = $${paramCount}`);
+      queryParams.push(role);
+    }
+    
+    // Filtro de estado
+    if (status !== 'all') {
+      paramCount++;
+      whereConditions.push(`estado = $${paramCount}`);
+      queryParams.push(status);
+    }
+    
+    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+    
+    // Query para obtener usuarios
+    const usersQuery = `
+      SELECT id, cedula, nombre, apellido, correo, telefono, direccion, genero,
+             tipo_usuario, estado, email_verificado, fecha_registro, fecha_ultimo_acceso
+      FROM usuarios 
+      ${whereClause}
+      ORDER BY fecha_registro DESC
+      LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}
+    `;
+    
+    queryParams.push(parseInt(limit), offset);
+    
+    const usersResult = await query(usersQuery, queryParams);
+    
+    // Query para contar total
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM usuarios 
+      ${whereClause}
+    `;
+    
+    const countResult = await query(countQuery, queryParams.slice(0, -2));
+    const total = parseInt(countResult.rows[0].total);
+    
+    res.json({
+      success: true,
+      data: {
+        users: usersResult.rows,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          pages: Math.ceil(total / limit)
+        }
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error obteniendo usuarios:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor'
+    });
+  }
+};
+
+/**
  * Obtener perfil del usuario autenticado
  */
 const getProfile = async (req, res) => {
@@ -563,6 +655,7 @@ module.exports = {
   requestPasswordReset,
   resetPassword,
   getProfile,
+  getUsers,
   logout,
   testAuth
 };

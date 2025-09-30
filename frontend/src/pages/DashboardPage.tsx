@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -11,10 +12,13 @@ import {
   Settings, 
   LogOut,
   Shield,
-  Users
+  Users,
+  BarChart3,
+  UserPlus
 } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
+  const navigate = useNavigate();
   const { user, logout, isLoading, refreshUser } = useAuth();
 
   // Debug: Verificar los datos del usuario
@@ -277,33 +281,60 @@ export const DashboardPage: React.FC = () => {
         {/* Admin/Moderator Actions */}
         {(user.tipo_usuario === 'administrador' || user.tipo_usuario === 'moderador') && (
           <div className="mt-8">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Users className="h-5 w-5" />
-                  <span>Panel de Administración</span>
-                </CardTitle>
-                <CardDescription>
-                  Herramientas de moderación y administración
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Button variant="outline" className="justify-start">
-                    <Users className="h-4 w-4 mr-2" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Panel de Administración</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1">
+                <div className="p-6">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <Users className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Gestión de Usuarios</h3>
+                  <p className="text-sm text-gray-600 mb-4">Administra usuarios, roles y permisos</p>
+                  <Button
+                    onClick={() => navigate('/admin/users')}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                  >
                     Gestionar Usuarios
                   </Button>
-                  <Button variant="outline" className="justify-start">
-                    <Shield className="h-4 w-4 mr-2" />
-                    Moderar Contenido
-                  </Button>
-                  <Button variant="outline" className="justify-start">
-                    <Settings className="h-4 w-4 mr-2" />
-                    Configuración del Sistema
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1">
+                <div className="p-6">
+                  <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <BarChart3 className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Estadísticas</h3>
+                  <p className="text-sm text-gray-600 mb-4">Visualiza métricas y reportes</p>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {/* Implementar estadísticas */}}
+                  >
+                    Ver Estadísticas
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+
+              {user.tipo_usuario === 'administrador' && (
+                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1">
+                  <div className="p-6">
+                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                      <UserPlus className="h-6 w-6 text-white" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Registrar Moderador</h3>
+                    <p className="text-sm text-gray-600 mb-4">Crear nuevas cuentas de moderador</p>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => navigate('/admin/register-moderator')}
+                      >
+                        Registrar Moderador
+                      </Button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 

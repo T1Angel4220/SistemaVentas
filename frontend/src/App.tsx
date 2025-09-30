@@ -11,6 +11,8 @@ import { RegisterPage } from './pages/RegisterPage';
 import { VerifyEmailPage } from './pages/VerifyEmailPage';
 import { VerifyCodePage } from './pages/VerifyCodePage';
 import { DashboardPage } from './pages/DashboardPage';
+import { UserManagementPage } from './pages/UserManagementPage';
+import { RegisterModeratorPage } from './pages/RegisterModeratorPage';
 
 // Componentes de error
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -41,6 +43,22 @@ function App() {
               />
               
               {/* Rutas de administración (solo para moderadores y administradores) */}
+              <Route 
+                path="/admin/users" 
+                element={
+                  <ProtectedRoute allowedRoles={['moderador', 'administrador']}>
+                    <UserManagementPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/register-moderator" 
+                element={
+                  <ProtectedRoute allowedRoles={['administrador']}>
+                    <RegisterModeratorPage />
+                  </ProtectedRoute>
+                } 
+              />
               <Route 
                 path="/admin/*" 
                 element={

@@ -45,6 +45,46 @@ const registerSchema = Joi.object({
   })
 });
 
+const registerModeratorSchema = Joi.object({
+  cedula: Joi.string().min(9).max(20).required().messages({
+    'string.min': 'La cédula debe tener al menos 9 caracteres',
+    'string.max': 'La cédula no puede tener más de 20 caracteres',
+    'any.required': 'La cédula es requerida'
+  }),
+  nombre: Joi.string().min(2).max(100).required().messages({
+    'string.min': 'El nombre debe tener al menos 2 caracteres',
+    'string.max': 'El nombre no puede tener más de 100 caracteres',
+    'any.required': 'El nombre es requerido'
+  }),
+  apellido: Joi.string().min(2).max(100).required().messages({
+    'string.min': 'El apellido debe tener al menos 2 caracteres',
+    'string.max': 'El apellido no puede tener más de 100 caracteres',
+    'any.required': 'El apellido es requerido'
+  }),
+  correo: Joi.string().email().required().messages({
+    'string.email': 'El correo debe ser un email válido',
+    'any.required': 'El correo es requerido'
+  }),
+  telefono: Joi.string().min(8).max(20).optional().messages({
+    'string.min': 'El teléfono debe tener al menos 8 caracteres',
+    'string.max': 'El teléfono no puede tener más de 20 caracteres'
+  }),
+  direccion: Joi.string().max(500).optional().messages({
+    'string.max': 'La dirección no puede tener más de 500 caracteres'
+  }),
+  genero: Joi.string().valid('masculino', 'femenino', 'otro').optional().messages({
+    'any.only': 'El género debe ser masculino, femenino u otro'
+  }),
+  password: Joi.string().min(6).max(100).required().messages({
+    'string.min': 'La contraseña debe tener al menos 6 caracteres',
+    'string.max': 'La contraseña no puede tener más de 100 caracteres',
+    'any.required': 'La contraseña es requerida'
+  }),
+  tipo_usuario: Joi.string().valid('moderador').default('moderador').messages({
+    'any.only': 'El tipo de usuario debe ser moderador'
+  })
+});
+
 const loginSchema = Joi.object({
   correo: Joi.string().email().required().messages({
     'string.email': 'El correo debe ser un email válido',
@@ -147,6 +187,13 @@ router.post('/reset-password', validateRequest(resetPasswordSchema), authControl
 router.get('/profile', authenticate, authController.getProfile);
 
 /**
+ * @route GET /api/auth/users
+ * @desc Obtener lista de usuarios (solo moderadores y administradores)
+ * @access Private (Moderator/Admin)
+ */
+router.get('/users', authenticate, requireModerator, authController.getUsers);
+
+/**
  * @route POST /api/auth/logout
  * @desc Logout - Invalidar sesión
  * @access Private
@@ -166,7 +213,7 @@ router.get('/test', authenticate, authController.testAuth);
  * @desc Registro de moderadores (solo administrador)
  * @access Private (Admin only)
  */
-router.post('/register-moderator', authenticate, requireAdmin, validateRequest(registerSchema), authController.register);
+router.post('/register-moderator', authenticate, requireAdmin, validateRequest(registerModeratorSchema), authController.register);
 
 /**
  * @route PUT /api/auth/activate-user/:userId

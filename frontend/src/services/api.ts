@@ -161,6 +161,34 @@ class ApiService {
     return this.request<User>('/auth/profile');
   }
 
+  async getUsers(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    role?: string;
+    status?: string;
+  }): Promise<ApiResponse<{
+    users: User[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      pages: number;
+    };
+  }>> {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.role) queryParams.append('role', params.role);
+    if (params?.status) queryParams.append('status', params.status);
+    
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/auth/users?${queryString}` : '/auth/users';
+    
+    return this.request(endpoint);
+  }
+
   async logout(): Promise<ApiResponse> {
     const response = await this.request('/auth/logout', {
       method: 'POST',
