@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -200,33 +201,53 @@ export const DashboardPage: React.FC = () => {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center space-x-2 text-lg">
-                <ShoppingCart className="h-5 w-5 text-blue-600" />
-                <span>Comprar</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>
-                Explora productos y servicios disponibles
-              </CardDescription>
-            </CardContent>
-          </Card>
+          <Link to="/products">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center space-x-2 text-lg">
+                  <ShoppingCart className="h-5 w-5 text-blue-600" />
+                  <span>Comprar</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription>
+                  Explora productos y servicios disponibles
+                </CardDescription>
+              </CardContent>
+            </Card>
+          </Link>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center space-x-2 text-lg">
-                <Package className="h-5 w-5 text-green-600" />
-                <span>Vender</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>
-                Publica tus productos y servicios
-              </CardDescription>
-            </CardContent>
-          </Card>
+          {(user.tipo_usuario === 'vendedor' || user.tipo_usuario === 'administrador') ? (
+            <Link to="/products/create">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center space-x-2 text-lg">
+                    <Package className="h-5 w-5 text-green-600" />
+                    <span>Vender</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription>
+                    Publica tus productos y servicios
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            </Link>
+          ) : (
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center space-x-2 text-lg">
+                  <Package className="h-5 w-5 text-green-600" />
+                  <span>Vender</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription>
+                  Publica tus productos y servicios
+                </CardDescription>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="hover:shadow-lg transition-shadow cursor-pointer">
             <CardHeader className="pb-3">
@@ -242,19 +263,37 @@ export const DashboardPage: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center space-x-2 text-lg">
-                <Settings className="h-5 w-5 text-gray-600" />
-                <span>Configuración</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>
-                Gestiona tu cuenta y preferencias
-              </CardDescription>
-            </CardContent>
-          </Card>
+          {(user.tipo_usuario === 'vendedor' || user.tipo_usuario === 'administrador') ? (
+            <Link to="/my-products">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center space-x-2 text-lg">
+                    <Package className="h-5 w-5 text-orange-600" />
+                    <span>Mis Productos</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription>
+                    Gestiona tus productos publicados
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            </Link>
+          ) : (
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center space-x-2 text-lg">
+                  <Settings className="h-5 w-5 text-gray-600" />
+                  <span>Configuración</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription>
+                  Gestiona tu cuenta y preferencias
+                </CardDescription>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Admin/Moderator Actions */}

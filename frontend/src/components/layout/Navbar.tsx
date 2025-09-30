@@ -62,6 +62,14 @@ export const Navbar: React.FC = () => {
               >
                 Productos
               </Link>
+              {(user.tipo_usuario === 'vendedor' || user.tipo_usuario === 'administrador') && (
+                <Link
+                  to="/my-products"
+                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Mis Productos
+                </Link>
+              )}
               <Link
                 to="/chat"
                 className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"

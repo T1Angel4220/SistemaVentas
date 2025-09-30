@@ -1,5 +1,4 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { Navbar } from './components/layout/Navbar';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
@@ -10,6 +9,10 @@ import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { VerifyEmailPage } from './pages/VerifyEmailPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { ProductsPage } from './pages/ProductsPage';
+import { ProductDetailPage } from './pages/ProductDetailPage';
+import { CreateProductPage } from './pages/CreateProductPage';
+import { MyProductsPage } from './pages/MyProductsPage';
 
 // Componentes de error
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -58,20 +61,29 @@ function App() {
               />
               
               {/* Rutas de productos */}
+              <Route path="/products" element={<ProductsPage />} />
+              <Route path="/products/:id" element={<ProductDetailPage />} />
               <Route 
-                path="/products/*" 
+                path="/products/create" 
                 element={
-                  <ProtectedRoute>
-                    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                      <div className="text-center">
-                        <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                          Productos
-                        </h2>
-                        <p className="text-gray-600">
-                          Catálogo de productos en desarrollo...
-                        </p>
-                      </div>
-                    </div>
+                  <ProtectedRoute allowedRoles={['vendedor', 'administrador']}>
+                    <CreateProductPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/products/:id/edit" 
+                element={
+                  <ProtectedRoute allowedRoles={['vendedor', 'administrador']}>
+                    <CreateProductPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/my-products" 
+                element={
+                  <ProtectedRoute allowedRoles={['vendedor', 'administrador']}>
+                    <MyProductsPage />
                   </ProtectedRoute>
                 } 
               />
