@@ -1,0 +1,240 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { Button } from '../components/ui/Button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
+import { 
+  ShoppingCart, 
+  Package, 
+  MessageSquare, 
+  Shield, 
+  Users, 
+  Star,
+  CheckCircle,
+  ArrowRight
+} from 'lucide-react';
+
+export const HomePage: React.FC = () => {
+  const { isAuthenticated, user } = useAuth();
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Section */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+          <div className="text-center">
+            <h1 className="text-4xl md:text-6xl font-bold mb-6">
+              Sistema de Ventas Multiempresa
+            </h1>
+            <p className="text-xl md:text-2xl mb-8 text-blue-100">
+              La plataforma más completa para comprar y vender productos y servicios
+            </p>
+            {!isAuthenticated ? (
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link to="/register">
+                  <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100">
+                    Comenzar Ahora
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
+                <Link to="/login">
+                  <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
+                    Iniciar Sesión
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link to="/dashboard">
+                  <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100">
+                    Ir al Dashboard
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Features Section */}
+      <div className="py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              ¿Por qué elegir nuestro sistema?
+            </h2>
+            <p className="text-lg text-gray-600">
+              Ofrecemos las mejores herramientas para compradores y vendedores
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <Card className="text-center">
+              <CardHeader>
+                <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                  <ShoppingCart className="h-6 w-6 text-blue-600" />
+                </div>
+                <CardTitle>Comprar Fácil</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription>
+                  Encuentra productos y servicios de calidad con solo unos clics
+                </CardDescription>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center">
+              <CardHeader>
+                <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                  <Package className="h-6 w-6 text-green-600" />
+                </div>
+                <CardTitle>Vender Seguro</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription>
+                  Publica tus productos y servicios con total seguridad
+                </CardDescription>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center">
+              <CardHeader>
+                <div className="mx-auto w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-4">
+                  <MessageSquare className="h-6 w-6 text-purple-600" />
+                </div>
+                <CardTitle>Comunicación Directa</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription>
+                  Chatea directamente con compradores y vendedores
+                </CardDescription>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center">
+              <CardHeader>
+                <div className="mx-auto w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
+                  <Shield className="h-6 w-6 text-yellow-600" />
+                </div>
+                <CardTitle>Moderación Inteligente</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription>
+                  Sistema de moderación automática para contenido seguro
+                </CardDescription>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center">
+              <CardHeader>
+                <div className="mx-auto w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                  <Users className="h-6 w-6 text-red-600" />
+                </div>
+                <CardTitle>Comunidad Confiable</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription>
+                  Sistema de valoraciones y reputación para usuarios
+                </CardDescription>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center">
+              <CardHeader>
+                <div className="mx-auto w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
+                  <Star className="h-6 w-6 text-indigo-600" />
+                </div>
+                <CardTitle>Experiencia Premium</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription>
+                  Interfaz intuitiva y fácil de usar para todos
+                </CardDescription>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats Section */}
+      <div className="bg-white py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Números que hablan
+            </h2>
+            <p className="text-lg text-gray-600">
+              Miles de usuarios confían en nuestra plataforma
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="text-center">
+              <div className="text-4xl font-bold text-blue-600 mb-2">1000+</div>
+              <div className="text-gray-600">Usuarios Activos</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-green-600 mb-2">5000+</div>
+              <div className="text-gray-600">Productos Publicados</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-purple-600 mb-2">10000+</div>
+              <div className="text-gray-600">Transacciones Exitosas</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-yellow-600 mb-2">99%</div>
+              <div className="text-gray-600">Satisfacción del Cliente</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* CTA Section */}
+      <div className="bg-gray-900 text-white py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-bold mb-4">
+            ¿Listo para comenzar?
+          </h2>
+          <p className="text-xl text-gray-300 mb-8">
+            Únete a nuestra comunidad y descubre nuevas oportunidades
+          </p>
+          {!isAuthenticated ? (
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link to="/register">
+                <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
+                  Crear Cuenta Gratis
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+              <Link to="/login">
+                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-gray-900">
+                  Ya tengo cuenta
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <Link to="/dashboard">
+              <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
+                Ir al Dashboard
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+          )}
+        </div>
+      </div>
+
+      {/* Footer */}
+      <footer className="bg-gray-800 text-white py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <p className="text-gray-400">
+              © 2024 Sistema de Ventas Multiempresa. Todos los derechos reservados.
+            </p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+

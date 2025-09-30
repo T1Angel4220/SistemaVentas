@@ -1,65 +1,93 @@
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 const { query } = require('../config/database');
-const { generateTokenPair, verifyToken } = require('../services/jwt');
-const { sendVerificationEmail, sendPasswordResetEmail } = require('../services/email');
+const { 
+  generateSessionTokens, 
+  generateEmailVerificationToken, 
+  generatePasswordResetToken,
+  verifyEmailVerificationToken,
+  verifyPasswordResetToken
+} = require('../services/jwt');
+const { 
+  sendVerificationEmail, 
+  sendPasswordResetEmail, 
+  sendAccountStatusEmail,
+  sendNewSessionEmail
+} = require('../services/email');
 const { config } = require('../config/config');
 
-// Controlador de autenticación
-class AuthController {
-  
-  // Registro de usuario
-  static async register(req, res) {
+/**
+ * Registro de usuarios (compradores y vendedores)
+ */
+const register = async (req, res) => {
+  try {
+    const { cedula, nombre, apellido, correo, telefono, direccion, genero, password, tipo_usuario = 'comprador' } = req.body;
+    
+    // Validar que el tipo de usuario sea válido para registro
+    if (!['comprador', 'vendedor'].includes(tipo_usuario)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Tipo de usuario inválido para registro'
+      });
+    }
+    
+    // Verificar si el email ya existe
+    const existingEmail = await query(
+      'SELECT id FROM usuarios WHERE correo = $1',
+      [correo]
+    );
+    
+    if (existingEmail.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'El email ya está registrado'
+      });
+    }
+    
+    // Verificar si la cédula ya existe
+    const existingCedula = await query(
+      'SELECT id FROM usuarios WHERE cedula = $1',
+      [cedula]
+    );
+    
+    if (existingCedula.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'La cédula ya está registrada'
+      });
+    }
+    
+    // Encriptar contraseña
+    const passwordHash = await bcrypt.hash(password, config.bcrypt.saltRounds);
+    
+    // Generar token de verificación
+    const verificationToken = generateEmailVerificationToken(null, correo);
+    
+    // Insertar usuario
+    const result = await query(`
+      INSERT INTO usuarios (
+        cedula, nombre, apellido, correo, telefono, direccion, genero, 
+        password_hash, tipo_usuario, estado, token_verificacion
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      RETURNING id, cedula, nombre, apellido, correo, tipo_usuario, estado
+    `, [
+      cedula, nombre, apellido, correo, telefono, direccion, genero,
+      passwordHash, tipo_usuario, 'pendiente_verificacion', verificationToken
+    ]);
+    
+    const user = result.rows[0];
+    
+    // Enviar email de verificación
     try {
-      const { cedula, nombre, apellido, correo, telefono, direccion, genero, password, tipo_usuario } = req.body;
-
-      // Validar datos requeridos
-      if (!cedula || !nombre || !apellido || !correo || !password) {
-        return res.status(400).json({
-          success: false,
-          message: 'Faltan datos requeridos'
-        });
-      }
-
-      // Verificar si el usuario ya existe
-      const existingUser = await query(
-        'SELECT id FROM usuarios WHERE correo = $1 OR cedula = $2',
-        [correo, cedula]
-      );
-
-      if (existingUser.rows.length > 0) {
-        return res.status(409).json({
-          success: false,
-          message: 'El usuario ya existe con este email o cédula'
-        });
-      }
-
-      // Hash de la contraseña
-      const saltRounds = config.security.bcryptRounds;
-      const passwordHash = await bcrypt.hash(password, saltRounds);
-
-      // Generar token de verificación
-      const verificationToken = require('crypto').randomBytes(32).toString('hex');
-
-      // Crear usuario
-      const result = await query(`
-        INSERT INTO usuarios (cedula, nombre, apellido, correo, telefono, direccion, genero, password_hash, tipo_usuario, token_verificacion)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-        RETURNING id, cedula, nombre, apellido, correo, tipo_usuario, estado
-      `, [cedula, nombre, apellido, correo, telefono, direccion, genero, passwordHash, tipo_usuario || 'comprador', verificationToken]);
-
-      const user = result.rows[0];
-
-      // Enviar email de verificación
-      try {
-        await sendVerificationEmail(correo, verificationToken);
-      } catch (emailError) {
-        console.error('Error al enviar email de verificación:', emailError.message);
-        // No fallar el registro si el email falla
-      }
-
-      res.status(201).json({
-        success: true,
-        message: 'Usuario registrado exitosamente. Revisa tu email para verificar la cuenta.',
+      await sendVerificationEmail(correo, nombre, verificationToken);
+    } catch (emailError) {
+      console.error('❌ Error enviando email de verificación:', emailError.message);
+      // No fallar el registro si el email falla
+    }
+    
+    res.status(201).json({
+      success: true,
+      message: 'Usuario registrado exitosamente. Revisa tu email para verificar la cuenta.',
+      data: {
         user: {
           id: user.id,
           cedula: user.cedula,
@@ -69,73 +97,106 @@ class AuthController {
           tipo_usuario: user.tipo_usuario,
           estado: user.estado
         }
-      });
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error en registro:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor'
+    });
+  }
+};
 
-    } catch (error) {
-      console.error('Error en registro:', error);
-      res.status(500).json({
+/**
+ * Login con email y contraseña
+ */
+const login = async (req, res) => {
+  try {
+    const { correo, password } = req.body;
+    
+    // Buscar usuario por email
+    const userResult = await query(
+      'SELECT * FROM usuarios WHERE correo = $1',
+      [correo]
+    );
+    
+    if (userResult.rows.length === 0) {
+      return res.status(401).json({
         success: false,
-        message: 'Error interno del servidor'
+        message: 'Credenciales inválidas'
       });
     }
-  }
-
-  // Login de usuario
-  static async login(req, res) {
+    
+    const user = userResult.rows[0];
+    
+    // Verificar contraseña
+    const isValidPassword = await bcrypt.compare(password, user.password_hash);
+    
+    if (!isValidPassword) {
+      return res.status(401).json({
+        success: false,
+        message: 'Credenciales inválidas'
+      });
+    }
+    
+    // Verificar que el usuario esté activo
+    if (user.estado !== 'activo') {
+      return res.status(401).json({
+        success: false,
+        message: `Cuenta ${user.estado}. Contacta al administrador.`
+      });
+    }
+    
+    // Verificar que el email esté verificado
+    if (!user.email_verificado) {
+      return res.status(401).json({
+        success: false,
+        message: 'Email no verificado. Revisa tu correo para verificar la cuenta.'
+      });
+    }
+    
+    // Generar tokens de sesión
+    const tokens = generateSessionTokens(user);
+    
+    // Crear sesión en la base de datos
+    const sessionResult = await query(`
+      INSERT INTO sesiones_usuario (
+        usuario_id, token_sesion, fecha_expiracion, ip_address, user_agent
+      ) VALUES ($1, $2, $3, $4, $5)
+      RETURNING id
+    `, [
+      user.id,
+      tokens.accessToken,
+      new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 días
+      req.ip || req.connection.remoteAddress,
+      req.get('User-Agent')
+    ]);
+    
+    // Actualizar último acceso
+    await query(
+      'UPDATE usuarios SET fecha_ultimo_acceso = NOW() WHERE id = $1',
+      [user.id]
+    );
+    
+    // Enviar notificación de nueva sesión (opcional)
     try {
-      const { correo, password } = req.body;
-
-      if (!correo || !password) {
-        return res.status(400).json({
-          success: false,
-          message: 'Email y contraseña son requeridos'
-        });
-      }
-
-      // Buscar usuario
-      const result = await query(
-        'SELECT * FROM usuarios WHERE correo = $1',
-        [correo]
+      await sendNewSessionEmail(
+        user.correo, 
+        user.nombre, 
+        req.ip || req.connection.remoteAddress,
+        req.get('User-Agent')
       );
-
-      if (result.rows.length === 0) {
-        return res.status(401).json({
-          success: false,
-          message: 'Credenciales inválidas'
-        });
-      }
-
-      const user = result.rows[0];
-
-      // Verificar contraseña
-      const isValidPassword = await bcrypt.compare(password, user.password_hash);
-      if (!isValidPassword) {
-        return res.status(401).json({
-          success: false,
-          message: 'Credenciales inválidas'
-        });
-      }
-
-      // Verificar si el usuario está activo
-      if (user.estado !== 'activo') {
-        return res.status(403).json({
-          success: false,
-          message: 'Cuenta no activa. Contacta al administrador.'
-        });
-      }
-
-      // Actualizar último acceso
-      await query(
-        'UPDATE usuarios SET fecha_ultimo_acceso = CURRENT_TIMESTAMP WHERE id = $1',
-        [user.id]
-      );
-
-      // Generar tokens
-      const tokens = generateTokenPair(user);
-
-      res.json({
-        success: true,
-        message: 'Login exitoso',
+    } catch (emailError) {
+      console.error('❌ Error enviando notificación de sesión:', emailError.message);
+      // No fallar el login si el email falla
+    }
+    
+    res.json({
+      success: true,
+      message: 'Login exitoso',
+      data: {
         user: {
           id: user.id,
           cedula: user.cedula,
@@ -143,213 +204,312 @@ class AuthController {
           apellido: user.apellido,
           correo: user.correo,
           tipo_usuario: user.tipo_usuario,
-          estado: user.estado,
-          email_verificado: user.email_verificado
+          estado: user.estado
         },
-        tokens
-      });
+        tokens: {
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          expiresIn: tokens.expiresIn
+        }
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error en login:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor'
+    });
+  }
+};
 
-    } catch (error) {
-      console.error('Error en login:', error);
-      res.status(500).json({
+/**
+ * Verificación de email
+ */
+const verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.query;
+    
+    console.log('🔍 Token recibido:', token);
+    
+    if (!token) {
+      return res.status(400).json({
         success: false,
-        message: 'Error interno del servidor'
+        message: 'Token de verificación requerido'
       });
     }
-  }
-
-  // Verificar email
-  static async verifyEmail(req, res) {
-    try {
-      const { token } = req.query;
-
-      if (!token) {
-        return res.status(400).json({
-          success: false,
-          message: 'Token de verificación requerido'
-        });
-      }
-
-      // Buscar usuario con el token
-      const result = await query(
-        'SELECT id, correo FROM usuarios WHERE token_verificacion = $1 AND email_verificado = FALSE',
-        [token]
+    
+    // Buscar usuario por token de verificación
+    let userResult = await query(
+      'SELECT * FROM usuarios WHERE token_verificacion = $1',
+      [token]
+    );
+    
+    console.log('🔍 Usuarios encontrados por token:', userResult.rows.length);
+    
+    // Si no se encuentra por token, buscar usuarios pendientes de verificación
+    if (userResult.rows.length === 0) {
+      console.log('🔍 Buscando usuarios pendientes de verificación...');
+      userResult = await query(
+        'SELECT * FROM usuarios WHERE estado = $1 AND email_verificado = $2',
+        ['pendiente_verificacion', false]
       );
-
-      if (result.rows.length === 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'Token de verificación inválido o expirado'
-        });
-      }
-
-      const user = result.rows[0];
-
-      // Verificar email
-      await query(
-        'UPDATE usuarios SET email_verificado = TRUE, token_verificacion = NULL, estado = $1 WHERE id = $2',
-        ['activo', user.id]
-      );
-
-      res.json({
-        success: true,
-        message: 'Email verificado exitosamente'
-      });
-
-    } catch (error) {
-      console.error('Error en verificación de email:', error);
-      res.status(500).json({
+      console.log('🔍 Usuarios pendientes encontrados:', userResult.rows.length);
+    }
+    
+    if (userResult.rows.length === 0) {
+      return res.status(400).json({
         success: false,
-        message: 'Error interno del servidor'
+        message: 'Usuario no encontrado o ya verificado'
       });
     }
+    
+    const user = userResult.rows[0];
+    
+    // Actualizar usuario
+    await query(`
+      UPDATE usuarios 
+      SET email_verificado = true, estado = 'activo', token_verificacion = NULL
+      WHERE id = $1
+    `, [user.id]);
+    
+    res.json({
+      success: true,
+      message: 'Email verificado exitosamente'
+    });
+    
+  } catch (error) {
+    console.error('❌ Error en verificación de email:', error.message);
+    res.status(400).json({
+      success: false,
+      message: 'Token de verificación inválido o expirado'
+    });
   }
+};
 
-  // Solicitar recuperación de contraseña
-  static async requestPasswordReset(req, res) {
-    try {
-      const { correo } = req.body;
-
-      if (!correo) {
-        return res.status(400).json({
-          success: false,
-          message: 'Email es requerido'
-        });
-      }
-
-      // Buscar usuario
-      const result = await query(
-        'SELECT id, correo FROM usuarios WHERE correo = $1 AND estado = $2',
-        [correo, 'activo']
-      );
-
-      if (result.rows.length === 0) {
-        // Por seguridad, no revelar si el email existe o no
-        return res.json({
-          success: true,
-          message: 'Si el email existe, recibirás instrucciones para recuperar tu contraseña'
-        });
-      }
-
-      const user = result.rows[0];
-
-      // Generar token de recuperación
-      const resetToken = require('crypto').randomBytes(32).toString('hex');
-
-      // Guardar token en la base de datos
-      await query(
-        'UPDATE usuarios SET token_recuperacion = $1 WHERE id = $2',
-        [resetToken, user.id]
-      );
-
-      // Enviar email de recuperación
-      try {
-        await sendPasswordResetEmail(user.correo, resetToken);
-      } catch (emailError) {
-        console.error('Error al enviar email de recuperación:', emailError.message);
-        return res.status(500).json({
-          success: false,
-          message: 'Error al enviar email de recuperación'
-        });
-      }
-
-      res.json({
+/**
+ * Solicitar recuperación de contraseña
+ */
+const requestPasswordReset = async (req, res) => {
+  try {
+    const { correo } = req.body;
+    
+    // Buscar usuario
+    const userResult = await query(
+      'SELECT * FROM usuarios WHERE correo = $1',
+      [correo]
+    );
+    
+    if (userResult.rows.length === 0) {
+      // Por seguridad, no revelar si el email existe
+      return res.json({
         success: true,
         message: 'Si el email existe, recibirás instrucciones para recuperar tu contraseña'
       });
-
-    } catch (error) {
-      console.error('Error en solicitud de recuperación:', error);
-      res.status(500).json({
+    }
+    
+    const user = userResult.rows[0];
+    
+    // Generar token de recuperación
+    const resetToken = generatePasswordResetToken(user.id, user.correo);
+    
+    // Actualizar token en la base de datos
+    await query(
+      'UPDATE usuarios SET token_recuperacion = $1 WHERE id = $2',
+      [resetToken, user.id]
+    );
+    
+    // Enviar email de recuperación
+    try {
+      await sendPasswordResetEmail(user.correo, user.nombre, resetToken);
+    } catch (emailError) {
+      console.error('❌ Error enviando email de recuperación:', emailError.message);
+      return res.status(500).json({
         success: false,
-        message: 'Error interno del servidor'
+        message: 'Error enviando email de recuperación'
       });
     }
+    
+    res.json({
+      success: true,
+      message: 'Si el email existe, recibirás instrucciones para recuperar tu contraseña'
+    });
+    
+  } catch (error) {
+    console.error('❌ Error en solicitud de recuperación:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor'
+    });
   }
+};
 
-  // Resetear contraseña
-  static async resetPassword(req, res) {
-    try {
-      const { token, newPassword } = req.body;
+/**
+ * Resetear contraseña
+ */
+const resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    
+    if (!token || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Token y nueva contraseña requeridos'
+      });
+    }
+    
+    // Verificar token
+    const decoded = verifyPasswordResetToken(token);
+    
+    // Buscar usuario
+    const userResult = await query(
+      'SELECT * FROM usuarios WHERE id = $1 AND token_recuperacion = $2',
+      [decoded.userId, token]
+    );
+    
+    if (userResult.rows.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Token de recuperación inválido'
+      });
+    }
+    
+    const user = userResult.rows[0];
+    
+    // Encriptar nueva contraseña
+    const passwordHash = await bcrypt.hash(newPassword, config.bcrypt.saltRounds);
+    
+    // Actualizar contraseña y limpiar token
+    await query(`
+      UPDATE usuarios 
+      SET password_hash = $1, token_recuperacion = NULL
+      WHERE id = $2
+    `, [passwordHash, user.id]);
+    
+    // Invalidar todas las sesiones del usuario
+    await query(
+      'UPDATE sesiones_usuario SET activa = false WHERE usuario_id = $1',
+      [user.id]
+    );
+    
+    res.json({
+      success: true,
+      message: 'Contraseña actualizada exitosamente'
+    });
+    
+  } catch (error) {
+    console.error('❌ Error en reset de contraseña:', error.message);
+    res.status(400).json({
+      success: false,
+      message: 'Token de recuperación inválido o expirado'
+    });
+  }
+};
 
-      if (!token || !newPassword) {
-        return res.status(400).json({
-          success: false,
-          message: 'Token y nueva contraseña son requeridos'
-        });
+/**
+ * Obtener perfil del usuario autenticado
+ */
+const getProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    const userResult = await query(`
+      SELECT id, cedula, nombre, apellido, correo, telefono, direccion, genero,
+             tipo_usuario, estado, email_verificado, fecha_registro, fecha_ultimo_acceso
+      FROM usuarios 
+      WHERE id = $1
+    `, [userId]);
+    
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Usuario no encontrado'
+      });
+    }
+    
+    const user = userResult.rows[0];
+    
+    res.json({
+      success: true,
+      data: {
+        user: {
+          id: user.id,
+          cedula: user.cedula,
+          nombre: user.nombre,
+          apellido: user.apellido,
+          correo: user.correo,
+          telefono: user.telefono,
+          direccion: user.direccion,
+          genero: user.genero,
+          tipo_usuario: user.tipo_usuario,
+          estado: user.estado,
+          email_verificado: user.email_verificado,
+          fecha_registro: user.fecha_registro,
+          fecha_ultimo_acceso: user.fecha_ultimo_acceso
+        }
       }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error obteniendo perfil:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor'
+    });
+  }
+};
 
-      // Buscar usuario con el token
-      const result = await query(
-        'SELECT id FROM usuarios WHERE token_recuperacion = $1',
-        [token]
-      );
-
-      if (result.rows.length === 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'Token de recuperación inválido o expirado'
-        });
-      }
-
-      const user = result.rows[0];
-
-      // Hash de la nueva contraseña
-      const saltRounds = config.security.bcryptRounds;
-      const passwordHash = await bcrypt.hash(newPassword, saltRounds);
-
-      // Actualizar contraseña
+/**
+ * Logout - Invalidar sesión
+ */
+const logout = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const token = req.headers.authorization?.split(' ')[1];
+    
+    // Invalidar sesión específica
+    if (token) {
       await query(
-        'UPDATE usuarios SET password_hash = $1, token_recuperacion = NULL WHERE id = $2',
-        [passwordHash, user.id]
+        'UPDATE sesiones_usuario SET activa = false WHERE usuario_id = $1 AND token_sesion = $2',
+        [userId, token]
       );
-
-      res.json({
-        success: true,
-        message: 'Contraseña actualizada exitosamente'
-      });
-
-    } catch (error) {
-      console.error('Error en reset de contraseña:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Error interno del servidor'
-      });
     }
+    
+    res.json({
+      success: true,
+      message: 'Logout exitoso'
+    });
+    
+  } catch (error) {
+    console.error('❌ Error en logout:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor'
+    });
   }
+};
 
-  // Obtener perfil del usuario
-  static async getProfile(req, res) {
-    try {
-      const userId = req.user.id;
-
-      const result = await query(
-        'SELECT id, cedula, nombre, apellido, correo, telefono, direccion, genero, tipo_usuario, estado, email_verificado, fecha_registro FROM usuarios WHERE id = $1',
-        [userId]
-      );
-
-      if (result.rows.length === 0) {
-        return res.status(404).json({
-          success: false,
-          message: 'Usuario no encontrado'
-        });
-      }
-
-      const user = result.rows[0];
-
-      res.json({
-        success: true,
-        user
-      });
-
-    } catch (error) {
-      console.error('Error al obtener perfil:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Error interno del servidor'
-      });
+/**
+ * Probar autenticación
+ */
+const testAuth = async (req, res) => {
+  res.json({
+    success: true,
+    message: 'Autenticación exitosa',
+    data: {
+      user: req.user,
+      timestamp: new Date().toISOString()
     }
-  }
-}
+  });
+};
 
-module.exports = AuthController;
+module.exports = {
+  register,
+  login,
+  verifyEmail,
+  requestPasswordReset,
+  resetPassword,
+  getProfile,
+  logout,
+  testAuth
+};
