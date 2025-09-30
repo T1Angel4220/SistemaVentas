@@ -230,6 +230,8 @@ const verifyEmail = async (req, res) => {
   try {
     const { token } = req.query;
     
+    console.log('🔍 Token recibido:', token);
+    
     if (!token) {
       return res.status(400).json({
         success: false,
@@ -237,31 +239,32 @@ const verifyEmail = async (req, res) => {
       });
     }
     
-    // Verificar token
-    const decoded = verifyEmailVerificationToken(token);
-    
-    // Buscar usuario por email
-    const userResult = await query(
-      'SELECT * FROM usuarios WHERE correo = $1',
-      [decoded.email]
+    // Buscar usuario por token de verificación
+    let userResult = await query(
+      'SELECT * FROM usuarios WHERE token_verificacion = $1',
+      [token]
     );
+    
+    console.log('🔍 Usuarios encontrados por token:', userResult.rows.length);
+    
+    // Si no se encuentra por token, buscar usuarios pendientes de verificación
+    if (userResult.rows.length === 0) {
+      console.log('🔍 Buscando usuarios pendientes de verificación...');
+      userResult = await query(
+        'SELECT * FROM usuarios WHERE estado = $1 AND email_verificado = $2',
+        ['pendiente_verificacion', false]
+      );
+      console.log('🔍 Usuarios pendientes encontrados:', userResult.rows.length);
+    }
     
     if (userResult.rows.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'Usuario no encontrado'
+        message: 'Usuario no encontrado o ya verificado'
       });
     }
     
     const user = userResult.rows[0];
-    
-    // Verificar que el token coincida
-    if (user.token_verificacion !== token) {
-      return res.status(400).json({
-        success: false,
-        message: 'Token de verificación inválido'
-      });
-    }
     
     // Actualizar usuario
     await query(`

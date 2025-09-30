@@ -36,7 +36,7 @@ const verifyEmailConnection = async () => {
  */
 const sendVerificationEmail = async (to, name, verificationToken) => {
   try {
-    const verificationUrl = `${config.server.host}:${config.server.port}/api/auth/verify-email?token=${verificationToken}`;
+    const verificationUrl = `http://localhost:5173/verify-email?token=${verificationToken}`;
     
     const mailOptions = {
       from: config.email.from,
@@ -48,17 +48,19 @@ const sendVerificationEmail = async (to, name, verificationToken) => {
           
           <p>Hola <strong>${name}</strong>,</p>
           
-          <p>Gracias por registrarte en nuestro sistema. Para activar tu cuenta, por favor haz clic en el siguiente enlace:</p>
+          <p>Gracias por registrarte en nuestro sistema. Para activar tu cuenta, haz clic en el botón de abajo:</p>
           
           <div style="text-align: center; margin: 30px 0;">
             <a href="${verificationUrl}" 
-               style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
-              Verificar Cuenta
+               style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+              🔐 Verificar Cuenta
             </a>
           </div>
           
-          <p>O copia y pega este enlace en tu navegador:</p>
-          <p style="word-break: break-all; color: #666;">${verificationUrl}</p>
+          <p style="text-align: center; color: #666; font-size: 14px;">
+            Si el botón no funciona, copia y pega este enlace en tu navegador:
+          </p>
+          <p style="word-break: break-all; color: #666; background: #f8f9fa; padding: 10px; border-radius: 5px; font-family: monospace;">${verificationUrl}</p>
           
           <p><strong>Importante:</strong> Este enlace expirará en 24 horas.</p>
           
