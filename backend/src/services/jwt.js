@@ -58,14 +58,10 @@ const verifyToken = (token) => {
  * @returns {string} Token de verificación
  */
 const generateEmailVerificationToken = (userId, email) => {
-  const payload = {
-    userId,
-    email,
-    type: 'email_verification',
-    timestamp: Date.now()
-  };
-  
-  return generateToken(payload, '24h');
+  // Generar un token más corto usando crypto para verificación de email
+  const crypto = require('crypto');
+  const token = crypto.randomBytes(32).toString('hex');
+  return token;
 };
 
 /**
@@ -75,44 +71,38 @@ const generateEmailVerificationToken = (userId, email) => {
  * @returns {string} Token de recuperación
  */
 const generatePasswordResetToken = (userId, email) => {
-  const payload = {
-    userId,
-    email,
-    type: 'password_reset',
-    timestamp: Date.now()
-  };
-  
-  return generateToken(payload, '1h');
+  // Generar un token más corto usando crypto para recuperación de contraseña
+  const crypto = require('crypto');
+  const token = crypto.randomBytes(32).toString('hex');
+  return token;
 };
 
 /**
  * Verifica un token de verificación de email
  * @param {string} token - Token a verificar
- * @returns {Object} Datos del token
+ * @returns {boolean} True si el token es válido
  */
 const verifyEmailVerificationToken = (token) => {
-  const decoded = verifyToken(token);
-  
-  if (decoded.type !== 'email_verification') {
-    throw new Error('Token de tipo incorrecto');
+  // Para tokens simples, solo verificamos que exista y tenga el formato correcto
+  if (!token || typeof token !== 'string' || token.length !== 64) {
+    throw new Error('Token de verificación inválido');
   }
   
-  return decoded;
+  return true;
 };
 
 /**
  * Verifica un token de recuperación de contraseña
  * @param {string} token - Token a verificar
- * @returns {Object} Datos del token
+ * @returns {boolean} True si el token es válido
  */
 const verifyPasswordResetToken = (token) => {
-  const decoded = verifyToken(token);
-  
-  if (decoded.type !== 'password_reset') {
-    throw new Error('Token de tipo incorrecto');
+  // Para tokens simples, solo verificamos que exista y tenga el formato correcto
+  if (!token || typeof token !== 'string' || token.length !== 64) {
+    throw new Error('Token de recuperación inválido');
   }
   
-  return decoded;
+  return true;
 };
 
 /**
