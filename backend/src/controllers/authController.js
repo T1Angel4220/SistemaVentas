@@ -258,13 +258,34 @@ const verifyEmail = async (req, res) => {
     }
     
     if (userResult.rows.length === 0) {
+      // Verificar si el usuario ya está verificado
+      const alreadyVerifiedResult = await query(
+        'SELECT * FROM usuarios WHERE correo = $1 AND email_verificado = true',
+        [req.query.email || '']
+      );
+      
+      if (alreadyVerifiedResult.rows.length > 0) {
+        return res.json({
+          success: true,
+          message: 'Email ya verificado previamente'
+        });
+      }
+      
       return res.status(400).json({
         success: false,
-        message: 'Usuario no encontrado o ya verificado'
+        message: 'Usuario no encontrado o token inválido'
       });
     }
     
     const user = userResult.rows[0];
+    
+    // Verificar si ya está verificado
+    if (user.email_verificado) {
+      return res.json({
+        success: true,
+        message: 'Email ya verificado previamente'
+      });
+    }
     
     // Actualizar usuario
     await query(`
@@ -413,6 +434,8 @@ const getProfile = async (req, res) => {
   try {
     const userId = req.user.id;
     
+    console.log('🔍 Obteniendo perfil para usuario ID:', userId);
+    
     const userResult = await query(`
       SELECT id, cedula, nombre, apellido, correo, telefono, direccion, genero,
              tipo_usuario, estado, email_verificado, fecha_registro, fecha_ultimo_acceso
@@ -421,6 +444,7 @@ const getProfile = async (req, res) => {
     `, [userId]);
     
     if (userResult.rows.length === 0) {
+      console.log('❌ Usuario no encontrado en la base de datos');
       return res.status(404).json({
         success: false,
         message: 'Usuario no encontrado'
@@ -429,7 +453,18 @@ const getProfile = async (req, res) => {
     
     const user = userResult.rows[0];
     
-    res.json({
+    console.log('📊 Datos del usuario desde BD:', {
+      id: user.id,
+      nombre: user.nombre,
+      apellido: user.apellido,
+      correo: user.correo,
+      tipo_usuario: user.tipo_usuario,
+      estado: user.estado,
+      email_verificado: user.email_verificado,
+      tipo_email_verificado: typeof user.email_verificado
+    });
+    
+    const responseData = {
       success: true,
       data: {
         user: {
@@ -448,7 +483,11 @@ const getProfile = async (req, res) => {
           fecha_ultimo_acceso: user.fecha_ultimo_acceso
         }
       }
-    });
+    };
+    
+    console.log('📤 Enviando respuesta al frontend:', JSON.stringify(responseData, null, 2));
+    
+    res.json(responseData);
     
   } catch (error) {
     console.error('❌ Error obteniendo perfil:', error.message);

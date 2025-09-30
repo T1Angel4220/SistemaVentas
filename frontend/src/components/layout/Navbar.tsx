@@ -83,10 +83,10 @@ export const Navbar: React.FC = () => {
           <div className="flex items-center space-x-4">
             <div className="hidden md:block text-right">
               <p className="text-sm font-medium text-gray-900">
-                {user.nombre} {user.apellido}
+                {user.nombre || ''} {user.apellido || ''}
               </p>
               <p className="text-xs text-gray-500">
-                {user.tipo_usuario.charAt(0).toUpperCase() + user.tipo_usuario.slice(1)}
+                {user.tipo_usuario ? user.tipo_usuario.charAt(0).toUpperCase() + user.tipo_usuario.slice(1) : 'Usuario'}
               </p>
             </div>
             

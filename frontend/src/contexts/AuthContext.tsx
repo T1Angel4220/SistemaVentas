@@ -108,28 +108,49 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Verificar autenticación al cargar la aplicación
   useEffect(() => {
+    let isMounted = true;
+    let hasChecked = false; // Flag para evitar múltiples verificaciones
+    
     const checkAuth = async () => {
+      if (hasChecked) return; // Evitar múltiples llamadas
+      hasChecked = true;
+      
       const token = apiService.getToken();
-      if (token) {
+      if (token && isMounted) {
         try {
           dispatch({ type: 'AUTH_START' });
+          console.log('🔍 Frontend: Obteniendo perfil del usuario...');
           const response = await apiService.getProfile();
-          if (response.success && response.data) {
-            dispatch({ type: 'AUTH_SUCCESS', payload: response.data });
-          } else {
+          console.log('📊 Frontend: Respuesta del backend:', response);
+          
+          if (response.success && response.data && isMounted) {
+            console.log('✅ Frontend: Usuario autenticado:', response.data);
+            // El backend devuelve { data: { user: {...} } }, necesitamos extraer el user
+            const userData = response.data.user;
+            console.log('🔍 Frontend: Datos del usuario extraídos:', userData);
+            dispatch({ type: 'AUTH_SUCCESS', payload: userData });
+          } else if (isMounted) {
+            console.log('❌ Frontend: Token inválido, limpiando...');
             // Token inválido, limpiar
             apiService.setToken(null);
             dispatch({ type: 'AUTH_LOGOUT' });
           }
         } catch (error) {
-          console.error('Error verificando autenticación:', error);
-          apiService.setToken(null);
-          dispatch({ type: 'AUTH_LOGOUT' });
+          if (isMounted) {
+            console.error('❌ Frontend: Error verificando autenticación:', error);
+            apiService.setToken(null);
+            dispatch({ type: 'AUTH_LOGOUT' });
+          }
         }
       }
     };
 
     checkAuth();
+    
+    // Cleanup function
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Función de login

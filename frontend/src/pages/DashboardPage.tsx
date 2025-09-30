@@ -17,6 +17,13 @@ import {
 export const DashboardPage: React.FC = () => {
   const { user, logout, isLoading } = useAuth();
 
+  // Debug: Verificar los datos del usuario
+  console.log('🔍 DashboardPage - user completo:', user);
+  console.log('🔍 DashboardPage - user.telefono:', user?.telefono);
+  console.log('🔍 DashboardPage - user.direccion:', user?.direccion);
+  console.log('🔍 DashboardPage - user.genero:', user?.genero);
+  console.log('🔍 DashboardPage - user.fecha_registro:', user?.fecha_registro);
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -67,194 +74,176 @@ export const DashboardPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Header mejorado */}
+      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Bienvenido, {user.nombre}
-              </h1>
-              <p className="text-gray-600">
-                Sistema de Ventas Multiempresa
-              </p>
-            </div>
+          <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">
-                  {user.nombre} {user.apellido}
-                </p>
-                <p className="text-sm text-gray-500">{user.correo}</p>
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+                <span className="text-lg font-bold text-white">
+                  {user.nombre.charAt(0)}{user.apellido.charAt(0)}
+                </span>
               </div>
-              <Button
-                variant="outline"
-                onClick={handleLogout}
-                disabled={isLoading}
-                className="flex items-center space-x-2"
-              >
-                <LogOut className="h-4 w-4" />
-                <span>Cerrar Sesión</span>
-              </Button>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">¡Hola, {user.nombre}!</h1>
+                <p className="text-sm text-gray-600">Sistema de Ventas Multiempresa</p>
+              </div>
             </div>
+            <Button
+              variant="outline"
+              onClick={handleLogout}
+              disabled={isLoading}
+              className="flex items-center space-x-2 hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-colors"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Cerrar Sesión</span>
+            </Button>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* User Info */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
+        {/* User Profile Section */}
+        <div className="mb-8">
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-4">
+              <h2 className="text-xl font-bold text-white flex items-center space-x-2">
                 <User className="h-5 w-5" />
-                <span>Información del Usuario</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Nombre completo</label>
-                  <p className="text-sm text-gray-900">{user.nombre} {user.apellido}</p>
+                <span>Mi Perfil</span>
+              </h2>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Nombre completo</label>
+                    <p className="text-sm font-semibold text-gray-900">{user.nombre} {user.apellido}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Correo electrónico</label>
+                    <p className="text-sm text-gray-900">{user.correo}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Cédula</label>
+                    <p className="text-sm text-gray-900">{user.cedula}</p>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Cédula</label>
-                  <p className="text-sm text-gray-900">{user.cedula}</p>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Teléfono</label>
+                    <p className="text-sm text-gray-900">{user.telefono || 'No especificado'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Dirección</label>
+                    <p className="text-sm text-gray-900">{user.direccion || 'No especificada'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Género</label>
+                    <p className="text-sm text-gray-900 capitalize">{user.genero || 'No especificado'}</p>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Correo</label>
-                  <p className="text-sm text-gray-900">{user.correo}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Teléfono</label>
-                  <p className="text-sm text-gray-900">{user.telefono || 'No especificado'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Dirección</label>
-                  <p className="text-sm text-gray-900">{user.direccion || 'No especificada'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Género</label>
-                  <p className="text-sm text-gray-900 capitalize">{user.genero || 'No especificado'}</p>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Rol</label>
+                    <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getRoleColor(user.tipo_usuario)}`}>
+                      {getRoleDisplayName(user.tipo_usuario)}
+                    </span>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Estado</label>
+                    <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(user.estado)}`}>
+                      {user.estado.replace('_', ' ').toUpperCase()}
+                    </span>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Email verificado</label>
+                    <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                      ✓ SÍ
+                    </span>
+                  </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Shield className="h-5 w-5" />
-                <span>Estado de la Cuenta</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-500">Rol</label>
-                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(user.tipo_usuario)}`}>
-                  {getRoleDisplayName(user.tipo_usuario)}
-                </span>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Estado</label>
-                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(user.estado)}`}>
-                  {user.estado.replace('_', ' ').toUpperCase()}
-                </span>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Email verificado</label>
-                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                  user.email_verificado ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                }`}>
-                  {user.email_verificado ? 'SÍ' : 'NO'}
-                </span>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Miembro desde</label>
-                <p className="text-sm text-gray-900">
-                  {new Date(user.fecha_registro).toLocaleDateString('es-ES', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </p>
-              </div>
-              {user.fecha_ultimo_acceso && (
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Último acceso</label>
-                  <p className="text-sm text-gray-900">
-                    {new Date(user.fecha_ultimo_acceso).toLocaleDateString('es-ES', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </p>
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Miembro desde</label>
+                    <p className="text-sm text-gray-900">
+                      {user.fecha_registro ? 
+                        new Date(user.fecha_registro).toLocaleDateString('es-ES', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        }) : 
+                        'No disponible'
+                      }
+                    </p>
+                  </div>
+                  {user.fecha_ultimo_acceso && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Último acceso</label>
+                      <p className="text-sm text-gray-900">
+                        {new Date(user.fecha_ultimo_acceso).toLocaleDateString('es-ES', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    </div>
+                  )}
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center space-x-2 text-lg">
-                <ShoppingCart className="h-5 w-5 text-blue-600" />
-                <span>Comprar</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>
-                Explora productos y servicios disponibles
-              </CardDescription>
-            </CardContent>
-          </Card>
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Acciones Rápidas</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1">
+              <div className="p-6">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <ShoppingCart className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Comprar</h3>
+                <p className="text-sm text-gray-600">Explora productos y servicios disponibles</p>
+              </div>
+            </div>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center space-x-2 text-lg">
-                <Package className="h-5 w-5 text-green-600" />
-                <span>Vender</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>
-                Publica tus productos y servicios
-              </CardDescription>
-            </CardContent>
-          </Card>
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1">
+              <div className="p-6">
+                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <Package className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Vender</h3>
+                <p className="text-sm text-gray-600">Publica tus productos y servicios</p>
+              </div>
+            </div>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center space-x-2 text-lg">
-                <MessageSquare className="h-5 w-5 text-purple-600" />
-                <span>Chat</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>
-                Comunícate con otros usuarios
-              </CardDescription>
-            </CardContent>
-          </Card>
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1">
+              <div className="p-6">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <MessageSquare className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Chat</h3>
+                <p className="text-sm text-gray-600">Comunícate con otros usuarios</p>
+              </div>
+            </div>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center space-x-2 text-lg">
-                <Settings className="h-5 w-5 text-gray-600" />
-                <span>Configuración</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>
-                Gestiona tu cuenta y preferencias
-              </CardDescription>
-            </CardContent>
-          </Card>
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1">
+              <div className="p-6">
+                <div className="w-12 h-12 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <Settings className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Configuración</h3>
+                <p className="text-sm text-gray-600">Gestiona tu cuenta y preferencias</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Admin/Moderator Actions */}
@@ -290,16 +279,7 @@ export const DashboardPage: React.FC = () => {
           </div>
         )}
 
-        {/* Status Alerts */}
-        {!user.email_verificado && (
-          <div className="mt-8">
-            <Alert variant="warning">
-              <AlertDescription>
-                Tu email no ha sido verificado. Revisa tu correo y haz clic en el enlace de verificación.
-              </AlertDescription>
-            </Alert>
-          </div>
-        )}
+        {/* Status Alerts - Email verification removed as it's handled at login */}
 
         {user.estado !== 'activo' && (
           <div className="mt-8">
