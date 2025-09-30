@@ -458,10 +458,14 @@ const getProfile = async (req, res) => {
       nombre: user.nombre,
       apellido: user.apellido,
       correo: user.correo,
+      telefono: user.telefono,
+      direccion: user.direccion,
+      genero: user.genero,
       tipo_usuario: user.tipo_usuario,
       estado: user.estado,
       email_verificado: user.email_verificado,
-      tipo_email_verificado: typeof user.email_verificado
+      fecha_registro: user.fecha_registro,
+      fecha_ultimo_acceso: user.fecha_ultimo_acceso
     });
     
     const responseData = {

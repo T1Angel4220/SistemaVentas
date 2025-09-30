@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
-  const { user, logout, isLoading } = useAuth();
+  const { user, logout, isLoading, refreshUser } = useAuth();
 
   // Debug: Verificar los datos del usuario
   console.log('🔍 DashboardPage - user completo:', user);
@@ -23,6 +23,14 @@ export const DashboardPage: React.FC = () => {
   console.log('🔍 DashboardPage - user.direccion:', user?.direccion);
   console.log('🔍 DashboardPage - user.genero:', user?.genero);
   console.log('🔍 DashboardPage - user.fecha_registro:', user?.fecha_registro);
+
+  // Refrescar datos del usuario al montar el componente
+  React.useEffect(() => {
+    if (user && (!user.telefono || !user.direccion || !user.genero)) {
+      console.log('🔄 DashboardPage: Datos incompletos, refrescando...');
+      refreshUser();
+    }
+  }, [user, refreshUser]);
 
   const handleLogout = async () => {
     try {
@@ -32,12 +40,26 @@ export const DashboardPage: React.FC = () => {
     }
   };
 
-  if (!user) {
+  if (!user || isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Cargando...</h2>
           <p className="text-gray-600">Verificando autenticación...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Verificar que todos los datos esenciales estén cargados
+  if (!user.nombre || !user.apellido || !user.correo) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Cargando datos del usuario...</h2>
+          <p className="text-gray-600">Obteniendo información completa...</p>
         </div>
       </div>
     );
@@ -133,15 +155,21 @@ export const DashboardPage: React.FC = () => {
                 <div className="space-y-4">
                   <div>
                     <label className="text-sm font-medium text-gray-500">Teléfono</label>
-                    <p className="text-sm text-gray-900">{user.telefono || 'No especificado'}</p>
+                    <p className="text-sm text-gray-900">
+                      {user.telefono ? user.telefono : <span className="text-gray-400 italic">No proporcionado</span>}
+                    </p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">Dirección</label>
-                    <p className="text-sm text-gray-900">{user.direccion || 'No especificada'}</p>
+                    <p className="text-sm text-gray-900">
+                      {user.direccion ? user.direccion : <span className="text-gray-400 italic">No proporcionada</span>}
+                    </p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">Género</label>
-                    <p className="text-sm text-gray-900 capitalize">{user.genero || 'No especificado'}</p>
+                    <p className="text-sm text-gray-900 capitalize">
+                      {user.genero ? user.genero : <span className="text-gray-400 italic">No especificado</span>}
+                    </p>
                   </div>
                 </div>
                 <div className="space-y-4">
@@ -176,7 +204,7 @@ export const DashboardPage: React.FC = () => {
                           month: 'long',
                           day: 'numeric'
                         }) : 
-                        'No disponible'
+                        <span className="text-gray-400 italic">No disponible</span>
                       }
                     </p>
                   </div>

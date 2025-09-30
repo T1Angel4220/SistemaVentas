@@ -108,49 +108,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Verificar autenticación al cargar la aplicación
   useEffect(() => {
-    let isMounted = true;
-    let hasChecked = false; // Flag para evitar múltiples verificaciones
-    
     const checkAuth = async () => {
-      if (hasChecked) return; // Evitar múltiples llamadas
-      hasChecked = true;
-      
       const token = apiService.getToken();
-      if (token && isMounted) {
+      if (token) {
         try {
           dispatch({ type: 'AUTH_START' });
           console.log('🔍 Frontend: Obteniendo perfil del usuario...');
           const response = await apiService.getProfile();
           console.log('📊 Frontend: Respuesta del backend:', response);
           
-          if (response.success && response.data && isMounted) {
+          if (response.success && response.data) {
             console.log('✅ Frontend: Usuario autenticado:', response.data);
             // El backend devuelve { data: { user: {...} } }, necesitamos extraer el user
             const userData = response.data.user;
             console.log('🔍 Frontend: Datos del usuario extraídos:', userData);
             dispatch({ type: 'AUTH_SUCCESS', payload: userData });
-          } else if (isMounted) {
+          } else {
             console.log('❌ Frontend: Token inválido, limpiando...');
-            // Token inválido, limpiar
             apiService.setToken(null);
             dispatch({ type: 'AUTH_LOGOUT' });
           }
         } catch (error) {
-          if (isMounted) {
-            console.error('❌ Frontend: Error verificando autenticación:', error);
-            apiService.setToken(null);
-            dispatch({ type: 'AUTH_LOGOUT' });
-          }
+          console.error('❌ Frontend: Error verificando autenticación:', error);
+          apiService.setToken(null);
+          dispatch({ type: 'AUTH_LOGOUT' });
         }
       }
     };
 
     checkAuth();
-    
-    // Cleanup function
-    return () => {
-      isMounted = false;
-    };
   }, []);
 
   // Función de login
@@ -160,7 +146,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await apiService.login(credentials);
       
       if (response.success && response.data) {
-        dispatch({ type: 'AUTH_SUCCESS', payload: response.data.user });
+        const userData = response.data.user;
+        console.log('🔍 Frontend: Datos del usuario en login:', userData);
+        dispatch({ type: 'AUTH_SUCCESS', payload: userData });
       } else {
         throw new Error(response.message || 'Error en el login');
       }
@@ -263,9 +251,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Función para refrescar datos del usuario
   const refreshUser = async (): Promise<void> => {
     try {
+      console.log('🔄 Frontend: Refrescando datos del usuario...');
       const response = await apiService.getProfile();
       if (response.success && response.data) {
-        dispatch({ type: 'AUTH_SUCCESS', payload: response.data });
+        console.log('✅ Frontend: Datos del usuario refrescados:', response.data);
+        dispatch({ type: 'AUTH_SUCCESS', payload: response.data.user });
       }
     } catch (error) {
       console.error('Error refrescando usuario:', error);
