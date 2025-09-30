@@ -228,56 +228,48 @@ const login = async (req, res) => {
  */
 const verifyEmail = async (req, res) => {
   try {
-    const { token } = req.query;
+    const { code } = req.body;
     
-    console.log('🔍 Token recibido:', token);
+    console.log('🔍 Código recibido:', code);
     
-    if (!token) {
+    if (!code) {
       return res.status(400).json({
         success: false,
-        message: 'Token de verificación requerido'
+        message: 'Código de verificación requerido'
+      });
+    }
+
+    // Verificar el formato del código
+    if (!/^\d{6}$/.test(code)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Código debe tener 6 dígitos'
       });
     }
     
-    // Buscar usuario por token de verificación
-    let userResult = await query(
-      'SELECT * FROM usuarios WHERE token_verificacion = $1',
-      [token]
-    );
+    // Buscar usuario por código de verificación
+    const userResult = await query(`
+      SELECT id, correo, estado, email_verificado, token_verificacion, fecha_registro
+      FROM usuarios 
+      WHERE token_verificacion = $1
+    `, [code]);
     
-    console.log('🔍 Usuarios encontrados por token:', userResult.rows.length);
-    
-    // Si no se encuentra por token, buscar usuarios pendientes de verificación
-    if (userResult.rows.length === 0) {
-      console.log('🔍 Buscando usuarios pendientes de verificación...');
-      userResult = await query(
-        'SELECT * FROM usuarios WHERE estado = $1 AND email_verificado = $2',
-        ['pendiente_verificacion', false]
-      );
-      console.log('🔍 Usuarios pendientes encontrados:', userResult.rows.length);
-    }
+    console.log('🔍 Usuarios encontrados por código:', userResult.rows.length);
     
     if (userResult.rows.length === 0) {
-      // Verificar si el usuario ya está verificado
-      const alreadyVerifiedResult = await query(
-        'SELECT * FROM usuarios WHERE correo = $1 AND email_verificado = true',
-        [req.query.email || '']
-      );
-      
-      if (alreadyVerifiedResult.rows.length > 0) {
-        return res.json({
-          success: true,
-          message: 'Email ya verificado previamente'
-        });
-      }
-      
       return res.status(400).json({
         success: false,
-        message: 'Usuario no encontrado o token inválido'
+        message: 'Código de verificación inválido'
       });
     }
     
     const user = userResult.rows[0];
+    console.log('👤 Usuario encontrado:', {
+      id: user.id,
+      correo: user.correo,
+      estado: user.estado,
+      email_verificado: user.email_verificado
+    });
     
     // Verificar si ya está verificado
     if (user.email_verificado) {
@@ -286,13 +278,31 @@ const verifyEmail = async (req, res) => {
         message: 'Email ya verificado previamente'
       });
     }
+
+    // Verificar que el código no haya expirado (10 minutos)
+    const now = new Date();
+    const registrationTime = new Date(user.fecha_registro);
+    const timeDiff = (now - registrationTime) / 1000 / 60; // diferencia en minutos
+    
+    if (timeDiff > 10) {
+      console.log('❌ Código expirado. Tiempo transcurrido:', timeDiff, 'minutos');
+      return res.status(400).json({
+        success: false,
+        message: 'Código de verificación expirado. Solicita uno nuevo.'
+      });
+    }
     
     // Actualizar usuario
     await query(`
       UPDATE usuarios 
-      SET email_verificado = true, estado = 'activo', token_verificacion = NULL
+      SET email_verificado = true, 
+          estado = 'activo', 
+          token_verificacion = NULL,
+          fecha_actualizacion = CURRENT_TIMESTAMP
       WHERE id = $1
     `, [user.id]);
+    
+    console.log('✅ Email verificado exitosamente para usuario:', user.id);
     
     res.json({
       success: true,
@@ -301,9 +311,9 @@ const verifyEmail = async (req, res) => {
     
   } catch (error) {
     console.error('❌ Error en verificación de email:', error.message);
-    res.status(400).json({
+    res.status(500).json({
       success: false,
-      message: 'Token de verificación inválido o expirado'
+      message: 'Error interno del servidor'
     });
   }
 };

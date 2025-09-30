@@ -136,10 +136,10 @@ class ApiService {
     });
   }
 
-  async verifyEmail(token: string): Promise<ApiResponse> {
+  async verifyEmail(code: string): Promise<ApiResponse> {
     return this.request('/auth/verify-email', {
-      method: 'GET',
-      // Agregar token como query parameter
+      method: 'POST',
+      body: JSON.stringify({ code }),
     });
   }
 

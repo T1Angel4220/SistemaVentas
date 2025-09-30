@@ -120,8 +120,11 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
     try {
       const { confirmPassword, ...userData } = formData;
       await register(userData);
-      setSuccessMessage('¡Registro exitoso! Revisa tu email para verificar tu cuenta.');
-      onSuccess?.();
+      setSuccessMessage('¡Registro exitoso! Revisa tu email para obtener el código de verificación.');
+      // Redirigir a la página de verificación de código después de 2 segundos
+      setTimeout(() => {
+        window.location.href = `/verify-code?email=${encodeURIComponent(formData.correo)}`;
+      }, 2000);
     } catch (error) {
       console.error('Error en registro:', error);
     }

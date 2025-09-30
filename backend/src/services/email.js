@@ -34,35 +34,31 @@ const verifyEmailConnection = async () => {
  * @param {string} verificationToken - Token de verificación
  * @returns {Promise<boolean>} True si se envió correctamente
  */
-const sendVerificationEmail = async (to, name, verificationToken) => {
+const sendVerificationEmail = async (to, name, verificationCode) => {
   try {
-    const verificationUrl = `http://localhost:5173/verify-email?token=${verificationToken}`;
-    
     const mailOptions = {
       from: config.email.from,
       to: to,
-      subject: 'Verificación de cuenta - Sistema de Ventas',
+      subject: 'Código de Verificación - Sistema de Ventas',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #333; text-align: center;">¡Bienvenido al Sistema de Ventas!</h2>
           
           <p>Hola <strong>${name}</strong>,</p>
           
-          <p>Gracias por registrarte en nuestro sistema. Para activar tu cuenta, haz clic en el botón de abajo:</p>
+          <p>Gracias por registrarte en nuestro sistema. Para activar tu cuenta, utiliza el siguiente código de verificación:</p>
           
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${verificationUrl}" 
-               style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-              🔐 Verificar Cuenta
-            </a>
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; display: inline-block; font-size: 32px; font-weight: bold; letter-spacing: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+              ${verificationCode}
+            </div>
           </div>
           
-          <p style="text-align: center; color: #666; font-size: 14px;">
-            Si el botón no funciona, copia y pega este enlace en tu navegador:
+          <p style="text-align: center; color: #666; font-size: 16px; font-weight: bold;">
+            Ingresa este código en la página de verificación para activar tu cuenta.
           </p>
-          <p style="word-break: break-all; color: #666; background: #f8f9fa; padding: 10px; border-radius: 5px; font-family: monospace;">${verificationUrl}</p>
           
-          <p><strong>Importante:</strong> Este enlace expirará en 24 horas.</p>
+          <p><strong>Importante:</strong> Este código expirará en 10 minutos.</p>
           
           <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
           

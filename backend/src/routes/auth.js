@@ -73,6 +73,14 @@ const resetPasswordSchema = Joi.object({
   })
 });
 
+const verifyEmailSchema = Joi.object({
+  code: Joi.string().length(6).pattern(/^\d{6}$/).required().messages({
+    'string.length': 'El código debe tener exactamente 6 dígitos',
+    'string.pattern.base': 'El código debe contener solo números',
+    'any.required': 'El código de verificación es requerido'
+  })
+});
+
 // Middleware de validación
 const validateRequest = (schema) => {
   return (req, res, next) => {
@@ -110,11 +118,11 @@ router.post('/register', validateRequest(registerSchema), authController.registe
 router.post('/login', validateRequest(loginSchema), authController.login);
 
 /**
- * @route GET /api/auth/verify-email
- * @desc Verificación de email
+ * @route POST /api/auth/verify-email
+ * @desc Verificación de email con código
  * @access Public
  */
-router.get('/verify-email', authController.verifyEmail);
+router.post('/verify-email', validateRequest(verifyEmailSchema), authController.verifyEmail);
 
 /**
  * @route POST /api/auth/request-password-reset

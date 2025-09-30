@@ -58,10 +58,9 @@ const verifyToken = (token) => {
  * @returns {string} Token de verificación
  */
 const generateEmailVerificationToken = (userId, email) => {
-  // Generar un token más corto usando crypto para verificación de email
-  const crypto = require('crypto');
-  const token = crypto.randomBytes(32).toString('hex');
-  return token;
+  // Generar código de 6 dígitos para verificación de email
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  return code;
 };
 
 /**
@@ -83,9 +82,9 @@ const generatePasswordResetToken = (userId, email) => {
  * @returns {boolean} True si el token es válido
  */
 const verifyEmailVerificationToken = (token) => {
-  // Para tokens simples, solo verificamos que exista y tenga el formato correcto
-  if (!token || typeof token !== 'string' || token.length !== 64) {
-    throw new Error('Token de verificación inválido');
+  // Para códigos de 6 dígitos, verificamos que exista y tenga el formato correcto
+  if (!token || typeof token !== 'string' || token.length !== 6 || !/^\d{6}$/.test(token)) {
+    throw new Error('Código de verificación inválido');
   }
   
   return true;
