@@ -385,7 +385,7 @@ export const UserManagementPage: React.FC = () => {
                           
                           {user.id !== currentUser?.id && (
                             <>
-                              {user.estado === 'inactivo' && (
+                              {(user.estado === 'inactivo' || user.estado === 'suspendido') && (
                                 <Button
                                   variant="outline"
                                   size="sm"
@@ -407,14 +407,16 @@ export const UserManagementPage: React.FC = () => {
                                 </Button>
                               )}
                               
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => openModal(user, 'suspend')}
-                                className="text-red-600 hover:text-red-700"
-                              >
-                                <UserMinus className="h-4 w-4" />
-                              </Button>
+                              {user.estado === 'activo' && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => openModal(user, 'suspend')}
+                                  className="text-red-600 hover:text-red-700"
+                                >
+                                  <UserMinus className="h-4 w-4" />
+                                </Button>
+                              )}
                             </>
                           )}
                         </div>
@@ -430,56 +432,136 @@ export const UserManagementPage: React.FC = () => {
 
       {/* Modal de acciones */}
       {showModal && selectedUser && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-gray-900">
-                  {modalType === 'view' && 'Detalles del Usuario'}
-                  {modalType === 'activate' && 'Activar Usuario'}
-                  {modalType === 'deactivate' && 'Desactivar Usuario'}
-                  {modalType === 'suspend' && 'Suspender Usuario'}
-                </h3>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+            {/* Header del modal */}
+            <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                    {modalType === 'view' && <Eye className="h-6 w-6" />}
+                    {modalType === 'activate' && <CheckCircle className="h-6 w-6" />}
+                    {modalType === 'deactivate' && <UserX className="h-6 w-6" />}
+                    {modalType === 'suspend' && <UserMinus className="h-6 w-6" />}
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold">
+                      {modalType === 'view' && 'Detalles del Usuario'}
+                      {modalType === 'activate' && 'Activar Usuario'}
+                      {modalType === 'deactivate' && 'Desactivar Usuario'}
+                      {modalType === 'suspend' && 'Suspender Usuario'}
+                    </h3>
+                    <p className="text-blue-100 text-sm">
+                      {modalType === 'view' && 'Información completa del usuario'}
+                      {modalType === 'activate' && 'Reactivar acceso al sistema'}
+                      {modalType === 'deactivate' && 'Deshabilitar acceso temporalmente'}
+                      {modalType === 'suspend' && 'Suspender cuenta del usuario'}
+                    </p>
+                  </div>
+                </div>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-white/80 hover:text-white hover:bg-white/10 rounded-full p-2 transition-colors"
                 >
                   <XCircle className="h-6 w-6" />
                 </button>
               </div>
-              
+            </div>
+            
+            {/* Contenido del modal */}
+            <div className="p-6 max-h-[60vh] overflow-y-auto">
               {modalType === 'view' ? (
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Nombre completo</label>
-                    <p className="text-sm text-gray-900">{selectedUser.nombre} {selectedUser.apellido}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Email</label>
-                    <p className="text-sm text-gray-900">{selectedUser.correo}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Rol</label>
-                    <p className="text-sm text-gray-900 capitalize">{selectedUser.tipo_usuario}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Estado</label>
-                    <p className="text-sm text-gray-900 capitalize">{selectedUser.estado.replace('_', ' ')}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Fecha de registro</label>
-                    <p className="text-sm text-gray-900">
-                      {new Date(selectedUser.fecha_registro).toLocaleDateString('es-ES')}
-                    </p>
+                <div className="space-y-6">
+                  {/* Información del usuario */}
+                  <div className="bg-gray-50 rounded-xl p-6">
+                    <div className="flex items-center space-x-4 mb-6">
+                      <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-xl font-bold">
+                        {selectedUser.nombre.charAt(0)}{selectedUser.apellido.charAt(0)}
+                      </div>
+                      <div>
+                        <h4 className="text-xl font-bold text-gray-900">{selectedUser.nombre} {selectedUser.apellido}</h4>
+                        <p className="text-gray-600">{selectedUser.correo}</p>
+                        <div className="flex items-center space-x-2 mt-2">
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            selectedUser.tipo_usuario === 'administrador' ? 'bg-red-100 text-red-800' :
+                            selectedUser.tipo_usuario === 'moderador' ? 'bg-purple-100 text-purple-800' :
+                            selectedUser.tipo_usuario === 'vendedor' ? 'bg-green-100 text-green-800' :
+                            'bg-blue-100 text-blue-800'
+                          }`}>
+                            {selectedUser.tipo_usuario.charAt(0).toUpperCase() + selectedUser.tipo_usuario.slice(1)}
+                          </span>
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            selectedUser.estado === 'activo' ? 'bg-green-100 text-green-800' :
+                            selectedUser.estado === 'inactivo' ? 'bg-red-100 text-red-800' :
+                            selectedUser.estado === 'suspendido' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-orange-100 text-orange-800'
+                          }`}>
+                            {selectedUser.estado.replace('_', ' ').toUpperCase()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Cédula</label>
+                          <p className="text-sm text-gray-900 font-mono">{selectedUser.cedula}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Teléfono</label>
+                          <p className="text-sm text-gray-900">{selectedUser.telefono || 'No proporcionado'}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Dirección</label>
+                          <p className="text-sm text-gray-900">{selectedUser.direccion || 'No proporcionada'}</p>
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Género</label>
+                          <p className="text-sm text-gray-900 capitalize">{selectedUser.genero || 'No especificado'}</p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Fecha de registro</label>
+                          <p className="text-sm text-gray-900">
+                            {new Date(selectedUser.fecha_registro).toLocaleDateString('es-ES', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
+                          </p>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Último acceso</label>
+                          <p className="text-sm text-gray-900">
+                            {selectedUser.fecha_ultimo_acceso ? 
+                              new Date(selectedUser.fecha_ultimo_acceso).toLocaleDateString('es-ES', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              }) : 'Nunca'
+                            }
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  <p className="text-sm text-gray-600">
-                    {modalType === 'activate' && `¿Estás seguro de que quieres activar a ${selectedUser.nombre} ${selectedUser.apellido}?`}
-                    {modalType === 'deactivate' && `¿Estás seguro de que quieres desactivar a ${selectedUser.nombre} ${selectedUser.apellido}?`}
-                    {modalType === 'suspend' && `¿Estás seguro de que quieres suspender a ${selectedUser.nombre} ${selectedUser.apellido}?`}
-                  </p>
+                <div className="space-y-6">
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                    <div className="flex items-center space-x-2">
+                      <UserX className="h-5 w-5 text-yellow-600" />
+                      <p className="text-sm font-medium text-yellow-800">
+                        {modalType === 'activate' && `¿Estás seguro de que quieres activar a ${selectedUser.nombre} ${selectedUser.apellido}?`}
+                        {modalType === 'deactivate' && `¿Estás seguro de que quieres desactivar a ${selectedUser.nombre} ${selectedUser.apellido}?`}
+                        {modalType === 'suspend' && `¿Estás seguro de que quieres suspender a ${selectedUser.nombre} ${selectedUser.apellido}?`}
+                      </p>
+                    </div>
+                  </div>
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -488,38 +570,40 @@ export const UserManagementPage: React.FC = () => {
                     <textarea
                       value={actionReason}
                       onChange={(e) => setActionReason(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                       rows={3}
                       placeholder="Describe el motivo de esta acción..."
                     />
                   </div>
                 </div>
               )}
-              
-              <div className="flex justify-end space-x-3 mt-6">
+            </div>
+            
+            {/* Footer del modal */}
+            <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowModal(false)}
+                className="px-6"
+              >
+                Cancelar
+              </Button>
+              {modalType !== 'view' && (
                 <Button
-                  variant="outline"
-                  onClick={() => setShowModal(false)}
+                  onClick={() => handleAction(modalType, selectedUser.id, actionReason)}
+                  disabled={loading}
+                  className={`px-6 ${
+                    modalType === 'activate' ? 'bg-green-600 hover:bg-green-700' :
+                    modalType === 'deactivate' ? 'bg-yellow-600 hover:bg-yellow-700' :
+                    'bg-red-600 hover:bg-red-700'
+                  }`}
                 >
-                  Cancelar
+                  {loading ? 'Procesando...' : 
+                   modalType === 'activate' ? 'Activar' :
+                   modalType === 'deactivate' ? 'Desactivar' : 'Suspender'
+                  }
                 </Button>
-                {modalType !== 'view' && (
-                  <Button
-                    onClick={() => handleAction(modalType, selectedUser.id, actionReason)}
-                    disabled={loading}
-                    className={
-                      modalType === 'activate' ? 'bg-green-600 hover:bg-green-700' :
-                      modalType === 'deactivate' ? 'bg-yellow-600 hover:bg-yellow-700' :
-                      'bg-red-600 hover:bg-red-700'
-                    }
-                  >
-                    {loading ? 'Procesando...' : 
-                     modalType === 'activate' ? 'Activar' :
-                     modalType === 'deactivate' ? 'Desactivar' : 'Suspender'
-                    }
-                  </Button>
-                )}
-              </div>
+              )}
             </div>
           </div>
         </div>

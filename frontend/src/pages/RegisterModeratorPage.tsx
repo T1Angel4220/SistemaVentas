@@ -183,26 +183,26 @@ export const RegisterModeratorPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50">
+      <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-4">
+          <div className="flex items-center justify-between py-6">
             <div className="flex items-center space-x-4">
               <Button
                 variant="outline"
                 onClick={() => navigate('/admin/users')}
-                className="flex items-center space-x-2"
+                className="flex items-center space-x-2 bg-white/10 hover:bg-white/20 border-white/20 text-white hover:text-white"
               >
                 <ArrowLeft className="h-4 w-4" />
                 <span>Volver</span>
               </Button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Registrar Moderador</h1>
-                <p className="text-gray-600">Crear nueva cuenta de moderador</p>
+                <h1 className="text-2xl font-bold text-white">Registrar Moderador</h1>
+                <p className="text-blue-100">Crear nueva cuenta de moderador</p>
               </div>
             </div>
-            <div className="flex items-center space-x-2 text-sm text-gray-500">
+            <div className="flex items-center space-x-2 text-sm text-blue-100">
               <Shield className="h-4 w-4" />
               <span>Solo Administradores</span>
             </div>
