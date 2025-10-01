@@ -328,124 +328,6 @@ const verifyEmail = async (req, res) => {
   }
 };
 
-/**
- * Solicitar recuperación de contraseña
- */
-const requestPasswordReset = async (req, res) => {
-  try {
-    const { correo } = req.body;
-    
-    // Buscar usuario
-    const userResult = await query(
-      'SELECT * FROM usuarios WHERE correo = $1',
-      [correo]
-    );
-    
-    if (userResult.rows.length === 0) {
-      // Por seguridad, no revelar si el email existe
-      return res.json({
-        success: true,
-        message: 'Si el email existe, recibirás instrucciones para recuperar tu contraseña'
-      });
-    }
-    
-    const user = userResult.rows[0];
-    
-    // Generar token de recuperación
-    const resetToken = generatePasswordResetToken(user.id, user.correo);
-    
-    // Actualizar token en la base de datos
-    await query(
-      'UPDATE usuarios SET token_recuperacion = $1 WHERE id = $2',
-      [resetToken, user.id]
-    );
-    
-    // Enviar email de recuperación
-    try {
-      await sendPasswordResetEmail(user.correo, user.nombre, resetToken);
-    } catch (emailError) {
-      console.error('❌ Error enviando email de recuperación:', emailError.message);
-      return res.status(500).json({
-        success: false,
-        message: 'Error enviando email de recuperación'
-      });
-    }
-    
-    res.json({
-      success: true,
-      message: 'Si el email existe, recibirás instrucciones para recuperar tu contraseña'
-    });
-    
-  } catch (error) {
-    console.error('❌ Error en solicitud de recuperación:', error.message);
-    res.status(500).json({
-      success: false,
-      message: 'Error interno del servidor'
-    });
-  }
-};
-
-/**
- * Resetear contraseña
- */
-const resetPassword = async (req, res) => {
-  try {
-    const { token, newPassword } = req.body;
-    
-    if (!token || !newPassword) {
-      return res.status(400).json({
-        success: false,
-        message: 'Token y nueva contraseña requeridos'
-      });
-    }
-    
-    // Verificar token
-    const decoded = verifyPasswordResetToken(token);
-    
-    // Buscar usuario
-    const userResult = await query(
-      'SELECT * FROM usuarios WHERE id = $1 AND token_recuperacion = $2',
-      [decoded.userId, token]
-    );
-    
-    if (userResult.rows.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Token de recuperación inválido'
-      });
-    }
-    
-    const user = userResult.rows[0];
-    
-    // Encriptar nueva contraseña
-    const passwordHash = await bcrypt.hash(newPassword, config.bcrypt.saltRounds);
-    
-    // Actualizar contraseña y limpiar token
-    await query(`
-      UPDATE usuarios 
-      SET password_hash = $1, token_recuperacion = NULL
-      WHERE id = $2
-    `, [passwordHash, user.id]);
-    
-    // Invalidar todas las sesiones del usuario
-    await query(
-      'UPDATE sesiones_usuario SET activa = false WHERE usuario_id = $1',
-      [user.id]
-    );
-    
-    res.json({
-      success: true,
-      message: 'Contraseña actualizada exitosamente'
-    });
-    
-  } catch (error) {
-    console.error('❌ Error en reset de contraseña:', error.message);
-    res.status(400).json({
-      success: false,
-      message: 'Token de recuperación inválido o expirado'
-    });
-  }
-};
 
 /**
  * Obtener lista de usuarios (solo para moderadores y administradores)
@@ -646,6 +528,169 @@ const testAuth = async (req, res) => {
       timestamp: new Date().toISOString()
     }
   });
+};
+
+/**
+ * Solicitar recuperación de contraseña
+ */
+const requestPasswordReset = async (req, res) => {
+  try {
+    const { correo } = req.body;
+    
+    if (!correo) {
+      return res.status(400).json({
+        success: false,
+        message: 'Correo electrónico requerido'
+      });
+    }
+    
+    // Buscar usuario por email
+    const userResult = await query(
+      'SELECT id, correo, nombre, apellido, estado FROM usuarios WHERE correo = $1',
+      [correo]
+    );
+    
+    if (userResult.rows.length === 0) {
+      // Por seguridad, no revelamos si el email existe o no
+      return res.json({
+        success: true,
+        message: 'Si el correo existe en nuestro sistema, recibirás un email con las instrucciones para restablecer tu contraseña'
+      });
+    }
+    
+    const user = userResult.rows[0];
+    
+    // Verificar que el usuario esté activo
+    if (user.estado !== 'activo') {
+      return res.json({
+        success: true,
+        message: 'Si el correo existe en nuestro sistema, recibirás un email con las instrucciones para restablecer tu contraseña'
+      });
+    }
+    
+    // Generar código de recuperación de 6 dígitos
+    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Guardar código en la base de datos
+    await query(
+      'UPDATE usuarios SET token_recuperacion = $1, fecha_actualizacion = CURRENT_TIMESTAMP WHERE id = $2',
+      [resetCode, user.id]
+    );
+    
+    // Enviar email de recuperación
+    try {
+      await sendPasswordResetEmail(user.correo, user.nombre, resetCode);
+      console.log('✅ Email de recuperación enviado a:', user.correo);
+    } catch (emailError) {
+      console.error('❌ Error enviando email de recuperación:', emailError.message);
+      // No fallar la operación si el email falla
+    }
+    
+    res.json({
+      success: true,
+      message: 'Si el correo existe en nuestro sistema, recibirás un email con las instrucciones para restablecer tu contraseña'
+    });
+    
+  } catch (error) {
+    console.error('❌ Error en solicitud de recuperación:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor'
+    });
+  }
+};
+
+/**
+ * Restablecer contraseña
+ */
+const resetPassword = async (req, res) => {
+  try {
+    const { code, newPassword } = req.body;
+    
+    if (!code || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Código y nueva contraseña requeridos'
+      });
+    }
+    
+    // Verificar formato del código
+    if (!/^\d{6}$/.test(code)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Código debe tener 6 dígitos'
+      });
+    }
+    
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'La contraseña debe tener al menos 6 caracteres'
+      });
+    }
+    
+    // Buscar usuario por código de recuperación
+    const userResult = await query(
+      'SELECT id, correo, nombre, apellido, token_recuperacion, fecha_actualizacion FROM usuarios WHERE token_recuperacion = $1',
+      [code]
+    );
+    
+    if (userResult.rows.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Código de recuperación inválido o expirado'
+      });
+    }
+    
+    const user = userResult.rows[0];
+    
+    // Verificar que el código no haya expirado (10 minutos)
+    const now = new Date();
+    const codeTime = new Date(user.fecha_actualizacion);
+    const timeDiff = (now - codeTime) / 1000 / 60; // diferencia en minutos
+    
+    if (timeDiff > 10) {
+      // Limpiar código expirado
+      await query(
+        'UPDATE usuarios SET token_recuperacion = NULL WHERE id = $1',
+        [user.id]
+      );
+      
+      return res.status(400).json({
+        success: false,
+        message: 'Código de recuperación expirado. Solicita uno nuevo.'
+      });
+    }
+    
+    // Hashear nueva contraseña
+    const passwordHash = await bcrypt.hash(newPassword, config.bcrypt.saltRounds);
+    
+    // Actualizar contraseña y limpiar token
+    await query(
+      'UPDATE usuarios SET password_hash = $1, token_recuperacion = NULL, fecha_actualizacion = CURRENT_TIMESTAMP WHERE id = $2',
+      [passwordHash, user.id]
+    );
+    
+    // Invalidar todas las sesiones activas del usuario
+    await query(
+      'UPDATE sesiones_usuario SET activa = false WHERE usuario_id = $1',
+      [user.id]
+    );
+    
+    console.log('✅ Contraseña restablecida para usuario:', user.id);
+    
+    res.json({
+      success: true,
+      message: 'Contraseña restablecida exitosamente. Inicia sesión con tu nueva contraseña.'
+    });
+    
+  } catch (error) {
+    console.error('❌ Error en restablecimiento de contraseña:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor'
+    });
+  }
 };
 
 module.exports = {

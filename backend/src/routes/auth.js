@@ -103,8 +103,10 @@ const requestPasswordResetSchema = Joi.object({
 });
 
 const resetPasswordSchema = Joi.object({
-  token: Joi.string().required().messages({
-    'any.required': 'El token es requerido'
+  code: Joi.string().length(6).pattern(/^\d{6}$/).required().messages({
+    'string.length': 'El código debe tener exactamente 6 dígitos',
+    'string.pattern.base': 'El código debe contener solo números',
+    'any.required': 'El código es requerido'
   }),
   newPassword: Joi.string().min(6).max(100).required().messages({
     'string.min': 'La nueva contraseña debe tener al menos 6 caracteres',

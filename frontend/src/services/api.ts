@@ -150,10 +150,10 @@ class ApiService {
     });
   }
 
-  async resetPassword(token: string, newPassword: string): Promise<ApiResponse> {
+  async resetPassword(code: string, newPassword: string): Promise<ApiResponse> {
     return this.request('/auth/reset-password', {
       method: 'POST',
-      body: JSON.stringify({ token, newPassword }),
+      body: JSON.stringify({ code, newPassword }),
     });
   }
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
 import { Button } from '../components/ui/Button';
@@ -39,6 +40,7 @@ interface User {
 }
 
 export const UserManagementPage: React.FC = () => {
+  const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -188,21 +190,21 @@ export const UserManagementPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
+          <div className="flex justify-between items-center py-8">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Gestión de Usuarios</h1>
-              <p className="text-gray-600 mt-1">
+              <h1 className="text-3xl font-bold text-white">Gestión de Usuarios</h1>
+              <p className="text-blue-100 mt-2">
                 Administra usuarios, roles y permisos del sistema
               </p>
             </div>
             {currentUser?.tipo_usuario === 'administrador' && (
               <Button
-                onClick={() => {/* Implementar registro de moderador */}}
-                className="bg-blue-600 hover:bg-blue-700"
+                onClick={() => navigate('/admin/register-moderator')}
+                className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white border-0 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
               >
                 <UserPlus className="h-4 w-4 mr-2" />
                 Registrar Moderador
