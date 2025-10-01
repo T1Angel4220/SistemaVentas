@@ -220,6 +220,40 @@ class ApiService {
     });
   }
 
+  // Métodos administrativos de gestión de sesiones (solo moderadores/admin)
+  async getUserSessions(userId: number): Promise<ApiResponse<{
+    user: {
+      id: number;
+      nombre: string;
+      apellido: string;
+      correo: string;
+    };
+    sessions: Array<{
+      id: number;
+      fecha_inicio: string;
+      fecha_expiracion: string;
+      ip_address: string;
+      user_agent: string;
+      activa: boolean;
+    }>;
+  }>> {
+    return this.request(`/auth/admin/sessions/${userId}`);
+  }
+
+  async closeUserSession(sessionId: number, motivo?: string): Promise<ApiResponse> {
+    return this.request(`/auth/admin/sessions/${sessionId}`, {
+      method: 'DELETE',
+      body: JSON.stringify({ motivo }),
+    });
+  }
+
+  async closeAllUserSessions(userId: number, motivo?: string): Promise<ApiResponse> {
+    return this.request(`/auth/admin/sessions/user/${userId}`, {
+      method: 'DELETE',
+      body: JSON.stringify({ motivo }),
+    });
+  }
+
   // Métodos de administración (solo para moderadores/administradores)
   async registerModerator(userData: RegisterRequest): Promise<ApiResponse<User>> {
     return this.request<User>('/auth/register-moderator', {

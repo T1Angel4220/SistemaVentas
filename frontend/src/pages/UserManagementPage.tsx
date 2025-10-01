@@ -22,7 +22,8 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  AlertTriangle
+  AlertTriangle,
+  Monitor
 } from 'lucide-react';
 
 interface User {
@@ -384,6 +385,18 @@ export const UserManagementPage: React.FC = () => {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
+                          
+                          {user.tipo_usuario !== 'administrador' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => navigate(`/admin/sessions/${user.id}`)}
+                              className="text-blue-600 hover:text-blue-700"
+                              title="Gestionar sesiones"
+                            >
+                              <Monitor className="h-4 w-4" />
+                            </Button>
+                          )}
                           
                           {user.id !== currentUser?.id && (
                             <>

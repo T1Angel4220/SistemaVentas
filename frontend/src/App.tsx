@@ -16,6 +16,7 @@ import { ResetPasswordCodePage } from './pages/ResetPasswordCodePage';
 import { DashboardPage } from './pages/DashboardPage';
 import { UserManagementPage } from './pages/UserManagementPage';
 import { RegisterModeratorPage } from './pages/RegisterModeratorPage';
+import { SessionManagementPage } from './pages/SessionManagementPage';
 
 // Componentes de error
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -54,6 +55,15 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['moderador', 'administrador']}>
                     <UserManagementPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/admin/sessions/:userId" 
+                element={
+                  <ProtectedRoute allowedRoles={['moderador', 'administrador']}>
+                    <SessionManagementPage />
                   </ProtectedRoute>
                 } 
               />

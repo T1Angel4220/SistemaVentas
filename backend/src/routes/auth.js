@@ -527,5 +527,240 @@ router.delete('/sessions/:sessionId', authenticate, async (req, res) => {
   }
 });
 
+/**
+ * @route GET /api/auth/admin/sessions/:userId
+ * @desc Obtener sesiones de cualquier usuario (solo moderadores/admin)
+ * @access Private (Moderator/Admin)
+ */
+router.get('/admin/sessions/:userId', authenticate, requireModerator, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    // Verificar que el usuario existe
+    const userResult = await require('../config/database').query(
+      'SELECT id, nombre, apellido, correo, tipo_usuario FROM usuarios WHERE id = $1',
+      [userId]
+    );
+    
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Usuario no encontrado'
+      });
+    }
+    
+    const user = userResult.rows[0];
+    
+    // Verificar jerarquía: moderadores no pueden gestionar sesiones de administradores
+    if (user.tipo_usuario === 'administrador' && req.user.tipo_usuario === 'moderador') {
+      return res.status(403).json({
+        success: false,
+        message: 'No tienes permisos para gestionar sesiones de administradores'
+      });
+    }
+    
+    // Obtener sesiones del usuario
+    const sessionsResult = await require('../config/database').query(`
+      SELECT id, fecha_inicio, fecha_expiracion, ip_address, user_agent, activa
+      FROM sesiones_usuario 
+      WHERE usuario_id = $1 
+      ORDER BY fecha_inicio DESC
+    `, [userId]);
+    
+    res.json({
+      success: true,
+      data: {
+        user: {
+          id: user.id,
+          nombre: user.nombre,
+          apellido: user.apellido,
+          correo: user.correo
+        },
+        sessions: sessionsResult.rows
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error obteniendo sesiones del usuario:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor'
+    });
+  }
+});
+
+/**
+ * @route DELETE /api/auth/admin/sessions/:sessionId
+ * @desc Cerrar sesión específica de cualquier usuario (solo moderadores/admin)
+ * @access Private (Moderator/Admin)
+ */
+router.delete('/admin/sessions/:sessionId', authenticate, requireModerator, async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { motivo } = req.body;
+    
+    // Verificar que la sesión existe y obtener información del usuario
+    const sessionResult = await require('../config/database').query(`
+      SELECT s.id, s.usuario_id, s.ip_address, s.user_agent, s.activa,
+             u.nombre, u.apellido, u.correo, u.tipo_usuario
+      FROM sesiones_usuario s
+      JOIN usuarios u ON s.usuario_id = u.id
+      WHERE s.id = $1
+    `, [sessionId]);
+    
+    if (sessionResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Sesión no encontrada'
+      });
+    }
+    
+    const session = sessionResult.rows[0];
+    
+    // Verificar jerarquía: moderadores no pueden cerrar sesiones de administradores
+    if (session.tipo_usuario === 'administrador' && req.user.tipo_usuario === 'moderador') {
+      return res.status(403).json({
+        success: false,
+        message: 'No tienes permisos para cerrar sesiones de administradores'
+      });
+    }
+    
+    if (!session.activa) {
+      return res.status(400).json({
+        success: false,
+        message: 'La sesión ya está cerrada'
+      });
+    }
+    
+    // Cerrar la sesión
+    await require('../config/database').query(
+      'UPDATE sesiones_usuario SET activa = false WHERE id = $1',
+      [sessionId]
+    );
+    
+    // Registrar acción de moderación
+    await require('../config/database').query(`
+      INSERT INTO acciones_moderacion (moderador_id, accion, tabla_afectada, registro_id, detalles)
+      VALUES ($1, $2, $3, $4, $5)
+    `, [
+      req.user.id,
+      'cerrar_sesion',
+      'sesiones_usuario',
+      sessionId,
+      JSON.stringify({
+        usuario_afectado: `${session.nombre} ${session.apellido} (${session.correo})`,
+        ip_sesion: session.ip_address,
+        user_agent: session.user_agent,
+        motivo: motivo || 'Sesión cerrada por moderador'
+      })
+    ]);
+    
+    res.json({
+      success: true,
+      message: 'Sesión cerrada exitosamente',
+      data: {
+        usuario: `${session.nombre} ${session.apellido}`,
+        ip: session.ip_address,
+        dispositivo: session.user_agent
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error cerrando sesión:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor'
+    });
+  }
+});
+
+/**
+ * @route DELETE /api/auth/admin/sessions/user/:userId
+ * @desc Cerrar todas las sesiones de un usuario (solo moderadores/admin)
+ * @access Private (Moderator/Admin)
+ */
+router.delete('/admin/sessions/user/:userId', authenticate, requireModerator, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { motivo } = req.body;
+    
+    // Verificar que el usuario existe
+    const userResult = await require('../config/database').query(
+      'SELECT id, nombre, apellido, correo, tipo_usuario FROM usuarios WHERE id = $1',
+      [userId]
+    );
+    
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Usuario no encontrado'
+      });
+    }
+    
+    const user = userResult.rows[0];
+    
+    // Verificar jerarquía: moderadores no pueden cerrar todas las sesiones de administradores
+    if (user.tipo_usuario === 'administrador' && req.user.tipo_usuario === 'moderador') {
+      return res.status(403).json({
+        success: false,
+        message: 'No tienes permisos para cerrar todas las sesiones de administradores'
+      });
+    }
+    
+    // Obtener sesiones activas antes de cerrarlas
+    const activeSessionsResult = await require('../config/database').query(
+      'SELECT COUNT(*) as count FROM sesiones_usuario WHERE usuario_id = $1 AND activa = true',
+      [userId]
+    );
+    
+    const activeSessionsCount = parseInt(activeSessionsResult.rows[0].count);
+    
+    if (activeSessionsCount === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'El usuario no tiene sesiones activas'
+      });
+    }
+    
+    // Cerrar todas las sesiones del usuario
+    await require('../config/database').query(
+      'UPDATE sesiones_usuario SET activa = false WHERE usuario_id = $1 AND activa = true',
+      [userId]
+    );
+    
+    // Registrar acción de moderación
+    await require('../config/database').query(`
+      INSERT INTO acciones_moderacion (moderador_id, accion, tabla_afectada, registro_id, detalles)
+      VALUES ($1, $2, $3, $4, $5)
+    `, [
+      req.user.id,
+      'cerrar_todas_sesiones',
+      'usuarios',
+      userId,
+      JSON.stringify({
+        usuario_afectado: `${user.nombre} ${user.apellido} (${user.correo})`,
+        sesiones_cerradas: activeSessionsCount,
+        motivo: motivo || 'Todas las sesiones cerradas por moderador'
+      })
+    ]);
+    
+    res.json({
+      success: true,
+      message: `Se cerraron ${activeSessionsCount} sesiones del usuario`,
+      data: {
+        usuario: `${user.nombre} ${user.apellido}`,
+        sesiones_cerradas: activeSessionsCount
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error cerrando todas las sesiones:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor'
+    });
+  }
+});
+
 module.exports = router;
 
