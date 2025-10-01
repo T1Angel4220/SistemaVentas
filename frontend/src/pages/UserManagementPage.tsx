@@ -398,7 +398,7 @@ export const UserManagementPage: React.FC = () => {
                                 </Button>
                               )}
                               
-                              {user.estado === 'activo' && (
+                              {user.estado === 'activo' && user.tipo_usuario !== 'administrador' && (
                                 <Button
                                   variant="outline"
                                   size="sm"
@@ -409,7 +409,7 @@ export const UserManagementPage: React.FC = () => {
                                 </Button>
                               )}
                               
-                              {user.estado === 'activo' && (
+                              {user.estado === 'activo' && user.tipo_usuario !== 'administrador' && (
                                 <Button
                                   variant="outline"
                                   size="sm"
