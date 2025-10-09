@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { apiService } from '../services/api';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
@@ -47,7 +48,7 @@ export const MyProductsPage: React.FC = () => {
 
       const response = await fetch(`http://localhost:3001/api/products/my/products?${queryParams}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${apiService.getToken()}`
         }
       });
       const data: ProductsResponse = await response.json();
@@ -86,7 +87,7 @@ export const MyProductsPage: React.FC = () => {
       const response = await fetch(`http://localhost:3001/api/products/${productId}/availability`, {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${apiService.getToken()}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ disponibilidad: !currentAvailability })
@@ -115,7 +116,7 @@ export const MyProductsPage: React.FC = () => {
         const response = await fetch(`http://localhost:3001/api/products/${productId}`, {
           method: 'DELETE',
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${apiService.getToken()}`
           }
         });
 

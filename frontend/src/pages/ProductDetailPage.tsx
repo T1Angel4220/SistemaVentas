@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
+import { apiService } from '../services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
@@ -40,7 +41,7 @@ export const ProductDetailPage: React.FC = () => {
     try {
       const response = await fetch(`http://localhost:3001/api/saved-products/check/${productId}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${apiService.getToken()}`
         }
       });
       const data = await response.json();
@@ -86,7 +87,7 @@ export const ProductDetailPage: React.FC = () => {
       const response = await fetch(`http://localhost:3001/api/saved-products/${product.id}`, {
         method,
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${apiService.getToken()}`,
           'Content-Type': 'application/json'
         }
       });
@@ -111,7 +112,7 @@ export const ProductDetailPage: React.FC = () => {
         const response = await fetch(`http://localhost:3001/api/products/${product.id}`, {
           method: 'DELETE',
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${apiService.getToken()}`
           }
         });
         

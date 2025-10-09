@@ -1,12 +1,23 @@
 const { query } = require('../config/database');
 const { config } = require('../config/config');
 
+// Función helper para construir URLs completas de imágenes
+const buildImageUrl = (filename) => {
+  const baseUrl = `${config.server.host}:${config.server.port}`;
+  return `http://${baseUrl}/uploads/${filename}`;
+};
+
 // Controlador de productos y servicios
 class ProductsController {
   
   // Crear nuevo producto/servicio
   static async createProduct(req, res) {
     try {
+      console.log('Datos recibidos:', {
+        body: req.body,
+        files: req.files ? req.files.map(f => ({ filename: f.filename, originalname: f.originalname })) : 'No files'
+      });
+
       const { 
         codigo, 
         nombre, 
@@ -71,6 +82,24 @@ class ProductsController {
            VALUES ($1, $2, $3, $4)`,
           [producto.id, horario_atencion, dias_disponibles, duracion_estimada]
         );
+      }
+
+      // Manejar imágenes si se enviaron
+      if (req.files && req.files.length > 0) {
+        console.log('📸 Procesando imágenes:', req.files.length);
+        
+        for (let i = 0; i < req.files.length; i++) {
+          const file = req.files[i];
+          const esPrincipal = i === 0; // La primera imagen es la principal
+          
+          await query(
+            `INSERT INTO item_imagenes (item_id, url_imagen, orden, es_principal)
+             VALUES ($1, $2, $3, $4)`,
+            [producto.id, buildImageUrl(file.filename), i + 1, esPrincipal]
+          );
+        }
+        
+        console.log('✅ Imágenes guardadas exitosamente');
       }
 
       res.status(201).json({
@@ -246,6 +275,14 @@ class ProductsController {
         [id]
       );
 
+      // Convertir URLs relativas a absolutas
+      const imagenesConUrlsCompletas = imagenes.rows.map(imagen => ({
+        ...imagen,
+        url_imagen: imagen.url_imagen.startsWith('http') 
+          ? imagen.url_imagen 
+          : buildImageUrl(imagen.url_imagen.replace('/uploads/', ''))
+      }));
+
       // Si es un servicio, obtener información adicional
       let servicioInfo = null;
       if (producto.rows[0].tipo === 'servicio') {
@@ -260,7 +297,7 @@ class ProductsController {
         success: true,
         data: {
           ...producto.rows[0],
-          imagenes: imagenes.rows,
+          imagenes: imagenesConUrlsCompletas,
           servicio: servicioInfo
         }
       });

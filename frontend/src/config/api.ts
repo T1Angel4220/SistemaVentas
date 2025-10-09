@@ -1,3 +1,5 @@
+import { apiService } from '../services/api';
+
 // Configuración de la API
 export const API_CONFIG = {
   BASE_URL: 'http://localhost:3001',
@@ -57,7 +59,7 @@ export const buildApiUrl = (endpoint: string): string => {
 
 // Función helper para obtener headers con autenticación
 export const getAuthHeaders = (): HeadersInit => {
-  const token = localStorage.getItem('token');
+  const token = apiService.getToken();
   return {
     'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json'
@@ -66,7 +68,7 @@ export const getAuthHeaders = (): HeadersInit => {
 
 // Función helper para obtener headers con autenticación para FormData
 export const getAuthFormHeaders = (): HeadersInit => {
-  const token = localStorage.getItem('token');
+  const token = apiService.getToken();
   return {
     'Authorization': `Bearer ${token}`
   };

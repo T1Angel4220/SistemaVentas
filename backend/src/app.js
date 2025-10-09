@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const path = require('path');
+const fs = require('fs');
 const { config } = require('./config/config');
 
 // Importar rutas
@@ -15,25 +17,36 @@ const locationsRoutes = require('./routes/locations');
 // Crear aplicación Express
 const app = express();
 
-// Middleware de seguridad
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
-    },
-  },
-}));
+// Middleware de seguridad (temporalmente deshabilitado para imágenes)
+// app.use(helmet({
+//   contentSecurityPolicy: {
+//     directives: {
+//       defaultSrc: ["'self'"],
+//       styleSrc: ["'self'", "'unsafe-inline'"],
+//       scriptSrc: ["'self'"],
+//       imgSrc: ["'self'", "data:", "https:", "http://localhost:3001"],
+//     },
+//   },
+// }));
 
 // Configurar CORS
 app.use(cors({
-  origin: config.cors.origin,
+  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Content-Type', 'Content-Length'],
+  optionsSuccessStatus: 200
 }));
+
+// Middleware específico para archivos estáticos
+app.use('/uploads', (req, res, next) => {
+  // Permitir acceso desde cualquier origen para archivos estáticos
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+});
 
 // Rate limiting
 const limiter = rateLimit({
@@ -76,6 +89,9 @@ app.use(limiter);
 // Middleware para parsear JSON
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Servir archivos estáticos (imágenes subidas)
+app.use('/uploads', express.static('uploads'));
 
 // Middleware para logging de requests
 app.use((req, res, next) => {

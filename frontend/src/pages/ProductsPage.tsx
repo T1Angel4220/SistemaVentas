@@ -80,18 +80,25 @@ export const ProductsPage: React.FC = () => {
   // Cargar datos iniciales
   useEffect(() => {
     loadProducts();
-    loadCategories();
-  }, [loadProducts]);
+    // Solo cargar categorías si no están cargadas
+    if (categories.length === 0) {
+      loadCategories();
+    }
+  }, [loadProducts, categories.length]);
 
   const loadCategories = async () => {
     try {
       const response = await fetch('http://localhost:3001/api/categories');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
       if (data.success) {
         setCategories(data.data);
       }
     } catch (error) {
       console.error('Error al cargar categorías:', error);
+      // No mostrar error al usuario, solo log
     }
   };
 

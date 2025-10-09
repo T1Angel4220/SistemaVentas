@@ -10,13 +10,14 @@ const {
   optionalAuth 
 } = require('../middlewares/auth');
 const { validateProductCreate, validateProductUpdate, validateProductAvailability, validateProductFilters } = require('../middlewares/productValidation');
+const { upload, handleMulterError } = require('../middlewares/upload');
 
 // Rutas públicas (no requieren autenticación)
 router.get('/', validateProductFilters, ProductsController.getProducts);                    // GET /api/products - Listar productos con filtros
 router.get('/:id', ProductsController.getProductById);             // GET /api/products/:id - Obtener producto específico
 
 // Rutas protegidas con permisos específicos por rol
-router.post('/', authenticate, requireProductCreate, validateProductCreate, ProductsController.createProduct);   // POST /api/products - Crear producto (vendedores, moderadores, administradores)
+router.post('/', authenticate, requireProductCreate, upload.array('images', 5), handleMulterError, validateProductCreate, ProductsController.createProduct);   // POST /api/products - Crear producto (vendedores, moderadores, administradores)
 
 // Rutas que requieren permisos específicos según el rol
 router.put('/:id', authenticate, requireProductUpdate, validateProductUpdate, ProductsController.updateProduct);           // PUT /api/products/:id - Actualizar producto

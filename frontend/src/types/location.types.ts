@@ -5,9 +5,9 @@
 export interface Location {
   id: number;
   nombre: string;
-  provincia: string;
-  canton: string;
-  distrito: string;
+  provincia?: string;
+  canton?: string;
+  distrito?: string;
 }
 
 export interface LocationsResponse {
