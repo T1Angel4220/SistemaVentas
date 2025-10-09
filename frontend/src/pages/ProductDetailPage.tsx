@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { usePermissions } from '../hooks/usePermissions';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
@@ -16,46 +17,17 @@ import {
   Trash2,
   ArrowLeft,
   Share2,
-  Flag
+  Flag,
+  Shield,
+  AlertTriangle
 } from 'lucide-react';
-
-interface ProductDetail {
-  id: number;
-  codigo: string;
-  nombre: string;
-  descripcion: string;
-  precio: number;
-  tipo: 'producto' | 'servicio';
-  estado: string;
-  disponibilidad: boolean;
-  fecha_publicacion: string;
-  fecha_actualizacion: string;
-  categoria_nombre: string;
-  vendedor_nombre: string;
-  vendedor_email: string;
-  vendedor_id: number;
-  ubicacion_nombre?: string;
-  provincia?: string;
-  canton?: string;
-  distrito?: string;
-  imagenes: Array<{
-    id: number;
-    url_imagen: string;
-    orden: number;
-    es_principal: boolean;
-  }>;
-  servicio?: {
-    horario_atencion: string;
-    dias_disponibles: string;
-    duracion_estimada: string;
-  };
-  es_peligroso?: boolean;
-}
+import type { ProductDetail } from '../types/product.types';
 
 export const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { canModifyProduct, canDeleteProduct, canModerateProduct } = usePermissions();
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -234,8 +206,9 @@ export const ProductDetailPage: React.FC = () => {
     );
   }
 
-  const isOwner = user && (user.id === product.vendedor_id || user.tipo_usuario === 'administrador');
-  const canEdit = isOwner && product.estado !== 'rechazado' && !product.es_peligroso;
+  const isOwner = (productOwnerId?: number) => {
+    return user && productOwnerId && user.id === productOwnerId;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
@@ -267,7 +240,7 @@ export const ProductDetailPage: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center space-x-3">
-              {canEdit && (
+              {canModifyProduct(product.vendedor_id) && !product.es_peligroso && (
                 <Link to={`/products/${product.id}/edit`}>
                   <Button className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl">
                     <Edit className="h-4 w-4 mr-2" />
@@ -275,7 +248,7 @@ export const ProductDetailPage: React.FC = () => {
                   </Button>
                 </Link>
               )}
-              {isOwner && (
+              {canDeleteProduct(product.vendedor_id) && !product.es_peligroso && (
                 <Button 
                   onClick={handleDeleteProduct}
                   className="bg-red-500/20 hover:bg-red-500/30 text-white border-red-300/30 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
@@ -589,6 +562,86 @@ export const ProductDetailPage: React.FC = () => {
                   Este producto está pendiente de revisión por parte de los moderadores.
                 </AlertDescription>
               </Alert>
+            )}
+
+            {product.es_peligroso && (
+              <Alert className="border-red-200 bg-red-50 shadow-lg rounded-xl">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription className="text-red-800 font-medium">
+                  Este producto está marcado como peligroso y no puede ser modificado.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Acciones de gestión según permisos */}
+            {(canModifyProduct(product.vendedor_id) || canDeleteProduct(product.vendedor_id) || canModerateProduct()) && (
+              <Card className="shadow-2xl border-0 bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden mt-6">
+                <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 p-6">
+                  <CardTitle className="flex items-center space-x-3 text-gray-800">
+                    <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                      <Shield className="h-5 w-5 text-purple-600" />
+                    </div>
+                    <div>
+                      <span className="text-xl font-bold">Acciones de Gestión</span>
+                      <p className="text-sm text-gray-600 font-normal">Gestiona este producto</p>
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {canModifyProduct(product.vendedor_id) && !product.es_peligroso && (
+                      <Button 
+                        onClick={() => navigate(`/products/${product.id}/edit`)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white h-12"
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Editar Producto
+                      </Button>
+                    )}
+                    
+                    {canDeleteProduct(product.vendedor_id) && !product.es_peligroso && (
+                      <Button 
+                        onClick={() => {
+                          if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
+                            // Implementar eliminación
+                            console.log('Eliminar producto:', product.id);
+                          }
+                        }}
+                        className="bg-red-600 hover:bg-red-700 text-white h-12"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Eliminar Producto
+                      </Button>
+                    )}
+                    
+                    {canModerateProduct() && (
+                      <Button 
+                        onClick={() => navigate('/products/moderation')}
+                        className="bg-purple-600 hover:bg-purple-700 text-white h-12"
+                      >
+                        <Shield className="h-4 w-4 mr-2" />
+                        Moderar Producto
+                      </Button>
+                    )}
+                  </div>
+                  
+                  {/* Información adicional */}
+                  <div className="mt-6 p-4 bg-gray-50 rounded-xl">
+                    <div className="flex items-center space-x-2 text-sm text-gray-600">
+                      {isOwner(product.vendedor_id) && (
+                        <Badge className="bg-blue-100 text-blue-800">
+                          Eres el propietario de este producto
+                        </Badge>
+                      )}
+                      {canModerateProduct() && (
+                        <Badge className="bg-purple-100 text-purple-800">
+                          Tienes permisos de moderación
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             )}
           </div>
         </div>

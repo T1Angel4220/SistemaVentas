@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Textarea } from '../components/ui/Textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/Select';
 import { Label } from '../components/ui/Label';
 import { Alert, AlertDescription } from '../components/ui/Alert';
 import { 
@@ -18,39 +17,9 @@ import {
   Clock,
   DollarSign
 } from 'lucide-react';
-
-interface Category {
-  id: number;
-  nombre: string;
-}
-
-interface Location {
-  id: number;
-  nombre: string;
-  provincia: string;
-  canton: string;
-  distrito: string;
-}
-
-interface ProductForm {
-  codigo: string;
-  nombre: string;
-  descripcion: string;
-  precio: string;
-  tipo: 'producto' | 'servicio';
-  categoria_id: string;
-  ubicacion_id: string;
-  // Campos específicos para servicios
-  horario_atencion: string;
-  dias_disponibles: string;
-  duracion_estimada: string;
-}
-
-interface ImageFile {
-  file: File;
-  preview: string;
-  id: string;
-}
+import type { ProductForm, ImageFile } from '../types/product.types';
+import type { Category } from '../types/category.types';
+import type { Location } from '../types/location.types';
 
 export const CreateProductPage: React.FC = () => {
   const { user } = useAuth();

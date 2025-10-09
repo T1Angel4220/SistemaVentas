@@ -20,6 +20,7 @@ import { ProductsPage } from './pages/ProductsPage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
 import { CreateProductPage } from './pages/CreateProductPage';
 import { MyProductsPage } from './pages/MyProductsPage';
+import { ProductModerationPage } from './pages/ProductModerationPage';
 
 // Componentes de error
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -120,6 +121,14 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['vendedor', 'administrador']}>
                     <MyProductsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/products/moderation" 
+                element={
+                  <ProtectedRoute allowedRoles={['moderador', 'administrador']}>
+                    <ProductModerationPage />
                   </ProtectedRoute>
                 } 
               />

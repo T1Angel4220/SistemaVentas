@@ -538,6 +538,160 @@ class ProductsController {
       });
     }
   }
+
+  // Moderar producto (solo moderadores y administradores)
+  static async moderateProduct(req, res) {
+    try {
+      const { id } = req.params;
+      const { accion, motivo, decision_final } = req.body;
+      const moderador_id = req.user.id;
+
+      // Validar acción
+      const accionesValidas = ['aprobar', 'rechazar', 'suspender', 'marcar_peligroso'];
+      if (!accionesValidas.includes(accion)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Acción de moderación inválida'
+        });
+      }
+
+      // Verificar que el producto existe
+      const productoExistente = await query(
+        'SELECT * FROM items WHERE id = $1',
+        [id]
+      );
+
+      if (productoExistente.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Producto no encontrado'
+        });
+      }
+
+      const producto = productoExistente.rows[0];
+
+      // Determinar nuevo estado según la acción
+      let nuevoEstado;
+      let esPeligroso = producto.es_peligroso;
+      let fechaDeteccionPeligroso = producto.fecha_deteccion_peligroso;
+
+      switch (accion) {
+        case 'aprobar':
+          nuevoEstado = 'activo';
+          break;
+        case 'rechazar':
+          nuevoEstado = 'rechazado';
+          break;
+        case 'suspender':
+          nuevoEstado = 'suspendido';
+          break;
+        case 'marcar_peligroso':
+          nuevoEstado = 'peligroso';
+          esPeligroso = true;
+          fechaDeteccionPeligroso = new Date();
+          break;
+      }
+
+      // Actualizar producto
+      const productoActualizado = await query(
+        `UPDATE items SET 
+          estado = $1,
+          es_peligroso = $2,
+          fecha_deteccion_peligroso = $3,
+          moderador_revision_id = $4,
+          motivo_rechazo = $5,
+          fecha_revision = CURRENT_TIMESTAMP
+        WHERE id = $6
+        RETURNING *`,
+        [nuevoEstado, esPeligroso, fechaDeteccionPeligroso, moderador_id, motivo, id]
+      );
+
+      // Registrar acción de moderación
+      await query(
+        `INSERT INTO acciones_moderacion (moderador_id, accion, tabla_afectada, registro_id, detalles)
+         VALUES ($1, $2, 'items', $3, $4)`,
+        [moderador_id, `moderar_producto_${accion}`, id, decision_final || motivo]
+      );
+
+      res.json({
+        success: true,
+        message: `Producto ${accion} exitosamente`,
+        data: productoActualizado.rows[0]
+      });
+
+    } catch (error) {
+      console.error('Error al moderar producto:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error interno del servidor',
+        error: config.server.nodeEnv === 'development' ? error.message : {}
+      });
+    }
+  }
+
+  // Obtener productos pendientes de moderación
+  static async getPendingModeration(req, res) {
+    try {
+      const { page = 1, limit = 10, estado = 'pendiente_revision' } = req.query;
+
+      // Calcular offset para paginación
+      const offset = (page - 1) * limit;
+
+      const productos = await query(
+        `SELECT 
+          i.id, i.codigo, i.nombre, i.descripcion, i.precio, 
+          i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion,
+          i.fecha_revision, i.moderador_revision_id, i.motivo_rechazo,
+          c.nombre as categoria_nombre,
+          u.nombre || ' ' || u.apellido as vendedor_nombre,
+          ub.nombre as ubicacion_nombre,
+          COUNT(ii.id) as total_imagenes
+        FROM items i
+        JOIN categorias c ON i.categoria_id = c.id
+        JOIN usuarios u ON i.vendedor_id = u.id
+        LEFT JOIN ubicaciones ub ON i.ubicacion_id = ub.id
+        LEFT JOIN item_imagenes ii ON i.id = ii.item_id
+        WHERE i.estado = $1
+        GROUP BY i.id, i.codigo, i.nombre, i.descripcion, i.precio, 
+                 i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion,
+                 i.fecha_revision, i.moderador_revision_id, i.motivo_rechazo,
+                 c.nombre, u.nombre, u.apellido, ub.nombre
+        ORDER BY i.fecha_publicacion ASC
+        LIMIT $2 OFFSET $3`,
+        [estado, limit, offset]
+      );
+
+      // Contar total
+      const totalCount = await query(
+        `SELECT COUNT(*) as total
+         FROM items i
+         WHERE i.estado = $1`,
+        [estado]
+      );
+
+      const total = parseInt(totalCount.rows[0].total);
+      const totalPages = Math.ceil(total / limit);
+
+      res.json({
+        success: true,
+        data: productos.rows,
+        pagination: {
+          current_page: parseInt(page),
+          total_pages: totalPages,
+          total_items: total,
+          items_per_page: parseInt(limit)
+        }
+      });
+
+    } catch (error) {
+      console.error('Error al obtener productos pendientes de moderación:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error interno del servidor',
+        error: config.server.nodeEnv === 'development' ? error.message : {}
+      });
+    }
+  }
 }
 
 module.exports = ProductsController;

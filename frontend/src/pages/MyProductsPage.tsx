@@ -15,34 +15,7 @@ import {
   Calendar,
   AlertCircle
 } from 'lucide-react';
-
-interface Product {
-  id: number;
-  codigo: string;
-  nombre: string;
-  descripcion: string;
-  precio: number;
-  tipo: 'producto' | 'servicio';
-  estado: string;
-  disponibilidad: boolean;
-  fecha_publicacion: string;
-  categoria_nombre: string;
-  total_imagenes: number;
-  es_peligroso?: boolean;
-}
-
-interface ProductsResponse {
-  success: boolean;
-  data: Product[];
-  pagination: {
-    current_page: number;
-    total_pages: number;
-    total_items: number;
-    items_per_page: number;
-    has_next: boolean;
-    has_prev: boolean;
-  };
-}
+import type { Product, ProductsResponse } from '../types/product.types';
 
 export const MyProductsPage: React.FC = () => {
   const { user } = useAuth();

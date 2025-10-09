@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { usePermissions } from '../hooks/usePermissions';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -17,46 +18,15 @@ import {
   ShoppingCart,
   ToggleRight,
   CheckCircle,
-  DollarSign
+  DollarSign,
+  Shield
 } from 'lucide-react';
-
-interface Product {
-  id: number;
-  codigo: string;
-  nombre: string;
-  descripcion: string;
-  precio: number;
-  tipo: 'producto' | 'servicio';
-  estado: string;
-  disponibilidad: boolean;
-  fecha_publicacion: string;
-  categoria_nombre: string;
-  vendedor_nombre: string;
-  ubicacion_nombre?: string;
-  total_imagenes: number;
-}
-
-interface Category {
-  id: number;
-  nombre: string;
-}
-
-
-interface ProductsResponse {
-  success: boolean;
-  data: Product[];
-  pagination: {
-    current_page: number;
-    total_pages: number;
-    total_items: number;
-    items_per_page: number;
-    has_next: boolean;
-    has_prev: boolean;
-  };
-}
+import type { Product, ProductsResponse, ProductFilters } from '../types/product.types';
+import type { Category } from '../types/category.types';
 
 export const ProductsPage: React.FC = () => {
   const { user } = useAuth();
+  const { permissions, canModerateProduct, getRoleDisplayName, getRoleColor } = usePermissions();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,7 +42,7 @@ export const ProductsPage: React.FC = () => {
   });
 
   // Filtros optimizados para muchos datos
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<ProductFilters>({
     search: '',
     categoria_id: '',
     tipo: '',
@@ -200,14 +170,42 @@ export const ProductsPage: React.FC = () => {
               </div>
             </div>
             
-            {user && (user.tipo_usuario === 'vendedor' || user.tipo_usuario === 'administrador') && (
-              <div className="mt-8">
+            {/* Botones de acción según permisos */}
+            <div className="mt-8 flex flex-wrap justify-center gap-4">
+              {permissions.canCreate && (
                 <Link to="/products/create">
                   <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 shadow-lg hover:shadow-xl transition-all duration-300">
                     <Plus className="h-5 w-5 mr-2" />
                     Crear Producto
                   </Button>
                 </Link>
+              )}
+              
+              {permissions.canCreate && (
+                <Link to="/my-products">
+                  <Button size="lg" variant="outline" className="bg-white/20 text-white border-white hover:bg-white hover:text-blue-600 shadow-lg hover:shadow-xl transition-all duration-300">
+                    <Package className="h-5 w-5 mr-2" />
+                    Mis Productos
+                  </Button>
+                </Link>
+              )}
+              
+              {canModerateProduct() && (
+                <Link to="/products/moderation">
+                  <Button size="lg" variant="outline" className="bg-white/20 text-white border-white hover:bg-white hover:text-blue-600 shadow-lg hover:shadow-xl transition-all duration-300">
+                    <Shield className="h-5 w-5 mr-2" />
+                    Moderación
+                  </Button>
+                </Link>
+              )}
+            </div>
+            
+            {/* Información del rol del usuario */}
+            {user && (
+              <div className="mt-6 flex justify-center">
+                <Badge className={`${getRoleColor()} px-4 py-2 text-sm font-medium`}>
+                  {getRoleDisplayName()}
+                </Badge>
               </div>
             )}
           </div>

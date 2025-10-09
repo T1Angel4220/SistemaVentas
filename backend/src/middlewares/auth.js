@@ -106,6 +106,139 @@ const requireModerator = authorize(['moderador', 'administrador']);
 const requireVendor = authorize(['vendedor', 'moderador', 'administrador']);
 
 /**
+ * Middleware específico para productos - verifica permisos según el rol
+ * @param {string} action - Acción que se quiere realizar (create, read, update, delete, moderate)
+ * @returns {Function} Middleware function
+ */
+const requireProductPermission = (action) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Autenticación requerida'
+      });
+    }
+
+    const { tipo_usuario } = req.user;
+    
+    // Definir permisos por rol y acción
+    const permissions = {
+      // Compradores
+      comprador: {
+        read: true,           // Pueden ver productos
+        create: false,        // No pueden crear productos
+        update: false,       // No pueden actualizar productos
+        delete: false,       // No pueden eliminar productos
+        moderate: false      // No pueden moderar productos
+      },
+      
+      // Vendedores
+      vendedor: {
+        read: true,          // Pueden ver productos
+        create: true,        // Pueden crear productos
+        update: 'own',      // Solo pueden actualizar sus propios productos
+        delete: 'own',      // Solo pueden eliminar sus propios productos
+        moderate: false     // No pueden moderar productos de otros
+      },
+      
+      // Moderadores
+      moderador: {
+        read: true,         // Pueden ver todos los productos
+        create: true,       // Pueden crear productos
+        update: true,       // Pueden actualizar cualquier producto
+        delete: true,       // Pueden eliminar cualquier producto
+        moderate: true      // Pueden moderar productos
+      },
+      
+      // Administradores
+      administrador: {
+        read: true,         // Pueden ver todos los productos
+        create: true,       // Pueden crear productos
+        update: true,       // Pueden actualizar cualquier producto
+        delete: true,       // Pueden eliminar cualquier producto
+        moderate: true      // Pueden moderar productos
+      }
+    };
+
+    const userPermissions = permissions[tipo_usuario];
+    
+    if (!userPermissions || !userPermissions[action]) {
+      return res.status(403).json({
+        success: false,
+        message: `No tienes permisos para ${action} productos`
+      });
+    }
+
+    // Para acciones 'own', verificar que es el propietario del producto
+    if (userPermissions[action] === 'own') {
+      const productId = req.params.id;
+      if (!productId) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID de producto requerido'
+        });
+      }
+
+      // Verificar que el producto pertenece al usuario
+      return query(
+        'SELECT vendedor_id FROM items WHERE id = $1',
+        [productId]
+      ).then(result => {
+        if (result.rows.length === 0) {
+          return res.status(404).json({
+            success: false,
+            message: 'Producto no encontrado'
+          });
+        }
+
+        const productOwnerId = result.rows[0].vendedor_id;
+        if (productOwnerId !== req.user.id) {
+          return res.status(403).json({
+            success: false,
+            message: 'Solo puedes modificar tus propios productos'
+          });
+        }
+
+        next();
+      }).catch(error => {
+        console.error('❌ Error verificando propiedad del producto:', error.message);
+        return res.status(500).json({
+          success: false,
+          message: 'Error interno del servidor'
+        });
+      });
+    }
+
+    next();
+  };
+};
+
+/**
+ * Middleware para verificar que el usuario puede crear productos
+ */
+const requireProductCreate = requireProductPermission('create');
+
+/**
+ * Middleware para verificar que el usuario puede leer productos
+ */
+const requireProductRead = requireProductPermission('read');
+
+/**
+ * Middleware para verificar que el usuario puede actualizar productos
+ */
+const requireProductUpdate = requireProductPermission('update');
+
+/**
+ * Middleware para verificar que el usuario puede eliminar productos
+ */
+const requireProductDelete = requireProductPermission('delete');
+
+/**
+ * Middleware para verificar que el usuario puede moderar productos
+ */
+const requireProductModerate = requireProductPermission('moderate');
+
+/**
  * Middleware para verificar que el usuario puede acceder a su propio recurso
  * @param {string} userIdParam - Nombre del parámetro que contiene el ID del usuario
  * @returns {Function} Middleware function
@@ -241,5 +374,11 @@ module.exports = {
   requireVendor,
   requireOwnership,
   requireActiveSession,
-  optionalAuth
+  optionalAuth,
+  requireProductPermission,
+  requireProductCreate,
+  requireProductRead,
+  requireProductUpdate,
+  requireProductDelete,
+  requireProductModerate
 };

@@ -1,26 +1,26 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
+import { usePermissions } from '../hooks/usePermissions';
 import { Button } from '../components/ui/Button';
 import { Alert, AlertDescription } from '../components/ui/Alert';
-import { 
-  User, 
-  ShoppingCart, 
-  Package, 
-  MessageSquare, 
-  Settings, 
+import {
+  User,
+  ShoppingCart,
+  Package,
+  MessageSquare,
+  Settings,
   LogOut,
-  Shield,
   Users,
   BarChart3,
-  UserPlus
+  UserPlus,
+  Shield
 } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout, isLoading, refreshUser } = useAuth();
+  const { canModerateProduct } = usePermissions();
 
   // Debug: Verificar los datos del usuario
   console.log('🔍 DashboardPage - user completo:', user);
@@ -70,25 +70,6 @@ export const DashboardPage: React.FC = () => {
     );
   }
 
-  const getRoleDisplayName = (tipo: string) => {
-    const roles = {
-      comprador: 'Comprador',
-      vendedor: 'Vendedor',
-      moderador: 'Moderador',
-      administrador: 'Administrador'
-    };
-    return roles[tipo as keyof typeof roles] || tipo;
-  };
-
-  const getRoleColor = (tipo: string) => {
-    const colors = {
-      comprador: 'bg-blue-100 text-blue-800',
-      vendedor: 'bg-green-100 text-green-800',
-      moderador: 'bg-yellow-100 text-yellow-800',
-      administrador: 'bg-red-100 text-red-800'
-    };
-    return colors[tipo as keyof typeof colors] || 'bg-gray-100 text-gray-800';
-  };
 
   const getStatusColor = (estado: string) => {
     const colors = {
@@ -180,8 +161,8 @@ export const DashboardPage: React.FC = () => {
                 <div className="space-y-4">
                   <div>
                     <label className="text-sm font-medium text-gray-500">Rol</label>
-                    <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getRoleColor(user.tipo_usuario)}`}>
-                      {getRoleDisplayName(user.tipo_usuario)}
+                    <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                      {user.tipo_usuario}
                     </span>
                   </div>
                   <div>
@@ -237,7 +218,10 @@ export const DashboardPage: React.FC = () => {
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Acciones Rápidas</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1">
+            <div 
+              onClick={() => navigate('/products')}
+              className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1"
+            >
               <div className="p-6">
                 <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                   <ShoppingCart className="h-6 w-6 text-white" />
@@ -247,17 +231,35 @@ export const DashboardPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1">
+            <div 
+              onClick={() => {
+                if (user.tipo_usuario === 'vendedor' || user.tipo_usuario === 'administrador') {
+                  navigate('/products/create');
+                }
+              }}
+              className={`bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 group hover:-translate-y-1 ${
+                user.tipo_usuario === 'vendedor' || user.tipo_usuario === 'administrador' 
+                  ? 'cursor-pointer' 
+                  : 'cursor-not-allowed opacity-60'
+              }`}
+            >
               <div className="p-6">
                 <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                   <Package className="h-6 w-6 text-white" />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Vender</h3>
-                <p className="text-sm text-gray-600">Publica tus productos y servicios</p>
+                <p className="text-sm text-gray-600">
+                  {user.tipo_usuario === 'vendedor' || user.tipo_usuario === 'administrador' 
+                    ? 'Publica tus productos y servicios' 
+                    : 'Solo disponible para vendedores'}
+                </p>
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1">
+            <div 
+              onClick={() => navigate('/chat')}
+              className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1"
+            >
               <div className="p-6">
                 <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                   <MessageSquare className="h-6 w-6 text-white" />
@@ -267,7 +269,10 @@ export const DashboardPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1">
+            <div 
+              onClick={() => navigate('/settings')}
+              className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1"
+            >
               <div className="p-6">
                 <div className="w-12 h-12 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                   <Settings className="h-6 w-6 text-white" />
@@ -276,6 +281,21 @@ export const DashboardPage: React.FC = () => {
                 <p className="text-sm text-gray-600">Gestiona tu cuenta y preferencias</p>
               </div>
             </div>
+
+            {canModerateProduct() && (
+              <div 
+                onClick={() => navigate('/products/moderation')}
+                className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1"
+              >
+                <div className="p-6">
+                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <Shield className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Moderación</h3>
+                  <p className="text-sm text-gray-600">Revisa y aprueba productos</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
