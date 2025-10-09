@@ -44,13 +44,8 @@ const authenticate = async (req, res, next) => {
       });
     }
     
-    // Verificar que el email está verificado
-    if (!user.email_verificado) {
-      return res.status(401).json({
-        success: false,
-        message: 'Email no verificado'
-      });
-    }
+    // Nota: No bloqueamos el acceso si el email no está verificado
+    // El frontend se encargará de mostrar el mensaje apropiado
     
     // Agregar información del usuario al request
     req.user = {

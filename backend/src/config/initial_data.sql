@@ -45,10 +45,7 @@ INSERT INTO ubicaciones (nombre, provincia, canton, distrito) VALUES
 
 -- Administrador del sistema
 INSERT INTO usuarios (cedula, nombre, apellido, correo, telefono, direccion, genero, password_hash, tipo_usuario, estado, email_verificado) VALUES
-('123456789', 'Admin', 'Sistema', 'admin@sistemaventas.com', '8888-8888', 'San José, Costa Rica', 'masculino', '$2b$10$l.OGwPCLxG2illHVG02npOLO1MbgqxfqT0YZ4Jj9qYMorUylK7uv6', 'administrador', 'activo',TRUE);
-
-INSERT INTO usuarios (cedula, nombre, apellido, correo, telefono, direccion, genero, password_hash, tipo_usuario, estado, email_verificado) VALUES
-('123456789', 'Admin', 'Sistema', 'admin@sistemaventas.com', '8888-8888', 'San José, Costa Rica', 'masculino', '$2b$10$rQZ8K9mN2pL3sT4uV5wX6yZ7aB8cD9eF0gH1iJ2kL3mN4oP5qR6sT7uV8wX9yZ', 'administrador', 'activo', TRUE);
+('123456789', 'Admin', 'Sistema', 'admin@sistemaventas.com', '8888-8888', 'San José, Costa Rica', 'masculino', '$2b$10$7VZ0SqSl4GbpgcnWaiTaXOv8SGZZMc5M/JkWP8i6fwnkPVK.dz1vy', 'administrador', 'activo', TRUE);
 
 
 -- Moderadores

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -12,11 +13,29 @@ import {
   Settings, 
   LogOut,
   Shield,
-  Users
+  Users,
+  BarChart3,
+  UserPlus
 } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
-  const { user, logout, isLoading } = useAuth();
+  const navigate = useNavigate();
+  const { user, logout, isLoading, refreshUser } = useAuth();
+
+  // Debug: Verificar los datos del usuario
+  console.log('🔍 DashboardPage - user completo:', user);
+  console.log('🔍 DashboardPage - user.telefono:', user?.telefono);
+  console.log('🔍 DashboardPage - user.direccion:', user?.direccion);
+  console.log('🔍 DashboardPage - user.genero:', user?.genero);
+  console.log('🔍 DashboardPage - user.fecha_registro:', user?.fecha_registro);
+
+  // Refrescar datos del usuario al montar el componente
+  React.useEffect(() => {
+    if (user && (!user.telefono || !user.direccion || !user.genero)) {
+      console.log('🔄 DashboardPage: Datos incompletos, refrescando...');
+      refreshUser();
+    }
+  }, [user, refreshUser]);
 
   const handleLogout = async () => {
     try {
@@ -26,12 +45,26 @@ export const DashboardPage: React.FC = () => {
     }
   };
 
-  if (!user) {
+  if (!user || isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Cargando...</h2>
           <p className="text-gray-600">Verificando autenticación...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Verificar que todos los datos esenciales estén cargados
+  if (!user.nombre || !user.apellido || !user.correo) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Cargando datos del usuario...</h2>
+          <p className="text-gray-600">Obteniendo información completa...</p>
         </div>
       </div>
     );
@@ -68,277 +101,245 @@ export const DashboardPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Header mejorado */}
+      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Bienvenido, {user.nombre}
-              </h1>
-              <p className="text-gray-600">
-                Sistema de Ventas Multiempresa
-              </p>
-            </div>
+          <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">
-                  {user.nombre} {user.apellido}
-                </p>
-                <p className="text-sm text-gray-500">{user.correo}</p>
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+                <span className="text-lg font-bold text-white">
+                  {user.nombre.charAt(0)}{user.apellido.charAt(0)}
+                </span>
               </div>
-              <Button
-                variant="outline"
-                onClick={handleLogout}
-                disabled={isLoading}
-                className="flex items-center space-x-2"
-              >
-                <LogOut className="h-4 w-4" />
-                <span>Cerrar Sesión</span>
-              </Button>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">¡Hola, {user.nombre}!</h1>
+                <p className="text-sm text-gray-600">Sistema de Ventas Multiempresa</p>
+              </div>
             </div>
+            <Button
+              variant="outline"
+              onClick={handleLogout}
+              disabled={isLoading}
+              className="flex items-center space-x-2 hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-colors"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Cerrar Sesión</span>
+            </Button>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* User Info */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
+        {/* User Profile Section */}
+        <div className="mb-8">
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-4">
+              <h2 className="text-xl font-bold text-white flex items-center space-x-2">
                 <User className="h-5 w-5" />
-                <span>Información del Usuario</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Nombre completo</label>
-                  <p className="text-sm text-gray-900">{user.nombre} {user.apellido}</p>
+                <span>Mi Perfil</span>
+              </h2>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Nombre completo</label>
+                    <p className="text-sm font-semibold text-gray-900">{user.nombre} {user.apellido}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Correo electrónico</label>
+                    <p className="text-sm text-gray-900">{user.correo}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Cédula</label>
+                    <p className="text-sm text-gray-900">{user.cedula}</p>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Cédula</label>
-                  <p className="text-sm text-gray-900">{user.cedula}</p>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Teléfono</label>
+                    <p className="text-sm text-gray-900">
+                      {user.telefono ? user.telefono : <span className="text-gray-400 italic">No proporcionado</span>}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Dirección</label>
+                    <p className="text-sm text-gray-900">
+                      {user.direccion ? user.direccion : <span className="text-gray-400 italic">No proporcionada</span>}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Género</label>
+                    <p className="text-sm text-gray-900 capitalize">
+                      {user.genero ? user.genero : <span className="text-gray-400 italic">No especificado</span>}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Correo</label>
-                  <p className="text-sm text-gray-900">{user.correo}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Teléfono</label>
-                  <p className="text-sm text-gray-900">{user.telefono || 'No especificado'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Dirección</label>
-                  <p className="text-sm text-gray-900">{user.direccion || 'No especificada'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Género</label>
-                  <p className="text-sm text-gray-900 capitalize">{user.genero || 'No especificado'}</p>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Rol</label>
+                    <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getRoleColor(user.tipo_usuario)}`}>
+                      {getRoleDisplayName(user.tipo_usuario)}
+                    </span>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Estado</label>
+                    <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(user.estado)}`}>
+                      {user.estado.replace('_', ' ').toUpperCase()}
+                    </span>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Email verificado</label>
+                    <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                      ✓ SÍ
+                    </span>
+                  </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Shield className="h-5 w-5" />
-                <span>Estado de la Cuenta</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-500">Rol</label>
-                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(user.tipo_usuario)}`}>
-                  {getRoleDisplayName(user.tipo_usuario)}
-                </span>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Estado</label>
-                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(user.estado)}`}>
-                  {user.estado.replace('_', ' ').toUpperCase()}
-                </span>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Email verificado</label>
-                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                  user.email_verificado ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                }`}>
-                  {user.email_verificado ? 'SÍ' : 'NO'}
-                </span>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Miembro desde</label>
-                <p className="text-sm text-gray-900">
-                  {new Date(user.fecha_registro).toLocaleDateString('es-ES', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </p>
-              </div>
-              {user.fecha_ultimo_acceso && (
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Último acceso</label>
-                  <p className="text-sm text-gray-900">
-                    {new Date(user.fecha_ultimo_acceso).toLocaleDateString('es-ES', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </p>
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Miembro desde</label>
+                    <p className="text-sm text-gray-900">
+                      {user.fecha_registro ? 
+                        new Date(user.fecha_registro).toLocaleDateString('es-ES', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        }) : 
+                        <span className="text-gray-400 italic">No disponible</span>
+                      }
+                    </p>
+                  </div>
+                  {user.fecha_ultimo_acceso && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Último acceso</label>
+                      <p className="text-sm text-gray-900">
+                        {new Date(user.fecha_ultimo_acceso).toLocaleDateString('es-ES', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    </div>
+                  )}
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Link to="/products">
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center space-x-2 text-lg">
-                  <ShoppingCart className="h-5 w-5 text-blue-600" />
-                  <span>Comprar</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription>
-                  Explora productos y servicios disponibles
-                </CardDescription>
-              </CardContent>
-            </Card>
-          </Link>
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Acciones Rápidas</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1">
+              <div className="p-6">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <ShoppingCart className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Comprar</h3>
+                <p className="text-sm text-gray-600">Explora productos y servicios disponibles</p>
+              </div>
+            </div>
 
-          {(user.tipo_usuario === 'vendedor' || user.tipo_usuario === 'administrador') ? (
-            <Link to="/products/create">
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center space-x-2 text-lg">
-                    <Package className="h-5 w-5 text-green-600" />
-                    <span>Vender</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription>
-                    Publica tus productos y servicios
-                  </CardDescription>
-                </CardContent>
-              </Card>
-            </Link>
-          ) : (
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center space-x-2 text-lg">
-                  <Package className="h-5 w-5 text-green-600" />
-                  <span>Vender</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription>
-                  Publica tus productos y servicios
-                </CardDescription>
-              </CardContent>
-            </Card>
-          )}
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1">
+              <div className="p-6">
+                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <Package className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Vender</h3>
+                <p className="text-sm text-gray-600">Publica tus productos y servicios</p>
+              </div>
+            </div>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center space-x-2 text-lg">
-                <MessageSquare className="h-5 w-5 text-purple-600" />
-                <span>Chat</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>
-                Comunícate con otros usuarios
-              </CardDescription>
-            </CardContent>
-          </Card>
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1">
+              <div className="p-6">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <MessageSquare className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Chat</h3>
+                <p className="text-sm text-gray-600">Comunícate con otros usuarios</p>
+              </div>
+            </div>
 
-          {(user.tipo_usuario === 'vendedor' || user.tipo_usuario === 'administrador') ? (
-            <Link to="/my-products">
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center space-x-2 text-lg">
-                    <Package className="h-5 w-5 text-orange-600" />
-                    <span>Mis Productos</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription>
-                    Gestiona tus productos publicados
-                  </CardDescription>
-                </CardContent>
-              </Card>
-            </Link>
-          ) : (
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center space-x-2 text-lg">
-                  <Settings className="h-5 w-5 text-gray-600" />
-                  <span>Configuración</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription>
-                  Gestiona tu cuenta y preferencias
-                </CardDescription>
-              </CardContent>
-            </Card>
-          )}
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1">
+              <div className="p-6">
+                <div className="w-12 h-12 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <Settings className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Configuración</h3>
+                <p className="text-sm text-gray-600">Gestiona tu cuenta y preferencias</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Admin/Moderator Actions */}
         {(user.tipo_usuario === 'administrador' || user.tipo_usuario === 'moderador') && (
           <div className="mt-8">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Users className="h-5 w-5" />
-                  <span>Panel de Administración</span>
-                </CardTitle>
-                <CardDescription>
-                  Herramientas de moderación y administración
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Button variant="outline" className="justify-start">
-                    <Users className="h-4 w-4 mr-2" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Panel de Administración</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1">
+                <div className="p-6">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <Users className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Gestión de Usuarios</h3>
+                  <p className="text-sm text-gray-600 mb-4">Administra usuarios, roles y permisos</p>
+                  <Button
+                    onClick={() => navigate('/admin/users')}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                  >
                     Gestionar Usuarios
                   </Button>
-                  <Button variant="outline" className="justify-start">
-                    <Shield className="h-4 w-4 mr-2" />
-                    Moderar Contenido
-                  </Button>
-                  <Button variant="outline" className="justify-start">
-                    <Settings className="h-4 w-4 mr-2" />
-                    Configuración del Sistema
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1">
+                <div className="p-6">
+                  <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <BarChart3 className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Estadísticas</h3>
+                  <p className="text-sm text-gray-600 mb-4">Visualiza métricas y reportes</p>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {/* Implementar estadísticas */}}
+                  >
+                    Ver Estadísticas
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+
+              {user.tipo_usuario === 'administrador' && (
+                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1">
+                  <div className="p-6">
+                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                      <UserPlus className="h-6 w-6 text-white" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Registrar Moderador</h3>
+                    <p className="text-sm text-gray-600 mb-4">Crear nuevas cuentas de moderador</p>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => navigate('/admin/register-moderator')}
+                      >
+                        Registrar Moderador
+                      </Button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
-        {/* Status Alerts */}
-        {!user.email_verificado && (
-          <div className="mt-8">
-            <Alert variant="warning">
-              <AlertDescription>
-                Tu email no ha sido verificado. Revisa tu correo y haz clic en el enlace de verificación.
-              </AlertDescription>
-            </Alert>
-          </div>
-        )}
+        {/* Status Alerts - Email verification removed as it's handled at login */}
 
         {user.estado !== 'activo' && (
           <div className="mt-8">

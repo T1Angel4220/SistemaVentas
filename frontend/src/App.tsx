@@ -8,7 +8,14 @@ import { HomePage } from './pages/HomePage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { VerifyEmailPage } from './pages/VerifyEmailPage';
+import { VerifyCodePage } from './pages/VerifyCodePage';
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
+import { ResetPasswordPage } from './pages/ResetPasswordPage';
+import { ResetPasswordCodePage } from './pages/ResetPasswordCodePage';
 import { DashboardPage } from './pages/DashboardPage';
+import { UserManagementPage } from './pages/UserManagementPage';
+import { RegisterModeratorPage } from './pages/RegisterModeratorPage';
+import { SessionManagementPage } from './pages/SessionManagementPage';
 import { ProductsPage } from './pages/ProductsPage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
 import { CreateProductPage } from './pages/CreateProductPage';
@@ -30,6 +37,10 @@ function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/verify-email" element={<VerifyEmailPage />} />
+              <Route path="/verify-code" element={<VerifyCodePage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/reset-password-code" element={<ResetPasswordCodePage />} />
               
               {/* Rutas protegidas */}
               <Route 
@@ -42,6 +53,31 @@ function App() {
               />
               
               {/* Rutas de administración (solo para moderadores y administradores) */}
+              <Route 
+                path="/admin/users" 
+                element={
+                  <ProtectedRoute allowedRoles={['moderador', 'administrador']}>
+                    <UserManagementPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/admin/sessions/:userId" 
+                element={
+                  <ProtectedRoute allowedRoles={['moderador', 'administrador']}>
+                    <SessionManagementPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/register-moderator" 
+                element={
+                  <ProtectedRoute allowedRoles={['administrador']}>
+                    <RegisterModeratorPage />
+                  </ProtectedRoute>
+                } 
+              />
               <Route 
                 path="/admin/*" 
                 element={

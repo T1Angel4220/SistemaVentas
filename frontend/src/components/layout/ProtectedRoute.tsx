@@ -85,22 +85,24 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // Si el email no está verificado, mostrar mensaje
-  if (!user.email_verificado) {
+  // Debug: Verificar el valor de email_verificado
+  console.log('🔍 ProtectedRoute - user:', user);
+  console.log('🔍 ProtectedRoute - user.email_verificado:', user.email_verificado, 'tipo:', typeof user.email_verificado);
+  
+  // Si el usuario no está cargado o está cargando, mostrar loading
+  if (!user || isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Email No Verificado</h2>
-          <p className="text-gray-600 mb-4">
-            Debes verificar tu email antes de continuar.
-          </p>
-          <p className="text-sm text-gray-500">
-            Revisa tu correo y haz clic en el enlace de verificación.
-          </p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando...</p>
         </div>
       </div>
     );
   }
+  
+  // ELIMINAMOS LA VERIFICACIÓN DE EMAIL EN EL DASHBOARD
+  // La verificación de email ya se hace al hacer login, no es necesaria aquí
 
   // Si todo está bien, mostrar el contenido
   return <>{children}</>;

@@ -136,10 +136,10 @@ class ApiService {
     });
   }
 
-  async verifyEmail(token: string): Promise<ApiResponse> {
+  async verifyEmail(code: string): Promise<ApiResponse> {
     return this.request('/auth/verify-email', {
-      method: 'GET',
-      // Agregar token como query parameter
+      method: 'POST',
+      body: JSON.stringify({ code }),
     });
   }
 
@@ -150,15 +150,43 @@ class ApiService {
     });
   }
 
-  async resetPassword(token: string, newPassword: string): Promise<ApiResponse> {
+  async resetPassword(code: string, newPassword: string): Promise<ApiResponse> {
     return this.request('/auth/reset-password', {
       method: 'POST',
-      body: JSON.stringify({ token, newPassword }),
+      body: JSON.stringify({ code, newPassword }),
     });
   }
 
   async getProfile(): Promise<ApiResponse<User>> {
     return this.request<User>('/auth/profile');
+  }
+
+  async getUsers(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    role?: string;
+    status?: string;
+  }): Promise<ApiResponse<{
+    users: User[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      pages: number;
+    };
+  }>> {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.role) queryParams.append('role', params.role);
+    if (params?.status) queryParams.append('status', params.status);
+    
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/auth/users?${queryString}` : '/auth/users';
+    
+    return this.request(endpoint);
   }
 
   async logout(): Promise<ApiResponse> {
@@ -189,6 +217,40 @@ class ApiService {
   async closeSession(sessionId: number): Promise<ApiResponse> {
     return this.request(`/auth/sessions/${sessionId}`, {
       method: 'DELETE',
+    });
+  }
+
+  // Métodos administrativos de gestión de sesiones (solo moderadores/admin)
+  async getUserSessions(userId: number): Promise<ApiResponse<{
+    user: {
+      id: number;
+      nombre: string;
+      apellido: string;
+      correo: string;
+    };
+    sessions: Array<{
+      id: number;
+      fecha_inicio: string;
+      fecha_expiracion: string;
+      ip_address: string;
+      user_agent: string;
+      activa: boolean;
+    }>;
+  }>> {
+    return this.request(`/auth/admin/sessions/${userId}`);
+  }
+
+  async closeUserSession(sessionId: number, motivo?: string): Promise<ApiResponse> {
+    return this.request(`/auth/admin/sessions/${sessionId}`, {
+      method: 'DELETE',
+      body: JSON.stringify({ motivo }),
+    });
+  }
+
+  async closeAllUserSessions(userId: number, motivo?: string): Promise<ApiResponse> {
+    return this.request(`/auth/admin/sessions/user/${userId}`, {
+      method: 'DELETE',
+      body: JSON.stringify({ motivo }),
     });
   }
 
