@@ -26,7 +26,29 @@ export const ProductDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isZoomed, setIsZoomed] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setMousePosition({ x, y });
+  };
+
+  const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
+    setIsZoomed(true);
+    // Calcular posición del popup solo una vez al entrar
+    const rect = e.currentTarget.getBoundingClientRect();
+    const popupX = rect.right + 20; // 20px a la derecha de la imagen
+    const popupY = rect.top; // Alineado con la parte superior de la imagen
+    setPopupPosition({ x: popupX, y: popupY });
+  };
+
+  const handleMouseLeave = () => {
+    setIsZoomed(false);
+  };
 
   const loadProduct = useCallback(async () => {
     try {
@@ -139,12 +161,12 @@ export const ProductDetailPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-6 py-3">
           <div className="flex items-center space-x-4">
             {/* Botón de regresar */}
-            <Link to="/products">
+              <Link to="/products">
               <Button variant="ghost" size="sm" className="text-gray-600 hover:text-blue-600 hover:bg-transparent p-0 h-auto">
                 <ArrowLeft className="h-4 w-4 mr-1" />
                 Regresar
-              </Button>
-            </Link>
+                </Button>
+              </Link>
             
             {/* Breadcrumb */}
             <div className="flex items-center space-x-2 text-sm text-gray-600">
@@ -162,58 +184,85 @@ export const ProductDetailPage: React.FC = () => {
         {/* Layout principal estilo Amazon */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Columna izquierda - Imágenes y descripción */}
-          <div className="space-y-4">
-            {/* Imagen principal */}
+                  <div className="space-y-4">
+                    {/* Imagen principal */}
             <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
               {product.imagenes.length > 0 ? (
-                <div className="relative">
-                  <img
-                    src={product.imagenes[currentImageIndex]?.url_imagen}
-                    alt={product.nombre}
-                    className="w-full h-[500px] object-contain bg-white"
-                  />
+                <div className="relative group">
+                  <div 
+                    className="relative overflow-hidden cursor-zoom-in"
+                    onMouseMove={handleMouseMove}
+                    onMouseEnter={handleMouseEnter}
+                    onMouseLeave={handleMouseLeave}
+                  >
+                      <img
+                        src={product.imagenes[currentImageIndex]?.url_imagen}
+                        alt={product.nombre}
+                      className="w-full h-[500px] object-contain bg-white"
+                    />
+                    
+                    {/* Overlay de zoom */}
+                    {isZoomed && (
+                      <div className="absolute inset-0 bg-black/10 pointer-events-none">
+                        <div 
+                          className="absolute w-20 h-20 border-2 border-blue-500 bg-blue-500/20 rounded-full pointer-events-none"
+                          style={{
+                            left: `${mousePosition.x}%`,
+                            top: `${mousePosition.y}%`,
+                            transform: 'translate(-50%, -50%)'
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
                   
                   {/* Contador de imágenes */}
-                  {product.imagenes.length > 1 && (
+                      {product.imagenes.length > 1 && (
                     <div className="absolute top-4 right-4">
                       <div className="bg-black/70 rounded px-2 py-1 text-white text-xs">
                         {currentImageIndex + 1} de {product.imagenes.length}
                       </div>
                     </div>
                   )}
+                  
+                  {/* Indicador de zoom */}
+                  <div className="absolute bottom-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <div className="bg-white/90 rounded px-2 py-1 text-xs text-gray-600 shadow-sm">
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="h-[500px] bg-gray-100 flex items-center justify-center">
                   <div className="text-center">
                     <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-600">Sin imágenes disponibles</h3>
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            {/* Miniaturas */}
-            {product.imagenes.length > 1 && (
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Miniaturas */}
+                    {product.imagenes.length > 1 && (
               <div className="flex space-x-2 overflow-x-auto pb-2">
-                {product.imagenes.map((imagen, index) => (
-                  <button
-                    key={imagen.id}
-                    onClick={() => setCurrentImageIndex(index)}
+                          {product.imagenes.map((imagen, index) => (
+                            <button
+                              key={imagen.id}
+                              onClick={() => setCurrentImageIndex(index)}
                     className={`flex-shrink-0 w-16 h-16 border-2 rounded transition-all duration-200 ${
-                      index === currentImageIndex 
+                                index === currentImageIndex 
                         ? 'border-orange-500' 
                         : 'border-gray-300 hover:border-gray-400'
-                    }`}
-                  >
-                    <img
-                      src={imagen.url_imagen}
-                      alt={`${product.nombre} ${index + 1}`}
+                              }`}
+                            >
+                              <img
+                                src={imagen.url_imagen}
+                                alt={`${product.nombre} ${index + 1}`}
                       className="w-full h-full object-cover rounded"
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
+                              />
+                            </button>
+                          ))}
+                      </div>
+                    )}
 
 
           </div>
@@ -229,21 +278,21 @@ export const ProductDetailPage: React.FC = () => {
                 Código: {product.codigo}
               </div>
               
-              {/* Precio */}
+                  {/* Precio */}
               <div className="mb-4">
                 <span className="text-3xl font-bold text-gray-900">
                   ₡{product.precio ? Number(product.precio).toFixed(2) : '0.00'}
                 </span>
-              </div>
+                    </div>
               
               {/* Estado */}
               <div className="mb-4">
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
                   {product.estado === 'pendiente_revision' ? 'Pendiente de revisión' : product.estado.replace('_', ' ')}
                 </span>
-              </div>
-            </div>
-
+                    </div>
+                  </div>
+                  
             {/* Información de estado pendiente */}
             {product.estado === 'pendiente_revision' && (
               <Alert className="border-yellow-200 bg-yellow-50 rounded-lg">
@@ -269,9 +318,9 @@ export const ProductDetailPage: React.FC = () => {
                       Editar
                     </Button>
                   )}
-                  
+                    
                   {canDeleteProduct(product.vendedor_id) && !product.es_peligroso && (
-                    <Button 
+                      <Button 
                       onClick={() => {
                         if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
                           handleDeleteProduct();
@@ -282,10 +331,10 @@ export const ProductDetailPage: React.FC = () => {
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
                       Eliminar
-                    </Button>
-                  )}
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
             )}
 
             {/* Información del vendedor - Solo si no es el propietario */}
@@ -316,13 +365,13 @@ export const ProductDetailPage: React.FC = () => {
                 <div className="flex items-center space-x-2">
                   <MapPin className="h-4 w-4 text-gray-500" />
                   <span className="text-gray-900">{product.ubicacion_nombre}</span>
-                </div>
-                {product.provincia && (
+                    </div>
+                      {product.provincia && (
                   <p className="text-sm text-gray-600 mt-1">
-                    {product.provincia}, {product.canton}, {product.distrito}
-                  </p>
-                )}
-              </div>
+                          {product.provincia}, {product.canton}, {product.distrito}
+                        </p>
+                      )}
+                    </div>
             )}
 
             {/* Información adicional */}
@@ -346,37 +395,65 @@ export const ProductDetailPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Popup de zoom - aparece como overlay estático */}
+        {isZoomed && product.imagenes.length > 0 && (
+          <div 
+            className="fixed z-50 pointer-events-none"
+            style={{
+              left: `${popupPosition.x}px`,
+              top: `${Math.max(10, popupPosition.y)}px`,
+            }}
+          >
+            <div className="border border-gray-300 rounded-lg overflow-hidden bg-white shadow-2xl">
+              <div className="w-[700px] h-[600px] overflow-hidden relative">
+                <img
+                  src={product.imagenes[currentImageIndex]?.url_imagen}
+                  alt={`${product.nombre} - Vista ampliada`}
+                  className="absolute object-contain bg-white"
+                  style={{
+                    width: '200%',
+                    height: '200%',
+                    left: `${25 - mousePosition.x}%`,
+                    top: `${25 - mousePosition.y}%`,
+                    transition: 'none'
+                  }}
+                />
+              </div>
+                    </div>
+                  </div>
+        )}
+
         {/* Descripción del producto - estilo Amazon */}
         <div className="mt-12">
           <div className="border-t border-gray-200 pt-8">
             <h2 className="text-xl font-medium text-gray-900 mb-4">Descripción del producto</h2>
             <div className="prose max-w-none">
-              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                {product.descripcion}
-              </p>
+                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                      {product.descripcion}
+                    </p>
+                  </div>
+                    </div>
             </div>
-          </div>
-        </div>
 
         {/* Alertas de estado adicionales */}
         <div className="mt-8 space-y-4">
-          {!product.disponibilidad && (
-            <Alert className="border-red-200 bg-red-50 rounded-lg">
-              <AlertCircle className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-800 font-medium text-sm">
-                Este producto no está disponible actualmente.
-              </AlertDescription>
-            </Alert>
-          )}
+              {!product.disponibilidad && (
+                <Alert className="border-red-200 bg-red-50 rounded-lg">
+                  <AlertCircle className="h-4 w-4 text-red-600" />
+                  <AlertDescription className="text-red-800 font-medium text-sm">
+                    Este producto no está disponible actualmente.
+                  </AlertDescription>
+                </Alert>
+              )}
 
-          {product.es_peligroso && (
-            <Alert className="border-red-200 bg-red-50 rounded-lg">
-              <AlertTriangle className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-800 font-medium text-sm">
-                Este producto está marcado como peligroso y no puede ser modificado.
-              </AlertDescription>
-            </Alert>
-          )}
+              {product.es_peligroso && (
+                <Alert className="border-red-200 bg-red-50 rounded-lg">
+                  <AlertTriangle className="h-4 w-4 text-red-600" />
+                  <AlertDescription className="text-red-800 font-medium text-sm">
+                    Este producto está marcado como peligroso y no puede ser modificado.
+                  </AlertDescription>
+                </Alert>
+              )}
         </div>
       </main>
     </div>
