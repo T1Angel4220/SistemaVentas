@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useCategories, useLocations } from '../hooks/useApiData';
+import { useCategories } from '../hooks/useApiData';
 import { apiService } from '../services/api';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Textarea } from '../components/ui/Textarea';
 import { Label } from '../components/ui/Label';
 import { Alert, AlertDescription } from '../components/ui/Alert';
-import { Badge } from '../components/ui/Badge';
 import { 
   Package, 
   Calendar, 
@@ -18,17 +17,11 @@ import {
   Save,
   ArrowLeft,
   Clock,
-  DollarSign,
-  MapPin,
-  Tag,
-  FileText,
-  Image as ImageIcon,
   AlertCircle,
   CheckCircle2
 } from 'lucide-react';
 import type { ProductForm, ImageFile } from '../types/product.types';
 import type { Category } from '../types/category.types';
-import type { Location } from '../types/location.types';
 
 export const CreateProductPage: React.FC = () => {
   const { user } = useAuth();
@@ -40,7 +33,6 @@ export const CreateProductPage: React.FC = () => {
 
   // Usar hooks optimizados para evitar múltiples requests
   const { data: categories, loading: categoriesLoading, error: categoriesError } = useCategories();
-  const { data: locations, loading: locationsLoading, error: locationsError } = useLocations();
 
   const [form, setForm] = useState<ProductForm>({
     codigo: '',
@@ -242,34 +234,39 @@ export const CreateProductPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-      {/* Hero Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      {/* Hero Header mejorado */}
+      <div className="relative bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white overflow-hidden">
+        {/* Patrón de fondo */}
+        <div className="absolute inset-0 bg-black/10">
+          <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-transparent"></div>
+        </div>
+        
+        <div className="relative max-w-7xl mx-auto px-6 py-8">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-8">
               <Button 
                 variant="outline" 
                 onClick={() => navigate('/products')}
-                className="bg-white/20 text-white border-white/30 hover:bg-white hover:text-blue-600 backdrop-blur-sm"
+                className="bg-white/20 text-white border-white/30 hover:bg-white hover:text-blue-600 backdrop-blur-sm rounded-xl px-6 py-3 font-medium transition-all duration-300 shadow-lg hover:shadow-xl"
               >
-                <ArrowLeft className="h-4 w-4 mr-2" />
+                <ArrowLeft className="h-5 w-5 mr-2" />
                 Volver
               </Button>
               <div>
-                <h1 className="text-4xl font-bold mb-2">
+                <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
                   Crear {form.tipo === 'producto' ? 'Producto' : 'Servicio'}
                 </h1>
-                <p className="text-blue-100">
+                <p className="text-blue-100 text-base">
                   Completa la información para publicar tu {form.tipo}
                 </p>
               </div>
             </div>
             <div className="hidden md:block">
-              <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-2xl border border-white/30">
                 {form.tipo === 'producto' ? (
-                  <Package className="w-10 h-10 text-white" />
+                  <Package className="w-8 h-8 text-white" />
                 ) : (
-                  <Calendar className="w-10 h-10 text-white" />
+                  <Calendar className="w-8 h-8 text-white" />
                 )}
               </div>
             </div>
@@ -277,7 +274,7 @@ export const CreateProductPage: React.FC = () => {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8 relative z-10">
+      <main className="max-w-7xl mx-auto px-6 py-12 -mt-12 relative z-10">
         {/* Alertas */}
         {errors.general && (
           <Alert variant="destructive" className="mb-6">
@@ -295,14 +292,6 @@ export const CreateProductPage: React.FC = () => {
           </Alert>
         )}
 
-        {locationsError && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              Error al cargar ubicaciones: {locationsError}
-            </AlertDescription>
-          </Alert>
-        )}
 
         {success && (
           <Alert className="mb-6 bg-green-50 border-green-200">
@@ -314,394 +303,352 @@ export const CreateProductPage: React.FC = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Columna izquierda - Información básica */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Tipo de publicación */}
-              <Card className="shadow-2xl border-0 bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden">
-                <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6">
-                  <CardTitle className="flex items-center space-x-3 text-gray-800">
-                    <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                      <Tag className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <span className="text-xl font-bold">Tipo de Publicación</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-2 gap-4">
-                    <button
-                      type="button"
-                      onClick={() => handleInputChange('tipo', 'producto')}
-                      className={`p-6 rounded-xl border-2 transition-all duration-300 ${
-                        form.tipo === 'producto'
-                          ? 'border-blue-500 bg-blue-50 shadow-lg scale-105'
-                          : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
-                      }`}
-                    >
-                      <Package className={`h-10 w-10 mx-auto mb-3 ${
-                        form.tipo === 'producto' ? 'text-blue-600' : 'text-gray-400'
-                      }`} />
-                      <h3 className={`font-semibold text-lg ${
-                        form.tipo === 'producto' ? 'text-blue-900' : 'text-gray-700'
-                      }`}>Producto</h3>
-                      <p className="text-sm text-gray-600 mt-1">Artículo físico o digital</p>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleInputChange('tipo', 'servicio')}
-                      className={`p-6 rounded-xl border-2 transition-all duration-300 ${
-                        form.tipo === 'servicio'
-                          ? 'border-blue-500 bg-blue-50 shadow-lg scale-105'
-                          : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
-                      }`}
-                    >
-                      <Calendar className={`h-10 w-10 mx-auto mb-3 ${
-                        form.tipo === 'servicio' ? 'text-blue-600' : 'text-gray-400'
-                      }`} />
-                      <h3 className={`font-semibold text-lg ${
-                        form.tipo === 'servicio' ? 'text-blue-900' : 'text-gray-700'
-                      }`}>Servicio</h3>
-                      <p className="text-sm text-gray-600 mt-1">Servicio profesional</p>
-                    </button>
-                  </div>
-                </CardContent>
-              </Card>
+          {/* Tipo de publicación - Estilo Amazon horizontal */}
+          <Card className="shadow-lg border-0 bg-white rounded-lg overflow-hidden">
+            <CardContent className="p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Tipo de Publicación</h2>
+              <div className="flex space-x-4">
+                <button
+                  type="button"
+                  onClick={() => handleInputChange('tipo', 'producto')}
+                  className={`flex items-center space-x-3 px-6 py-3 rounded-lg border-2 transition-all duration-200 ${
+                    form.tipo === 'producto'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                  }`}
+                >
+                  <Package className="h-5 w-5" />
+                  <span className="font-medium">Producto</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleInputChange('tipo', 'servicio')}
+                  className={`flex items-center space-x-3 px-6 py-3 rounded-lg border-2 transition-all duration-200 ${
+                    form.tipo === 'servicio'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                  }`}
+                >
+                  <Calendar className="h-5 w-5" />
+                  <span className="font-medium">Servicio</span>
+                </button>
+              </div>
+            </CardContent>
+          </Card>
 
-              {/* Información básica */}
-              <Card className="shadow-2xl border-0 bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden">
-                <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6">
-                  <CardTitle className="flex items-center space-x-3 text-gray-800">
-                    <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                      <FileText className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <span className="text-xl font-bold">Información Básica</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <Label htmlFor="codigo" className="text-sm font-medium text-gray-700 mb-2 block">
-                        Código del {form.tipo} *
-                      </Label>
-                      <div className="relative">
-                        <Tag className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                        <Input
-                          id="codigo"
-                          value={form.codigo}
-                          onChange={(e) => handleInputChange('codigo', e.target.value)}
-                          placeholder="Ej: PROD-001"
-                          className={`pl-10 h-12 ${errors.codigo ? 'border-red-500' : ''}`}
-                        />
-                      </div>
-                      {errors.codigo && (
-                        <p className="text-red-500 text-sm mt-1">{errors.codigo}</p>
-                      )}
-                    </div>
+          {/* Información básica - Estilo Amazon */}
+          <Card className="shadow-lg border-0 bg-white rounded-lg overflow-hidden">
+            <CardContent className="p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-6">Información Básica</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <Label htmlFor="codigo" className="block text-sm font-medium text-gray-700 mb-2">
+                    Código del {form.tipo} *
+                  </Label>
+                  <Input
+                    id="codigo"
+                    value={form.codigo}
+                    onChange={(e) => handleInputChange('codigo', e.target.value)}
+                    placeholder="Ej: PROD-001"
+                    className={`w-full h-10 rounded-md border transition-colors ${
+                      errors.codigo 
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                        : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+                    }`}
+                  />
+                  {errors.codigo && (
+                    <p className="text-red-500 text-sm mt-1">{errors.codigo}</p>
+                  )}
+                </div>
 
-                    <div>
-                      <Label htmlFor="precio" className="text-sm font-medium text-gray-700 mb-2 block">
-                        Precio (₡) *
-                      </Label>
-                      <div className="relative">
-                        <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                        <Input
-                          id="precio"
-                          type="number"
-                          step="0.01"
-                          value={form.precio}
-                          onChange={(e) => handleInputChange('precio', e.target.value)}
-                          placeholder="0.00"
-                          className={`pl-10 h-12 ${errors.precio ? 'border-red-500' : ''}`}
-                        />
-                      </div>
-                      {errors.precio && (
-                        <p className="text-red-500 text-sm mt-1">{errors.precio}</p>
-                      )}
-                    </div>
-                  </div>
+                <div>
+                  <Label htmlFor="precio" className="block text-sm font-medium text-gray-700 mb-2">
+                    Precio (₡) *
+                  </Label>
+                  <Input
+                    id="precio"
+                    type="number"
+                    step="0.01"
+                    value={form.precio}
+                    onChange={(e) => handleInputChange('precio', e.target.value)}
+                    placeholder="0.00"
+                    className={`w-full h-10 rounded-md border transition-colors ${
+                      errors.precio 
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                        : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+                    }`}
+                  />
+                  {errors.precio && (
+                    <p className="text-red-500 text-sm mt-1">{errors.precio}</p>
+                  )}
+                </div>
+              </div>
 
+              <div className="mb-6">
+                <Label htmlFor="nombre" className="block text-sm font-medium text-gray-700 mb-2">
+                  Nombre del {form.tipo} *
+                </Label>
+                <Input
+                  id="nombre"
+                  value={form.nombre}
+                  onChange={(e) => handleInputChange('nombre', e.target.value)}
+                  placeholder={`Nombre descriptivo del ${form.tipo}`}
+                  className={`w-full h-10 rounded-md border transition-colors ${
+                    errors.nombre 
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                      : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+                  }`}
+                />
+                {errors.nombre && (
+                  <p className="text-red-500 text-sm mt-1">{errors.nombre}</p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="descripcion" className="block text-sm font-medium text-gray-700 mb-2">
+                  Descripción *
+                </Label>
+                <Textarea
+                  id="descripcion"
+                  value={form.descripcion}
+                  onChange={(e) => handleInputChange('descripcion', e.target.value)}
+                  placeholder={`Describe detalladamente tu ${form.tipo}...`}
+                  rows={4}
+                  className={`w-full rounded-md border transition-colors resize-none ${
+                    errors.descripcion 
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                      : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+                  }`}
+                />
+                <div className="flex justify-between items-center mt-1">
+                  {errors.descripcion ? (
+                    <p className="text-red-500 text-sm">{errors.descripcion}</p>
+                  ) : (
+                    <div></div>
+                  )}
+                  <p className={`text-sm ${
+                    form.descripcion.length < 10 ? 'text-red-500' : 'text-green-600'
+                  }`}>
+                    {form.descripcion.length} caracteres (mínimo 10)
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Campos específicos de servicio */}
+          {form.tipo === 'servicio' && (
+            <Card className="shadow-lg border-0 bg-white rounded-lg overflow-hidden">
+              <CardContent className="p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-6">Detalles del Servicio</h2>
+                <div className="space-y-4">
                   <div>
-                    <Label htmlFor="nombre" className="text-sm font-medium text-gray-700 mb-2 block">
-                      Nombre del {form.tipo} *
+                    <Label htmlFor="horario_atencion" className="block text-sm font-medium text-gray-700 mb-2">
+                      Horario de Atención *
                     </Label>
                     <Input
-                      id="nombre"
-                      value={form.nombre}
-                      onChange={(e) => handleInputChange('nombre', e.target.value)}
-                      placeholder={`Nombre descriptivo del ${form.tipo}`}
-                      className={`h-12 ${errors.nombre ? 'border-red-500' : ''}`}
+                      id="horario_atencion"
+                      value={form.horario_atencion}
+                      onChange={(e) => handleInputChange('horario_atencion', e.target.value)}
+                      placeholder="Ej: Lunes a Viernes 8:00 AM - 5:00 PM"
+                      className={`w-full h-10 rounded-md border transition-colors ${
+                        errors.horario_atencion 
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                          : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+                      }`}
                     />
-                    {errors.nombre && (
-                      <p className="text-red-500 text-sm mt-1">{errors.nombre}</p>
+                    {errors.horario_atencion && (
+                      <p className="text-red-500 text-sm mt-1">{errors.horario_atencion}</p>
                     )}
                   </div>
 
                   <div>
-                    <Label htmlFor="descripcion" className="text-sm font-medium text-gray-700 mb-2 block">
-                      Descripción *
+                    <Label htmlFor="dias_disponibles" className="block text-sm font-medium text-gray-700 mb-2">
+                      Días Disponibles *
                     </Label>
-                    <Textarea
-                      id="descripcion"
-                      value={form.descripcion}
-                      onChange={(e) => handleInputChange('descripcion', e.target.value)}
-                      placeholder={`Describe detalladamente tu ${form.tipo}...`}
-                      rows={6}
-                      className={errors.descripcion ? 'border-red-500' : ''}
+                    <Input
+                      id="dias_disponibles"
+                      value={form.dias_disponibles}
+                      onChange={(e) => handleInputChange('dias_disponibles', e.target.value)}
+                      placeholder="Ej: Lunes a Viernes"
+                      className={`w-full h-10 rounded-md border transition-colors ${
+                        errors.dias_disponibles 
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                          : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+                      }`}
                     />
-                    {errors.descripcion && (
-                      <p className="text-red-500 text-sm mt-1">{errors.descripcion}</p>
+                    {errors.dias_disponibles && (
+                      <p className="text-red-500 text-sm mt-1">{errors.dias_disponibles}</p>
                     )}
-                    <p className="text-sm text-gray-500 mt-1">
-                      {form.descripcion.length} caracteres (mínimo 10)
-                    </p>
                   </div>
-                </CardContent>
-              </Card>
 
-              {/* Campos específicos de servicio */}
-              {form.tipo === 'servicio' && (
-                <Card className="shadow-2xl border-0 bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden">
-                  <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 p-6">
-                    <CardTitle className="flex items-center space-x-3 text-gray-800">
-                      <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                        <Clock className="h-5 w-5 text-purple-600" />
-                      </div>
-                      <span className="text-xl font-bold">Detalles del Servicio</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-6 space-y-6">
-                    <div>
-                      <Label htmlFor="horario_atencion" className="text-sm font-medium text-gray-700 mb-2 block">
-                        Horario de Atención *
-                      </Label>
-                      <Input
-                        id="horario_atencion"
-                        value={form.horario_atencion}
-                        onChange={(e) => handleInputChange('horario_atencion', e.target.value)}
-                        placeholder="Ej: Lunes a Viernes 8:00 AM - 5:00 PM"
-                        className={`h-12 ${errors.horario_atencion ? 'border-red-500' : ''}`}
-                      />
-                      {errors.horario_atencion && (
-                        <p className="text-red-500 text-sm mt-1">{errors.horario_atencion}</p>
-                      )}
-                    </div>
+                  <div>
+                    <Label htmlFor="duracion_estimada" className="block text-sm font-medium text-gray-700 mb-2">
+                      Duración Estimada
+                    </Label>
+                    <Input
+                      id="duracion_estimada"
+                      value={form.duracion_estimada}
+                      onChange={(e) => handleInputChange('duracion_estimada', e.target.value)}
+                      placeholder="Ej: 2 horas"
+                      className="w-full h-10 rounded-md border border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-colors"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-                    <div>
-                      <Label htmlFor="dias_disponibles" className="text-sm font-medium text-gray-700 mb-2 block">
-                        Días Disponibles *
-                      </Label>
-                      <Input
-                        id="dias_disponibles"
-                        value={form.dias_disponibles}
-                        onChange={(e) => handleInputChange('dias_disponibles', e.target.value)}
-                        placeholder="Ej: Lunes a Viernes"
-                        className={`h-12 ${errors.dias_disponibles ? 'border-red-500' : ''}`}
-                      />
-                      {errors.dias_disponibles && (
-                        <p className="text-red-500 text-sm mt-1">{errors.dias_disponibles}</p>
-                      )}
-                    </div>
+          {/* Categoría y Ubicación - Estilo Amazon horizontal */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="shadow-lg border-0 bg-white rounded-lg overflow-hidden">
+              <CardContent className="p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Categoría *</h2>
+                <select
+                  value={form.categoria_id}
+                  onChange={(e) => handleInputChange('categoria_id', e.target.value)}
+                  className={`w-full h-10 rounded-md border transition-colors ${
+                    errors.categoria_id 
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                      : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+                  }`}
+                  disabled={categoriesLoading}
+                >
+                  <option value="">
+                    {categoriesLoading ? 'Cargando categorías...' : 'Selecciona una categoría'}
+                  </option>
+                  {categories.map((category: Category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.nombre}
+                    </option>
+                  ))}
+                </select>
+                {errors.categoria_id && (
+                  <p className="text-red-500 text-sm mt-1">{errors.categoria_id}</p>
+                )}
+              </CardContent>
+            </Card>
 
-                    <div>
-                      <Label htmlFor="duracion_estimada" className="text-sm font-medium text-gray-700 mb-2 block">
-                        Duración Estimada
-                      </Label>
-                      <Input
-                        id="duracion_estimada"
-                        value={form.duracion_estimada}
-                        onChange={(e) => handleInputChange('duracion_estimada', e.target.value)}
-                        placeholder="Ej: 2 horas"
-                        className="h-12"
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
+            <Card className="shadow-lg border-0 bg-white rounded-lg overflow-hidden">
+              <CardContent className="p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Ubicación</h2>
+                <Input
+                  value={form.ubicacion_id}
+                  onChange={(e) => handleInputChange('ubicacion_id', e.target.value)}
+                  placeholder="Ej: San José, Costa Rica"
+                  className="w-full h-10 rounded-md border border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-colors"
+                />
+                <p className="text-sm text-gray-500 mt-1">
+                  Escribe tu ubicación (opcional)
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Imágenes - Estilo Amazon */}
+          <Card className="shadow-lg border-0 bg-white rounded-lg overflow-hidden">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-900">Imágenes</h2>
+                <span className="text-sm text-gray-500">{images.length}/5</span>
+              </div>
+              
+              <div className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                images.length >= 5 
+                  ? 'border-gray-200 bg-gray-50' 
+                  : 'border-gray-300 hover:border-blue-500 hover:bg-blue-50'
+              }`}>
+                <input
+                  type="file"
+                  id="image-upload"
+                  multiple
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  disabled={images.length >= 5}
+                />
+                <label
+                  htmlFor="image-upload"
+                  className={`cursor-pointer ${images.length >= 5 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <Upload className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                  <p className={`font-medium mb-1 ${
+                    images.length >= 5 ? 'text-gray-500' : 'text-gray-700'
+                  }`}>
+                    {images.length >= 5
+                      ? 'Máximo de imágenes alcanzado'
+                      : 'Click para subir imágenes'}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Máximo 5 imágenes, hasta 5MB cada una
+                  </p>
+                </label>
+              </div>
+
+              {errors.images && (
+                <Alert variant="destructive" className="mt-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{errors.images}</AlertDescription>
+                </Alert>
               )}
 
-              {/* Imágenes */}
-              <Card className="shadow-2xl border-0 bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden">
-                <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 p-6">
-                  <CardTitle className="flex items-center justify-between text-gray-800">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
-                        <ImageIcon className="h-5 w-5 text-green-600" />
-                      </div>
-                      <span className="text-xl font-bold">Imágenes</span>
-                    </div>
-                    <Badge variant="outline" className="bg-white">
-                      {images.length}/5
-                    </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="space-y-4">
-                    {/* Botón de subir imagen */}
-                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-500 transition-colors">
-                      <input
-                        type="file"
-                        id="image-upload"
-                        multiple
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        className="hidden"
-                        disabled={images.length >= 5}
+              {/* Preview de imágenes */}
+              {images.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-6">
+                  {images.map((image, index) => (
+                    <div
+                      key={image.id}
+                      className="relative group rounded-lg overflow-hidden border border-gray-200 hover:border-blue-500 transition-colors"
+                    >
+                      <img
+                        src={image.preview}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-24 object-cover"
                       />
-                      <label
-                        htmlFor="image-upload"
-                        className={`cursor-pointer ${images.length >= 5 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      <button
+                        type="button"
+                        onClick={() => removeImage(image.id)}
+                        className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
                       >
-                        <Upload className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                        <p className="text-gray-600 font-medium mb-1">
-                          {images.length >= 5
-                            ? 'Máximo de imágenes alcanzado'
-                            : 'Click para subir imágenes'}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          Máximo 5 imágenes, hasta 5MB cada una
-                        </p>
-                      </label>
+                        <X className="h-3 w-3" />
+                      </button>
+                      {index === 0 && (
+                        <div className="absolute bottom-1 left-1 bg-blue-600 text-white px-2 py-1 rounded text-xs font-medium">
+                          Principal
+                        </div>
+                      )}
                     </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-                    {errors.images && (
-                      <Alert variant="destructive">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>{errors.images}</AlertDescription>
-                      </Alert>
-                    )}
-
-                    {/* Preview de imágenes */}
-                    {images.length > 0 && (
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {images.map((image, index) => (
-                          <div
-                            key={image.id}
-                            className="relative group rounded-xl overflow-hidden border-2 border-gray-200 hover:border-blue-500 transition-colors"
-                          >
-                            <img
-                              src={image.preview}
-                              alt={`Preview ${index + 1}`}
-                              className="w-full h-32 object-cover"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => removeImage(image.id)}
-                              className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                            {index === 0 && (
-                              <Badge className="absolute bottom-2 left-2 bg-blue-600 text-white">
-                                Principal
-                              </Badge>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Columna derecha - Categoría y ubicación */}
-            <div className="space-y-6">
-              {/* Categoría */}
-              <Card className="shadow-2xl border-0 bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden sticky top-4">
-                <CardHeader className="bg-gradient-to-r from-orange-50 to-amber-50 p-6">
-                  <CardTitle className="flex items-center space-x-3 text-gray-800">
-                    <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
-                      <Tag className="h-5 w-5 text-orange-600" />
-                    </div>
-                    <span className="text-xl font-bold">Categoría *</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <select
-                    value={form.categoria_id}
-                    onChange={(e) => handleInputChange('categoria_id', e.target.value)}
-                    className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.categoria_id ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    disabled={categoriesLoading}
-                  >
-                    <option value="">
-                      {categoriesLoading ? 'Cargando categorías...' : 'Selecciona una categoría'}
-                    </option>
-                    {categories.map((category: Category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.nombre}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.categoria_id && (
-                    <p className="text-red-500 text-sm mt-2">{errors.categoria_id}</p>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Ubicación */}
-              <Card className="shadow-2xl border-0 bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden">
-                <CardHeader className="bg-gradient-to-r from-pink-50 to-rose-50 p-6">
-                  <CardTitle className="flex items-center space-x-3 text-gray-800">
-                    <div className="w-10 h-10 bg-pink-100 rounded-xl flex items-center justify-center">
-                      <MapPin className="h-5 w-5 text-pink-600" />
-                    </div>
-                    <span className="text-xl font-bold">Ubicación</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <select
-                    value={form.ubicacion_id}
-                    onChange={(e) => handleInputChange('ubicacion_id', e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    disabled={locationsLoading}
-                  >
-                    <option value="">
-                      {locationsLoading ? 'Cargando ubicaciones...' : 'Selecciona una ubicación (opcional)'}
-                    </option>
-                    {locations.map((location: Location) => (
-                      <option key={location.id} value={location.id}>
-                        {location.nombre}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="text-sm text-gray-500 mt-2">
-                    La ubicación ayuda a los compradores a encontrarte
-                  </p>
-                </CardContent>
-              </Card>
-
-              {/* Botón de enviar */}
-              <Card className="shadow-2xl border-0 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl overflow-hidden">
-                <CardContent className="p-6">
-                  <Button
-                    type="submit"
-                    disabled={loading || success}
-                    className="w-full h-14 bg-white text-blue-600 hover:bg-gray-100 text-lg font-semibold shadow-xl"
-                  >
-                    {loading ? (
-                      <>
-                        <Clock className="h-5 w-5 mr-2 animate-spin" />
-                        Creando...
-                      </>
-                    ) : success ? (
-                      <>
-                        <CheckCircle2 className="h-5 w-5 mr-2" />
-                        ¡Creado!
-                      </>
-                    ) : (
-                      <>
-                        <Save className="h-5 w-5 mr-2" />
-                        Publicar {form.tipo}
-                      </>
-                    )}
-                  </Button>
-                  <p className="text-center text-white text-sm mt-4">
-                    * Campos obligatorios
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
+          {/* Botón de envío - Estilo Amazon */}
+          <div className="flex justify-end">
+            <Button
+              type="submit"
+              disabled={loading || success}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
+            >
+              {loading ? (
+                <>
+                  <Clock className="h-4 w-4 mr-2 animate-spin" />
+                  Creando...
+                </>
+              ) : success ? (
+                <>
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  ¡Creado!
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Publicar {form.tipo}
+                </>
+              )}
+            </Button>
           </div>
         </form>
       </main>
