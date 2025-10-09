@@ -48,43 +48,43 @@ app.use('/uploads', (req, res, next) => {
   next();
 });
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // máximo 100 requests por IP por ventana
-  message: {
-    success: false,
-    message: 'Demasiadas solicitudes desde esta IP, intenta de nuevo más tarde'
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+// Rate limiting - TEMPORALMENTE DESHABILITADO
+// const limiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 minutos
+//   max: 100, // máximo 100 requests por IP por ventana
+//   message: {
+//     success: false,
+//     message: 'Demasiadas solicitudes desde esta IP, intenta de nuevo más tarde'
+//   },
+//   standardHeaders: true,
+//   legacyHeaders: false,
+// });
 
-// Rate limiting más estricto solo para login
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 10, // máximo 10 intentos de login por IP por ventana
-  message: {
-    success: false,
-    message: 'Demasiados intentos de login, intenta de nuevo más tarde'
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+// // Rate limiting más estricto solo para login
+// const loginLimiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 minutos
+//   max: 10, // máximo 10 intentos de login por IP por ventana
+//   message: {
+//     success: false,
+//     message: 'Demasiados intentos de login, intenta de nuevo más tarde'
+//   },
+//   standardHeaders: true,
+//   legacyHeaders: false,
+// });
 
-// Rate limiting para registro (más permisivo)
-const registerLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hora
-  max: 20, // máximo 20 registros por IP por hora
-  message: {
-    success: false,
-    message: 'Demasiados intentos de registro, intenta de nuevo más tarde'
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+// // Rate limiting para registro (más permisivo)
+// const registerLimiter = rateLimit({
+//   windowMs: 60 * 60 * 1000, // 1 hora
+//   max: 20, // máximo 20 registros por IP por hora
+//   message: {
+//     success: false,
+//     message: 'Demasiados intentos de registro, intenta de nuevo más tarde'
+//   },
+//   standardHeaders: true,
+//   legacyHeaders: false,
+// });
 
-app.use(limiter);
+// app.use(limiter);
 
 // Middleware para parsear JSON
 app.use(express.json({ limit: '10mb' }));
@@ -227,9 +227,9 @@ app.get('/api/docs', (req, res) => {
 });
 
 // Rutas de la API
-// Aplicar rate limiting específico por ruta
-app.use('/api/auth/login', loginLimiter);
-app.use('/api/auth/register', registerLimiter);
+// Aplicar rate limiting específico por ruta - TEMPORALMENTE DESHABILITADO
+// app.use('/api/auth/login', loginLimiter);
+// app.use('/api/auth/register', registerLimiter);
 app.use('/api/auth', authRoutes);
 
 // Middleware para manejar rutas no encontradas
