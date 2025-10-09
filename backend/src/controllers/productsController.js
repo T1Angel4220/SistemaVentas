@@ -532,7 +532,8 @@ class ProductsController {
           i.id, i.codigo, i.nombre, i.descripcion, i.precio, 
           i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion,
           c.nombre as categoria_nombre,
-          COUNT(ii.id) as total_imagenes
+          COUNT(ii.id) as total_imagenes,
+          (SELECT ii2.url_imagen FROM item_imagenes ii2 WHERE ii2.item_id = i.id ORDER BY ii2.orden LIMIT 1) as primera_imagen
         FROM items i
         JOIN categorias c ON i.categoria_id = c.id
         LEFT JOIN item_imagenes ii ON i.id = ii.item_id

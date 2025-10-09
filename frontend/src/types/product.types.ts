@@ -22,6 +22,7 @@ export interface Product {
   vendedor_id?: number;
   ubicacion_nombre?: string;
   total_imagenes: number;
+  primera_imagen?: string;
   es_peligroso?: boolean;
 }
 
