@@ -401,6 +401,81 @@ class ProductsController {
     }
   }
 
+  // Obtener producto para vista de comprador (con información del vendedor)
+  static async getProductForView(req, res) {
+    try {
+      const { id } = req.params;
+
+      const producto = await query(
+        `SELECT 
+          i.*,
+          c.nombre as categoria_nombre,
+          c.descripcion as categoria_descripcion,
+          u.nombre as vendedor_nombre,
+          u.apellido as vendedor_apellido,
+          u.correo as vendedor_correo,
+          u.telefono as vendedor_telefono,
+          u.direccion as vendedor_direccion,
+          ub.nombre as ubicacion_nombre,
+          ub.provincia, ub.canton, ub.distrito
+        FROM items i
+        JOIN categorias c ON i.categoria_id = c.id
+        JOIN usuarios u ON i.vendedor_id = u.id
+        LEFT JOIN ubicaciones ub ON i.ubicacion_id = ub.id
+        WHERE i.id = $1 AND i.estado = 'activo'`,
+        [id]
+      );
+
+      if (producto.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Producto no encontrado o no está disponible'
+        });
+      }
+
+      // Obtener imágenes del producto
+      const imagenes = await query(
+        'SELECT * FROM item_imagenes WHERE item_id = $1 ORDER BY orden',
+        [id]
+      );
+
+      // Convertir URLs relativas a absolutas
+      const imagenesConUrlsCompletas = imagenes.rows.map(imagen => ({
+        ...imagen,
+        url_imagen: imagen.url_imagen.startsWith('http') 
+          ? imagen.url_imagen 
+          : buildImageUrl(imagen.url_imagen.replace('/uploads/', ''))
+      }));
+
+      // Si es un servicio, obtener información adicional
+      let servicioInfo = null;
+      if (producto.rows[0].tipo === 'servicio') {
+        const servicio = await query(
+          'SELECT * FROM servicios WHERE item_id = $1',
+          [id]
+        );
+        servicioInfo = servicio.rows[0];
+      }
+
+      res.json({
+        success: true,
+        data: {
+          ...producto.rows[0],
+          imagenes: imagenesConUrlsCompletas,
+          servicio: servicioInfo
+        }
+      });
+
+    } catch (error) {
+      console.error('Error al obtener producto para vista:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error interno del servidor',
+        error: config.server.nodeEnv === 'development' ? error.message : {}
+      });
+    }
+  }
+
   // Actualizar producto
   static async updateProduct(req, res) {
     try {

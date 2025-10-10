@@ -662,7 +662,7 @@ export const ProductsPage: React.FC = () => {
                                   <Heart className={`h-4 w-4 ${savedProducts.includes(product.id) ? 'fill-current' : ''}`} />
                                 )}
                               </Button>
-                              <Link to={`/products/checkout/${product.id}`}>
+                              <Link to={`/products/contact/${product.id}`}>
                                 <Button className="w-12 h-10 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl">
                                   <ShoppingCart className="h-4 w-4" />
                                 </Button>

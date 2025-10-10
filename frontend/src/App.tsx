@@ -20,7 +20,7 @@ import { ProductsPage } from './pages/ProductsPage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
 import { ProductViewPage } from './pages/ProductViewPage';
 import { ProductsCatalogPage } from './pages/ProductsCatalogPage';
-import { CheckoutPage } from './pages/CheckoutPage';
+import { ContactVendorPage } from './pages/ContactVendorPage';
 import { CreateProductPage } from './pages/CreateProductPage';
 import { MyProductsPage } from './pages/MyProductsPage';
 import { ProductModerationPage } from './pages/ProductModerationPage';
@@ -114,10 +114,10 @@ function App() {
               />
               <Route path="/products/view/:id" element={<ProductViewPage />} />
               <Route 
-                path="/products/checkout/:id" 
+                path="/products/contact/:id" 
                 element={
                   <ProtectedRoute allowedRoles={['comprador']}>
-                    <CheckoutPage />
+                    <ContactVendorPage />
                   </ProtectedRoute>
                 } 
               />
