@@ -1038,6 +1038,226 @@ class ProductsController {
       });
     }
   }
+
+  // ==================== FUNCIONES PARA PRODUCTOS GUARDADOS ====================
+
+  // Obtener productos guardados del usuario
+  static async getSavedProducts(req, res) {
+    try {
+      // console.log('🔍 DEBUG - getSavedProducts llamado');
+      // console.log('🔍 DEBUG - req.user:', req.user);
+      const userId = req.user.id;
+
+      // Verificar que el usuario sea comprador
+      if (req.user.tipo_usuario !== 'comprador') {
+        return res.status(403).json({
+          success: false,
+          message: 'Solo los compradores pueden ver productos guardados'
+        });
+      }
+
+      const result = await query(`
+        SELECT 
+          sp.id as saved_id,
+          sp.fecha_guardado,
+          i.id,
+          i.codigo,
+          i.nombre,
+          i.descripcion,
+          i.precio,
+          i.tipo,
+          i.estado,
+          i.disponibilidad,
+          i.es_peligroso,
+          i.fecha_publicacion,
+          c.nombre as categoria_nombre,
+          u.nombre as ubicacion_nombre,
+          v.nombre as vendedor_nombre,
+          v.correo as vendedor_email,
+          (
+            SELECT url_imagen 
+            FROM item_imagenes 
+            WHERE item_id = i.id 
+            ORDER BY orden ASC 
+            LIMIT 1
+          ) as primera_imagen,
+          (
+            SELECT COUNT(*) 
+            FROM item_imagenes 
+            WHERE item_id = i.id
+          ) as total_imagenes
+        FROM productos_guardados sp
+        JOIN items i ON sp.item_id = i.id
+        LEFT JOIN categorias c ON i.categoria_id = c.id
+        LEFT JOIN ubicaciones u ON i.ubicacion_id = u.id
+        LEFT JOIN usuarios v ON i.vendedor_id = v.id
+        WHERE sp.usuario_id = $1
+        AND i.estado = 'activo'
+        ORDER BY sp.fecha_guardado DESC
+      `, [userId]);
+
+      return res.status(200).json({
+        success: true,
+        data: result.rows,
+        message: 'Productos guardados obtenidos exitosamente'
+      });
+
+    } catch (error) {
+      console.error('Error al obtener productos guardados:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error interno del servidor al obtener productos guardados'
+      });
+    }
+  }
+
+  // Guardar producto en favoritos
+  static async saveProduct(req, res) {
+    try {
+      const { id: productoId } = req.params;
+      const userId = req.user.id;
+
+      // Verificar que el usuario sea comprador
+      if (req.user.tipo_usuario !== 'comprador') {
+        return res.status(403).json({
+          success: false,
+          message: 'Solo los compradores pueden guardar productos'
+        });
+      }
+
+      // Verificar que el producto existe y está activo
+      const productCheck = await query(
+        'SELECT id, estado FROM items WHERE id = $1',
+        [productoId]
+      );
+
+      if (productCheck.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Producto no encontrado'
+        });
+      }
+
+      if (productCheck.rows[0].estado !== 'activo') {
+        return res.status(400).json({
+          success: false,
+          message: 'No se puede guardar un producto inactivo'
+        });
+      }
+
+      // Verificar si ya está guardado
+      const alreadySaved = await query(
+        'SELECT id FROM productos_guardados WHERE usuario_id = $1 AND item_id = $2',
+        [userId, productoId]
+      );
+
+      if (alreadySaved.rows.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'El producto ya está en tus favoritos'
+        });
+      }
+
+      // Guardar el producto
+      await query(
+        'INSERT INTO productos_guardados (usuario_id, item_id, fecha_guardado) VALUES ($1, $2, NOW())',
+        [userId, productoId]
+      );
+
+      return res.status(201).json({
+        success: true,
+        message: 'Producto guardado en favoritos exitosamente'
+      });
+
+    } catch (error) {
+      console.error('Error al guardar producto:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error interno del servidor al guardar el producto'
+      });
+    }
+  }
+
+  // Eliminar producto de favoritos
+  static async unsaveProduct(req, res) {
+    try {
+      const { id: productoId } = req.params;
+      const userId = req.user.id;
+
+      // Verificar que el usuario sea comprador
+      if (req.user.tipo_usuario !== 'comprador') {
+        return res.status(403).json({
+          success: false,
+          message: 'Solo los compradores pueden eliminar productos guardados'
+        });
+      }
+
+      // Verificar si está guardado
+      const savedProduct = await query(
+        'SELECT id FROM productos_guardados WHERE usuario_id = $1 AND item_id = $2',
+        [userId, productoId]
+      );
+
+      if (savedProduct.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'El producto no está en tus favoritos'
+        });
+      }
+
+      // Eliminar de favoritos
+      await query(
+        'DELETE FROM productos_guardados WHERE usuario_id = $1 AND item_id = $2',
+        [userId, productoId]
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: 'Producto eliminado de favoritos exitosamente'
+      });
+
+    } catch (error) {
+      console.error('Error al eliminar producto guardado:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error interno del servidor al eliminar el producto'
+      });
+    }
+  }
+
+  // Verificar si un producto está guardado
+  static async getSavedStatus(req, res) {
+    try {
+      const { id: productoId } = req.params;
+      const userId = req.user.id;
+
+      // Verificar que el usuario sea comprador
+      if (req.user.tipo_usuario !== 'comprador') {
+        return res.status(403).json({
+          success: false,
+          message: 'Solo los compradores pueden verificar productos guardados'
+        });
+      }
+
+      const result = await query(
+        'SELECT id FROM productos_guardados WHERE usuario_id = $1 AND item_id = $2',
+        [userId, productoId]
+      );
+
+      return res.status(200).json({
+        success: true,
+        isSaved: result.rows.length > 0,
+        message: 'Estado de guardado obtenido exitosamente'
+      });
+
+    } catch (error) {
+      console.error('Error al verificar estado de guardado:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error interno del servidor al verificar el estado'
+      });
+    }
+  }
 }
 
 module.exports = ProductsController;

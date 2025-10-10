@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
+import { useAlert } from '../hooks/useAlert';
+import { apiService } from '../services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -28,6 +30,7 @@ import HierarchicalCategorySearch from '../components/ui/HierarchicalCategorySea
 export const ProductsPage: React.FC = () => {
   const { user } = useAuth();
   const { permissions, canModerateProduct, getRoleDisplayName, getRoleColor } = usePermissions();
+  const { showSuccess, showError } = useAlert();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,6 +56,10 @@ export const ProductsPage: React.FC = () => {
     limit: 12
   });
 
+  // Estado para productos guardados
+  const [savedProducts, setSavedProducts] = useState<number[]>([]);
+  const [savingProduct, setSavingProduct] = useState<number | null>(null);
+
   const loadProducts = useCallback(async () => {
     try {
       setLoading(true);
@@ -76,15 +83,6 @@ export const ProductsPage: React.FC = () => {
     }
   }, [filters]);
 
-  // Cargar datos iniciales
-  useEffect(() => {
-    loadProducts();
-    // Solo cargar categorías si no están cargadas
-    if (categories.length === 0) {
-      loadCategories();
-    }
-  }, [loadProducts, categories.length]);
-
   const loadCategories = async () => {
     try {
       const response = await fetch('http://localhost:3001/api/categories');
@@ -98,6 +96,103 @@ export const ProductsPage: React.FC = () => {
     } catch (error) {
       console.error('Error al cargar categorías:', error);
       // No mostrar error al usuario, solo log
+    }
+  };
+
+  const loadSavedProducts = useCallback(async () => {
+    if (!user || user.tipo_usuario !== 'comprador') return;
+    
+    try {
+      const response = await fetch('http://localhost:3001/api/products/saved', {
+        headers: {
+          'Authorization': `Bearer ${apiService.getToken()}`
+        }
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        setSavedProducts(data.data.map((p: { id: number }) => p.id));
+      }
+    } catch (error) {
+      console.error('Error al cargar productos guardados:', error);
+    }
+  }, [user]);
+
+  // Cargar datos iniciales
+  useEffect(() => {
+    loadProducts();
+    // Solo cargar categorías si no están cargadas
+    if (categories.length === 0) {
+      loadCategories();
+    }
+  }, [loadProducts, categories.length]);
+
+  useEffect(() => {
+    if (user) {
+      loadSavedProducts();
+    }
+  }, [user, loadSavedProducts]);
+
+  const handleSaveProduct = async (productId: number) => {
+    if (!user) {
+      showError('Error', 'Debes iniciar sesión como comprador para guardar productos');
+      return;
+    }
+
+    if (user.tipo_usuario !== 'comprador') {
+      showError('Error', 'Solo los compradores pueden guardar productos');
+      return;
+    }
+
+    setSavingProduct(productId);
+    try {
+      const response = await fetch(`http://localhost:3001/api/products/${productId}/save`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiService.getToken()}`
+        }
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        showSuccess('¡Producto guardado!', 'El producto se ha añadido a tu lista de favoritos.');
+        setSavedProducts(prev => [...prev, productId]);
+      } else {
+        showError('Error', data.message || 'Error al guardar el producto');
+      }
+    } catch (error) {
+      console.error('Error al guardar producto:', error);
+      showError('Error', 'Error al guardar el producto');
+    } finally {
+      setSavingProduct(null);
+    }
+  };
+
+  const handleUnsaveProduct = async (productId: number) => {
+    if (!user || user.tipo_usuario !== 'comprador') return;
+
+    setSavingProduct(productId);
+    try {
+      const response = await fetch(`http://localhost:3001/api/products/${productId}/unsave`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${apiService.getToken()}`
+        }
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        showSuccess('¡Producto eliminado!', 'El producto se ha eliminado de tu lista de favoritos.');
+        setSavedProducts(prev => prev.filter(id => id !== productId));
+      } else {
+        showError('Error', data.message || 'Error al eliminar el producto');
+      }
+    } catch (error) {
+      console.error('Error al eliminar producto:', error);
+      showError('Error', 'Error al eliminar el producto');
+    } finally {
+      setSavingProduct(null);
     }
   };
 
@@ -222,6 +317,15 @@ export const ProductsPage: React.FC = () => {
                   <Button size="lg" variant="outline" className="bg-white/20 text-white border-white hover:bg-white hover:text-blue-600 shadow-lg hover:shadow-xl transition-all duration-300">
                     <Package className="h-5 w-5 mr-2" />
                     Mis Productos
+                  </Button>
+                </Link>
+              )}
+              
+              {user?.tipo_usuario === 'comprador' && (
+                <Link to="/products/saved">
+                  <Button size="lg" variant="outline" className="bg-white/20 text-white border-white hover:bg-white hover:text-blue-600 shadow-lg hover:shadow-xl transition-all duration-300">
+                    <Heart className="h-5 w-5 mr-2" />
+                    Mis Favoritos
                   </Button>
                 </Link>
               )}
@@ -535,12 +639,36 @@ export const ProductsPage: React.FC = () => {
                               Ver detalles
                             </Button>
                           </Link>
-                          <Button className="w-12 h-10 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl">
-                            <Heart className="h-4 w-4" />
-                          </Button>
-                          <Button className="w-12 h-10 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl">
-                            <ShoppingCart className="h-4 w-4" />
-                          </Button>
+                          
+                          {/* Botones de favoritos y carrito - Solo para compradores */}
+                          {user?.tipo_usuario === 'comprador' && (
+                            <>
+                              <Button 
+                                onClick={() => 
+                                  savedProducts.includes(product.id)
+                                    ? handleUnsaveProduct(product.id)
+                                    : handleSaveProduct(product.id)
+                                }
+                                disabled={savingProduct === product.id}
+                                className={`w-12 h-10 border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl ${
+                                  savedProducts.includes(product.id)
+                                    ? 'bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700'
+                                    : 'bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600'
+                                } text-white`}
+                              >
+                                {savingProduct === product.id ? (
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                ) : (
+                                  <Heart className={`h-4 w-4 ${savedProducts.includes(product.id) ? 'fill-current' : ''}`} />
+                                )}
+                              </Button>
+                              <Link to={`/products/checkout/${product.id}`}>
+                                <Button className="w-12 h-10 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl">
+                                  <ShoppingCart className="h-4 w-4" />
+                                </Button>
+                              </Link>
+                            </>
+                          )}
                         </div>
                 </CardContent>
               </Card>

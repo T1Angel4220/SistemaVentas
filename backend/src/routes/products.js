@@ -14,6 +14,13 @@ const { upload, handleMulterError } = require('../middlewares/upload');
 
 // Rutas públicas (no requieren autenticación)
 router.get('/', validateProductFilters, ProductsController.getProducts);                    // GET /api/products - Listar productos con filtros
+
+// Rutas específicas que deben ir ANTES de /:id para evitar conflictos
+router.get('/saved', authenticate, ProductsController.getSavedProducts);                     // GET /api/products/saved - Productos guardados
+router.post('/:id/save', authenticate, ProductsController.saveProduct);                      // POST /api/products/:id/save - Guardar producto
+router.delete('/:id/unsave', authenticate, ProductsController.unsaveProduct);                // DELETE /api/products/:id/unsave - Eliminar de guardados
+router.get('/:id/saved-status', authenticate, ProductsController.getSavedStatus);            // GET /api/products/:id/saved-status - Verificar si está guardado
+
 router.get('/:id', ProductsController.getProductById);             // GET /api/products/:id - Obtener producto específico
 
 // Rutas protegidas con permisos específicos por rol

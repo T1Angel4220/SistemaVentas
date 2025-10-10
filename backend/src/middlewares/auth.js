@@ -9,9 +9,12 @@ const { query } = require('../config/database');
  */
 const authenticate = async (req, res, next) => {
   try {
+    // console.log('🔍 DEBUG AUTH - Headers recibidos:', req.headers.authorization);
     const token = extractTokenFromHeader(req.headers.authorization);
+    // console.log('🔍 DEBUG AUTH - Token extraído:', token ? token.substring(0, 20) + '...' : 'null');
     
     if (!token) {
+      console.log('❌ Error en autenticación: Token no encontrado');
       return res.status(401).json({
         success: false,
         message: 'Token de acceso requerido'
@@ -60,7 +63,7 @@ const authenticate = async (req, res, next) => {
     console.error('❌ Error en autenticación:', error.message);
     return res.status(401).json({
       success: false,
-      message: 'Token inválido o expirado'
+      message: 'Token de acceso requerido'
     });
   }
 };

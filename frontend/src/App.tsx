@@ -18,9 +18,13 @@ import { RegisterModeratorPage } from './pages/RegisterModeratorPage';
 import { SessionManagementPage } from './pages/SessionManagementPage';
 import { ProductsPage } from './pages/ProductsPage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
+import { ProductViewPage } from './pages/ProductViewPage';
+import { ProductsCatalogPage } from './pages/ProductsCatalogPage';
+import { CheckoutPage } from './pages/CheckoutPage';
 import { CreateProductPage } from './pages/CreateProductPage';
 import { MyProductsPage } from './pages/MyProductsPage';
 import { ProductModerationPage } from './pages/ProductModerationPage';
+import { SavedProductsPage } from './pages/SavedProductsPage';
 
 // Componentes de error
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -99,6 +103,24 @@ function App() {
               
               {/* Rutas de productos */}
               <Route path="/products" element={<ProductsPage />} />
+              <Route path="/products/catalog" element={<ProductsCatalogPage />} />
+              <Route 
+                path="/products/saved" 
+                element={
+                  <ProtectedRoute allowedRoles={['comprador']}>
+                    <SavedProductsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route path="/products/view/:id" element={<ProductViewPage />} />
+              <Route 
+                path="/products/checkout/:id" 
+                element={
+                  <ProtectedRoute allowedRoles={['comprador']}>
+                    <CheckoutPage />
+                  </ProtectedRoute>
+                } 
+              />
               <Route path="/products/:id" element={<ProductDetailPage />} />
               <Route 
                 path="/products/create" 
