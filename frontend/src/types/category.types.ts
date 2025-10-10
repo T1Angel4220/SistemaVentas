@@ -8,6 +8,9 @@ export interface Category {
   descripcion?: string;
   icono?: string;
   activo?: boolean;
+  categoria_padre_id?: number;
+  nivel: number;
+  orden: number;
 }
 
 export interface CategoryWithCount extends Category {

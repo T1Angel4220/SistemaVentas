@@ -13,6 +13,10 @@ const pool = new Pool({
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
+  // Configuración UTF-8 para manejar caracteres especiales
+  client_encoding: 'UTF8',
+  // Configuración adicional para caracteres especiales
+  application_name: 'sistema_ventas_multiempresa'
 });
 
 // Función para probar la conexión
@@ -20,8 +24,12 @@ const testConnection = async () => {
   try {
     const client = await pool.connect();
     const result = await client.query('SELECT NOW()');
+    
+    // Verificar codificación de la conexión
+    const encodingResult = await client.query("SHOW client_encoding");
+    console.log(`✅ Conexión a la base de datos exitosa (Codificación: ${encodingResult.rows[0].client_encoding})`);
+    
     client.release();
-    console.log('✅ Conexión a la base de datos exitosa');
     return true;
   } catch (error) {
     console.error('❌ Error de conexión a la base de datos:', error.message);
@@ -125,6 +133,59 @@ const restoreTestData = async () => {
   }
 };
 
+// Función para corregir caracteres mal codificados
+const fixEncodingIssues = async () => {
+  try {
+    console.log('🔧 Verificando y corrigiendo problemas de codificación...');
+    
+    // Lista de correcciones comunes para caracteres mal codificados
+    const corrections = [
+      { from: 'Ã¡', to: 'á' }, // á
+      { from: 'Ã©', to: 'é' }, // é
+      { from: 'Ã­', to: 'í' }, // í
+      { from: 'Ã³', to: 'ó' }, // ó
+      { from: 'Ãº', to: 'ú' }, // ú
+      { from: 'Ã±', to: 'ñ' }, // ñ
+      { from: 'Ã', to: 'Á' },  // Á
+      { from: 'Ã‰', to: 'É' }, // É
+      { from: 'Ã', to: 'Í' },  // Í
+      { from: 'Ã"', to: 'Ó' }, // Ó
+      { from: 'Ãš', to: 'Ú' }, // Ú
+      { from: 'Ã\u0091', to: 'Ñ' }, // Ñ
+    ];
+
+    // Corregir categorías
+    for (const correction of corrections) {
+      await query(
+        'UPDATE categorias SET nombre = REPLACE(nombre, $1, $2) WHERE nombre LIKE $3',
+        [correction.from, correction.to, `%${correction.from}%`]
+      );
+    }
+
+    // Verificar si hay categorías con problemas de codificación
+    const problematicCategories = await query(`
+      SELECT id, nombre 
+      FROM categorias 
+      WHERE nombre ~ '[^\x00-\x7F]' 
+      AND nombre NOT ~ '[áéíóúñÁÉÍÓÚÑ]'
+    `);
+
+    if (problematicCategories.rows.length > 0) {
+      console.log('⚠️  Se encontraron categorías con posibles problemas de codificación:');
+      problematicCategories.rows.forEach(cat => {
+        console.log(`   - ID ${cat.id}: "${cat.nombre}"`);
+      });
+    } else {
+      console.log('✅ Todas las categorías tienen codificación correcta');
+    }
+
+    return true;
+  } catch (error) {
+    console.error('❌ Error al corregir problemas de codificación:', error.message);
+    return false;
+  }
+};
+
 // Función para obtener estado de la base de datos
 const getDatabaseStatus = async () => {
   try {
@@ -174,5 +235,6 @@ module.exports = {
   initializeDatabase,
   cleanTestData,
   restoreTestData,
-  getDatabaseStatus
+  getDatabaseStatus,
+  fixEncodingIssues
 };

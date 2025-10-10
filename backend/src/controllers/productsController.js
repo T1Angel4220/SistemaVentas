@@ -459,6 +459,54 @@ class ProductsController {
         );
       }
 
+      // Manejar imágenes eliminadas
+      if (req.body.deleted_images) {
+        try {
+          const deletedImages = JSON.parse(req.body.deleted_images);
+          if (Array.isArray(deletedImages) && deletedImages.length > 0) {
+            console.log('🗑️ Eliminando imágenes:', deletedImages);
+            
+            // Obtener URLs de las imágenes a eliminar
+            const imagesToDelete = await query(
+              'SELECT url_imagen FROM item_imagenes WHERE item_id = $1 AND id = ANY($2)',
+              [id, deletedImages]
+            );
+            
+            // Eliminar de la base de datos
+            await query(
+              'DELETE FROM item_imagenes WHERE item_id = $1 AND id = ANY($2)',
+              [id, deletedImages]
+            );
+            
+            // Aquí podrías agregar lógica para eliminar archivos físicos
+            console.log('✅ Imágenes eliminadas de la base de datos');
+          }
+        } catch (error) {
+          console.error('⚠️ Error al procesar imágenes eliminadas:', error);
+        }
+      }
+
+      // Manejar nuevas imágenes
+      if (req.files && req.files.length > 0) {
+        console.log('📸 Agregando nuevas imágenes:', req.files.length);
+        
+        for (let i = 0; i < req.files.length; i++) {
+          const file = req.files[i];
+          
+          // Obtener el siguiente orden
+          const nextOrder = await query(
+            'SELECT COALESCE(MAX(orden), 0) + 1 as next_order FROM item_imagenes WHERE item_id = $1',
+            [id]
+          );
+          
+          await query(
+            `INSERT INTO item_imagenes (item_id, url_imagen, orden, es_principal)
+             VALUES ($1, $2, $3, $4)`,
+            [id, buildImageUrl(file.filename), nextOrder.rows[0].next_order, false]
+          );
+        }
+      }
+
       res.json({
         success: true,
         message: 'Producto actualizado exitosamente',

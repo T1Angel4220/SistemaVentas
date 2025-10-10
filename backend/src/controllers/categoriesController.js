@@ -10,10 +10,11 @@ class CategoriesController {
       const { activa = true } = req.query;
 
       const categorias = await query(
-        `SELECT id, nombre, descripcion, activa, fecha_creacion
+        `SELECT id, nombre, descripcion, activa, fecha_creacion, 
+                categoria_padre_id, nivel, orden
          FROM categorias 
          WHERE activa = $1
-         ORDER BY nombre ASC`,
+         ORDER BY nivel ASC, orden ASC, nombre ASC`,
         [activa]
       );
 

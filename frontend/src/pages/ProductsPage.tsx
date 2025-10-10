@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import type { Product, ProductsResponse, ProductFilters } from '../types/product.types';
 import type { Category } from '../types/category.types';
+import HierarchicalCategorySearch from '../components/ui/HierarchicalCategorySearch';
 
 export const ProductsPage: React.FC = () => {
   const { user } = useAuth();
@@ -30,8 +31,6 @@ export const ProductsPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [categorySearch, setCategorySearch] = useState('');
   const [pagination, setPagination] = useState({
     current_page: 1,
     total_pages: 1,
@@ -102,10 +101,6 @@ export const ProductsPage: React.FC = () => {
     }
   };
 
-  // Filtrar categorías por búsqueda
-  const filteredCategories = categories.filter(category =>
-    category.nombre.toLowerCase().includes(categorySearch.toLowerCase())
-  );
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({
@@ -260,133 +255,76 @@ export const ProductsPage: React.FC = () => {
                 </select>
               </div>
 
-              {/* Filtros avanzados - colapsables */}
+              {/* Filtros adicionales */}
               <div className="border-t border-gray-100 pt-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-800">Filtros Avanzados</h3>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                    className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                  >
-                    {showAdvancedFilters ? 'Ocultar' : 'Mostrar'} filtros
-                  </Button>
-                </div>
-
-                {showAdvancedFilters && (
-                  <div className="space-y-6">
-                    {/* Primera fila - Categoría y Tipo */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Categoría con búsqueda */}
-                      <div className="space-y-3">
-                        <label className="text-sm font-medium text-gray-700 flex items-center">
-                          <Search className="h-4 w-4 mr-2 text-blue-500" />
-                          Categoría
-                        </label>
-                        <div className="space-y-2">
-                          <Input
-                            placeholder="Buscar categoría..."
-                            value={categorySearch}
-                            onChange={(e) => setCategorySearch(e.target.value)}
-                            className="h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 shadow-sm rounded-xl bg-white/80 backdrop-blur-sm"
-                          />
-                          <select 
-                            value={filters.categoria_id} 
-                            onChange={(e) => handleFilterChange('categoria_id', e.target.value)}
-                            className="h-12 w-full rounded-xl border border-gray-200 bg-white/80 backdrop-blur-sm px-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all duration-200 hover:shadow-md"
-                          >
-                            <option value="">Todas las categorías</option>
-                            {filteredCategories.map((category) => (
-                              <option key={category.id} value={category.id.toString()}>
-                                {category.nombre}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-
-                      {/* Tipo */}
-                      <div className="space-y-3">
-                        <label className="text-sm font-medium text-gray-700 flex items-center">
-                          <Package className="h-4 w-4 mr-2 text-blue-500" />
-                          Tipo de producto
-                        </label>
-                        <select 
-                          value={filters.tipo} 
-                          onChange={(e) => handleFilterChange('tipo', e.target.value)}
-                          className="h-12 w-full rounded-xl border border-gray-200 bg-white/80 backdrop-blur-sm px-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all duration-200 hover:shadow-md"
-                        >
-                          <option value="">Todos los tipos</option>
-                          <option value="producto">Solo Productos</option>
-                          <option value="servicio">Solo Servicios</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* Segunda fila - Precios */}
-                    <div className="space-y-3">
-                      <label className="text-sm font-medium text-gray-700 flex items-center">
-                        <DollarSign className="h-4 w-4 mr-2 text-green-500" />
-                        Rango de precios (₡)
-                      </label>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Input
-                          type="number"
-                          placeholder="Precio mínimo"
-                          value={filters.precio_min}
-                          onChange={(e) => handleFilterChange('precio_min', e.target.value)}
-                          className="h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 shadow-sm rounded-xl bg-white/80 backdrop-blur-sm"
-                        />
-                        <Input
-                          type="number"
-                          placeholder="Precio máximo"
-                          value={filters.precio_max}
-                          onChange={(e) => handleFilterChange('precio_max', e.target.value)}
-                          className="h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 shadow-sm rounded-xl bg-white/80 backdrop-blur-sm"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Tercera fila - Estado y Disponibilidad */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Estado */}
-                      <div className="space-y-3">
-                        <label className="text-sm font-medium text-gray-700 flex items-center">
-                          <CheckCircle className="h-4 w-4 mr-2 text-orange-500" />
-                          Estado del producto
-                        </label>
-                        <select 
-                          value={filters.estado} 
-                          onChange={(e) => handleFilterChange('estado', e.target.value)}
-                          className="h-12 w-full rounded-xl border border-gray-200 bg-white/80 backdrop-blur-sm px-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all duration-200 hover:shadow-md"
-                        >
-                          <option value="activo">Solo Activos</option>
-                          <option value="pendiente_revision">Pendientes</option>
-                          <option value="rechazado">Rechazados</option>
-                          <option value="">Todos los estados</option>
-                        </select>
-                      </div>
-
-                      {/* Disponibilidad */}
-                      <div className="space-y-3">
-                        <label className="text-sm font-medium text-gray-700 flex items-center">
-                          <ToggleRight className="h-4 w-4 mr-2 text-green-500" />
-                          Disponibilidad
-                        </label>
-                        <select 
-                          value={filters.disponibilidad} 
-                          onChange={(e) => handleFilterChange('disponibilidad', e.target.value)}
-                          className="h-12 w-full rounded-xl border border-gray-200 bg-white/80 backdrop-blur-sm px-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all duration-200 hover:shadow-md"
-                        >
-                          <option value="true">Solo Disponibles</option>
-                          <option value="false">No Disponibles</option>
-                          <option value="">Toda disponibilidad</option>
-                        </select>
-                      </div>
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {/* Categoría */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center">
+                      <Search className="h-4 w-4 mr-2 text-blue-500" />
+                      Categoría
+                    </label>
+                    <HierarchicalCategorySearch
+                      categories={categories}
+                      selectedCategoryId={filters.categoria_id}
+                      onCategorySelect={(categoryId) => {
+                        handleFilterChange('categoria_id', categoryId);
+                      }}
+                      loading={false}
+                      placeholder="Buscar categoría..."
+                    />
                   </div>
-                )}
+
+                  {/* Precio máximo */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center">
+                      <DollarSign className="h-4 w-4 mr-2 text-green-500" />
+                      Precio máximo ($)
+                    </label>
+                    <Input
+                      type="number"
+                      placeholder="Precio máximo"
+                      value={filters.precio_max}
+                      onChange={(e) => handleFilterChange('precio_max', e.target.value)}
+                      className="h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 shadow-sm rounded-xl bg-white/80 backdrop-blur-sm"
+                    />
+                  </div>
+
+                  {/* Estado */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center">
+                      <CheckCircle className="h-4 w-4 mr-2 text-orange-500" />
+                      Estado
+                    </label>
+                    <select 
+                      value={filters.estado} 
+                      onChange={(e) => handleFilterChange('estado', e.target.value)}
+                      className="h-12 w-full rounded-xl border border-gray-200 bg-white/80 backdrop-blur-sm px-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all duration-200 hover:shadow-md"
+                    >
+                      <option value="activo">Solo Activos</option>
+                      <option value="pendiente_revision">Pendientes</option>
+                      <option value="rechazado">Rechazados</option>
+                      <option value="">Todos los estados</option>
+                    </select>
+                  </div>
+
+                  {/* Disponibilidad */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center">
+                      <ToggleRight className="h-4 w-4 mr-2 text-green-500" />
+                      Disponibilidad
+                    </label>
+                    <select 
+                      value={filters.disponibilidad} 
+                      onChange={(e) => handleFilterChange('disponibilidad', e.target.value)}
+                      className="h-12 w-full rounded-xl border border-gray-200 bg-white/80 backdrop-blur-sm px-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all duration-200 hover:shadow-md"
+                    >
+                      <option value="true">Solo Disponibles</option>
+                      <option value="false">No Disponibles</option>
+                      <option value="">Toda disponibilidad</option>
+                    </select>
+                  </div>
+                </div>
               </div>
             </div>
             
@@ -406,8 +344,6 @@ export const ProductsPage: React.FC = () => {
                       page: 1,
                       limit: 12
                     });
-                    setCategorySearch('');
-                    setShowAdvancedFilters(false);
                   }}
                   variant="outline"
                   className="border-gray-300 text-gray-600 hover:bg-gray-50 rounded-xl"
@@ -487,8 +423,6 @@ export const ProductsPage: React.FC = () => {
                     page: 1,
                     limit: 12
                   });
-                  setCategorySearch('');
-                  setShowAdvancedFilters(false);
                 }}
                 className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl px-8 py-3"
               >

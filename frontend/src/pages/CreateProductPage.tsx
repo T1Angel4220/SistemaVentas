@@ -11,6 +11,7 @@ import { Textarea } from '../components/ui/Textarea';
 import { Label } from '../components/ui/Label';
 import { Alert, AlertDescription } from '../components/ui/Alert';
 import { AlertDialog } from '../components/ui/AlertDialog';
+import HierarchicalCategorySearch from '../components/ui/HierarchicalCategorySearch';
 import { 
   Package, 
   Calendar, 
@@ -23,7 +24,6 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import type { ProductForm, ImageFile } from '../types/product.types';
-import type { Category } from '../types/category.types';
 
 export const CreateProductPage: React.FC = () => {
   const { user } = useAuth();
@@ -628,28 +628,16 @@ export const CreateProductPage: React.FC = () => {
             <Card className="shadow-lg border-0 bg-white rounded-lg overflow-hidden">
               <CardContent className="p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Categoría *</h2>
-                <select
-                  value={form.categoria_id}
-                  onChange={(e) => handleInputChange('categoria_id', e.target.value)}
-                  className={`w-full h-10 rounded-md border transition-colors ${
-                    errors.categoria_id 
-                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
-                      : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
-                  }`}
-                  disabled={categoriesLoading}
-                >
-                  <option value="">
-                    {categoriesLoading ? 'Cargando categorías...' : 'Selecciona una categoría'}
-                  </option>
-                  {categories.map((category: Category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.nombre}
-                    </option>
-                  ))}
-                </select>
-                {errors.categoria_id && (
-                  <p className="text-red-500 text-sm mt-1">{errors.categoria_id}</p>
-                )}
+                <HierarchicalCategorySearch
+                  categories={categories}
+                  selectedCategoryId={form.categoria_id}
+                  onCategorySelect={(categoryId) => {
+                    handleInputChange('categoria_id', categoryId);
+                  }}
+                  loading={categoriesLoading}
+                  error={errors.categoria_id}
+                  placeholder="Buscar categoría (ej: Hogar > Muebles, Servicios > Diseño...)"
+                />
               </CardContent>
             </Card>
 
