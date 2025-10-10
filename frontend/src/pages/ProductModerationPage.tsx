@@ -42,18 +42,7 @@ export const ProductModerationPage: React.FC = () => {
     limit: 12
   });
 
-  // Verificar permisos
-  useEffect(() => {
-    if (!user || !canModerateProduct()) {
-      setError('No tienes permisos para acceder a esta página');
-      setLoading(false);
-      return;
-    }
-  }, [user, canModerateProduct]);
-
   const loadProducts = useCallback(async () => {
-    if (!canModerateProduct()) return;
-
     try {
       setLoading(true);
       setError(null);
@@ -79,15 +68,29 @@ export const ProductModerationPage: React.FC = () => {
       }
     } catch (error) {
       console.error('Error al cargar productos:', error);
-      setError('Error al cargar productos');
+      setError('Error de conexión: Verifica que el servidor esté corriendo');
     } finally {
       setLoading(false);
     }
-  }, [filters, canModerateProduct]);
+  }, [filters]);
 
+  // Verificar permisos y cargar productos
   useEffect(() => {
+    if (!user) {
+      setError('Usuario no autenticado');
+      setLoading(false);
+      return;
+    }
+
+    if (!canModerateProduct()) {
+      setError('No tienes permisos para acceder a esta página');
+      setLoading(false);
+      return;
+    }
+
+    // Solo cargar si tiene permisos
     loadProducts();
-  }, [loadProducts]);
+  }, [user, filters, loadProducts]);
 
   const handleModerationAction = async (productId: number, action: string, motivo?: string) => {
     try {
@@ -135,9 +138,9 @@ export const ProductModerationPage: React.FC = () => {
   };
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('es-CR', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'CRC'
+      currency: 'USD'
     }).format(price);
   };
 
@@ -272,16 +275,34 @@ export const ProductModerationPage: React.FC = () => {
         {/* Productos */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {products.map((product) => (
-            <Card key={product.id} className="hover:shadow-lg transition-shadow">
+            <Card key={product.id} className="hover:shadow-lg transition-shadow group">
               <div className="relative">
-                <div className="h-48 bg-gray-200 rounded-t-lg flex items-center justify-center">
-                  {product.total_imagenes > 0 ? (
-                    <div className="text-gray-500">
-                      <Package className="h-12 w-12 mx-auto mb-2" />
-                      <p className="text-sm">{product.total_imagenes} imagen{product.total_imagenes !== 1 ? 'es' : ''}</p>
-                    </div>
+                <div className="h-48 bg-gradient-to-br from-gray-100 to-gray-200 rounded-t-lg flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-300">
+                  {product.total_imagenes > 0 && product.primera_imagen ? (
+                    <>
+                      <img
+                        src={product.primera_imagen}
+                        alt={product.nombre}
+                        className="w-full h-full object-cover"
+                      />
+                      {/* Indicador de múltiples imágenes */}
+                      {product.total_imagenes > 1 && (
+                        <div className="absolute bottom-3 right-3">
+                          <div className="bg-black/70 backdrop-blur-sm rounded-lg px-2 py-1 text-white text-xs font-medium">
+                            +{product.total_imagenes - 1} más
+                          </div>
+                        </div>
+                      )}
+                    </>
                   ) : (
-                    <Package className="h-12 w-12 text-gray-400" />
+                    <div className="text-center text-gray-600">
+                      <div className="w-16 h-16 bg-white/80 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
+                        <Package className="h-8 w-8 text-gray-500" />
+                      </div>
+                      <p className="text-sm font-medium">
+                        {product.total_imagenes > 0 ? `${product.total_imagenes} imagen${product.total_imagenes !== 1 ? 'es' : ''}` : 'Sin imágenes'}
+                      </p>
+                    </div>
                   )}
                 </div>
                 <div className="absolute top-2 right-2">

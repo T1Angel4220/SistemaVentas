@@ -961,12 +961,13 @@ class ProductsController {
       const productos = await query(
         `SELECT 
           i.id, i.codigo, i.nombre, i.descripcion, i.precio, 
-          i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion,
+          i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion, i.es_peligroso,
           i.fecha_revision, i.moderador_revision_id, i.motivo_rechazo,
           c.nombre as categoria_nombre,
           u.nombre || ' ' || u.apellido as vendedor_nombre,
           ub.nombre as ubicacion_nombre,
-          COUNT(ii.id) as total_imagenes
+          COUNT(ii.id) as total_imagenes,
+          (SELECT ii2.url_imagen FROM item_imagenes ii2 WHERE ii2.item_id = i.id ORDER BY ii2.orden LIMIT 1) as primera_imagen
         FROM items i
         JOIN categorias c ON i.categoria_id = c.id
         JOIN usuarios u ON i.vendedor_id = u.id
@@ -974,7 +975,7 @@ class ProductsController {
         LEFT JOIN item_imagenes ii ON i.id = ii.item_id
         WHERE i.estado = $1
         GROUP BY i.id, i.codigo, i.nombre, i.descripcion, i.precio, 
-                 i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion,
+                 i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion, i.es_peligroso,
                  i.fecha_revision, i.moderador_revision_id, i.motivo_rechazo,
                  c.nombre, u.nombre, u.apellido, ub.nombre
         ORDER BY i.fecha_publicacion ASC
