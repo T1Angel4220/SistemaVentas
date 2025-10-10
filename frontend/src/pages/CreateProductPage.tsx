@@ -13,6 +13,7 @@ import { Alert, AlertDescription } from '../components/ui/Alert';
 import { AlertDialog } from '../components/ui/AlertDialog';
 import HierarchicalCategorySearch from '../components/ui/HierarchicalCategorySearch';
 import { ServiceDetailsForm } from '../components/ui/ServiceDetailsForm';
+import { VisibilityToggle } from '../components/ui/VisibilityToggle';
 import { 
   Package, 
   Calendar, 
@@ -55,6 +56,8 @@ export const CreateProductPage: React.FC = () => {
     ubicacion_canton: '',
     ubicacion_distrito: '',
     ubicacion_direccion: '',
+    disponibilidad: false, // Por defecto no visible hasta aprobación
+    estado: 'pendiente_revision', // Por defecto pendiente de revisión
     horario_atencion: '',
     horario_inicio: '',
     horario_fin: '',
@@ -86,6 +89,8 @@ export const CreateProductPage: React.FC = () => {
           ubicacion_canton: product.canton || '',
           ubicacion_distrito: product.distrito || '',
           ubicacion_direccion: product.ubicacion_nombre || '',
+          disponibilidad: product.disponibilidad === true, // Solo true si explícitamente es true
+          estado: product.estado || 'pendiente_revision',
           horario_atencion: product.servicio?.horario_atencion || '',
           horario_inicio: '', // Se extraerá del horario_atencion
           horario_fin: '', // Se extraerá del horario_atencion
@@ -139,6 +144,10 @@ export const CreateProductPage: React.FC = () => {
         return newErrors;
       });
     }
+  };
+
+  const handleVisibilityToggle = (visible: boolean) => {
+    setForm(prev => ({ ...prev, disponibilidad: visible }));
   };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -378,11 +387,40 @@ export const CreateProductPage: React.FC = () => {
       if (data.success) {
         setSuccess(true);
         const actionText = isEditMode ? 'actualizado' : 'creado';
-        showSuccess(
-          '¡Éxito!', 
-          `El producto ha sido ${actionText} correctamente.`,
-          () => navigate(`/products/${data.data.id || id}`)
-        );
+        
+        // Construir mensaje basado en información adicional
+        let mensajeExito = `El producto ha sido ${actionText} correctamente.`;
+        let tipoAlerta = 'success';
+        
+        if (data.informacion) {
+          if (data.informacion.estado === 'peligroso') {
+            tipoAlerta = 'warning';
+            mensajeExito = `⚠️ Producto ${actionText} pero marcado como peligroso automáticamente. Motivo: ${data.informacion.motivo}`;
+          } else if (data.informacion.requiere_revision) {
+            tipoAlerta = 'info';
+            mensajeExito = `ℹ️ Producto ${actionText} y enviado para revisión. ${data.informacion.motivo || ''}`;
+          }
+        }
+        
+        if (tipoAlerta === 'warning') {
+          showWarning(
+            'Producto Marcado como Peligroso', 
+            mensajeExito,
+            () => navigate(`/products/${data.data.id || id}`)
+          );
+        } else if (tipoAlerta === 'info') {
+          showSuccess(
+            'Producto Enviado para Revisión', 
+            mensajeExito,
+            () => navigate(`/products/${data.data.id || id}`)
+          );
+        } else {
+          showSuccess(
+            '¡Éxito!', 
+            mensajeExito,
+            () => navigate(`/products/${data.data.id || id}`)
+          );
+        }
       } else {
         // Manejar errores específicos del servidor
         if (data.errors) {
@@ -650,7 +688,7 @@ export const CreateProductPage: React.FC = () => {
                 {errors.horario_fin && (
                   <p className="text-red-500 text-sm mt-2">{errors.horario_fin}</p>
                 )}
-                {errors.dias_disponibles && (
+                    {errors.dias_disponibles && (
                   <p className="text-red-500 text-sm mt-2">{errors.dias_disponibles}</p>
                 )}
               </CardContent>
@@ -741,7 +779,7 @@ export const CreateProductPage: React.FC = () => {
                       className="mt-1"
                       required
                     />
-                  </div>
+                </div>
                 </div>
 
                 <p className="text-sm text-gray-500 mt-3">
@@ -750,6 +788,54 @@ export const CreateProductPage: React.FC = () => {
               </CardContent>
             </Card>
           </div>
+
+          {/* Toggle de Visibilidad - Solo en modo edición y si el producto está activo */}
+          {isEditMode && form.estado === 'activo' && (
+            <Card className="shadow-lg border-0 bg-white rounded-lg overflow-hidden">
+              <CardContent className="p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Disponibilidad en Stock</h2>
+                <VisibilityToggle
+                  isVisible={form.disponibilidad}
+                  onChange={handleVisibilityToggle}
+                  label=""
+                />
+                <p className="text-sm text-gray-500 mt-3">
+                  {form.disponibilidad 
+                    ? '✅ Tu producto está disponible en stock y los clientes pueden comprarlo' 
+                    : '❌ Tu producto está sin stock temporalmente (sin stock)'
+                  }
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Mensaje informativo para productos no activos */}
+          {isEditMode && form.estado !== 'activo' && (
+            <Card className="shadow-lg border-0 bg-white rounded-lg overflow-hidden">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-3">
+                  <div className="flex-shrink-0">
+                    <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                      <Clock className="h-5 w-5 text-yellow-600" />
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Estado del Producto</h3>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {form.estado === 'pendiente_revision' 
+                        ? 'Tu producto está pendiente de revisión por parte de los moderadores. Una vez aprobado, podrás controlar su disponibilidad en stock.'
+                        : form.estado === 'rechazado'
+                        ? 'Tu producto fue rechazado. Puedes apelar la decisión o editarlo y volver a enviarlo.'
+                        : form.estado === 'peligroso'
+                        ? 'Tu producto fue marcado como peligroso y requiere revisión urgente. No puede ser editado hasta que sea revisado.'
+                        : 'Tu producto no está aprobado y no será visible para los clientes.'
+                      }
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Imágenes - Estilo Amazon */}
           <Card className="shadow-lg border-0 bg-white rounded-lg overflow-hidden">

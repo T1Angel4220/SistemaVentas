@@ -1,5 +1,6 @@
 const { query } = require('../config/database');
 const { config } = require('../config/config');
+const { detectarContenidoInadecuado, obtenerMensajeRechazo } = require('../services/contentDetection');
 
 // Función helper para construir URLs completas de imágenes
 const buildImageUrl = (filename) => {
@@ -54,6 +55,28 @@ class ProductsController {
         });
       }
 
+      // Detectar contenido inadecuado
+      const deteccion = detectarContenidoInadecuado(nombre, descripcion);
+      console.log('Detección de contenido:', deteccion);
+      
+      // Determinar estado inicial basado en detección
+      let estadoInicial = 'pendiente_revision';
+      let esPeligroso = false;
+      let motivoRechazo = null;
+
+      if (deteccion.esInadecuado) {
+        if (deteccion.nivelRiesgo === 'alto') {
+          estadoInicial = 'peligroso';
+          esPeligroso = true;
+          motivoRechazo = obtenerMensajeRechazo(deteccion.categoria, deteccion.palabrasDetectadas);
+        } else if (deteccion.nivelRiesgo === 'medio') {
+          estadoInicial = 'pendiente_revision';
+          motivoRechazo = obtenerMensajeRechazo(deteccion.categoria, deteccion.palabrasDetectadas);
+        } else {
+          estadoInicial = 'pendiente_revision';
+        }
+      }
+
       // Verificar que el código sea único
       const codigoExistente = await query(
         'SELECT id FROM items WHERE codigo = $1',
@@ -97,13 +120,16 @@ class ProductsController {
       }
 
       // Crear el producto
+      // La disponibilidad debe ser false inicialmente (sin stock hasta que el vendedor lo configure)
+      // Solo se puede cambiar a true cuando el producto esté aprobado (estado: 'activo')
+      const disponibilidad = false;
       const nuevoProducto = await query(
         `INSERT INTO items (
           codigo, nombre, descripcion, precio, ubicacion_id, 
-          tipo, categoria_id, vendedor_id, estado
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pendiente_revision')
+          tipo, categoria_id, vendedor_id, estado, disponibilidad, es_peligroso, motivo_rechazo
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         RETURNING *`,
-        [codigo, nombre, descripcion, precio, ubicacionIdFinal, tipo, categoria_id, vendedor_id]
+        [codigo, nombre, descripcion, precio, ubicacionIdFinal, tipo, categoria_id, vendedor_id, estadoInicial, disponibilidad, esPeligroso, motivoRechazo]
       );
 
       const producto = nuevoProducto.rows[0];
@@ -135,10 +161,39 @@ class ProductsController {
         console.log('✅ Imágenes guardadas exitosamente');
       }
 
+      // Determinar mensaje de respuesta basado en el estado
+      let mensajeRespuesta = 'Producto creado exitosamente';
+      let informacionAdicional = null;
+
+      if (deteccion.esInadecuado) {
+        if (estadoInicial === 'peligroso') {
+          mensajeRespuesta = 'Producto creado pero marcado como peligroso automáticamente';
+          informacionAdicional = {
+            estado: 'peligroso',
+            motivo: motivoRechazo,
+            requiere_revision: true,
+            no_eliminable: true
+          };
+        } else {
+          mensajeRespuesta = 'Producto creado y enviado para revisión';
+          informacionAdicional = {
+            estado: 'pendiente_revision',
+            requiere_revision: true,
+            motivo: motivoRechazo
+          };
+        }
+      } else {
+        informacionAdicional = {
+          estado: 'pendiente_revision',
+          requiere_revision: true
+        };
+      }
+
       res.status(201).json({
         success: true,
-        message: 'Producto creado exitosamente',
-        data: producto
+        message: mensajeRespuesta,
+        data: producto,
+        informacion: informacionAdicional
       });
 
     } catch (error) {
@@ -221,7 +276,7 @@ class ProductsController {
       const productos = await query(
         `SELECT 
           i.id, i.codigo, i.nombre, i.descripcion, i.precio, 
-          i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion,
+          i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion, i.es_peligroso,
           c.nombre as categoria_nombre,
           u.nombre || ' ' || u.apellido as vendedor_nombre,
           ub.nombre as ubicacion_nombre,
@@ -233,7 +288,7 @@ class ProductsController {
         LEFT JOIN item_imagenes ii ON i.id = ii.item_id
         WHERE ${whereClause}
         GROUP BY i.id, i.codigo, i.nombre, i.descripcion, i.precio, 
-                 i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion,
+                 i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion, i.es_peligroso,
                  c.nombre, u.nombre, u.apellido, ub.nombre
         ORDER BY i.fecha_publicacion DESC
         LIMIT $${paramCount - 1} OFFSET $${paramCount}`,
@@ -414,6 +469,29 @@ class ProductsController {
         });
       }
 
+      // Detectar contenido inadecuado en los campos actualizados
+      const nombreParaDetectar = nombre || producto.nombre;
+      const descripcionParaDetectar = descripcion || producto.descripcion;
+      
+      const deteccion = detectarContenidoInadecuado(nombreParaDetectar, descripcionParaDetectar);
+      console.log('Detección de contenido en actualización:', deteccion);
+      
+      // Determinar si se debe cambiar el estado
+      let nuevoEstado = producto.estado;
+      let esPeligroso = producto.es_peligroso;
+      let motivoRechazo = producto.motivo_rechazo;
+
+      if (deteccion.esInadecuado) {
+        if (deteccion.nivelRiesgo === 'alto') {
+          nuevoEstado = 'peligroso';
+          esPeligroso = true;
+          motivoRechazo = obtenerMensajeRechazo(deteccion.categoria, deteccion.palabrasDetectadas);
+        } else if (deteccion.nivelRiesgo === 'medio' && producto.estado === 'activo') {
+          nuevoEstado = 'pendiente_revision';
+          motivoRechazo = obtenerMensajeRechazo(deteccion.categoria, deteccion.palabrasDetectadas);
+        }
+      }
+
       // Manejar ubicación con campos separados
       let ubicacionIdFinal = ubicacion_id;
       
@@ -444,6 +522,19 @@ class ProductsController {
       }
 
       // Actualizar producto
+      // Solo permitir cambio de disponibilidad (stock) si el producto está en estado 'activo'
+      // La disponibilidad solo se puede cambiar cuando el producto está aprobado
+      let disponibilidadFinal = undefined;
+      if (req.body.disponibilidad !== undefined) {
+        if (nuevoEstado === 'activo' || producto.estado === 'activo') {
+          // Solo permitir cambio de stock si el producto está aprobado
+          disponibilidadFinal = req.body.disponibilidad;
+        } else {
+          // Si no está activo, forzar a false (sin stock hasta aprobación)
+          disponibilidadFinal = false;
+        }
+      }
+      
       const productoActualizado = await query(
         `UPDATE items SET 
           nombre = COALESCE($1, nombre),
@@ -451,10 +542,14 @@ class ProductsController {
           precio = COALESCE($3, precio),
           ubicacion_id = COALESCE($4, ubicacion_id),
           categoria_id = COALESCE($5, categoria_id),
+          disponibilidad = COALESCE($6, disponibilidad),
+          estado = COALESCE($7, estado),
+          es_peligroso = COALESCE($8, es_peligroso),
+          motivo_rechazo = COALESCE($9, motivo_rechazo),
           fecha_actualizacion = CURRENT_TIMESTAMP
-        WHERE id = $6
+        WHERE id = $10
         RETURNING *`,
-        [nombre, descripcion, precio, ubicacionIdFinal, categoria_id, id]
+        [nombre, descripcion, precio, ubicacionIdFinal, categoria_id, disponibilidadFinal, nuevoEstado, esPeligroso, motivoRechazo, id]
       );
 
       // Si es un servicio, actualizar información adicional
@@ -546,10 +641,36 @@ class ProductsController {
         }
       }
 
+      // Determinar mensaje de respuesta basado en cambios de estado
+      let mensajeRespuesta = 'Producto actualizado exitosamente';
+      let informacionAdicional = null;
+
+      if (deteccion.esInadecuado && (nuevoEstado !== producto.estado)) {
+        if (nuevoEstado === 'peligroso') {
+          mensajeRespuesta = 'Producto actualizado pero marcado como peligroso automáticamente';
+          informacionAdicional = {
+            estado_anterior: producto.estado,
+            estado_nuevo: 'peligroso',
+            motivo: motivoRechazo,
+            requiere_revision: true,
+            no_eliminable: true
+          };
+        } else if (nuevoEstado === 'pendiente_revision') {
+          mensajeRespuesta = 'Producto actualizado y enviado para revisión';
+          informacionAdicional = {
+            estado_anterior: producto.estado,
+            estado_nuevo: 'pendiente_revision',
+            requiere_revision: true,
+            motivo: motivoRechazo
+          };
+        }
+      }
+
       res.json({
         success: true,
-        message: 'Producto actualizado exitosamente',
-        data: productoActualizado.rows[0]
+        message: mensajeRespuesta,
+        data: productoActualizado.rows[0],
+        informacion: informacionAdicional
       });
 
     } catch (error) {
@@ -692,7 +813,7 @@ class ProductsController {
       const productos = await query(
         `SELECT 
           i.id, i.codigo, i.nombre, i.descripcion, i.precio, 
-          i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion,
+          i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion, i.es_peligroso,
           c.nombre as categoria_nombre,
           COUNT(ii.id) as total_imagenes,
           (SELECT ii2.url_imagen FROM item_imagenes ii2 WHERE ii2.item_id = i.id ORDER BY ii2.orden LIMIT 1) as primera_imagen
@@ -701,7 +822,7 @@ class ProductsController {
         LEFT JOIN item_imagenes ii ON i.id = ii.item_id
         WHERE ${whereClause}
         GROUP BY i.id, i.codigo, i.nombre, i.descripcion, i.precio, 
-                 i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion, c.nombre
+                 i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion, i.es_peligroso, c.nombre
         ORDER BY i.fecha_publicacion DESC
         LIMIT $${queryParams.length - 1} OFFSET $${queryParams.length}`,
         queryParams

@@ -115,9 +115,9 @@ export const ProductsPage: React.FC = () => {
   };
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('es-CR', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'CRC'
+      currency: 'USD'
     }).format(price);
   };
 
@@ -129,21 +129,55 @@ export const ProductsPage: React.FC = () => {
     });
   };
 
-  const getStatusBadge = (estado: string, disponibilidad: boolean) => {
-    if (!disponibilidad) {
-      return <Badge variant="secondary">No disponible</Badge>;
+  const getStatusBadge = (product: Product) => {
+    const { estado, disponibilidad, tipo, es_peligroso } = product;
+    
+    // Si es peligroso, mostrar badge rojo
+    if (estado === 'peligroso' || es_peligroso) {
+      return (
+        <Badge className="bg-red-100 text-red-800 border-red-200">
+          {tipo === 'servicio' ? 'Servicio Peligroso' : 'Producto Peligroso'}
+        </Badge>
+      );
     }
     
-    const statusColors = {
-      activo: 'bg-green-100 text-green-800',
-      pendiente_revision: 'bg-yellow-100 text-yellow-800',
-      rechazado: 'bg-red-100 text-red-800',
-      suspendido: 'bg-gray-100 text-gray-800'
+    // Si está activo pero sin stock
+    if (estado === 'activo' && !disponibilidad) {
+      return (
+        <Badge className="bg-orange-100 text-orange-800 border-orange-200">
+          {tipo === 'servicio' ? 'Servicio sin Stock' : 'Producto sin Stock'}
+        </Badge>
+      );
+    }
+    
+    // Estados normales
+    const statusConfig = {
+      activo: {
+        color: 'bg-green-100 text-green-800 border-green-200',
+        text: tipo === 'servicio' ? 'Servicio Activo' : 'Producto Activo'
+      },
+      pendiente_revision: {
+        color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+        text: 'Pendiente de Revisión'
+      },
+      rechazado: {
+        color: 'bg-red-100 text-red-800 border-red-200',
+        text: 'Rechazado'
+      },
+      suspendido: {
+        color: 'bg-gray-100 text-gray-800 border-gray-200',
+        text: 'Suspendido'
+      }
+    };
+    
+    const config = statusConfig[estado as keyof typeof statusConfig] || {
+      color: 'bg-gray-100 text-gray-800 border-gray-200',
+      text: 'Estado Desconocido'
     };
     
     return (
-      <Badge className={statusColors[estado as keyof typeof statusColors] || 'bg-gray-100 text-gray-800'}>
-        {estado.replace('_', ' ').toUpperCase()}
+      <Badge className={config.color}>
+        {config.text}
       </Badge>
     );
   };
@@ -452,7 +486,7 @@ export const ProductsPage: React.FC = () => {
                           )}
                         </div>
                         <div className="absolute top-4 right-4">
-                          {getStatusBadge(product.estado, product.disponibilidad)}
+                          {getStatusBadge(product)}
                         </div>
                         <div className="absolute top-4 left-4">
                           <Badge className="bg-white/95 backdrop-blur-sm border-0 shadow-lg px-3 py-1 rounded-full">

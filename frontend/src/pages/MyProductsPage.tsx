@@ -13,8 +13,6 @@ import {
   Edit, 
   Trash2, 
   Eye, 
-  ToggleLeft, 
-  ToggleRight,
   Calendar,
   AlertCircle,
   ArrowLeft
@@ -87,39 +85,6 @@ export const MyProductsPage: React.FC = () => {
     setFilters(prev => ({ ...prev, page }));
   };
 
-  const handleToggleAvailability = async (productId: number, currentAvailability: boolean) => {
-    try {
-      const response = await fetch(`http://localhost:3001/api/products/${productId}/availability`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${apiService.getToken()}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ disponibilidad: !currentAvailability })
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        // Actualizar el estado local
-        setProducts(prev => prev.map(product => 
-          product.id === productId 
-            ? { ...product, disponibilidad: !currentAvailability }
-            : product
-        ));
-        
-        const newStatus = !currentAvailability ? 'disponible' : 'no disponible';
-        showSuccess(
-          'Disponibilidad actualizada',
-          `El producto ahora está ${newStatus}.`
-        );
-      } else {
-        showError('Error', data.message || 'Error al cambiar disponibilidad');
-      }
-    } catch (error) {
-      console.error('Error al cambiar disponibilidad:', error);
-      showError('Error', 'Error al cambiar disponibilidad');
-    }
-  };
 
   const handleEditProduct = (productId: number) => {
     navigate(`/products/${productId}/edit`);
@@ -172,21 +137,55 @@ export const MyProductsPage: React.FC = () => {
     });
   };
 
-  const getStatusBadge = (estado: string, disponibilidad: boolean) => {
-    if (!disponibilidad) {
-      return <Badge variant="secondary">No disponible</Badge>;
+  const getStatusBadge = (product: Product) => {
+    const { estado, disponibilidad, tipo, es_peligroso } = product;
+    
+    // Si es peligroso, mostrar badge rojo
+    if (estado === 'peligroso' || es_peligroso) {
+      return (
+        <Badge className="bg-red-100 text-red-800 border-red-200">
+          {tipo === 'servicio' ? 'Servicio Peligroso' : 'Producto Peligroso'}
+        </Badge>
+      );
     }
     
-    const statusColors = {
-      activo: 'bg-green-100 text-green-800',
-      pendiente_revision: 'bg-yellow-100 text-yellow-800',
-      rechazado: 'bg-red-100 text-red-800',
-      suspendido: 'bg-gray-100 text-gray-800'
+    // Si está activo pero sin stock
+    if (estado === 'activo' && !disponibilidad) {
+      return (
+        <Badge className="bg-orange-100 text-orange-800 border-orange-200">
+          {tipo === 'servicio' ? 'Servicio sin Stock' : 'Producto sin Stock'}
+        </Badge>
+      );
+    }
+    
+    // Estados normales
+    const statusConfig = {
+      activo: {
+        color: 'bg-green-100 text-green-800 border-green-200',
+        text: tipo === 'servicio' ? 'Servicio Activo' : 'Producto Activo'
+      },
+      pendiente_revision: {
+        color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+        text: 'Pendiente de Revisión'
+      },
+      rechazado: {
+        color: 'bg-red-100 text-red-800 border-red-200',
+        text: 'Rechazado'
+      },
+      suspendido: {
+        color: 'bg-gray-100 text-gray-800 border-gray-200',
+        text: 'Suspendido'
+      }
+    };
+    
+    const config = statusConfig[estado as keyof typeof statusConfig] || {
+      color: 'bg-gray-100 text-gray-800 border-gray-200',
+      text: 'Estado Desconocido'
     };
     
     return (
-      <Badge className={statusColors[estado as keyof typeof statusColors] || 'bg-gray-100 text-gray-800'}>
-        {estado.replace('_', ' ').toUpperCase()}
+      <Badge className={config.color}>
+        {config.text}
       </Badge>
     );
   };
@@ -200,7 +199,8 @@ export const MyProductsPage: React.FC = () => {
       activo: 'Tu producto está activo y visible para los compradores.',
       pendiente_revision: 'Tu producto está siendo revisado por los moderadores.',
       rechazado: 'Tu producto fue rechazado. Revisa los comentarios y haz las correcciones necesarias.',
-      suspendido: 'Tu producto ha sido suspendido temporalmente.'
+      suspendido: 'Tu producto ha sido suspendido temporalmente.',
+      peligroso: 'Tu producto fue marcado como peligroso y no puede ser editado.'
     };
     return messages[estado as keyof typeof messages] || 'Estado desconocido';
   };
@@ -429,7 +429,7 @@ export const MyProductsPage: React.FC = () => {
                   {/* Badges mejorados */}
                   <div className="absolute top-3 right-3">
                     <div className="bg-white/95 backdrop-blur-sm rounded-xl px-3 py-1 shadow-lg border border-gray-200">
-                      {getStatusBadge(product.estado, product.disponibilidad)}
+                      {getStatusBadge(product)}
                     </div>
                   </div>
                   <div className="absolute top-3 left-3">
@@ -497,28 +497,18 @@ export const MyProductsPage: React.FC = () => {
                       </Button>
                     )}
                     
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleToggleAvailability(product.id, product.disponibilidad)}
-                      className={`h-10 w-10 rounded-xl border-2 font-medium ${
-                        product.disponibilidad 
-                          ? 'border-green-200 text-green-600 hover:bg-green-50 hover:border-green-300' 
-                          : 'border-gray-200 text-gray-400 hover:bg-gray-50 hover:border-gray-300'
-                      }`}
-                    >
-                      {product.disponibilidad ? (
-                        <ToggleRight className="h-4 w-4" />
-                      ) : (
-                        <ToggleLeft className="h-4 w-4" />
-                      )}
-                    </Button>
                     
+                    {/* Botón de eliminar - Deshabilitado para productos peligrosos */}
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleDeleteProduct(product.id, product.nombre)}
-                      className="h-10 w-10 rounded-xl border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+                      disabled={product.es_peligroso || product.estado === 'peligroso'}
+                      className={`h-10 w-10 rounded-xl border-2 font-medium ${
+                        product.es_peligroso || product.estado === 'peligroso'
+                          ? 'border-gray-200 text-gray-300 cursor-not-allowed opacity-50'
+                          : 'border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300'
+                      }`}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
