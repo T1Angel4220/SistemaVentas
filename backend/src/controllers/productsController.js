@@ -901,7 +901,7 @@ class ProductsController {
           nuevoEstado = 'activo';
           break;
         case 'rechazar':
-          nuevoEstado = 'rechazado';
+          nuevoEstado = 'suspendido';
           break;
         case 'suspender':
           nuevoEstado = 'suspendido';
@@ -953,10 +953,21 @@ class ProductsController {
   // Obtener productos pendientes de moderación
   static async getPendingModeration(req, res) {
     try {
-      const { page = 1, limit = 10, estado = 'pendiente_revision' } = req.query;
+      const { page = 1, limit = 10, estado } = req.query;
 
       // Calcular offset para paginación
       const offset = (page - 1) * limit;
+
+      // Construir la consulta dinámicamente según si hay filtro de estado
+      let whereClause = '';
+      let queryParams = [];
+      
+      if (estado && estado.trim() !== '') {
+        whereClause = 'WHERE i.estado = $1';
+        queryParams = [estado, limit, offset];
+      } else {
+        queryParams = [limit, offset];
+      }
 
       const productos = await query(
         `SELECT 
@@ -973,23 +984,26 @@ class ProductsController {
         JOIN usuarios u ON i.vendedor_id = u.id
         LEFT JOIN ubicaciones ub ON i.ubicacion_id = ub.id
         LEFT JOIN item_imagenes ii ON i.id = ii.item_id
-        WHERE i.estado = $1
+        ${whereClause}
         GROUP BY i.id, i.codigo, i.nombre, i.descripcion, i.precio, 
                  i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion, i.es_peligroso,
                  i.fecha_revision, i.moderador_revision_id, i.motivo_rechazo,
                  c.nombre, u.nombre, u.apellido, ub.nombre
         ORDER BY i.fecha_publicacion ASC
-        LIMIT $2 OFFSET $3`,
-        [estado, limit, offset]
+        LIMIT $${queryParams.length - 1} OFFSET $${queryParams.length}`,
+        queryParams
       );
 
       // Contar total
-      const totalCount = await query(
-        `SELECT COUNT(*) as total
-         FROM items i
-         WHERE i.estado = $1`,
-        [estado]
-      );
+      let countQuery = `SELECT COUNT(*) as total FROM items i`;
+      let countParams = [];
+      
+      if (estado && estado.trim() !== '') {
+        countQuery += ` WHERE i.estado = $1`;
+        countParams = [estado];
+      }
+      
+      const totalCount = await query(countQuery, countParams);
 
       const total = parseInt(totalCount.rows[0].total);
       const totalPages = Math.ceil(total / limit);

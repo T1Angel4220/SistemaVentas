@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
+import { useAlert } from '../hooks/useAlert';
 import { apiService } from '../services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Alert, AlertDescription } from '../components/ui/Alert';
+import { AlertDialog } from '../components/ui/AlertDialog';
 import { 
   Shield, 
   Package, 
@@ -22,7 +24,8 @@ import type { Product, ProductsResponse } from '../types/product.types';
 
 export const ProductModerationPage: React.FC = () => {
   const { user } = useAuth();
-  const { canModerateProduct, getRoleDisplayName, getRoleColor } = usePermissions();
+  const { canModerateProduct, getRoleDisplayName } = usePermissions();
+  const { alert, showSuccess, showError, showWarning, hideAlert } = useAlert();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +40,7 @@ export const ProductModerationPage: React.FC = () => {
   });
 
   const [filters, setFilters] = useState({
-    estado: 'pendiente_revision',
+    estado: '',
     page: 1,
     limit: 12
   });
@@ -92,7 +95,7 @@ export const ProductModerationPage: React.FC = () => {
     loadProducts();
   }, [user, filters, loadProducts]);
 
-  const handleModerationAction = async (productId: number, action: string, motivo?: string) => {
+  const handleModerationAction = async (productId: number, action: string, productName: string, motivo?: string) => {
     try {
       setActionLoading(productId);
       
@@ -104,25 +107,51 @@ export const ProductModerationPage: React.FC = () => {
         },
         body: JSON.stringify({
           accion: action,
-          motivo: motivo || `Producto ${action} por ${getRoleDisplayName()}`,
-          decision_final: `Decisión: ${action}`
+          motivo: motivo || `Producto ${action === 'aprobar' ? 'aprobado' : action === 'rechazar' ? 'rechazado' : action} por ${getRoleDisplayName()}`,
+          decision_final: `Decisión: ${action === 'aprobar' ? 'Aprobado' : action === 'rechazar' ? 'Rechazado' : action}`
         })
       });
 
       const data = await response.json();
       
       if (data.success) {
-        // Recargar productos
-        await loadProducts();
+        // Mostrar mensaje de éxito
+        const actionText = action === 'aprobar' ? 'aprobado' : action === 'rechazar' ? 'rechazado' : action;
+        showSuccess(
+          'Acción completada',
+          `El producto "${productName}" ha sido ${actionText} exitosamente.`,
+          () => loadProducts()
+        );
+        
+        // Limpiar errores
+        setError(null);
       } else {
-        setError(data.message || 'Error al moderar producto');
+        showError('Error', data.message || 'Error al moderar producto');
       }
     } catch (error) {
       console.error('Error al moderar producto:', error);
-      setError('Error al moderar producto');
+      showError('Error', 'Error de conexión al moderar producto');
     } finally {
       setActionLoading(null);
     }
+  };
+
+  const handleApproveProduct = (productId: number, productName: string) => {
+    showWarning(
+      '¿Aprobar producto?',
+      `¿Estás seguro de que quieres aprobar el producto "${productName}"? Este producto será visible para todos los compradores.`,
+      () => handleModerationAction(productId, 'aprobar', productName),
+      undefined // onCancel - no necesita hacer nada especial
+    );
+  };
+
+  const handleRejectProduct = (productId: number, productName: string) => {
+    showWarning(
+      '¿Rechazar producto?',
+      `¿Estás seguro de que quieres rechazar el producto "${productName}"? Este producto será suspendido y no será visible para los compradores.`,
+      () => handleModerationAction(productId, 'rechazar', productName),
+      undefined // onCancel - no necesita hacer nada especial
+    );
   };
 
   const handleFilterChange = (key: string, value: string) => {
@@ -199,66 +228,142 @@ export const ProductModerationPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-indigo-700 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="text-center">
-            <div className="flex items-center justify-center mb-6">
-              <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mr-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Header profesional */}
+      <div className="bg-gradient-to-r from-slate-800 via-blue-900 to-indigo-900 text-white shadow-2xl">
+        <div className="max-w-7xl mx-auto px-6 py-12">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-6">
+              <div className="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/20">
                 <Shield className="w-10 h-10 text-white" />
               </div>
               <div>
-                <h1 className="text-4xl md:text-5xl font-bold">
-                  Moderación de Productos
+                <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+                  Centro de Moderación
                 </h1>
-                <p className="text-purple-100 text-lg mt-2">
-                  Revisa y aprueba productos pendientes de moderación
+                <p className="text-blue-100 text-base mt-1">
+                  Revisión y aprobación de contenido
                 </p>
               </div>
             </div>
             
-            {/* Información del rol del usuario */}
-            <div className="mt-6 flex justify-center">
-              <Badge className={`${getRoleColor()} px-4 py-2 text-sm font-medium`}>
-                {getRoleDisplayName()}
-              </Badge>
+            {/* Información del rol y estadísticas */}
+            <div className="flex items-center space-x-4">
+              <div className="text-right">
+                <div className="text-sm text-blue-200">Moderador activo</div>
+                <div className="font-semibold">{getRoleDisplayName()}</div>
+              </div>
+              <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center border border-white/20">
+                <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8 relative z-10">
-        {/* Filtros */}
-        <Card className="mb-8 shadow-2xl border-0 bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 p-6">
+      <main className="max-w-7xl mx-auto px-6 py-8 -mt-8 relative z-10">
+        {/* Estadísticas rápidas */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200 shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-yellow-700">Pendientes</p>
+                  <p className="text-3xl font-bold text-yellow-900 mt-1">
+                    {products.filter(p => p.estado === 'pendiente_revision').length}
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-yellow-500 rounded-xl flex items-center justify-center shadow-lg">
+                  <Clock className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-green-700">Aprobados</p>
+                  <p className="text-3xl font-bold text-green-900 mt-1">
+                    {products.filter(p => p.estado === 'activo').length}
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center shadow-lg">
+                  <CheckCircle className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200 shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-red-700">Rechazados</p>
+                  <p className="text-3xl font-bold text-red-900 mt-1">
+                    {products.filter(p => p.estado === 'suspendido').length}
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-red-500 rounded-xl flex items-center justify-center shadow-lg">
+                  <XCircle className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-purple-700">Total</p>
+                  <p className="text-3xl font-bold text-purple-900 mt-1">
+                    {pagination.total_items}
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center shadow-lg">
+                  <Package className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Filtros mejorados */}
+        <Card className="mb-8 shadow-xl border-0 bg-white/95 backdrop-blur-sm rounded-2xl overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50 p-6 border-b border-gray-100">
             <CardTitle className="flex items-center space-x-3 text-gray-800">
-              <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                <Filter className="h-5 w-5 text-purple-600" />
+              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                <Filter className="h-5 w-5 text-blue-600" />
               </div>
               <div>
                 <span className="text-xl font-bold">Filtros de Moderación</span>
-                <p className="text-sm text-gray-600 font-normal">Filtra productos por estado</p>
+                <p className="text-sm text-gray-600 font-normal">Filtra productos por estado para revisión</p>
               </div>
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+          <CardContent className="p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0 sm:space-x-6">
+              <div className="flex-1">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Estado del Producto
                 </label>
-                <select
-                  value={filters.estado}
-                  onChange={(e) => handleFilterChange('estado', e.target.value)}
-                  className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                >
-                  <option value="pendiente_revision">Pendiente de Revisión</option>
-                  <option value="activo">Activos</option>
-                  <option value="rechazado">Rechazados</option>
-                  <option value="suspendido">Suspendidos</option>
-                  <option value="peligroso">Peligrosos</option>
-                </select>
+        <select
+          value={filters.estado}
+          onChange={(e) => handleFilterChange('estado', e.target.value)}
+          className="w-full sm:w-64 flex h-12 items-center justify-between rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm hover:border-gray-300 transition-colors"
+        >
+          <option value="">Todos</option>
+          <option value="pendiente_revision">Pendiente de Revisión</option>
+          <option value="activo">Activos</option>
+          <option value="suspendido">Rechazados/Suspendidos</option>
+          <option value="peligroso">Peligrosos</option>
+        </select>
+              </div>
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 rounded-xl border border-blue-200">
+                <div className="text-sm font-medium text-blue-700">
+                  Mostrando <span className="font-bold text-blue-900">{products.length}</span> de <span className="font-bold text-blue-900">{pagination.total_items}</span> productos
+                </div>
               </div>
             </div>
           </CardContent>
@@ -273,11 +378,11 @@ export const ProductModerationPage: React.FC = () => {
         )}
 
         {/* Productos */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {products.map((product) => (
-            <Card key={product.id} className="hover:shadow-lg transition-shadow group">
+            <Card key={product.id} className="bg-white/95 backdrop-blur-sm shadow-lg hover:shadow-2xl transition-all duration-300 border-0 rounded-2xl overflow-hidden group">
               <div className="relative">
-                <div className="h-48 bg-gradient-to-br from-gray-100 to-gray-200 rounded-t-lg flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-300">
+                <div className="h-56 bg-gradient-to-br from-gray-100 to-gray-200 rounded-t-2xl flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-300">
                   {product.total_imagenes > 0 && product.primera_imagen ? (
                     <>
                       <img
@@ -305,117 +410,130 @@ export const ProductModerationPage: React.FC = () => {
                     </div>
                   )}
                 </div>
-                <div className="absolute top-2 right-2">
-                  {getStatusBadge(product.estado)}
+                
+                {/* Badges mejorados */}
+                <div className="absolute top-3 right-3">
+                  <div className="bg-white/95 backdrop-blur-sm rounded-xl px-3 py-1 shadow-lg border border-gray-200">
+                    {getStatusBadge(product.estado)}
+                  </div>
                 </div>
-                <div className="absolute top-2 left-2">
-                  <Badge variant="outline" className="bg-white">
-                    {getTypeIcon(product.tipo)}
-                    <span className="ml-1 capitalize">{product.tipo}</span>
-                  </Badge>
+                <div className="absolute top-3 left-3">
+                  <div className="bg-white/95 backdrop-blur-sm rounded-xl px-3 py-1 shadow-lg border border-gray-200">
+                    <Badge variant="outline" className="bg-transparent border-gray-300 text-gray-700">
+                      {getTypeIcon(product.tipo)}
+                      <span className="ml-1 capitalize text-xs">{product.tipo}</span>
+                    </Badge>
+                  </div>
                 </div>
               </div>
               
-              <CardContent className="p-4">
-                <div className="space-y-2">
-                  <h3 className="font-semibold text-gray-900 line-clamp-2">
-                    {product.nombre}
-                  </h3>
-                  <p className="text-sm text-gray-600 line-clamp-2">
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-bold text-gray-900 text-lg line-clamp-2 mb-1">
+                      {product.nombre}
+                    </h3>
+                    <p className="text-sm text-gray-500 font-medium">Código: {product.codigo}</p>
+                  </div>
+                  
+                  <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
                     {product.descripcion}
                   </p>
-                  <div className="flex items-center space-x-2 text-sm text-gray-500">
-                    <span className="font-medium text-green-600">
+                  
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                       {formatPrice(product.precio)}
                     </span>
+                    <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full font-medium">
+                      {product.categoria_nombre}
+                    </span>
                   </div>
-                  <div className="flex items-center space-x-2 text-sm text-gray-500">
-                    <span>{product.categoria_nombre}</span>
-                  </div>
+                  
                   {product.ubicacion_nombre && (
                     <div className="flex items-center space-x-1 text-sm text-gray-500">
-                      <MapPin className="h-3 w-3" />
+                      <MapPin className="h-4 w-4" />
                       <span>{product.ubicacion_nombre}</span>
                     </div>
                   )}
+                  
                   <div className="flex items-center justify-between text-sm text-gray-500">
-                    <span>Por: {product.vendedor_nombre}</span>
+                    <span className="font-medium">Por: {product.vendedor_nombre}</span>
                     <span>{formatDate(product.fecha_publicacion)}</span>
                   </div>
                 </div>
                 
-                {/* Acciones de moderación */}
-                <div className="space-y-2 mt-4">
+                {/* Acciones de moderación mejoradas */}
+                <div className="space-y-3 mt-6">
                   <div className="flex space-x-2">
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="flex-1"
+                      className="flex-1 h-10 rounded-xl border-2 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 font-medium"
                       onClick={() => window.open(`/products/${product.id}`, '_blank')}
                     >
-                      <Eye className="h-4 w-4 mr-1" />
-                      Ver
+                      <Eye className="h-4 w-4 mr-2" />
+                      Ver Detalles
                     </Button>
                   </div>
                   
                   {product.estado === 'pendiente_revision' && (
-                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100">
+                    <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-100">
                       <Button 
                         size="sm"
-                        onClick={() => handleModerationAction(product.id, 'aprobar')}
+                        onClick={() => handleApproveProduct(product.id, product.nombre)}
                         disabled={actionLoading === product.id}
-                        className="bg-green-600 hover:bg-green-700 text-white"
+                        className="h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
                       >
                         {actionLoading === product.id ? (
                           <Clock className="h-4 w-4 animate-spin" />
                         ) : (
                           <CheckCircle className="h-4 w-4" />
                         )}
-                        <span className="ml-1">Aprobar</span>
+                        <span className="ml-2">Aprobar</span>
                       </Button>
                       <Button 
                         size="sm"
-                        onClick={() => handleModerationAction(product.id, 'rechazar')}
+                        onClick={() => handleRejectProduct(product.id, product.nombre)}
                         disabled={actionLoading === product.id}
-                        className="bg-red-600 hover:bg-red-700 text-white"
+                        className="h-10 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
                       >
                         {actionLoading === product.id ? (
                           <Clock className="h-4 w-4 animate-spin" />
                         ) : (
                           <XCircle className="h-4 w-4" />
                         )}
-                        <span className="ml-1">Rechazar</span>
+                        <span className="ml-2">Rechazar</span>
                       </Button>
                     </div>
                   )}
                   
                   {product.estado === 'activo' && (
-                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100">
+                    <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-100">
                       <Button 
                         size="sm"
-                        onClick={() => handleModerationAction(product.id, 'suspender')}
+                        onClick={() => handleModerationAction(product.id, 'suspender', product.nombre)}
                         disabled={actionLoading === product.id}
-                        className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                        className="h-10 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
                       >
                         {actionLoading === product.id ? (
                           <Clock className="h-4 w-4 animate-spin" />
                         ) : (
                           <AlertTriangle className="h-4 w-4" />
                         )}
-                        <span className="ml-1">Suspender</span>
+                        <span className="ml-2">Suspender</span>
                       </Button>
                       <Button 
                         size="sm"
-                        onClick={() => handleModerationAction(product.id, 'marcar_peligroso')}
+                        onClick={() => handleModerationAction(product.id, 'marcar_peligroso', product.nombre)}
                         disabled={actionLoading === product.id}
-                        className="bg-red-600 hover:bg-red-700 text-white"
+                        className="h-10 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
                       >
                         {actionLoading === product.id ? (
                           <Clock className="h-4 w-4 animate-spin" />
                         ) : (
                           <AlertTriangle className="h-4 w-4" />
                         )}
-                        <span className="ml-1">Peligroso</span>
+                        <span className="ml-2">Peligroso</span>
                       </Button>
                     </div>
                   )}
@@ -458,23 +576,53 @@ export const ProductModerationPage: React.FC = () => {
           </div>
         )}
 
-        {/* Estadísticas */}
-        <Card className="mt-8">
+        {/* Estadísticas finales */}
+        <Card className="mt-8 bg-gradient-to-r from-slate-50 to-blue-50 border-slate-200">
           <CardContent className="p-6">
             <div className="text-center">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Productos {filters.estado.replace('_', ' ')}
+                Resumen de Moderación
               </h3>
-              <p className="text-3xl font-bold text-purple-600">
-                {pagination.total_items}
-              </p>
-              <p className="text-sm text-gray-600">
-                Página {pagination.current_page} de {pagination.total_pages}
+              <div className="flex justify-center space-x-8 mt-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-yellow-600">
+                    {products.filter(p => p.estado === 'pendiente_revision').length}
+                  </p>
+                  <p className="text-sm text-gray-600">Pendientes</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-green-600">
+                    {products.filter(p => p.estado === 'activo').length}
+                  </p>
+                  <p className="text-sm text-gray-600">Aprobados</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-red-600">
+                    {products.filter(p => p.estado === 'suspendido').length}
+                  </p>
+                  <p className="text-sm text-gray-600">Rechazados</p>
+                </div>
+              </div>
+              <p className="text-sm text-gray-500 mt-4">
+                Página {pagination.current_page} de {pagination.total_pages} • Total: {pagination.total_items} productos
               </p>
             </div>
           </CardContent>
         </Card>
       </main>
+
+      {/* Alert Dialog */}
+      <AlertDialog
+        isOpen={alert.isOpen}
+        onClose={hideAlert}
+        title={alert.title}
+        message={alert.message}
+        type={alert.type}
+        confirmText={alert.confirmText}
+        cancelText={alert.cancelText}
+        onConfirm={alert.onConfirm}
+        onCancel={alert.onCancel}
+      />
     </div>
   );
 };
