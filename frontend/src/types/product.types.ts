@@ -82,7 +82,9 @@ export interface ProductForm {
   ubicacion_direccion: string;
   // Campos específicos para servicios
   horario_atencion: string;
-  dias_disponibles: string;
+  horario_inicio: string;
+  horario_fin: string;
+  dias_disponibles: string[];
   duracion_estimada: string;
 }
 

@@ -12,6 +12,7 @@ import { Label } from '../components/ui/Label';
 import { Alert, AlertDescription } from '../components/ui/Alert';
 import { AlertDialog } from '../components/ui/AlertDialog';
 import HierarchicalCategorySearch from '../components/ui/HierarchicalCategorySearch';
+import { ServiceDetailsForm } from '../components/ui/ServiceDetailsForm';
 import { 
   Package, 
   Calendar, 
@@ -55,7 +56,9 @@ export const CreateProductPage: React.FC = () => {
     ubicacion_distrito: '',
     ubicacion_direccion: '',
     horario_atencion: '',
-    dias_disponibles: '',
+    horario_inicio: '',
+    horario_fin: '',
+    dias_disponibles: [],
     duracion_estimada: ''
   });
 
@@ -84,7 +87,9 @@ export const CreateProductPage: React.FC = () => {
           ubicacion_distrito: product.distrito || '',
           ubicacion_direccion: product.ubicacion_nombre || '',
           horario_atencion: product.servicio?.horario_atencion || '',
-          dias_disponibles: product.servicio?.dias_disponibles || '',
+          horario_inicio: '', // Se extraerá del horario_atencion
+          horario_fin: '', // Se extraerá del horario_atencion
+          dias_disponibles: product.servicio?.dias_disponibles ? product.servicio.dias_disponibles.split(',') : [],
           duracion_estimada: product.servicio?.duracion_estimada || ''
         });
 
@@ -124,7 +129,7 @@ export const CreateProductPage: React.FC = () => {
     }
   }, [user, navigate, id, loadProductData]);
 
-  const handleInputChange = (field: keyof ProductForm, value: string) => {
+  const handleInputChange = (field: keyof ProductForm, value: string | string[]) => {
     setForm(prev => ({ ...prev, [field]: value }));
     // Limpiar error del campo cuando el usuario empiece a escribir
     if (errors[field]) {
@@ -240,11 +245,14 @@ export const CreateProductPage: React.FC = () => {
     }
 
     if (form.tipo === 'servicio') {
-      if (!form.horario_atencion.trim()) {
-        newErrors.horario_atencion = 'El horario de atención es requerido para servicios';
+      if (!form.horario_inicio.trim()) {
+        newErrors.horario_inicio = 'La hora de inicio es requerida para servicios';
       }
-      if (!form.dias_disponibles.trim()) {
-        newErrors.dias_disponibles = 'Los días disponibles son requeridos para servicios';
+      if (!form.horario_fin.trim()) {
+        newErrors.horario_fin = 'La hora de fin es requerida para servicios';
+      }
+      if (form.dias_disponibles.length === 0) {
+        newErrors.dias_disponibles = 'Debe seleccionar al menos un día disponible';
       }
     }
 
@@ -278,12 +286,36 @@ export const CreateProductPage: React.FC = () => {
       // Crear FormData para enviar archivos
       const formData = new FormData();
       
-      // Agregar datos del formulario
+      // Agregar datos del formulario (excluyendo campos específicos de servicio que se procesarán por separado)
       Object.entries(form).forEach(([key, value]) => {
+        if (key === 'horario_inicio' || key === 'horario_fin' || key === 'dias_disponibles') {
+          return; // Estos se procesarán por separado
+        }
         if (value !== undefined && value !== null && value !== '') {
-          formData.append(key, value);
+          formData.append(key, value.toString());
         }
       });
+
+      // Procesar datos específicos del servicio
+      if (form.tipo === 'servicio') {
+        // Construir horario_atencion desde horario_inicio y horario_fin
+        if (form.horario_inicio && form.horario_fin) {
+          const formatTime = (time24: string) => {
+            const [hours, minutes] = time24.split(':').map(Number);
+            const period = hours >= 12 ? 'PM' : 'AM';
+            const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+            return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+          };
+          
+          const horarioCompleto = `${formatTime(form.horario_inicio)} - ${formatTime(form.horario_fin)}`;
+          formData.append('horario_atencion', horarioCompleto);
+        }
+        
+        // Convertir array de días a string separado por comas
+        if (form.dias_disponibles.length > 0) {
+          formData.append('dias_disponibles', form.dias_disponibles.join(', '));
+        }
+      }
 
       // Agregar imágenes (solo si hay nuevas)
       images.forEach((imageFile) => {
@@ -600,61 +632,27 @@ export const CreateProductPage: React.FC = () => {
           {form.tipo === 'servicio' && (
             <Card className="shadow-lg border-0 bg-white rounded-lg overflow-hidden">
               <CardContent className="p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-6">Detalles del Servicio</h2>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="horario_atencion" className="block text-sm font-medium text-gray-700 mb-2">
-                      Horario de Atención *
-                    </Label>
-                    <Input
-                      id="horario_atencion"
-                      value={form.horario_atencion}
-                      onChange={(e) => handleInputChange('horario_atencion', e.target.value)}
-                      placeholder="Ej: Lunes a Viernes 8:00 AM - 5:00 PM"
-                      className={`w-full h-10 rounded-md border transition-colors ${
-                        errors.horario_atencion 
-                          ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
-                          : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
-                      }`}
-                    />
-                    {errors.horario_atencion && (
-                      <p className="text-red-500 text-sm mt-1">{errors.horario_atencion}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label htmlFor="dias_disponibles" className="block text-sm font-medium text-gray-700 mb-2">
-                      Días Disponibles *
-                    </Label>
-                    <Input
-                      id="dias_disponibles"
-                      value={form.dias_disponibles}
-                      onChange={(e) => handleInputChange('dias_disponibles', e.target.value)}
-                      placeholder="Ej: Lunes a Viernes"
-                      className={`w-full h-10 rounded-md border transition-colors ${
-                        errors.dias_disponibles 
-                          ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
-                          : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
-                      }`}
-                    />
-                    {errors.dias_disponibles && (
-                      <p className="text-red-500 text-sm mt-1">{errors.dias_disponibles}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label htmlFor="duracion_estimada" className="block text-sm font-medium text-gray-700 mb-2">
-                      Duración Estimada
-                    </Label>
-                    <Input
-                      id="duracion_estimada"
-                      value={form.duracion_estimada}
-                      onChange={(e) => handleInputChange('duracion_estimada', e.target.value)}
-                      placeholder="Ej: 2 horas"
-                      className="w-full h-10 rounded-md border border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-colors"
-                    />
-                  </div>
-                </div>
+                <ServiceDetailsForm
+                  horarioInicio={form.horario_inicio}
+                  horarioFin={form.horario_fin}
+                  diasDisponibles={form.dias_disponibles}
+                  duracionEstimada={form.duracion_estimada}
+                  onHorarioInicioChange={(time) => handleInputChange('horario_inicio', time)}
+                  onHorarioFinChange={(time) => handleInputChange('horario_fin', time)}
+                  onDiasDisponiblesChange={(days) => handleInputChange('dias_disponibles', days)}
+                  onDuracionEstimadaChange={(duration) => handleInputChange('duracion_estimada', duration)}
+                />
+                
+                {/* Mostrar errores de validación */}
+                {errors.horario_inicio && (
+                  <p className="text-red-500 text-sm mt-2">{errors.horario_inicio}</p>
+                )}
+                {errors.horario_fin && (
+                  <p className="text-red-500 text-sm mt-2">{errors.horario_fin}</p>
+                )}
+                {errors.dias_disponibles && (
+                  <p className="text-red-500 text-sm mt-2">{errors.dias_disponibles}</p>
+                )}
               </CardContent>
             </Card>
           )}
