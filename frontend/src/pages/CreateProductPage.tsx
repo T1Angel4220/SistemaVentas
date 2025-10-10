@@ -29,7 +29,7 @@ export const CreateProductPage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { alert, showSuccess, showError, hideAlert } = useAlert();
+  const { alert, showSuccess, showError, showWarning, hideAlert } = useAlert();
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
   const [images, setImages] = useState<ImageFile[]>([]);
@@ -252,13 +252,25 @@ export const CreateProductPage: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
       return;
     }
 
+    const actionText = isEditMode ? 'guardar los cambios' : 'crear el producto';
+    const productName = form.nombre || 'este producto';
+    
+    showWarning(
+      `¿${isEditMode ? 'Guardar cambios' : 'Crear producto'}?`,
+      `¿Estás seguro de que quieres ${actionText} "${productName}"?`,
+      submitProduct,
+      undefined // onCancel - no necesita hacer nada especial
+    );
+  };
+
+  const submitProduct = async () => {
     setLoading(true);
     setErrors({});
 

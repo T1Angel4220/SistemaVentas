@@ -32,7 +32,9 @@ export const AlertDialog: React.FC<AlertDialogProps> = ({
   };
 
   const handleCancel = () => {
-    onCancel?.();
+    if (onCancel) {
+      onCancel();
+    }
     onClose();
   };
 
@@ -129,7 +131,7 @@ export const AlertDialog: React.FC<AlertDialogProps> = ({
 
         {/* Footer */}
         <div className="px-6 py-4 bg-gray-50 flex justify-end space-x-3">
-          {onCancel && (
+          {(onCancel || type === 'warning') && (
             <button
               onClick={handleCancel}
               className={`px-4 py-2 rounded-lg font-medium transition-colors border ${colors.cancel}`}

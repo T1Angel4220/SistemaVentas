@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useAlert } from '../hooks/useAlert';
 import { apiService } from '../services/api';
@@ -23,6 +23,7 @@ import type { Product, ProductsResponse } from '../types/product.types';
 
 export const MyProductsPage: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { alert, showSuccess, showError, showWarning, hideAlert } = useAlert();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -120,6 +121,10 @@ export const MyProductsPage: React.FC = () => {
     }
   };
 
+  const handleEditProduct = (productId: number) => {
+    navigate(`/products/${productId}/edit`);
+  };
+
   const handleDeleteProduct = async (productId: number, productName: string) => {
     showWarning(
       '¿Eliminar producto?',
@@ -147,7 +152,8 @@ export const MyProductsPage: React.FC = () => {
           console.error('Error al eliminar producto:', error);
           showError('Error', 'Error al eliminar el producto');
         }
-      }
+      },
+      undefined // onCancel - no necesita hacer nada especial
     );
   };
 
@@ -481,11 +487,14 @@ export const MyProductsPage: React.FC = () => {
                     </Link>
                     
                     {product.estado !== 'rechazado' && !product.es_peligroso && (
-                      <Link to={`/products/${product.id}/edit`}>
-                        <Button variant="outline" size="sm" className="h-10 w-10 rounded-xl border-2 border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </Link>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleEditProduct(product.id)}
+                        className="h-10 w-10 rounded-xl border-2 border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
                     )}
                     
                     <Button

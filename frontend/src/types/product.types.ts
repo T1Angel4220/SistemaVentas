@@ -39,6 +39,7 @@ export interface ProductDetail {
   fecha_publicacion: string;
   fecha_actualizacion: string;
   categoria_nombre: string;
+  categoria_descripcion?: string;
   vendedor_nombre: string;
   vendedor_email: string;
   vendedor_id: number;

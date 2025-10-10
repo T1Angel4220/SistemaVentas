@@ -283,6 +283,7 @@ class ProductsController {
         `SELECT 
           i.*,
           c.nombre as categoria_nombre,
+          c.descripcion as categoria_descripcion,
           u.nombre || ' ' || u.apellido as vendedor_nombre,
           u.correo as vendedor_email,
           ub.nombre as ubicacion_nombre,

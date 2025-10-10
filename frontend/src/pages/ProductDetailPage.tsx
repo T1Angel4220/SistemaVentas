@@ -15,7 +15,12 @@ import {
   Trash2,
   ArrowLeft,
   AlertTriangle,
-  AlertCircle
+  AlertCircle,
+  Clock,
+  Calendar,
+  Timer,
+  Tag,
+  FileText
 } from 'lucide-react';
 import type { ProductDetail } from '../types/product.types';
 
@@ -113,7 +118,8 @@ export const ProductDetailPage: React.FC = () => {
           console.error('Error al eliminar producto:', error);
           showError('Error', 'Error al eliminar el producto');
         }
-      }
+      },
+      undefined // onCancel - no necesita hacer nada especial
     );
   };
 
@@ -281,6 +287,45 @@ export const ProductDetailPage: React.FC = () => {
                     )}
 
 
+            {/* Información específica de servicios - Solo para servicios */}
+            {product.tipo === 'servicio' && product.servicio && (
+              <div className="border border-gray-200 rounded-lg p-4 bg-gradient-to-r from-purple-50 to-blue-50">
+                <h3 className="font-medium text-gray-900 mb-3 flex items-center">
+                  <Clock className="h-4 w-4 mr-2 text-purple-600" />
+                  Detalles del servicio
+                </h3>
+                <div className="space-y-3 text-sm">
+                  {product.servicio.horario_atencion && (
+                    <div className="flex items-start space-x-2">
+                      <Clock className="h-4 w-4 text-purple-500 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <span className="text-gray-600 block">Horario de atención:</span>
+                        <span className="text-gray-900 font-medium">{product.servicio.horario_atencion}</span>
+                      </div>
+                    </div>
+                  )}
+                  {product.servicio.dias_disponibles && (
+                    <div className="flex items-start space-x-2">
+                      <Calendar className="h-4 w-4 text-purple-500 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <span className="text-gray-600 block">Días disponibles:</span>
+                        <span className="text-gray-900 font-medium">{product.servicio.dias_disponibles}</span>
+                      </div>
+                    </div>
+                  )}
+                  {product.servicio.duracion_estimada && (
+                    <div className="flex items-start space-x-2">
+                      <Timer className="h-4 w-4 text-purple-500 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <span className="text-gray-600 block">Duración estimada:</span>
+                        <span className="text-gray-900 font-medium">{product.servicio.duracion_estimada}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
           </div>
 
           {/* Columna derecha - Información del producto */}
@@ -371,39 +416,74 @@ export const ProductDetailPage: React.FC = () => {
             )}
 
             {/* Ubicación */}
-            {product.ubicacion_nombre && (
+            {(product.ubicacion_nombre || product.provincia || product.canton) && (
               <div className="border border-gray-200 rounded-lg p-4">
-                <h3 className="font-medium text-gray-900 mb-2">Ubicación</h3>
-                <div className="flex items-center space-x-2">
-                  <MapPin className="h-4 w-4 text-gray-500" />
-                  <span className="text-gray-900">{product.ubicacion_nombre}</span>
+                <h3 className="font-medium text-gray-900 mb-3 flex items-center">
+                  <MapPin className="h-4 w-4 mr-2 text-blue-600" />
+                  Ubicación
+                </h3>
+                <div className="space-y-2">
+                  {product.ubicacion_nombre && (
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-gray-600 w-16">Dirección:</span>
+                      <span className="text-gray-900 font-medium">{product.ubicacion_nombre}</span>
                     </div>
-                      {product.provincia && (
-                  <p className="text-sm text-gray-600 mt-1">
-                          {product.provincia}, {product.canton}, {product.distrito}
-                        </p>
-                      )}
+                  )}
+                  {product.provincia && (
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-gray-600 w-16">Provincia:</span>
+                      <span className="text-gray-900">{product.provincia}</span>
                     </div>
+                  )}
+                  {product.canton && (
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-gray-600 w-16">Cantón:</span>
+                      <span className="text-gray-900">{product.canton}</span>
+                    </div>
+                  )}
+                  {product.distrito && (
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-gray-600 w-16">Distrito:</span>
+                      <span className="text-gray-900">{product.distrito}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
 
             {/* Información adicional */}
             <div className="border border-gray-200 rounded-lg p-4">
-              <h3 className="font-medium text-gray-900 mb-3">Información del producto</h3>
-              <div className="space-y-2 text-sm">
+              <h3 className="font-medium text-gray-900 mb-3 flex items-center">
+                <Tag className="h-4 w-4 mr-2 text-green-600" />
+                Información del {product.tipo === 'servicio' ? 'servicio' : 'producto'}
+              </h3>
+              <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Categoría:</span>
-                  <span className="text-gray-900">{product.categoria_nombre}</span>
+                  <span className="text-gray-900 font-medium">{product.categoria_nombre}</span>
                 </div>
+                {product.categoria_descripcion && (
+                  <div className="mt-2 p-2 bg-gray-50 rounded-lg">
+                    <div className="flex items-start space-x-2">
+                      <FileText className="h-3 w-3 text-gray-500 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <span className="text-xs text-gray-500 block mb-1">Descripción de la categoría:</span>
+                        <span className="text-gray-700 text-xs">{product.categoria_descripcion}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-gray-600">Publicado:</span>
                   <span className="text-gray-900">{formatDate(product.fecha_publicacion)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Tipo:</span>
-                  <span className="text-gray-900">{product.tipo === 'servicio' ? 'Servicio' : 'Producto'}</span>
+                  <span className="text-gray-900 font-medium">{product.tipo === 'servicio' ? 'Servicio' : 'Producto'}</span>
                 </div>
               </div>
             </div>
+
           </div>
         </div>
 
