@@ -118,6 +118,10 @@ const productSchemas = {
     }),
     duracion_estimada: Joi.string().max(50).optional().messages({
       'string.max': 'La duración estimada no puede tener más de 50 caracteres'
+    }),
+    // Campo para imágenes eliminadas (solo en actualización)
+    deleted_images: Joi.string().optional().messages({
+      'string.base': 'deleted_images debe ser una cadena JSON válida'
     })
   }),
 

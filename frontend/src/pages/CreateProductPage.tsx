@@ -279,8 +279,25 @@ export const CreateProductPage: React.FC = () => {
       });
 
       // Agregar información de imágenes eliminadas (solo en modo edición)
-      if (isEditMode && deletedExistingImages.length > 0) {
-        formData.append('deleted_images', JSON.stringify(deletedExistingImages));
+      console.log('🔍 Debug imágenes:', {
+        isEditMode,
+        deletedExistingImages,
+        length: deletedExistingImages.length
+      });
+      
+      if (isEditMode) {
+        // Siempre enviar deleted_images, incluso si está vacío
+        const deletedImagesString = deletedExistingImages.length > 0 
+          ? JSON.stringify(deletedExistingImages) 
+          : '[]';
+        
+        console.log('✅ Agregando deleted_images al formData:', deletedImagesString);
+        formData.append('deleted_images', deletedImagesString);
+        
+        // Debug: Verificar que se agregó correctamente
+        console.log('🔍 Verificando que se agregó deleted_images:', formData.has('deleted_images'));
+      } else {
+        console.log('❌ No se agregaron deleted_images (no es modo edición)');
       }
 
       const url = isEditMode 
@@ -295,6 +312,13 @@ export const CreateProductPage: React.FC = () => {
         url,
         method,
         formData: Object.fromEntries(formData.entries())
+      });
+      
+      // Debug adicional: Verificar si deleted_images está en formData
+      console.log('🔍 Verificando FormData:', {
+        hasDeletedImages: formData.has('deleted_images'),
+        deletedImagesValue: formData.get('deleted_images'),
+        allFormDataKeys: Array.from(formData.keys())
       });
 
       const response = await fetch(url, {
@@ -366,7 +390,7 @@ export const CreateProductPage: React.FC = () => {
             <div className="flex items-center space-x-8">
               <Button 
                 variant="outline" 
-                onClick={() => navigate('/products')}
+                onClick={() => navigate('/my-products')}
                 className="bg-white/20 text-white border-white/30 hover:bg-white hover:text-blue-600 backdrop-blur-sm rounded-xl px-6 py-3 font-medium transition-all duration-300 shadow-lg hover:shadow-xl"
               >
                 <ArrowLeft className="h-5 w-5 mr-2" />
@@ -698,7 +722,7 @@ export const CreateProductPage: React.FC = () => {
                     <Label htmlFor="ubicacion_direccion" className="text-sm font-medium text-gray-700">
                       Dirección específica *
                     </Label>
-                    <Input
+                <Input
                       id="ubicacion_direccion"
                       type="text"
                       placeholder="Ej: 100m norte del supermercado"
@@ -796,54 +820,77 @@ export const CreateProductPage: React.FC = () => {
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                     {existingImages.map((imageUrl, index) => {
                       const isDeleted = deletedExistingImages.includes(index);
+                      
+                      // No mostrar imágenes marcadas para eliminar
+                      if (isDeleted) {
+                        return null;
+                      }
+                      
                       return (
                         <div
                           key={`existing-${index}`}
-                          className={`relative group rounded-lg overflow-hidden border transition-all duration-200 ${
-                            isDeleted 
-                              ? 'border-red-300 bg-red-50 opacity-60' 
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
+                          className="relative group rounded-lg overflow-hidden border border-gray-200 hover:border-gray-300 transition-all duration-200"
                         >
                           <img
                             src={imageUrl}
                             alt={`Imagen existente ${index + 1}`}
-                            className={`w-full h-24 object-cover transition-all duration-200 ${
-                              isDeleted ? 'grayscale' : ''
-                            }`}
+                            className="w-full h-24 object-cover"
                           />
                           
                           {/* Badge de estado */}
-                          <div className={`absolute bottom-1 left-1 px-2 py-1 rounded text-xs font-medium ${
-                            isDeleted 
-                              ? 'bg-red-600 text-white' 
-                              : 'bg-green-600 text-white'
-                          }`}>
-                            {isDeleted ? 'Eliminada' : 'Actual'}
+                          <div className="absolute bottom-1 left-1 px-2 py-1 rounded text-xs font-medium bg-green-600 text-white">
+                            Actual
                           </div>
 
-                          {/* Botón de acción */}
+                          {/* Botón de eliminar */}
                           <button
                             type="button"
-                            onClick={() => isDeleted ? restoreExistingImage(index) : removeExistingImage(index)}
-                            className={`absolute top-1 right-1 p-1 rounded-full transition-all duration-200 ${
-                              isDeleted
-                                ? 'bg-green-500 text-white hover:bg-green-600'
-                                : 'bg-red-500 text-white hover:bg-red-600 opacity-0 group-hover:opacity-100'
-                            }`}
+                            onClick={() => removeExistingImage(index)}
+                            className="absolute top-1 right-1 p-1 rounded-full bg-red-500 text-white hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-all duration-200"
                           >
-                            {isDeleted ? (
-                              <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                              </svg>
-                            ) : (
-                              <X className="h-3 w-3" />
-                            )}
+                            <X className="h-3 w-3" />
                           </button>
                         </div>
                       );
                     })}
                   </div>
+                  
+                  {/* Sección de imágenes eliminadas */}
+                  {deletedExistingImages.length > 0 && (
+                    <div className="mt-4">
+                      <h4 className="text-sm font-medium text-gray-700 mb-3">Imágenes eliminadas:</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                        {deletedExistingImages.map((deletedIndex) => (
+                          <div
+                            key={`deleted-${deletedIndex}`}
+                            className="relative group rounded-lg overflow-hidden border border-red-300 bg-red-50 opacity-75 transition-all duration-200"
+                          >
+                            <img
+                              src={existingImages[deletedIndex]}
+                              alt={`Imagen eliminada ${deletedIndex + 1}`}
+                              className="w-full h-24 object-cover grayscale"
+                            />
+                            
+                            {/* Badge de eliminada */}
+                            <div className="absolute bottom-1 left-1 px-2 py-1 rounded text-xs font-medium bg-red-600 text-white">
+                              Eliminada
+                            </div>
+
+                            {/* Botón de restaurar */}
+                            <button
+                              type="button"
+                              onClick={() => restoreExistingImage(deletedIndex)}
+                              className="absolute top-1 right-1 p-1 rounded-full bg-green-500 text-white hover:bg-green-600 transition-all duration-200"
+                            >
+                              <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                              </svg>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   
                   {/* Información sobre las acciones */}
                   <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">

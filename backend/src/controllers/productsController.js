@@ -358,6 +358,15 @@ class ProductsController {
         });
       }
 
+      // Debug: Log completo de la request
+      console.log('🔍 DEBUG UPDATE PRODUCT:', {
+        body: req.body,
+        bodyKeys: Object.keys(req.body),
+        files: req.files ? req.files.length : 0,
+        deleted_images: req.body.deleted_images,
+        contentType: req.get('Content-Type')
+      });
+
       const { 
         nombre, 
         descripcion, 
@@ -460,26 +469,55 @@ class ProductsController {
       }
 
       // Manejar imágenes eliminadas
+      console.log('🔍 Verificando deleted_images:', {
+        exists: !!req.body.deleted_images,
+        value: req.body.deleted_images,
+        type: typeof req.body.deleted_images
+      });
+      
       if (req.body.deleted_images) {
         try {
-          const deletedImages = JSON.parse(req.body.deleted_images);
-          if (Array.isArray(deletedImages) && deletedImages.length > 0) {
-            console.log('🗑️ Eliminando imágenes:', deletedImages);
-            
-            // Obtener URLs de las imágenes a eliminar
-            const imagesToDelete = await query(
-              'SELECT url_imagen FROM item_imagenes WHERE item_id = $1 AND id = ANY($2)',
-              [id, deletedImages]
+          const deletedImageIndices = JSON.parse(req.body.deleted_images);
+          console.log('🗑️ Recibiendo índices de imágenes para eliminar:', deletedImageIndices);
+          
+          if (Array.isArray(deletedImageIndices) && deletedImageIndices.length > 0) {
+            // Obtener todas las imágenes del producto ordenadas por orden
+            const allImages = await query(
+              'SELECT id, url_imagen FROM item_imagenes WHERE item_id = $1 ORDER BY orden ASC',
+              [id]
             );
             
-            // Eliminar de la base de datos
-            await query(
-              'DELETE FROM item_imagenes WHERE item_id = $1 AND id = ANY($2)',
-              [id, deletedImages]
-            );
+            console.log('📋 Todas las imágenes del producto:', allImages.rows);
             
-            // Aquí podrías agregar lógica para eliminar archivos físicos
-            console.log('✅ Imágenes eliminadas de la base de datos');
+            // Obtener los IDs reales de las imágenes a eliminar basados en los índices
+            const idsToDelete = deletedImageIndices.map(index => {
+              if (index >= 0 && index < allImages.rows.length) {
+                return allImages.rows[index].id;
+              }
+              return null;
+            }).filter(id => id !== null);
+            
+            console.log('🎯 IDs reales a eliminar:', idsToDelete);
+            
+            if (idsToDelete.length > 0) {
+              // Obtener URLs de las imágenes a eliminar (para logs)
+              const imagesToDelete = await query(
+                'SELECT url_imagen FROM item_imagenes WHERE id = ANY($1)',
+                [idsToDelete]
+              );
+              
+              console.log('📁 URLs de imágenes a eliminar:', imagesToDelete.rows);
+              
+              // Eliminar de la base de datos
+              await query(
+                'DELETE FROM item_imagenes WHERE id = ANY($1)',
+                [idsToDelete]
+              );
+              
+              console.log('✅ Imágenes eliminadas de la base de datos');
+            } else {
+              console.log('⚠️ No se encontraron imágenes válidas para eliminar');
+            }
           }
         } catch (error) {
           console.error('⚠️ Error al procesar imágenes eliminadas:', error);
