@@ -316,6 +316,15 @@ class ProductsController {
   static async updateProduct(req, res) {
     try {
       const { id } = req.params;
+      
+      // Verificar que req.body existe
+      if (!req.body) {
+        return res.status(400).json({
+          success: false,
+          message: 'No se recibieron datos para actualizar'
+        });
+      }
+
       const { 
         nombre, 
         descripcion, 

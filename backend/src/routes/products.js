@@ -20,7 +20,7 @@ router.get('/:id', ProductsController.getProductById);             // GET /api/p
 router.post('/', authenticate, requireProductCreate, upload.array('images', 5), handleMulterError, validateProductCreate, ProductsController.createProduct);   // POST /api/products - Crear producto (vendedores, moderadores, administradores)
 
 // Rutas que requieren permisos específicos según el rol
-router.put('/:id', authenticate, requireProductUpdate, validateProductUpdate, ProductsController.updateProduct);           // PUT /api/products/:id - Actualizar producto
+router.put('/:id', authenticate, requireProductUpdate, upload.array('images', 5), handleMulterError, validateProductUpdate, ProductsController.updateProduct);           // PUT /api/products/:id - Actualizar producto
 router.delete('/:id', authenticate, requireProductDelete, ProductsController.deleteProduct);       // DELETE /api/products/:id - Eliminar producto
 router.patch('/:id/availability', authenticate, requireProductUpdate, validateProductAvailability, ProductsController.toggleAvailability); // PATCH /api/products/:id/availability - Cambiar disponibilidad
 

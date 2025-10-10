@@ -2,10 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
+import { useAlert } from '../hooks/useAlert';
 import { apiService } from '../services/api';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Alert, AlertDescription } from '../components/ui/Alert';
+import { AlertDialog } from '../components/ui/AlertDialog';
 import { 
   Package, 
   MapPin, 
@@ -22,6 +24,7 @@ export const ProductDetailPage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { canModifyProduct, canDeleteProduct, canModerateProduct } = usePermissions();
+  const { alert, showSuccess, showError, showWarning, hideAlert } = useAlert();
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -84,26 +87,34 @@ export const ProductDetailPage: React.FC = () => {
     const isOwner = user.id === product.vendedor_id || user.tipo_usuario === 'administrador';
     if (!isOwner) return;
     
-    if (window.confirm('¿Estás seguro de que quieres eliminar este producto?')) {
-      try {
-        const response = await fetch(`http://localhost:3001/api/products/${product.id}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${apiService.getToken()}`
+    showWarning(
+      '¿Eliminar producto?',
+      `¿Estás seguro de que quieres eliminar "${product.nombre}"? Esta acción no se puede deshacer.`,
+      async () => {
+        try {
+          const response = await fetch(`http://localhost:3001/api/products/${product.id}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${apiService.getToken()}`
+            }
+          });
+          
+          const data = await response.json();
+          if (data.success) {
+            showSuccess(
+              '¡Producto eliminado!',
+              'El producto ha sido eliminado correctamente.',
+              () => navigate('/products')
+            );
+          } else {
+            showError('Error', data.message || 'Error al eliminar el producto');
           }
-        });
-        
-        const data = await response.json();
-        if (data.success) {
-          navigate('/products');
-        } else {
-          alert(data.message || 'Error al eliminar el producto');
+        } catch (error) {
+          console.error('Error al eliminar producto:', error);
+          showError('Error', 'Error al eliminar el producto');
         }
-      } catch (error) {
-        console.error('Error al eliminar producto:', error);
-        alert('Error al eliminar el producto');
       }
-    }
+    );
   };
 
 
@@ -156,25 +167,30 @@ export const ProductDetailPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Breadcrumb navigation - estilo Amazon */}
-      <div className="bg-gray-50 border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 py-3">
-          <div className="flex items-center space-x-4">
+      {/* Header con gradiente azul-púrpura */}
+      <div className="relative bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white overflow-hidden shadow-lg">
+        {/* Patrón de fondo */}
+        <div className="absolute inset-0 bg-black/10">
+          <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-transparent"></div>
+        </div>
+        
+        <div className="relative max-w-7xl mx-auto px-6 py-8">
+          <div className="flex items-center space-x-8">
             {/* Botón de regresar */}
-              <Link to="/products">
-              <Button variant="ghost" size="sm" className="text-gray-600 hover:text-blue-600 hover:bg-transparent p-0 h-auto">
-                <ArrowLeft className="h-4 w-4 mr-1" />
+            <Link to="/products">
+              <Button variant="outline" size="sm" className="bg-white/20 text-white border-white/30 hover:bg-white hover:text-blue-600 backdrop-blur-sm rounded-xl px-6 py-3 font-medium transition-all duration-300 shadow-lg hover:shadow-xl">
+                <ArrowLeft className="h-5 w-5 mr-2" />
                 Regresar
-                </Button>
-              </Link>
+              </Button>
+            </Link>
             
             {/* Breadcrumb */}
-            <div className="flex items-center space-x-2 text-sm text-gray-600">
-              <Link to="/products" className="hover:text-blue-600">Productos</Link>
+            <div className="flex items-center space-x-2 text-base text-blue-100">
+              <Link to="/products" className="hover:text-white transition-colors">Productos</Link>
               <span>/</span>
-              <span className="text-gray-900">{product.categoria_nombre}</span>
+              <span className="text-white">{product.categoria_nombre}</span>
               <span>/</span>
-              <span className="text-gray-900 font-medium">{product.nombre}</span>
+              <span className="text-white font-medium">{product.nombre}</span>
             </div>
           </div>
         </div>
@@ -281,7 +297,7 @@ export const ProductDetailPage: React.FC = () => {
                   {/* Precio */}
               <div className="mb-4">
                 <span className="text-3xl font-bold text-gray-900">
-                  ₡{product.precio ? Number(product.precio).toFixed(2) : '0.00'}
+                  ${product.precio ? Number(product.precio).toFixed(2) : '0.00'}
                 </span>
                     </div>
               
@@ -321,11 +337,7 @@ export const ProductDetailPage: React.FC = () => {
                     
                   {canDeleteProduct(product.vendedor_id) && !product.es_peligroso && (
                       <Button 
-                      onClick={() => {
-                        if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
-                          handleDeleteProduct();
-                        }
-                      }}
+                      onClick={handleDeleteProduct}
                       variant="outline"
                       className="w-full h-10 text-sm text-red-600 border-red-300 hover:bg-red-50"
                     >
@@ -456,6 +468,19 @@ export const ProductDetailPage: React.FC = () => {
               )}
         </div>
       </main>
+
+      {/* Alert Dialog */}
+      <AlertDialog
+        isOpen={alert.isOpen}
+        onClose={hideAlert}
+        title={alert.title}
+        message={alert.message}
+        type={alert.type}
+        confirmText={alert.confirmText}
+        cancelText={alert.cancelText}
+        onConfirm={alert.onConfirm}
+        onCancel={alert.onCancel}
+      />
     </div>
   );
 };

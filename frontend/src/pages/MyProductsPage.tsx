@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useAlert } from '../hooks/useAlert';
 import { apiService } from '../services/api';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
+import { AlertDialog } from '../components/ui/AlertDialog';
 import { 
   Package, 
   Plus, 
@@ -20,6 +22,7 @@ import type { Product, ProductsResponse } from '../types/product.types';
 
 export const MyProductsPage: React.FC = () => {
   const { user } = useAuth();
+  const { alert, showSuccess, showError, showWarning, hideAlert } = useAlert();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({
@@ -101,43 +104,56 @@ export const MyProductsPage: React.FC = () => {
             ? { ...product, disponibilidad: !currentAvailability }
             : product
         ));
+        
+        const newStatus = !currentAvailability ? 'disponible' : 'no disponible';
+        showSuccess(
+          'Disponibilidad actualizada',
+          `El producto ahora está ${newStatus}.`
+        );
       } else {
-        alert(data.message || 'Error al cambiar disponibilidad');
+        showError('Error', data.message || 'Error al cambiar disponibilidad');
       }
     } catch (error) {
       console.error('Error al cambiar disponibilidad:', error);
-      alert('Error al cambiar disponibilidad');
+      showError('Error', 'Error al cambiar disponibilidad');
     }
   };
 
   const handleDeleteProduct = async (productId: number, productName: string) => {
-    if (window.confirm(`¿Estás seguro de que quieres eliminar "${productName}"?`)) {
-      try {
-        const response = await fetch(`http://localhost:3001/api/products/${productId}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${apiService.getToken()}`
-          }
-        });
+    showWarning(
+      '¿Eliminar producto?',
+      `¿Estás seguro de que quieres eliminar "${productName}"? Esta acción no se puede deshacer.`,
+      async () => {
+        try {
+          const response = await fetch(`http://localhost:3001/api/products/${productId}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${apiService.getToken()}`
+            }
+          });
 
-        const data = await response.json();
-        if (data.success) {
-          // Recargar productos
-          loadProducts();
-        } else {
-          alert(data.message || 'Error al eliminar el producto');
+          const data = await response.json();
+          if (data.success) {
+            showSuccess(
+              '¡Producto eliminado!',
+              `"${productName}" ha sido eliminado correctamente.`,
+              () => loadProducts()
+            );
+          } else {
+            showError('Error', data.message || 'Error al eliminar el producto');
+          }
+        } catch (error) {
+          console.error('Error al eliminar producto:', error);
+          showError('Error', 'Error al eliminar el producto');
         }
-      } catch (error) {
-        console.error('Error al eliminar producto:', error);
-        alert('Error al eliminar el producto');
       }
-    }
+    );
   };
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('es-CR', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'CRC'
+      currency: 'USD'
     }).format(price);
   };
 
@@ -204,21 +220,28 @@ export const MyProductsPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-      {/* Header mejorado */}
-      <header className="bg-white/80 backdrop-blur-sm shadow-lg border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex justify-between items-center py-8">
-            <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                Mis Productos
-              </h1>
-              <p className="text-gray-600 mt-2 text-lg">
-                Gestiona tus productos y servicios publicados
-              </p>
+    <div className="min-h-screen bg-white">
+      {/* Header con gradiente azul-púrpura */}
+      <header className="relative bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white overflow-hidden shadow-lg">
+        {/* Patrón de fondo */}
+        <div className="absolute inset-0 bg-black/10">
+          <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-transparent"></div>
+        </div>
+        
+        <div className="relative max-w-7xl mx-auto px-6 py-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-8">
+              <div>
+                <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+                  Mis Productos
+                </h1>
+                <p className="text-blue-100 text-base">
+                  Gestiona tus productos y servicios publicados
+                </p>
+              </div>
             </div>
             <Link to="/products/create">
-              <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl px-6 py-3">
+              <Button className="bg-white/20 text-white border-white/30 hover:bg-white hover:text-blue-600 backdrop-blur-sm rounded-xl px-6 py-3 font-medium transition-all duration-300 shadow-lg hover:shadow-xl">
                 <Plus className="h-5 w-5 mr-2" />
                 <span className="font-medium">Crear Producto</span>
               </Button>
@@ -534,6 +557,19 @@ export const MyProductsPage: React.FC = () => {
           </div>
         )}
       </main>
+
+      {/* Alert Dialog */}
+      <AlertDialog
+        isOpen={alert.isOpen}
+        onClose={hideAlert}
+        title={alert.title}
+        message={alert.message}
+        type={alert.type}
+        confirmText={alert.confirmText}
+        cancelText={alert.cancelText}
+        onConfirm={alert.onConfirm}
+        onCancel={alert.onCancel}
+      />
     </div>
   );
 };

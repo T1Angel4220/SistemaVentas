@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCategories } from '../hooks/useApiData';
+import { useAlert } from '../hooks/useAlert';
 import { apiService } from '../services/api';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -9,6 +10,7 @@ import { Input } from '../components/ui/Input';
 import { Textarea } from '../components/ui/Textarea';
 import { Label } from '../components/ui/Label';
 import { Alert, AlertDescription } from '../components/ui/Alert';
+import { AlertDialog } from '../components/ui/AlertDialog';
 import { 
   Package, 
   Calendar, 
@@ -26,10 +28,16 @@ import type { Category } from '../types/category.types';
 export const CreateProductPage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const { alert, showSuccess, showError, hideAlert } = useAlert();
   const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(false);
   const [images, setImages] = useState<ImageFile[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [deletedExistingImages, setDeletedExistingImages] = useState<number[]>([]);
 
   // Usar hooks optimizados para evitar múltiples requests
   const { data: categories, loading: categoriesLoading, error: categoriesError } = useCategories();
@@ -47,13 +55,66 @@ export const CreateProductPage: React.FC = () => {
     duracion_estimada: ''
   });
 
+  // Función para cargar datos del producto en modo edición
+  const loadProductData = useCallback(async (productId: string) => {
+    try {
+      setLoadingData(true);
+      const response = await fetch(`http://localhost:3001/api/products/${productId}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        const product = data.data;
+        setIsEditMode(true);
+        
+        // Cargar datos del formulario
+        setForm({
+          codigo: product.codigo || '',
+          nombre: product.nombre || '',
+          descripcion: product.descripcion || '',
+          precio: product.precio ? product.precio.toString() : '',
+          tipo: product.tipo || 'producto',
+          categoria_id: product.categoria_id?.toString() || '',
+          ubicacion_id: product.ubicacion_id?.toString() || '',
+          horario_atencion: product.servicio?.horario_atencion || '',
+          dias_disponibles: product.servicio?.dias_disponibles || '',
+          duracion_estimada: product.servicio?.duracion_estimada || ''
+        });
+
+        // Cargar imágenes existentes
+        if (product.imagenes && product.imagenes.length > 0) {
+          const imageUrls = product.imagenes.map((img: { url_imagen: string }) => img.url_imagen);
+          setExistingImages(imageUrls);
+        } else {
+          setExistingImages([]);
+        }
+        
+        // Limpiar estado de imágenes eliminadas
+        setDeletedExistingImages([]);
+      } else {
+        showError('Error', 'No se pudo cargar el producto para editar');
+        navigate('/my-products');
+      }
+    } catch (error) {
+      console.error('Error al cargar producto:', error);
+      showError('Error', 'Error al cargar el producto');
+      navigate('/my-products');
+    } finally {
+      setLoadingData(false);
+    }
+  }, [showError, navigate]);
+
   useEffect(() => {
     // Verificar permisos
     if (!user || (user.tipo_usuario !== 'vendedor' && user.tipo_usuario !== 'administrador')) {
       navigate('/products');
       return;
     }
-  }, [user, navigate]);
+
+    // Si hay un ID en la URL, cargar datos del producto para editar
+    if (id) {
+      loadProductData(id);
+    }
+  }, [user, navigate, id, loadProductData]);
 
   const handleInputChange = (field: keyof ProductForm, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -124,6 +185,18 @@ export const CreateProductPage: React.FC = () => {
     });
   };
 
+  const removeExistingImage = (index: number) => {
+    setDeletedExistingImages(prev => [...prev, index]);
+  };
+
+  const restoreExistingImage = (index: number) => {
+    setDeletedExistingImages(prev => prev.filter(i => i !== index));
+  };
+
+  const restoreAllExistingImages = () => {
+    setDeletedExistingImages([]);
+  };
+
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -187,18 +260,37 @@ export const CreateProductPage: React.FC = () => {
       
       // Agregar datos del formulario
       Object.entries(form).forEach(([key, value]) => {
-        if (value) {
+        if (value !== undefined && value !== null && value !== '') {
           formData.append(key, value);
         }
       });
 
-      // Agregar imágenes
+      // Agregar imágenes (solo si hay nuevas)
       images.forEach((imageFile) => {
         formData.append('images', imageFile.file);
       });
 
-      const response = await fetch('http://localhost:3001/api/products', {
-        method: 'POST',
+      // Agregar información de imágenes eliminadas (solo en modo edición)
+      if (isEditMode && deletedExistingImages.length > 0) {
+        formData.append('deleted_images', JSON.stringify(deletedExistingImages));
+      }
+
+      const url = isEditMode 
+        ? `http://localhost:3001/api/products/${id}`
+        : 'http://localhost:3001/api/products';
+      
+      const method = isEditMode ? 'PUT' : 'POST';
+
+      // Debug: Log de los datos que se van a enviar
+      console.log('Sending data:', {
+        isEditMode,
+        url,
+        method,
+        formData: Object.fromEntries(formData.entries())
+      });
+
+      const response = await fetch(url, {
+        method,
         headers: {
           'Authorization': `Bearer ${apiService.getToken()}`
         },
@@ -209,20 +301,25 @@ export const CreateProductPage: React.FC = () => {
 
       if (data.success) {
         setSuccess(true);
-        setTimeout(() => {
-          navigate(`/products/${data.data.id}`);
-        }, 1500);
+        const actionText = isEditMode ? 'actualizado' : 'creado';
+        showSuccess(
+          '¡Éxito!', 
+          `El producto ha sido ${actionText} correctamente.`,
+          () => navigate(`/products/${data.data.id || id}`)
+        );
       } else {
         // Manejar errores específicos del servidor
         if (data.errors) {
           setErrors(data.errors);
         } else {
-          setErrors({ general: data.message || 'Error al crear el producto' });
+          const actionText = isEditMode ? 'actualizar' : 'crear';
+          setErrors({ general: data.message || `Error al ${actionText} el producto` });
         }
       }
     } catch (error) {
-      console.error('Error al crear producto:', error);
-      setErrors({ general: 'Error al crear el producto. Por favor intenta nuevamente.' });
+      console.error(`Error al ${isEditMode ? 'actualizar' : 'crear'} producto:`, error);
+      const actionText = isEditMode ? 'actualizar' : 'crear';
+      setErrors({ general: `Error al ${actionText} el producto. Por favor intenta nuevamente.` });
     } finally {
       setLoading(false);
     }
@@ -230,6 +327,21 @@ export const CreateProductPage: React.FC = () => {
 
   if (!user || (user.tipo_usuario !== 'vendedor' && user.tipo_usuario !== 'administrador')) {
     return null;
+  }
+
+  // Mostrar carga mientras se cargan los datos del producto en modo edición
+  if (loadingData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg animate-pulse">
+            <Package className="h-10 w-10 text-blue-600" />
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">Cargando producto...</h2>
+          <p className="text-gray-600 text-lg">Obteniendo información para editar</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -254,10 +366,13 @@ export const CreateProductPage: React.FC = () => {
               </Button>
               <div>
                 <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
-                  Crear {form.tipo === 'producto' ? 'Producto' : 'Servicio'}
+                  {isEditMode ? 'Editar' : 'Crear'} {form.tipo === 'producto' ? 'Producto' : 'Servicio'}
                 </h1>
                 <p className="text-blue-100 text-base">
-                  Completa la información para publicar tu {form.tipo}
+                  {isEditMode 
+                    ? `Modifica la información de tu ${form.tipo}` 
+                    : `Completa la información para publicar tu ${form.tipo}`
+                  }
                 </p>
               </div>
             </div>
@@ -364,7 +479,7 @@ export const CreateProductPage: React.FC = () => {
 
                 <div>
                   <Label htmlFor="precio" className="block text-sm font-medium text-gray-700 mb-2">
-                    Precio (₡) *
+                    Precio ($) *
                   </Label>
                   <Input
                     id="precio"
@@ -550,7 +665,9 @@ export const CreateProductPage: React.FC = () => {
           <Card className="shadow-lg border-0 bg-white rounded-lg overflow-hidden">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Imágenes</h2>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  {isEditMode ? 'Agregar nuevas imágenes' : 'Imágenes'}
+                </h2>
                 <span className="text-sm text-gray-500">{images.length}/5</span>
               </div>
               
@@ -578,10 +695,15 @@ export const CreateProductPage: React.FC = () => {
                   }`}>
                     {images.length >= 5
                       ? 'Máximo de imágenes alcanzado'
-                      : 'Click para subir imágenes'}
+                      : isEditMode 
+                        ? 'Click para agregar nuevas imágenes'
+                        : 'Click para subir imágenes'}
                   </p>
                   <p className="text-sm text-gray-500">
-                    Máximo 5 imágenes, hasta 5MB cada una
+                    {isEditMode 
+                      ? 'Máximo 5 imágenes nuevas, hasta 5MB cada una'
+                      : 'Máximo 5 imágenes, hasta 5MB cada una'
+                    }
                   </p>
                 </label>
               </div>
@@ -593,37 +715,157 @@ export const CreateProductPage: React.FC = () => {
                 </Alert>
               )}
 
-              {/* Preview de imágenes */}
-              {images.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-6">
-                  {images.map((image, index) => (
-                    <div
-                      key={image.id}
-                      className="relative group rounded-lg overflow-hidden border border-gray-200 hover:border-blue-500 transition-colors"
-                    >
-                      <img
-                        src={image.preview}
-                        alt={`Preview ${index + 1}`}
-                        className="w-full h-24 object-cover"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(image.id)}
-                        className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                      {index === 0 && (
-                        <div className="absolute bottom-1 left-1 bg-blue-600 text-white px-2 py-1 rounded text-xs font-medium">
-                          Principal
-                        </div>
+              {/* Preview de imágenes existentes (modo edición) */}
+              {isEditMode && existingImages.length > 0 && (
+                <div className="mt-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-medium text-gray-700">Imágenes actuales</h3>
+                    <div className="flex items-center space-x-2">
+                      {deletedExistingImages.length > 0 && (
+                        <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-medium">
+                          {deletedExistingImages.length} marcada{deletedExistingImages.length !== 1 ? 's' : ''} para eliminar
+                        </span>
+                      )}
+                      {deletedExistingImages.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={restoreAllExistingImages}
+                          className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium hover:bg-green-200 transition-colors"
+                        >
+                          Restaurar todas
+                        </button>
                       )}
                     </div>
-                  ))}
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    {existingImages.map((imageUrl, index) => {
+                      const isDeleted = deletedExistingImages.includes(index);
+                      return (
+                        <div
+                          key={`existing-${index}`}
+                          className={`relative group rounded-lg overflow-hidden border transition-all duration-200 ${
+                            isDeleted 
+                              ? 'border-red-300 bg-red-50 opacity-60' 
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <img
+                            src={imageUrl}
+                            alt={`Imagen existente ${index + 1}`}
+                            className={`w-full h-24 object-cover transition-all duration-200 ${
+                              isDeleted ? 'grayscale' : ''
+                            }`}
+                          />
+                          
+                          {/* Badge de estado */}
+                          <div className={`absolute bottom-1 left-1 px-2 py-1 rounded text-xs font-medium ${
+                            isDeleted 
+                              ? 'bg-red-600 text-white' 
+                              : 'bg-green-600 text-white'
+                          }`}>
+                            {isDeleted ? 'Eliminada' : 'Actual'}
+                          </div>
+
+                          {/* Botón de acción */}
+                          <button
+                            type="button"
+                            onClick={() => isDeleted ? restoreExistingImage(index) : removeExistingImage(index)}
+                            className={`absolute top-1 right-1 p-1 rounded-full transition-all duration-200 ${
+                              isDeleted
+                                ? 'bg-green-500 text-white hover:bg-green-600'
+                                : 'bg-red-500 text-white hover:bg-red-600 opacity-0 group-hover:opacity-100'
+                            }`}
+                          >
+                            {isDeleted ? (
+                              <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                              </svg>
+                            ) : (
+                              <X className="h-3 w-3" />
+                            )}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  {/* Información sobre las acciones */}
+                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-start space-x-2">
+                      <div className="flex-shrink-0">
+                        <svg className="h-4 w-4 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div className="text-sm text-blue-700">
+                        <p className="font-medium mb-1">Gestionar imágenes:</p>
+                        <ul className="space-y-1 text-xs">
+                          <li>• Haz clic en la <span className="font-medium">X roja</span> para eliminar una imagen existente</li>
+                          <li>• Haz clic en el <span className="font-medium">ícono de restauración</span> para restaurar una imagen eliminada</li>
+                          <li>• Las imágenes nuevas se agregarán junto con las existentes no eliminadas</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Preview de imágenes nuevas */}
+              {images.length > 0 && (
+                <div className="mt-6">
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">
+                    {isEditMode ? 'Nuevas imágenes' : 'Imágenes del producto'}
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    {images.map((image, index) => (
+                      <div
+                        key={image.id}
+                        className="relative group rounded-lg overflow-hidden border border-gray-200 hover:border-blue-500 transition-colors"
+                      >
+                        <img
+                          src={image.preview}
+                          alt={`Preview ${index + 1}`}
+                          className="w-full h-24 object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(image.id)}
+                          className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                        {index === 0 && (
+                          <div className="absolute bottom-1 left-1 bg-blue-600 text-white px-2 py-1 rounded text-xs font-medium">
+                            Principal
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </CardContent>
           </Card>
+
+          {/* Resumen de cambios en modo edición */}
+          {isEditMode && (deletedExistingImages.length > 0 || images.length > 0) && (
+            <Card className="shadow-lg border-0 bg-blue-50 border-blue-200">
+              <CardContent className="p-4">
+                <h3 className="text-sm font-medium text-blue-900 mb-2">Resumen de cambios en imágenes:</h3>
+                <div className="space-y-1 text-sm text-blue-800">
+                  {deletedExistingImages.length > 0 && (
+                    <p>• Se eliminarán {deletedExistingImages.length} imagen{deletedExistingImages.length !== 1 ? 'es' : ''} existente{deletedExistingImages.length !== 1 ? 's' : ''}</p>
+                  )}
+                  {images.length > 0 && (
+                    <p>• Se agregarán {images.length} imagen{images.length !== 1 ? 'es' : ''} nueva{images.length !== 1 ? 's' : ''}</p>
+                  )}
+                  {deletedExistingImages.length === 0 && images.length === 0 && (
+                    <p>• No hay cambios en las imágenes</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Botón de envío - Estilo Amazon */}
           <div className="flex justify-end">
@@ -635,23 +877,36 @@ export const CreateProductPage: React.FC = () => {
               {loading ? (
                 <>
                   <Clock className="h-4 w-4 mr-2 animate-spin" />
-                  Creando...
+                  {isEditMode ? 'Actualizando...' : 'Creando...'}
                 </>
               ) : success ? (
                 <>
                   <CheckCircle2 className="h-4 w-4 mr-2" />
-                  ¡Creado!
+                  {isEditMode ? '¡Actualizado!' : '¡Creado!'}
                 </>
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  Publicar {form.tipo}
+                  {isEditMode ? 'Actualizar' : 'Publicar'} {form.tipo}
                 </>
               )}
             </Button>
           </div>
         </form>
       </main>
+
+      {/* Alert Dialog */}
+      <AlertDialog
+        isOpen={alert.isOpen}
+        onClose={hideAlert}
+        title={alert.title}
+        message={alert.message}
+        type={alert.type}
+        confirmText={alert.confirmText}
+        cancelText={alert.cancelText}
+        onConfirm={alert.onConfirm}
+        onCancel={alert.onCancel}
+      />
     </div>
   );
 };

@@ -204,12 +204,24 @@ const locationSchemas = {
 // Middleware de validación genérico
 const validateSchema = (schema) => {
   return (req, res, next) => {
+    // Debug: Log de req.body para entender qué datos llegan
+    console.log('Validating data:', req.body);
+    console.log('Body type:', typeof req.body);
+    console.log('Body keys:', req.body ? Object.keys(req.body) : 'undefined');
+
+    // Si req.body está vacío o undefined, no validar
+    if (!req.body || Object.keys(req.body).length === 0) {
+      console.log('No data to validate, skipping validation');
+      return next();
+    }
+
     const { error, value } = schema.validate(req.body, { 
       abortEarly: false,
       stripUnknown: true 
     });
 
     if (error) {
+      console.log('Validation error:', error.details);
       const errorMessages = error.details.map(detail => detail.message);
       return res.status(400).json({
         success: false,
