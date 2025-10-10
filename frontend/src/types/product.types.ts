@@ -75,6 +75,10 @@ export interface ProductForm {
   tipo: ProductType;
   categoria_id: string;
   ubicacion_id: string;
+  ubicacion_provincia: string;
+  ubicacion_canton: string;
+  ubicacion_distrito: string;
+  ubicacion_direccion: string;
   // Campos específicos para servicios
   horario_atencion: string;
   dias_disponibles: string;

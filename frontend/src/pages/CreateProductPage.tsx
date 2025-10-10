@@ -50,6 +50,10 @@ export const CreateProductPage: React.FC = () => {
     tipo: 'producto',
     categoria_id: '',
     ubicacion_id: '',
+    ubicacion_provincia: '',
+    ubicacion_canton: '',
+    ubicacion_distrito: '',
+    ubicacion_direccion: '',
     horario_atencion: '',
     dias_disponibles: '',
     duracion_estimada: ''
@@ -75,6 +79,10 @@ export const CreateProductPage: React.FC = () => {
           tipo: product.tipo || 'producto',
           categoria_id: product.categoria_id?.toString() || '',
           ubicacion_id: product.ubicacion_id?.toString() || '',
+          ubicacion_provincia: product.provincia || '',
+          ubicacion_canton: product.canton || '',
+          ubicacion_distrito: product.distrito || '',
+          ubicacion_direccion: product.ubicacion_nombre || '',
           horario_atencion: product.servicio?.horario_atencion || '',
           dias_disponibles: product.servicio?.dias_disponibles || '',
           duracion_estimada: product.servicio?.duracion_estimada || ''
@@ -648,14 +656,74 @@ export const CreateProductPage: React.FC = () => {
             <Card className="shadow-lg border-0 bg-white rounded-lg overflow-hidden">
               <CardContent className="p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Ubicación</h2>
-                <Input
-                  value={form.ubicacion_id}
-                  onChange={(e) => handleInputChange('ubicacion_id', e.target.value)}
-                  placeholder="Ej: San José, Costa Rica"
-                  className="w-full h-10 rounded-md border border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-colors"
-                />
-                <p className="text-sm text-gray-500 mt-1">
-                  Escribe tu ubicación (opcional)
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Provincia */}
+                  <div>
+                    <Label htmlFor="ubicacion_provincia" className="text-sm font-medium text-gray-700">
+                      Provincia *
+                    </Label>
+                    <Input
+                      id="ubicacion_provincia"
+                      type="text"
+                      placeholder="Ej: San José"
+                      value={form.ubicacion_provincia}
+                      onChange={(e) => handleInputChange('ubicacion_provincia', e.target.value)}
+                      className="mt-1"
+                      required
+                    />
+                  </div>
+
+                  {/* Cantón */}
+                  <div>
+                    <Label htmlFor="ubicacion_canton" className="text-sm font-medium text-gray-700">
+                      Cantón *
+                    </Label>
+                    <Input
+                      id="ubicacion_canton"
+                      type="text"
+                      placeholder="Ej: Santa Ana"
+                      value={form.ubicacion_canton}
+                      onChange={(e) => handleInputChange('ubicacion_canton', e.target.value)}
+                      className="mt-1"
+                      required
+                    />
+                  </div>
+
+                  {/* Distrito */}
+                  <div>
+                    <Label htmlFor="ubicacion_distrito" className="text-sm font-medium text-gray-700">
+                      Distrito
+                    </Label>
+                    <Input
+                      id="ubicacion_distrito"
+                      type="text"
+                      placeholder="Ej: Santa Ana (opcional)"
+                      value={form.ubicacion_distrito}
+                      onChange={(e) => handleInputChange('ubicacion_distrito', e.target.value)}
+                      className="mt-1"
+                    />
+                  </div>
+
+                  {/* Dirección */}
+                  <div>
+                    <Label htmlFor="ubicacion_direccion" className="text-sm font-medium text-gray-700">
+                      Dirección específica *
+                    </Label>
+                    <Input
+                      id="ubicacion_direccion"
+                      type="text"
+                      placeholder="Ej: 100m norte del supermercado"
+                      value={form.ubicacion_direccion}
+                      onChange={(e) => handleInputChange('ubicacion_direccion', e.target.value)}
+                      className="mt-1"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <p className="text-sm text-gray-500 mt-3">
+                  * Campos obligatorios: Provincia, Cantón y Dirección. El distrito es opcional.
                 </p>
               </CardContent>
             </Card>
@@ -697,7 +765,7 @@ export const CreateProductPage: React.FC = () => {
                       ? 'Máximo de imágenes alcanzado'
                       : isEditMode 
                         ? 'Click para agregar nuevas imágenes'
-                        : 'Click para subir imágenes'}
+                      : 'Click para subir imágenes'}
                   </p>
                   <p className="text-sm text-gray-500">
                     {isEditMode 
@@ -817,30 +885,30 @@ export const CreateProductPage: React.FC = () => {
                     {isEditMode ? 'Nuevas imágenes' : 'Imágenes del producto'}
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                    {images.map((image, index) => (
-                      <div
-                        key={image.id}
-                        className="relative group rounded-lg overflow-hidden border border-gray-200 hover:border-blue-500 transition-colors"
+                  {images.map((image, index) => (
+                    <div
+                      key={image.id}
+                      className="relative group rounded-lg overflow-hidden border border-gray-200 hover:border-blue-500 transition-colors"
+                    >
+                      <img
+                        src={image.preview}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-24 object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(image.id)}
+                        className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
                       >
-                        <img
-                          src={image.preview}
-                          alt={`Preview ${index + 1}`}
-                          className="w-full h-24 object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeImage(image.id)}
-                          className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                        {index === 0 && (
-                          <div className="absolute bottom-1 left-1 bg-blue-600 text-white px-2 py-1 rounded text-xs font-medium">
-                            Principal
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                        <X className="h-3 w-3" />
+                      </button>
+                      {index === 0 && (
+                        <div className="absolute bottom-1 left-1 bg-blue-600 text-white px-2 py-1 rounded text-xs font-medium">
+                          Principal
+                        </div>
+                      )}
+                    </div>
+                  ))}
                   </div>
                 </div>
               )}

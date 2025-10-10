@@ -23,9 +23,13 @@ class ProductsController {
         nombre, 
         descripcion, 
         precio, 
-        ubicacion_id, 
+        ubicacion_id,
+        ubicacion_provincia,
+        ubicacion_canton,
+        ubicacion_distrito,
+        ubicacion_direccion,
         tipo, 
-        categoria_id, 
+        categoria_id,
         horario_atencion, 
         dias_disponibles, 
         duracion_estimada 
@@ -63,6 +67,35 @@ class ProductsController {
         });
       }
 
+      // Manejar ubicación con campos separados
+      let ubicacionIdFinal = ubicacion_id;
+      
+      // Si se proporcionan los campos separados de ubicación, crear o buscar ubicación
+      if (ubicacion_provincia && ubicacion_canton && ubicacion_direccion) {
+        try {
+          // Buscar si ya existe una ubicación con estos datos exactos
+          const ubicacionExistente = await query(
+            'SELECT id FROM ubicaciones WHERE nombre = $1 AND provincia = $2 AND canton = $3 AND (distrito = $4 OR ($4 IS NULL AND distrito IS NULL))',
+            [ubicacion_direccion, ubicacion_provincia, ubicacion_canton, ubicacion_distrito || null]
+          );
+          
+          if (ubicacionExistente.rows.length > 0) {
+            ubicacionIdFinal = ubicacionExistente.rows[0].id;
+          } else {
+            // Crear nueva ubicación con todos los campos
+            const nuevaUbicacion = await query(
+              'INSERT INTO ubicaciones (nombre, provincia, canton, distrito) VALUES ($1, $2, $3, $4) RETURNING id',
+              [ubicacion_direccion, ubicacion_provincia, ubicacion_canton, ubicacion_distrito || null]
+            );
+            ubicacionIdFinal = nuevaUbicacion.rows[0].id;
+          }
+        } catch (error) {
+          console.error('Error al manejar ubicación:', error);
+          // Si hay error, usar null para ubicación
+          ubicacionIdFinal = null;
+        }
+      }
+
       // Crear el producto
       const nuevoProducto = await query(
         `INSERT INTO items (
@@ -70,7 +103,7 @@ class ProductsController {
           tipo, categoria_id, vendedor_id, estado
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pendiente_revision')
         RETURNING *`,
-        [codigo, nombre, descripcion, precio, ubicacion_id, tipo, categoria_id, vendedor_id]
+        [codigo, nombre, descripcion, precio, ubicacionIdFinal, tipo, categoria_id, vendedor_id]
       );
 
       const producto = nuevoProducto.rows[0];
@@ -329,7 +362,11 @@ class ProductsController {
         nombre, 
         descripcion, 
         precio, 
-        ubicacion_id, 
+        ubicacion_id,
+        ubicacion_provincia,
+        ubicacion_canton,
+        ubicacion_distrito,
+        ubicacion_direccion,
         categoria_id,
         horario_atencion, 
         dias_disponibles, 
@@ -367,6 +404,35 @@ class ProductsController {
         });
       }
 
+      // Manejar ubicación con campos separados
+      let ubicacionIdFinal = ubicacion_id;
+      
+      // Si se proporcionan los campos separados de ubicación, crear o buscar ubicación
+      if (ubicacion_provincia && ubicacion_canton && ubicacion_direccion) {
+        try {
+          // Buscar si ya existe una ubicación con estos datos exactos
+          const ubicacionExistente = await query(
+            'SELECT id FROM ubicaciones WHERE nombre = $1 AND provincia = $2 AND canton = $3 AND (distrito = $4 OR ($4 IS NULL AND distrito IS NULL))',
+            [ubicacion_direccion, ubicacion_provincia, ubicacion_canton, ubicacion_distrito || null]
+          );
+          
+          if (ubicacionExistente.rows.length > 0) {
+            ubicacionIdFinal = ubicacionExistente.rows[0].id;
+          } else {
+            // Crear nueva ubicación con todos los campos
+            const nuevaUbicacion = await query(
+              'INSERT INTO ubicaciones (nombre, provincia, canton, distrito) VALUES ($1, $2, $3, $4) RETURNING id',
+              [ubicacion_direccion, ubicacion_provincia, ubicacion_canton, ubicacion_distrito || null]
+            );
+            ubicacionIdFinal = nuevaUbicacion.rows[0].id;
+          }
+        } catch (error) {
+          console.error('Error al manejar ubicación:', error);
+          // Si hay error, usar null para ubicación
+          ubicacionIdFinal = null;
+        }
+      }
+
       // Actualizar producto
       const productoActualizado = await query(
         `UPDATE items SET 
@@ -378,7 +444,7 @@ class ProductsController {
           fecha_actualizacion = CURRENT_TIMESTAMP
         WHERE id = $6
         RETURNING *`,
-        [nombre, descripcion, precio, ubicacion_id, categoria_id, id]
+        [nombre, descripcion, precio, ubicacionIdFinal, categoria_id, id]
       );
 
       // Si es un servicio, actualizar información adicional

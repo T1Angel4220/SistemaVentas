@@ -18,15 +18,34 @@ const productSchemas = {
       'string.max': 'La descripción no puede tener más de 2000 caracteres',
       'any.required': 'La descripción es requerida'
     }),
-    precio: Joi.number().positive().precision(2).max(999999.99).required().messages({
-      'number.positive': 'El precio debe ser un número positivo',
-      'number.max': 'El precio no puede ser mayor a 999,999.99',
-      'any.required': 'El precio es requerido'
-    }),
-    ubicacion_id: Joi.number().integer().positive().optional().messages({
-      'number.base': 'La ubicación debe ser un número válido',
-      'number.positive': 'La ubicación debe ser un ID válido'
-    }),
+     precio: Joi.number().positive().precision(2).max(999999.99).required().messages({
+       'number.positive': 'El precio debe ser un número positivo',
+       'number.max': 'El precio no puede ser mayor a 999,999.99',
+       'any.required': 'El precio es requerido'
+     }),
+     ubicacion_id: Joi.number().integer().positive().optional().messages({
+       'number.base': 'La ubicación debe ser un número válido',
+       'number.positive': 'La ubicación debe ser un ID válido'
+     }),
+     ubicacion_provincia: Joi.string().min(3).max(100).required().messages({
+       'string.min': 'La provincia debe tener al menos 3 caracteres',
+       'string.max': 'La provincia no puede tener más de 100 caracteres',
+       'any.required': 'La provincia es requerida'
+     }),
+     ubicacion_canton: Joi.string().min(3).max(100).required().messages({
+       'string.min': 'El cantón debe tener al menos 3 caracteres',
+       'string.max': 'El cantón no puede tener más de 100 caracteres',
+       'any.required': 'El cantón es requerido'
+     }),
+     ubicacion_distrito: Joi.string().min(3).max(100).optional().messages({
+       'string.min': 'El distrito debe tener al menos 3 caracteres',
+       'string.max': 'El distrito no puede tener más de 100 caracteres'
+     }),
+     ubicacion_direccion: Joi.string().min(5).max(200).required().messages({
+       'string.min': 'La dirección debe tener al menos 5 caracteres',
+       'string.max': 'La dirección no puede tener más de 200 caracteres',
+       'any.required': 'La dirección es requerida'
+     }),
     tipo: Joi.string().valid('producto', 'servicio').required().messages({
       'any.only': 'El tipo debe ser "producto" o "servicio"',
       'any.required': 'El tipo es requerido'
@@ -62,14 +81,30 @@ const productSchemas = {
       'string.min': 'La descripción debe tener al menos 10 caracteres',
       'string.max': 'La descripción no puede tener más de 2000 caracteres'
     }),
-    precio: Joi.number().positive().precision(2).max(999999.99).optional().messages({
-      'number.positive': 'El precio debe ser un número positivo',
-      'number.max': 'El precio no puede ser mayor a 999,999.99'
-    }),
-    ubicacion_id: Joi.number().integer().positive().optional().messages({
-      'number.base': 'La ubicación debe ser un número válido',
-      'number.positive': 'La ubicación debe ser un ID válido'
-    }),
+     precio: Joi.number().positive().precision(2).max(999999.99).optional().messages({
+       'number.positive': 'El precio debe ser un número positivo',
+       'number.max': 'El precio no puede ser mayor a 999,999.99'
+     }),
+     ubicacion_id: Joi.number().integer().positive().optional().messages({
+       'number.base': 'La ubicación debe ser un número válido',
+       'number.positive': 'La ubicación debe ser un ID válido'
+     }),
+     ubicacion_provincia: Joi.string().min(3).max(100).optional().messages({
+       'string.min': 'La provincia debe tener al menos 3 caracteres',
+       'string.max': 'La provincia no puede tener más de 100 caracteres'
+     }),
+     ubicacion_canton: Joi.string().min(3).max(100).optional().messages({
+       'string.min': 'El cantón debe tener al menos 3 caracteres',
+       'string.max': 'El cantón no puede tener más de 100 caracteres'
+     }),
+     ubicacion_distrito: Joi.string().min(3).max(100).optional().messages({
+       'string.min': 'El distrito debe tener al menos 3 caracteres',
+       'string.max': 'El distrito no puede tener más de 100 caracteres'
+     }),
+     ubicacion_direccion: Joi.string().min(5).max(200).optional().messages({
+       'string.min': 'La dirección debe tener al menos 5 caracteres',
+       'string.max': 'La dirección no puede tener más de 200 caracteres'
+     }),
     categoria_id: Joi.number().integer().positive().optional().messages({
       'number.base': 'La categoría debe ser un número válido',
       'number.positive': 'La categoría debe ser un ID válido'
@@ -107,10 +142,12 @@ const productSchemas = {
     precio_max: Joi.number().positive().precision(2).optional().messages({
       'number.positive': 'El precio máximo debe ser un número positivo'
     }),
-    ubicacion_id: Joi.number().integer().positive().optional().messages({
-      'number.base': 'La ubicación debe ser un número válido',
-      'number.positive': 'La ubicación debe ser un ID válido'
-    }),
+     ubicacion_id: Joi.alternatives().try(
+       Joi.number().integer().positive(),
+       Joi.string().max(200)
+     ).optional().messages({
+       'alternatives.match': 'La ubicación debe ser un ID válido o texto descriptivo'
+     }),
     estado: Joi.string().valid('activo', 'inactivo', 'pendiente_revision', 'rechazado', 'peligroso', 'suspendido').optional().messages({
       'any.only': 'El estado debe ser uno de: activo, inactivo, pendiente_revision, rechazado, peligroso, suspendido'
     }),
@@ -204,14 +241,8 @@ const locationSchemas = {
 // Middleware de validación genérico
 const validateSchema = (schema) => {
   return (req, res, next) => {
-    // Debug: Log de req.body para entender qué datos llegan
-    console.log('Validating data:', req.body);
-    console.log('Body type:', typeof req.body);
-    console.log('Body keys:', req.body ? Object.keys(req.body) : 'undefined');
-
     // Si req.body está vacío o undefined, no validar
     if (!req.body || Object.keys(req.body).length === 0) {
-      console.log('No data to validate, skipping validation');
       return next();
     }
 
@@ -221,7 +252,6 @@ const validateSchema = (schema) => {
     });
 
     if (error) {
-      console.log('Validation error:', error.details);
       const errorMessages = error.details.map(detail => detail.message);
       return res.status(400).json({
         success: false,
