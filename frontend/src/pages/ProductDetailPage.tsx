@@ -20,7 +20,11 @@ import {
   Calendar,
   Timer,
   Tag,
-  FileText
+  FileText,
+  Shield,
+  CheckCircle,
+  XCircle,
+  Eye
 } from 'lucide-react';
 import type { ProductDetail } from '../types/product.types';
 
@@ -28,7 +32,7 @@ export const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { canModifyProduct, canDeleteProduct, canModerateProduct } = usePermissions();
+  const { canModifyProduct, canDeleteProduct } = usePermissions();
   const { alert, showSuccess, showError, showWarning, hideAlert } = useAlert();
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -37,6 +41,7 @@ export const ProductDetailPage: React.FC = () => {
   const [isZoomed, setIsZoomed] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
+  const [reviewLoading, setReviewLoading] = useState(false);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -96,27 +101,108 @@ export const ProductDetailPage: React.FC = () => {
       '¿Eliminar producto?',
       `¿Estás seguro de que quieres eliminar "${product.nombre}"? Esta acción no se puede deshacer.`,
       async () => {
-        try {
-          const response = await fetch(`http://localhost:3001/api/products/${product.id}`, {
-            method: 'DELETE',
-            headers: {
-              'Authorization': `Bearer ${apiService.getToken()}`
-            }
-          });
-          
-          const data = await response.json();
-          if (data.success) {
+      try {
+        const response = await fetch(`http://localhost:3001/api/products/${product.id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${apiService.getToken()}`
+          }
+        });
+        
+        const data = await response.json();
+        if (data.success) {
             showSuccess(
               '¡Producto eliminado!',
               'El producto ha sido eliminado correctamente.',
               () => navigate('/products')
             );
-          } else {
+        } else {
             showError('Error', data.message || 'Error al eliminar el producto');
+        }
+      } catch (error) {
+        console.error('Error al eliminar producto:', error);
+          showError('Error', 'Error al eliminar el producto');
+        }
+      },
+      undefined // onCancel - no necesita hacer nada especial
+    );
+  };
+
+  const handleMarkAsReviewed = async () => {
+    if (!product || !user) return;
+    
+    setReviewLoading(true);
+    try {
+      const response = await fetch(`http://localhost:3001/api/products/${product.id}/moderate`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiService.getToken()}`
+        },
+        body: JSON.stringify({
+          accion: 'marcar_revisado_detalle',
+          motivo: 'Producto marcado como revisado en detalle',
+          decision_final: 'Revisado en detalle'
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        showSuccess('¡Producto Revisado!', 'El producto ha sido marcado como revisado.');
+        // Recargar el producto para obtener la fecha_revision actualizada
+        loadProduct();
+      } else {
+        showError('Error al marcar como revisado', data.message || 'No se pudo marcar el producto como revisado.');
+      }
+    } catch (error) {
+      console.error('Error al marcar como revisado:', error);
+      showError('Error de conexión', 'No se pudo conectar con el servidor para marcar el producto como revisado.');
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
+  const handleModerationAction = async (action: string, productName: string) => {
+    if (!product || !user) return;
+    
+    const actionText = action === 'aprobar' ? 'aprobar' : 'rechazar';
+    const actionTitle = action === 'aprobar' ? '¿Aprobar producto?' : '¿Rechazar producto?';
+    const actionMessage = action === 'aprobar' 
+      ? `¿Estás seguro de que quieres aprobar "${productName}"? Este producto será visible para todos los compradores.`
+      : `¿Estás seguro de que quieres rechazar "${productName}"? Este producto será suspendido y no será visible para los compradores.`;
+    
+    showWarning(
+      actionTitle,
+      actionMessage,
+      async () => {
+        try {
+          const response = await fetch(`http://localhost:3001/api/products/${product.id}/moderate`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${apiService.getToken()}`
+            },
+            body: JSON.stringify({
+              accion: action,
+              motivo: `Producto ${actionText} por ${user.tipo_usuario}`,
+              decision_final: `Decisión: ${action === 'aprobar' ? 'Aprobado' : 'Rechazado'}`
+            })
+          });
+
+          const data = await response.json();
+          
+          if (data.success) {
+            showSuccess(
+              'Acción completada',
+              `El producto "${productName}" ha sido ${actionText} exitosamente.`,
+              () => navigate('/products/moderation')
+            );
+          } else {
+            showError('Error', data.message || 'Error al moderar producto');
           }
         } catch (error) {
-          console.error('Error al eliminar producto:', error);
-          showError('Error', 'Error al eliminar el producto');
+          console.error('Error al moderar producto:', error);
+          showError('Error', 'Error de conexión al moderar producto');
         }
       },
       undefined // onCancel - no necesita hacer nada especial
@@ -183,20 +269,30 @@ export const ProductDetailPage: React.FC = () => {
         <div className="relative max-w-7xl mx-auto px-6 py-8">
           <div className="flex items-center space-x-8">
             {/* Botón de regresar */}
-            <Link to="/my-products">
+            <Link to={user?.tipo_usuario === 'moderador' ? "/products/moderation" : "/my-products"}>
               <Button variant="outline" size="sm" className="bg-white/20 text-white border-white/30 hover:bg-white hover:text-blue-600 backdrop-blur-sm rounded-xl px-6 py-3 font-medium transition-all duration-300 shadow-lg hover:shadow-xl">
                 <ArrowLeft className="h-5 w-5 mr-2" />
                 Regresar
-              </Button>
-            </Link>
+                </Button>
+              </Link>
             
             {/* Breadcrumb */}
             <div className="flex items-center space-x-2 text-base text-blue-100">
-              <Link to="/products" className="hover:text-white transition-colors">Productos</Link>
+              {user?.tipo_usuario === 'moderador' ? (
+                <>
+                  <Link to="/products/moderation" className="hover:text-white transition-colors">Moderación</Link>
+                  <span>/</span>
+                  <span className="text-white font-medium">Revisión de producto</span>
+                </>
+              ) : (
+                <>
+                  <Link to="/products" className="hover:text-white transition-colors">Productos</Link>
               <span>/</span>
-              <span className="text-white">{product.categoria_nombre}</span>
+                  <span className="text-white">{product.categoria_nombre}</span>
               <span>/</span>
-              <span className="text-white font-medium">{product.nombre}</span>
+                  <span className="text-white font-medium">{product.nombre}</span>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -364,8 +460,105 @@ export const ProductDetailPage: React.FC = () => {
               </Alert>
             )}
 
-            {/* Acciones de Gestión */}
-            {(canModifyProduct(product.vendedor_id) || canDeleteProduct(product.vendedor_id) || canModerateProduct()) && (
+            {/* Acciones de Moderación */}
+            {user?.tipo_usuario === 'moderador' && (product.estado === 'pendiente_revision' || product.estado === 'activo') && (
+              <div className="border border-blue-200 rounded-lg p-4 bg-gradient-to-r from-blue-50 to-indigo-50">
+                <h3 className="font-medium text-gray-900 mb-3 flex items-center">
+                  <Shield className="h-4 w-4 mr-2 text-blue-600" />
+                  Acciones de Moderación
+                </h3>
+                
+                {product.estado === 'pendiente_revision' ? (
+                  // Flujo para productos pendientes de revisión
+                  !product.fecha_revision ? (
+                    // Botón para marcar como revisado
+                    <div className="text-center">
+                      <Button 
+                        onClick={handleMarkAsReviewed}
+                        disabled={reviewLoading}
+                        className="w-full h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200 text-base font-medium"
+                      >
+                        {reviewLoading ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Marcando como revisado...
+                          </>
+                        ) : (
+                          <>
+                            <Eye className="h-5 w-5 mr-2" />
+                            Marcar como Revisado
+                          </>
+                        )}
+                      </Button>
+                      <p className="text-xs text-gray-600 mt-3 text-center">
+                        Primero marca el producto como revisado, luego podrás aprobarlo o rechazarlo
+                      </p>
+                    </div>
+                  ) : (
+                    // Botones de aprobación/rechazo (solo después de marcar como revisado)
+                    <>
+                      <div className="mb-3 p-3 bg-green-100 border border-green-200 rounded-lg">
+                        <div className="flex items-center text-green-800">
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          <span className="text-sm font-medium">Producto marcado como revisado</span>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <Button 
+                          onClick={() => handleModerationAction('aprobar', product.nombre)}
+                          className="w-full h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200"
+                        >
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Aprobar
+                        </Button>
+                        <Button 
+                          onClick={() => handleModerationAction('rechazar', product.nombre)}
+                          className="w-full h-10 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200"
+                        >
+                          <XCircle className="h-4 w-4 mr-2" />
+                          Rechazar
+                        </Button>
+                      </div>
+                      <p className="text-xs text-gray-600 mt-3 text-center">
+                        Ahora puedes tomar una decisión sobre este producto
+                      </p>
+                    </>
+                  )
+                ) : (
+                  // Flujo para productos activos - pueden ser suspendidos o marcados como peligrosos
+                  <>
+                    <div className="mb-3 p-3 bg-green-100 border border-green-200 rounded-lg">
+                      <div className="flex items-center text-green-800">
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        <span className="text-sm font-medium">Producto activo - Acciones disponibles</span>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button 
+                        onClick={() => handleModerationAction('suspender', product.nombre)}
+                        className="w-full h-10 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200"
+                      >
+                        <AlertTriangle className="h-4 w-4 mr-2" />
+                        Suspender
+                      </Button>
+                      <Button 
+                        onClick={() => handleModerationAction('marcar_peligroso', product.nombre)}
+                        className="w-full h-10 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200"
+                      >
+                        <AlertTriangle className="h-4 w-4 mr-2" />
+                        Marcar como Peligroso
+                      </Button>
+                    </div>
+                    <p className="text-xs text-gray-600 mt-3 text-center">
+                      Puedes suspender el producto o marcarlo como peligroso
+                    </p>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Acciones de Gestión (Solo para Vendedores, NO para Moderadores) */}
+            {(canModifyProduct(product.vendedor_id) || canDeleteProduct(product.vendedor_id)) && user?.tipo_usuario !== 'moderador' && (
               <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
                 <h3 className="font-medium text-gray-900 mb-3">Gestionar producto</h3>
                 <div className="space-y-2">
@@ -423,13 +616,13 @@ export const ProductDetailPage: React.FC = () => {
                   Ubicación
                 </h3>
                 <div className="space-y-2">
-                  {product.ubicacion_nombre && (
-                    <div className="flex items-center space-x-2">
+            {product.ubicacion_nombre && (
+                <div className="flex items-center space-x-2">
                       <span className="text-sm text-gray-600 w-16">Dirección:</span>
                       <span className="text-gray-900 font-medium">{product.ubicacion_nombre}</span>
                     </div>
                   )}
-                  {product.provincia && (
+                      {product.provincia && (
                     <div className="flex items-center space-x-2">
                       <span className="text-sm text-gray-600 w-16">Provincia:</span>
                       <span className="text-gray-900">{product.provincia}</span>
@@ -448,7 +641,7 @@ export const ProductDetailPage: React.FC = () => {
                     </div>
                   )}
                 </div>
-              </div>
+                    </div>
             )}
 
             {/* Información adicional */}
@@ -471,7 +664,7 @@ export const ProductDetailPage: React.FC = () => {
                         <span className="text-gray-700 text-xs">{product.categoria_descripcion}</span>
                       </div>
                     </div>
-                  </div>
+                </div>
                 )}
                 <div className="flex justify-between">
                   <span className="text-gray-600">Publicado:</span>

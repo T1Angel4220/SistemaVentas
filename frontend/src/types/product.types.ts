@@ -24,6 +24,7 @@ export interface Product {
   total_imagenes: number;
   primera_imagen?: string;
   es_peligroso?: boolean;
+  fecha_revision?: string;
 }
 
 // Interface detallada de producto (para vista individual)
@@ -50,6 +51,7 @@ export interface ProductDetail {
   imagenes: ProductImage[];
   servicio?: ServiceDetails;
   es_peligroso?: boolean;
+  fecha_revision?: string;
 }
 
 // Imágenes de producto

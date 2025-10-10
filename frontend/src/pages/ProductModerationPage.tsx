@@ -348,17 +348,17 @@ export const ProductModerationPage: React.FC = () => {
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Estado del Producto
                 </label>
-        <select
-          value={filters.estado}
-          onChange={(e) => handleFilterChange('estado', e.target.value)}
+                <select
+                  value={filters.estado}
+                  onChange={(e) => handleFilterChange('estado', e.target.value)}
           className="w-full sm:w-64 flex h-12 items-center justify-between rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm hover:border-gray-300 transition-colors"
-        >
+                >
           <option value="">Todos</option>
-          <option value="pendiente_revision">Pendiente de Revisión</option>
-          <option value="activo">Activos</option>
+                  <option value="pendiente_revision">Pendiente de Revisión</option>
+                  <option value="activo">Activos</option>
           <option value="suspendido">Rechazados/Suspendidos</option>
-          <option value="peligroso">Peligrosos</option>
-        </select>
+                  <option value="peligroso">Peligrosos</option>
+                </select>
               </div>
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 rounded-xl border border-blue-200">
                 <div className="text-sm font-medium text-blue-700">
@@ -396,7 +396,7 @@ export const ProductModerationPage: React.FC = () => {
                           <div className="bg-black/70 backdrop-blur-sm rounded-lg px-2 py-1 text-white text-xs font-medium">
                             +{product.total_imagenes - 1} más
                           </div>
-                        </div>
+                    </div>
                       )}
                     </>
                   ) : (
@@ -414,15 +414,15 @@ export const ProductModerationPage: React.FC = () => {
                 {/* Badges mejorados */}
                 <div className="absolute top-3 right-3">
                   <div className="bg-white/95 backdrop-blur-sm rounded-xl px-3 py-1 shadow-lg border border-gray-200">
-                    {getStatusBadge(product.estado)}
+                  {getStatusBadge(product.estado)}
                   </div>
                 </div>
                 <div className="absolute top-3 left-3">
                   <div className="bg-white/95 backdrop-blur-sm rounded-xl px-3 py-1 shadow-lg border border-gray-200">
                     <Badge variant="outline" className="bg-transparent border-gray-300 text-gray-700">
-                      {getTypeIcon(product.tipo)}
+                    {getTypeIcon(product.tipo)}
                       <span className="ml-1 capitalize text-xs">{product.tipo}</span>
-                    </Badge>
+                  </Badge>
                   </div>
                 </div>
               </div>
@@ -431,8 +431,8 @@ export const ProductModerationPage: React.FC = () => {
                 <div className="space-y-4">
                   <div>
                     <h3 className="font-bold text-gray-900 text-lg line-clamp-2 mb-1">
-                      {product.nombre}
-                    </h3>
+                    {product.nombre}
+                  </h3>
                     <p className="text-sm text-gray-500 font-medium">Código: {product.codigo}</p>
                   </div>
                   
@@ -481,28 +481,36 @@ export const ProductModerationPage: React.FC = () => {
                       <Button 
                         size="sm"
                         onClick={() => handleApproveProduct(product.id, product.nombre)}
-                        disabled={actionLoading === product.id}
-                        className="h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
+                        disabled={actionLoading === product.id || !product.fecha_revision}
+                        className={`h-10 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 ${
+                          !product.fecha_revision 
+                            ? 'bg-gray-400 cursor-not-allowed opacity-50' 
+                            : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800'
+                        } text-white`}
                       >
                         {actionLoading === product.id ? (
                           <Clock className="h-4 w-4 animate-spin" />
                         ) : (
                           <CheckCircle className="h-4 w-4" />
                         )}
-                        <span className="ml-2">Aprobar</span>
+                        <span className="ml-2">{!product.fecha_revision ? 'Revisar primero' : 'Aprobar'}</span>
                       </Button>
                       <Button 
                         size="sm"
                         onClick={() => handleRejectProduct(product.id, product.nombre)}
-                        disabled={actionLoading === product.id}
-                        className="h-10 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
+                        disabled={actionLoading === product.id || !product.fecha_revision}
+                        className={`h-10 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 ${
+                          !product.fecha_revision 
+                            ? 'bg-gray-400 cursor-not-allowed opacity-50' 
+                            : 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800'
+                        } text-white`}
                       >
                         {actionLoading === product.id ? (
                           <Clock className="h-4 w-4 animate-spin" />
                         ) : (
                           <XCircle className="h-4 w-4" />
                         )}
-                        <span className="ml-2">Rechazar</span>
+                        <span className="ml-2">{!product.fecha_revision ? 'Revisar primero' : 'Rechazar'}</span>
                       </Button>
                     </div>
                   )}

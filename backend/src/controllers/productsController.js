@@ -868,7 +868,7 @@ class ProductsController {
       const moderador_id = req.user.id;
 
       // Validar acción
-      const accionesValidas = ['aprobar', 'rechazar', 'suspender', 'marcar_peligroso'];
+      const accionesValidas = ['aprobar', 'rechazar', 'suspender', 'marcar_peligroso', 'marcar_revisado_detalle'];
       if (!accionesValidas.includes(accion)) {
         return res.status(400).json({
           success: false,
@@ -911,6 +911,16 @@ class ProductsController {
           esPeligroso = true;
           fechaDeteccionPeligroso = new Date();
           break;
+        case 'marcar_revisado_detalle':
+          // Solo actualizar la fecha de revisión, no cambiar estado
+          await query(
+            `UPDATE items SET fecha_revision = NOW() WHERE id = $1`,
+            [id]
+          );
+          return res.status(200).json({ success: true, message: 'Producto marcado como revisado en detalle.' });
+      
+        default:
+          return res.status(400).json({ success: false, message: 'Acción de moderación inválida.' });
       }
 
       // Actualizar producto
