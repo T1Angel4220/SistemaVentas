@@ -218,43 +218,37 @@ export const DashboardPage: React.FC = () => {
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Acciones Rápidas</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div 
-              onClick={() => navigate('/products')}
-              className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1"
-            >
-              <div className="p-6">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                  <ShoppingCart className="h-6 w-6 text-white" />
+            {/* Solo mostrar "Comprar" si NO es admin o moderador */}
+            {user.tipo_usuario !== 'administrador' && user.tipo_usuario !== 'moderador' && (
+              <div 
+                onClick={() => navigate('/products')}
+                className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1"
+              >
+                <div className="p-6">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <ShoppingCart className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Comprar</h3>
+                  <p className="text-sm text-gray-600">Explora productos y servicios disponibles</p>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Comprar</h3>
-                <p className="text-sm text-gray-600">Explora productos y servicios disponibles</p>
               </div>
-            </div>
+            )}
 
-            <div 
-              onClick={() => {
-                if (user.tipo_usuario === 'vendedor' || user.tipo_usuario === 'administrador') {
-                  navigate('/products/create');
-                }
-              }}
-              className={`bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 group hover:-translate-y-1 ${
-                user.tipo_usuario === 'vendedor' || user.tipo_usuario === 'administrador' 
-                  ? 'cursor-pointer' 
-                  : 'cursor-not-allowed opacity-60'
-              }`}
-            >
-              <div className="p-6">
-                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                  <Package className="h-6 w-6 text-white" />
+            {/* Solo mostrar "Vender" si es vendedor (NO admin o moderador) */}
+            {user.tipo_usuario === 'vendedor' && (
+              <div 
+                onClick={() => navigate('/products/create')}
+                className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1"
+              >
+                <div className="p-6">
+                  <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <Package className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Vender</h3>
+                  <p className="text-sm text-gray-600">Publica tus productos y servicios</p>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Vender</h3>
-                <p className="text-sm text-gray-600">
-                  {user.tipo_usuario === 'vendedor' || user.tipo_usuario === 'administrador' 
-                    ? 'Publica tus productos y servicios' 
-                    : 'Solo disponible para vendedores'}
-                </p>
               </div>
-            </div>
+            )}
 
             <div 
               onClick={() => navigate('/chat')}

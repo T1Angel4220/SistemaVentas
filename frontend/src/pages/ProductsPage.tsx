@@ -29,7 +29,7 @@ import HierarchicalCategorySearch from '../components/ui/HierarchicalCategorySea
 
 export const ProductsPage: React.FC = () => {
   const { user } = useAuth();
-  const { permissions, canModerateProduct, getRoleDisplayName, getRoleColor } = usePermissions();
+  const { canModerateProduct, getRoleDisplayName, getRoleColor } = usePermissions();
   const { showSuccess, showError } = useAlert();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -303,7 +303,8 @@ export const ProductsPage: React.FC = () => {
             
             {/* Botones de acción según permisos */}
             <div className="mt-8 flex flex-wrap justify-center gap-4">
-              {permissions.canCreate && (
+              {/* Solo mostrar "Crear Producto" si es vendedor (NO admin o moderador) */}
+              {user?.tipo_usuario === 'vendedor' && (
                 <Link to="/products/create">
                   <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 shadow-lg hover:shadow-xl transition-all duration-300">
                     <Plus className="h-5 w-5 mr-2" />
@@ -312,7 +313,8 @@ export const ProductsPage: React.FC = () => {
                 </Link>
               )}
               
-              {permissions.canCreate && (
+              {/* Solo mostrar "Mis Productos" si es vendedor (NO admin o moderador) */}
+              {user?.tipo_usuario === 'vendedor' && (
                 <Link to="/my-products">
                   <Button size="lg" variant="outline" className="bg-white/20 text-white border-white hover:bg-white hover:text-blue-600 shadow-lg hover:shadow-xl transition-all duration-300">
                     <Package className="h-5 w-5 mr-2" />
@@ -321,6 +323,7 @@ export const ProductsPage: React.FC = () => {
                 </Link>
               )}
               
+              {/* Solo mostrar "Mis Favoritos" si es comprador (NO admin o moderador) */}
               {user?.tipo_usuario === 'comprador' && (
                 <Link to="/products/saved">
                   <Button size="lg" variant="outline" className="bg-white/20 text-white border-white hover:bg-white hover:text-blue-600 shadow-lg hover:shadow-xl transition-all duration-300">
@@ -330,6 +333,7 @@ export const ProductsPage: React.FC = () => {
                 </Link>
               )}
               
+              {/* Solo mostrar "Moderación" si tiene permisos de moderación */}
               {canModerateProduct() && (
                 <Link to="/products/moderation">
                   <Button size="lg" variant="outline" className="bg-white/20 text-white border-white hover:bg-white hover:text-blue-600 shadow-lg hover:shadow-xl transition-all duration-300">
@@ -652,7 +656,7 @@ export const ProductsPage: React.FC = () => {
                             </Button>
                           </Link>
                           
-                          {/* Botones de favoritos y carrito - Solo para compradores */}
+                          {/* Botones de favoritos y carrito - Solo para compradores (NO admin o moderador) */}
                           {user?.tipo_usuario === 'comprador' && (
                             <>
                               <Button 

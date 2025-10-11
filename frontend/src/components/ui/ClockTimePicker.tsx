@@ -19,9 +19,8 @@ export const ClockTimePicker: React.FC<ClockTimePickerProps> = ({
   className = ""
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [hours, setHours] = useState(12);
+  const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(0);
-  const [is24Hour, setIs24Hour] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
 
   // Inicializar valores desde el prop value
@@ -69,11 +68,31 @@ export const ClockTimePicker: React.FC<ClockTimePickerProps> = ({
   };
 
   const getHourAngle = () => {
-    return (hours % 12) * 30 + (minutes / 60) * 30;
+    // Para tiempo, las horas pueden ser 0, pero el reloj necesita un ángulo válido
+    // Si es 0 horas o 12 horas, la manecilla debe apuntar a las 12 (arriba)
+    if (hours === 0 || hours === 12 || hours === 24) {
+      return 360; // 360 grados = posición 12 (arriba) en SVG
+    }
+    
+    // Para horas de 13 en adelante, calcular el ángulo correctamente
+    let displayHours = hours;
+    if (hours > 12) {
+      displayHours = hours - 12; // 13 horas = 1 en el reloj, 14 = 2, etc.
+    }
+    
+    // Calcular solo el ángulo base de las horas (sin offset de minutos)
+    const baseAngle = (displayHours * 30) % 360;
+    
+    // Convertir al sistema de coordenadas SVG (360 grados = arriba)
+    return (baseAngle + 360) % 360;
   };
 
   const getMinuteAngle = () => {
-    return minutes * 6;
+    if (minutes === 0) {
+      return 360; // 360 grados = posición 0 (arriba, donde está el 12) en SVG
+    }
+    // Convertir al sistema de coordenadas SVG (360 grados = arriba)
+    return (minutes * 6 + 360) % 360;
   };
 
   const getClockPosition = (angle: number, radius: number) => {
@@ -104,19 +123,17 @@ export const ClockTimePicker: React.FC<ClockTimePickerProps> = ({
       setMinutes(newMinutes);
     } else {
       // Es para horas (círculo interior)
-      let newHours = Math.round(normalizedAngle / 30) % 12;
-      if (is24Hour) {
-        if (hours >= 12) {
-          newHours += 12;
-        }
+      const newHours = Math.round(normalizedAngle / 30) % 12;
+      // Si el ángulo está cerca de 0 grados (posición 12), establecer horas en 0 o 12
+      if (newHours === 0) {
+        setHours(12);
+      } else {
+        setHours(newHours);
       }
-      setHours(newHours);
     }
   };
 
-  const hourNumbers = is24Hour ? 
-    Array.from({ length: 24 }, (_, i) => i) :
-    Array.from({ length: 12 }, (_, i) => i + 1);
+  const hourNumbers = Array.from({ length: 12 }, (_, i) => i + 1);
 
   const minuteNumbers = Array.from({ length: 12 }, (_, i) => i * 5);
 
@@ -165,37 +182,16 @@ export const ClockTimePicker: React.FC<ClockTimePickerProps> = ({
               {/* Hora actual seleccionada */}
               <div className="mt-3 text-center">
                 <div className="text-2xl font-bold text-blue-900">
-                  {is24Hour ? formatTime24(hours, minutes) : formatTime(hours, minutes)}
+                  {formatTime(hours, minutes)}
                 </div>
                 <div className="text-sm text-blue-600 mt-1">
-                  {is24Hour ? 'Formato 24h' : 'Formato 12h'}
+                  Formato 12h
                 </div>
               </div>
             </div>
 
             {/* Contenido del reloj */}
             <div className="p-6">
-              {/* Toggle 12h/24h */}
-              <div className="flex justify-center mb-6">
-                <div className="bg-gray-100 rounded-lg p-1 flex">
-                  <button
-                    onClick={() => setIs24Hour(false)}
-                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                      !is24Hour ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600'
-                    }`}
-                  >
-                    12h
-                  </button>
-                  <button
-                    onClick={() => setIs24Hour(true)}
-                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                      is24Hour ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600'
-                    }`}
-                  >
-                    24h
-                  </button>
-                </div>
-              </div>
 
               {/* Reloj visual */}
               <div className="flex justify-center">
@@ -218,7 +214,8 @@ export const ClockTimePicker: React.FC<ClockTimePickerProps> = ({
                   
                   {/* Números de minutos */}
                   {minuteNumbers.map((minute) => {
-                    const angle = minute * 6 - 90;
+                    // Ajustar el ángulo para que el 0 esté arriba (90 grados)
+                    const angle = (minute * 6) % 360;
                     const pos = getClockPosition(angle, 75);
                     return (
                       <text
@@ -235,9 +232,9 @@ export const ClockTimePicker: React.FC<ClockTimePickerProps> = ({
                   
                   {/* Números de horas */}
                   {hourNumbers.map((hour) => {
-                    const angle = hour * (360 / (is24Hour ? 24 : 12)) - 90;
+                    // Ajustar el ángulo para que el 12 esté arriba (90 grados)
+                    const angle = (hour * 30) % 360;
                     const pos = getClockPosition(angle, 55);
-                    const displayHour = is24Hour ? hour : (hour === 0 ? 12 : hour);
                     return (
                       <text
                         key={hour}
@@ -246,7 +243,7 @@ export const ClockTimePicker: React.FC<ClockTimePickerProps> = ({
                         textAnchor="middle"
                         className="text-sm font-medium fill-gray-900 select-none"
                       >
-                        {displayHour}
+                        {hour}
                       </text>
                     );
                   })}
@@ -289,17 +286,15 @@ export const ClockTimePicker: React.FC<ClockTimePickerProps> = ({
                   <label className="text-xs text-gray-600 mb-1 block">Hora</label>
                   <input
                     type="number"
-                    min={is24Hour ? 0 : 1}
-                    max={is24Hour ? 23 : 12}
-                    value={is24Hour ? hours : (hours === 0 ? 12 : hours > 12 ? hours - 12 : hours)}
+                    min="0"
+                    max="24"
+                    value={hours}
                     onChange={(e) => {
                       let newHour = parseInt(e.target.value) || 0;
-                      if (!is24Hour && newHour === 12) newHour = 0;
-                      if (is24Hour) {
-                        setHours(newHour);
-                      } else {
-                        setHours(hours >= 12 ? newHour + 12 : newHour);
-                      }
+                      // Permitir valores de 0 a 24
+                      if (newHour < 0) newHour = 0;
+                      if (newHour > 24) newHour = 24;
+                      setHours(newHour);
                     }}
                     className="w-full h-10 rounded-lg border border-gray-200 px-3 text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
@@ -312,7 +307,16 @@ export const ClockTimePicker: React.FC<ClockTimePickerProps> = ({
                     max="59"
                     step="5"
                     value={minutes}
-                    onChange={(e) => setMinutes(parseInt(e.target.value) || 0)}
+                    onChange={(e) => {
+                      let val = parseInt(e.target.value) || 0;
+                      // Wrap-around: si es menor que 0, va a 59; si es mayor que 59, va a 0
+                      if (val < 0) {
+                        val = 59;
+                      } else if (val > 59) {
+                        val = 0;
+                      }
+                      setMinutes(val);
+                    }}
                     className="w-full h-10 rounded-lg border border-gray-200 px-3 text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>

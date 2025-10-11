@@ -56,13 +56,17 @@ export const Navbar: React.FC = () => {
               >
                 Dashboard
               </Link>
-              <Link
-                to="/products"
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-              >
-                Productos
-              </Link>
-              {(user.tipo_usuario === 'vendedor' || user.tipo_usuario === 'administrador') && (
+              {/* Solo mostrar "Productos" si NO es admin o moderador */}
+              {user.tipo_usuario !== 'administrador' && user.tipo_usuario !== 'moderador' && (
+                <Link
+                  to="/products"
+                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Productos
+                </Link>
+              )}
+              {/* Solo mostrar "Mis Productos" si es vendedor (NO admin o moderador) */}
+              {user.tipo_usuario === 'vendedor' && (
                 <Link
                   to="/my-products"
                   className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
