@@ -62,12 +62,12 @@ const startServer = async () => {
 
 // Manejar cierre graceful del servidor
 process.on('SIGINT', () => {
-  console.log('\n🛑 Cerrando servidor...');
+  console.log('\n Cerrando servidor...');
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-  console.log('\n🛑 Cerrando servidor...');
+  console.log('\n Cerrando servidor...');
   process.exit(0);
 });
 

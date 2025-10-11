@@ -26,6 +26,10 @@ export const ClockDurationPicker: React.FC<ClockDurationPickerProps> = ({
       const parsed = parseDuration(value);
       setHours(parsed.hours);
       setMinutes(parsed.minutes);
+    } else {
+      // Si no hay valor, inicializar con 0
+      setHours(0);
+      setMinutes(0);
     }
   }, [value]);
 
@@ -87,7 +91,6 @@ export const ClockDurationPicker: React.FC<ClockDurationPickerProps> = ({
   };
 
   const formatDurationShort = () => {
-    if (hours === 0 && minutes === 0) return '0:00';
     return `${hours}:${minutes.toString().padStart(2, '0')}`;
   };
 
@@ -102,14 +105,35 @@ export const ClockDurationPicker: React.FC<ClockDurationPickerProps> = ({
   };
 
   const getHourAngle = () => {
-    return (hours % 12) * 30 + (minutes / 60) * 30;
+    // Para duración, las horas pueden ser 0, pero el reloj necesita un ángulo válido
+    // Si es 0 horas, la manecilla debe apuntar a las 12 (arriba)
+    if (hours === 0) {
+      return 270; // 270 grados = posición 12 (arriba) en SVG
+    }
+    
+    // Para horas de 13 en adelante, calcular el ángulo correctamente
+    let displayHours = hours;
+    if (hours > 12) {
+      displayHours = hours - 12; // 13 horas = 1 en el reloj, 14 = 2, etc.
+    }
+    
+    // Calcular solo el ángulo base de las horas (sin offset de minutos)
+    const baseAngle = (displayHours * 30) % 360;
+    
+    // Convertir al sistema de coordenadas SVG (270 grados = arriba)
+    return (baseAngle + 270) % 360;
   };
 
   const getMinuteAngle = () => {
-    return minutes * 6;
+    if (minutes === 0) {
+      return 270; // 270 grados = posición 0 (arriba, donde está el 12) en SVG
+    }
+    // Convertir al sistema de coordenadas SVG (270 grados = arriba)
+    return (minutes * 6 + 270) % 360;
   };
 
   const getClockPosition = (angle: number, radius: number) => {
+    // Convertir ángulo para que 0 grados esté arriba (como un reloj normal)
     const radians = (angle - 90) * (Math.PI / 180);
     return {
       x: 100 + radius * Math.cos(radians),
@@ -136,9 +160,14 @@ export const ClockDurationPicker: React.FC<ClockDurationPickerProps> = ({
       const newMinutes = Math.round(normalizedAngle / 6) % 60;
       setMinutes(newMinutes);
     } else {
-      // Es para horas (círculo interior)
+      // Es para horas (círculo interior) - para duración
       const newHours = Math.round(normalizedAngle / 30) % 12;
-      setHours(newHours);
+      // Si el ángulo está cerca de 0 grados (posición 12), establecer horas en 0
+      if (newHours === 0) {
+        setHours(0);
+      } else {
+        setHours(newHours);
+      }
     }
   };
 
@@ -220,7 +249,8 @@ export const ClockDurationPicker: React.FC<ClockDurationPickerProps> = ({
                   
                   {/* Números de minutos */}
                   {minuteNumbers.map((minute) => {
-                    const angle = minute * 6 - 90;
+                    // Ajustar el ángulo para que el 0 esté arriba (90 grados)
+                    const angle = (minute * 6) % 360;
                     const pos = getClockPosition(angle, 75);
                     return (
                       <text
@@ -237,7 +267,8 @@ export const ClockDurationPicker: React.FC<ClockDurationPickerProps> = ({
                   
                   {/* Números de horas */}
                   {hourNumbers.map((hour) => {
-                    const angle = hour * 30 - 90;
+                    // Ajustar el ángulo para que el 12 esté arriba (90 grados)
+                    const angle = (hour * 30) % 360;
                     const pos = getClockPosition(angle, 55);
                     const displayHour = hour === 0 ? 12 : hour;
                     return (
@@ -257,8 +288,8 @@ export const ClockDurationPicker: React.FC<ClockDurationPickerProps> = ({
                   <line
                     x1="100"
                     y1="100"
-                    x2={getClockPosition(getHourAngle(), 40).x}
-                    y2={getClockPosition(getHourAngle(), 40).y}
+                    x2={getClockPosition(getHourAngle() + 90, 40).x}
+                    y2={getClockPosition(getHourAngle() + 90, 40).y}
                     stroke="#10b981"
                     strokeWidth="3"
                     strokeLinecap="round"
@@ -268,8 +299,8 @@ export const ClockDurationPicker: React.FC<ClockDurationPickerProps> = ({
                   <line
                     x1="100"
                     y1="100"
-                    x2={getClockPosition(getMinuteAngle(), 60).x}
-                    y2={getClockPosition(getMinuteAngle(), 60).y}
+                    x2={getClockPosition(getMinuteAngle() + 90, 60).x}
+                    y2={getClockPosition(getMinuteAngle() + 90, 60).y}
                     stroke="#f59e0b"
                     strokeWidth="2"
                     strokeLinecap="round"
@@ -306,7 +337,16 @@ export const ClockDurationPicker: React.FC<ClockDurationPickerProps> = ({
                     max="59"
                     step="5"
                     value={minutes}
-                    onChange={(e) => setMinutes(Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
+                    onChange={(e) => {
+                      let val = parseInt(e.target.value) || 0;
+                      // Wrap-around: si es menor que 0, va a 59; si es mayor que 59, va a 0
+                      if (val < 0) {
+                        val = 59;
+                      } else if (val > 59) {
+                        val = 0;
+                      }
+                      setMinutes(val);
+                    }}
                     className="w-full h-10 rounded-lg border border-gray-200 px-3 text-center focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
                 </div>
@@ -323,18 +363,25 @@ export const ClockDurationPicker: React.FC<ClockDurationPickerProps> = ({
                     { h: 2, m: 0, label: '2h' },
                     { h: 3, m: 0, label: '3h' },
                     { h: 4, m: 0, label: '4h' }
-                  ].map((option) => (
-                    <button
-                      key={option.label}
-                      onClick={() => {
-                        setHours(option.h);
-                        setMinutes(option.m);
-                      }}
-                      className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
-                    >
-                      {option.label}
-                    </button>
-                  ))}
+                  ].map((option) => {
+                    const isSelected = hours === option.h && minutes === option.m;
+                    return (
+                      <button
+                        key={option.label}
+                        onClick={() => {
+                          setHours(option.h);
+                          setMinutes(option.m);
+                        }}
+                        className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                          isSelected 
+                            ? 'bg-green-500 text-white' 
+                            : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>

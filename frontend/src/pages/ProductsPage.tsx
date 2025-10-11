@@ -573,19 +573,31 @@ export const ProductsPage: React.FC = () => {
                   {products.map((product) => (
                     <Card key={product.id} className="group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-2xl overflow-hidden">
                       <div className="relative overflow-hidden">
-                        <div className="h-56 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center relative">
-                          {product.total_imagenes > 0 ? (
-                            <div className="text-center">
-                              <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
-                                <Package className="h-10 w-10 text-blue-600" />
-                              </div>
-                              <p className="text-sm font-semibold text-gray-600 bg-white/80 px-3 py-1 rounded-full">
-                                {product.total_imagenes} imagen{product.total_imagenes !== 1 ? 'es' : ''}
-                              </p>
-                            </div>
+                        <div className="h-56 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-300">
+                          {product.total_imagenes > 0 && product.primera_imagen ? (
+                            <>
+                              <img
+                                src={product.primera_imagen}
+                                alt={product.nombre}
+                                className="w-full h-full object-cover"
+                              />
+                              {/* Indicador de múltiples imágenes */}
+                              {product.total_imagenes > 1 && (
+                                <div className="absolute bottom-3 right-3">
+                                  <div className="bg-black/70 backdrop-blur-sm rounded-lg px-2 py-1 text-white text-xs font-medium">
+                                    +{product.total_imagenes - 1} más
+                                  </div>
+                                </div>
+                              )}
+                            </>
                           ) : (
-                            <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center shadow-lg">
-                              <Package className="h-10 w-10 text-gray-400" />
+                            <div className="text-center text-gray-600">
+                              <div className="w-16 h-16 bg-white/80 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
+                                <Package className="h-8 w-8 text-gray-500" />
+                              </div>
+                              <p className="text-sm font-medium">
+                                {product.total_imagenes > 0 ? `${product.total_imagenes} imagen${product.total_imagenes !== 1 ? 'es' : ''}` : 'Sin imágenes'}
+                              </p>
                             </div>
                           )}
                         </div>

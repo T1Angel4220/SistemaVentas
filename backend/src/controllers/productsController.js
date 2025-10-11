@@ -280,7 +280,8 @@ class ProductsController {
           c.nombre as categoria_nombre,
           u.nombre || ' ' || u.apellido as vendedor_nombre,
           ub.nombre as ubicacion_nombre,
-          COUNT(ii.id) as total_imagenes
+          COUNT(ii.id) as total_imagenes,
+          (SELECT ii2.url_imagen FROM item_imagenes ii2 WHERE ii2.item_id = i.id ORDER BY ii2.orden LIMIT 1) as primera_imagen
         FROM items i
         JOIN categorias c ON i.categoria_id = c.id
         JOIN usuarios u ON i.vendedor_id = u.id
@@ -998,6 +999,12 @@ class ProductsController {
           return res.status(400).json({ success: false, message: 'Acción de moderación inválida.' });
       }
 
+      // Determinar si se debe establecer disponibilidad como true
+      let disponibilidad = producto.disponibilidad; // Mantener el valor actual por defecto
+      if (accion === 'aprobar') {
+        disponibilidad = true; // Cuando se aprueba, automáticamente disponible
+      }
+
       // Actualizar producto
       const productoActualizado = await query(
         `UPDATE items SET 
@@ -1006,10 +1013,11 @@ class ProductsController {
           fecha_deteccion_peligroso = $3,
           moderador_revision_id = $4,
           motivo_rechazo = $5,
-          fecha_revision = CURRENT_TIMESTAMP
+          fecha_revision = CURRENT_TIMESTAMP,
+          disponibilidad = $7
         WHERE id = $6
         RETURNING *`,
-        [nuevoEstado, esPeligroso, fechaDeteccionPeligroso, moderador_id, motivo, id]
+        [nuevoEstado, esPeligroso, fechaDeteccionPeligroso, moderador_id, motivo, id, disponibilidad]
       );
 
       // Registrar acción de moderación
