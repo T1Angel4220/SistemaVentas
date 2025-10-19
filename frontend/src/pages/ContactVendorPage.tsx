@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useAlert } from '../hooks/useAlert';
+import { apiService } from '../services/api';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -49,8 +50,9 @@ export const ContactVendorPage: React.FC = () => {
   const loadProduct = React.useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:3001/api/products/view/${id}`);
-      const data = await response.json();
+      const data = await apiService.request(`/products/view/${id}`, {
+        method: 'GET'
+      });
       
       if (data.success) {
         setProduct(data.data);
@@ -235,7 +237,7 @@ export const ContactVendorPage: React.FC = () => {
         <div className="relative max-w-7xl mx-auto px-6 py-8">
           <div className="flex items-center space-x-8">
             <Link to={
-              user?.tipo_usuario === 'moderador' 
+              user?.tipo_usuario === 'moderador' || user?.tipo_usuario === 'administrador'
                 ? "/products/moderation" 
                 : "/products"
             }>

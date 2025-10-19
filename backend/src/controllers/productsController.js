@@ -410,6 +410,20 @@ class ProductsController {
   static async getProductForView(req, res) {
     try {
       const { id } = req.params;
+      const user = req.user; // Puede ser null si no está autenticado
+
+      // Si es administrador o moderador, permitir cualquier estado
+      // Si no, solo permitir estados específicos
+      const isAdminOrModerator = user && (user.tipo_usuario === 'administrador' || user.tipo_usuario === 'moderador');
+      
+      let whereClause;
+      if (isAdminOrModerator) {
+        // Administradores y moderadores pueden ver productos en cualquier estado
+        whereClause = 'WHERE i.id = $1';
+      } else {
+        // Otros usuarios solo pueden ver productos activos, pendientes o inactivos
+        whereClause = `WHERE i.id = $1 AND i.estado IN ('activo', 'pendiente_revision', 'inactivo')`;
+      }
 
       const producto = await query(
         `SELECT 
@@ -427,7 +441,7 @@ class ProductsController {
         JOIN categorias c ON i.categoria_id = c.id
         JOIN usuarios u ON i.vendedor_id = u.id
         LEFT JOIN ubicaciones ub ON i.ubicacion_id = ub.id
-        WHERE i.id = $1 AND i.estado IN ('activo', 'pendiente_revision', 'inactivo')`,
+        ${whereClause}`,
         [id]
       );
 

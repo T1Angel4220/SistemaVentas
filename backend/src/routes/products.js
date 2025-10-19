@@ -17,7 +17,7 @@ router.get('/', validateProductFilters, ProductsController.getProducts);        
 
 // Rutas específicas que deben ir ANTES de /:id para evitar conflictos
 router.get('/saved', authenticate, ProductsController.getSavedProducts);                     // GET /api/products/saved - Productos guardados
-router.get('/view/:id', ProductsController.getProductForView);                              // GET /api/products/view/:id - Obtener producto para vista de comprador
+router.get('/view/:id', optionalAuth, ProductsController.getProductForView);                // GET /api/products/view/:id - Obtener producto para vista de comprador (auth opcional)
 router.post('/:id/save', authenticate, ProductsController.saveProduct);                      // POST /api/products/:id/save - Guardar producto
 router.delete('/:id/unsave', authenticate, ProductsController.unsaveProduct);                // DELETE /api/products/:id/unsave - Eliminar de guardados
 router.get('/:id/saved-status', authenticate, ProductsController.getSavedStatus);            // GET /api/products/:id/saved-status - Verificar si está guardado

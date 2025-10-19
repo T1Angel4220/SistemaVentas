@@ -140,7 +140,7 @@ onClick={() => navigate(`/products/${product.id}`)}
 
 **Causa:** En el backend, el endpoint `/api/products/moderation/pending` tenía un error en la construcción de los placeholders SQL para LIMIT y OFFSET. Usaba `$${queryParams.length - 1}` y `$${queryParams.length}` que no se evaluaban correctamente.
 
-**Solución:** `backend/src/controllers/productsController.js` (líneas 1051-1124)
+**Solución Backend:** `backend/src/controllers/productsController.js` (líneas 1051-1124)
 
 **Cambios aplicados:**
 ```javascript
@@ -159,16 +159,28 @@ offsetPlaceholder = '$2';
 queryParams = [parseInt(limit), offset];
 ```
 
-**Mejoras adicionales:**
+**Mejoras Backend:**
 1. ✅ Cambió el límite por defecto de 10 a 12 productos por página
 2. ✅ Agregó `parseInt()` para asegurar que page y limit sean números
 3. ✅ Agregó `has_next` y `has_prev` en la respuesta de paginación
 4. ✅ Mejoró el cálculo del offset: `(parseInt(page) - 1) * parseInt(limit)`
 
+**Mejoras Frontend:** `frontend/src/pages/ProductModerationPage.tsx` (líneas 556-656)
+
+**Diseño Mejorado:**
+1. ✨ **Contenedor con estilo:** Fondo blanco, bordes redondeados, sombra elegante
+2. 🎨 **Página actual:** Gradiente azul con sombra brillante y efecto scale
+3. 🔄 **Paginación inteligente:** Muestra solo páginas cercanas + primera/última con "..."
+4. ⬅️➡️ **Botones con iconos:** Flechas SVG en "Anterior" y "Siguiente"
+5. 📊 **Información extra:** Muestra "Página X de Y • Z productos en total"
+6. ✨ **Animaciones:** Efecto hover con scale 105% y transiciones suaves
+7. 🎯 **Estados visuales:** Deshabilitados en gris, activos en azul
+
 **Resultado:**
-- ✅ Los botones "Anterior" y "Siguiente" ahora funcionan correctamente
-- ✅ La numeración de páginas se muestra correctamente
+- ✅ Los botones "Anterior" y "Siguiente" funcionan correctamente
+- ✅ La numeración de páginas es inteligente (muestra ... cuando hay muchas)
 - ✅ El filtro por estado no interfiere con la paginación
+- ✨ Diseño moderno, elegante y profesional
 
 ---
 
@@ -179,7 +191,7 @@ queryParams = [parseInt(limit), offset];
 2. ✅ `frontend/src/pages/ProductViewPage.tsx` - Scroll + Contactar vendedor (ya estaba bien)
 3. ✅ `frontend/src/pages/ContactVendorPage.tsx` - Scroll + Botón Regresar según rol
 4. ✅ `frontend/src/pages/ForgotPasswordPage.tsx` - Sin countdown
-5. ✅ `frontend/src/pages/ProductModerationPage.tsx` - Ver Detalles en misma pestaña
+5. ✅ `frontend/src/pages/ProductModerationPage.tsx` - Ver Detalles en misma pestaña + Paginación mejorada
 6. ✅ `frontend/src/App.tsx` - Ruta de contacto sin protección innecesaria
 
 ### Backend:

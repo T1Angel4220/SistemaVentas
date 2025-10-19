@@ -273,7 +273,7 @@ export const ProductDetailPage: React.FC = () => {
           <div className="flex items-center space-x-8">
             {/* Botón de regresar */}
             <Link to={
-              user?.tipo_usuario === 'moderador' 
+              user?.tipo_usuario === 'moderador' || user?.tipo_usuario === 'administrador'
                 ? "/products/moderation" 
                 : user?.tipo_usuario === 'comprador'
                 ? "/products"
@@ -287,7 +287,7 @@ export const ProductDetailPage: React.FC = () => {
             
             {/* Breadcrumb */}
             <div className="flex items-center space-x-2 text-base text-blue-100">
-              {user?.tipo_usuario === 'moderador' ? (
+              {(user?.tipo_usuario === 'moderador' || user?.tipo_usuario === 'administrador') ? (
                 <>
                   <Link to="/products/moderation" className="hover:text-white transition-colors">Moderación</Link>
                   <span>/</span>
@@ -470,7 +470,7 @@ export const ProductDetailPage: React.FC = () => {
             )}
 
             {/* Acciones de Moderación */}
-            {user?.tipo_usuario === 'moderador' && (product.estado === 'pendiente_revision' || product.estado === 'activo') && (
+            {(user?.tipo_usuario === 'moderador' || user?.tipo_usuario === 'administrador') && (product.estado === 'pendiente_revision' || product.estado === 'activo') && (
               <div className="border border-blue-200 rounded-lg p-4 bg-gradient-to-r from-blue-50 to-indigo-50">
                 <h3 className="font-medium text-gray-900 mb-3 flex items-center">
                   <Shield className="h-4 w-4 mr-2 text-blue-600" />
