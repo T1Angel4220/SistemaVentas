@@ -9,12 +9,13 @@ const { query } = require('../config/database');
  */
 const authenticate = async (req, res, next) => {
   try {
-    // console.log('🔍 DEBUG AUTH - Headers recibidos:', req.headers.authorization);
     const token = extractTokenFromHeader(req.headers.authorization);
-    // console.log('🔍 DEBUG AUTH - Token extraído:', token ? token.substring(0, 20) + '...' : 'null');
     
     if (!token) {
-      console.log('❌ Error en autenticación: Token no encontrado');
+      // Solo loguear si no es la ruta de logout (caso esperado en algunos escenarios)
+      if (!req.path.includes('/logout')) {
+        console.log('❌ Error en autenticación: Token no encontrado');
+      }
       return res.status(401).json({
         success: false,
         message: 'Token de acceso requerido'

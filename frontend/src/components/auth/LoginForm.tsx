@@ -26,6 +26,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [resendingCode, setResendingCode] = useState(false);
+  const [resendMessage, setResendMessage] = useState('');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -67,6 +69,44 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
     return Object.keys(errors).length === 0;
   };
 
+  const handleResendCode = async () => {
+    if (!formData.correo) {
+      setValidationErrors({ correo: 'Ingresa tu correo electrónico' });
+      return;
+    }
+
+    setResendingCode(true);
+    setResendMessage('');
+    clearError();
+    
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${API_URL}/api/auth/resend-verification-code`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ correo: formData.correo }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setResendMessage(data.message);
+        setTimeout(() => {
+          window.location.href = `/verify-code?email=${encodeURIComponent(formData.correo)}`;
+        }, 2000);
+      } else {
+        setResendMessage(data.message);
+      }
+    } catch (error) {
+      console.error('Error reenviando código:', error);
+      setResendMessage('Error al reenviar el código. Intenta nuevamente.');
+    } finally {
+      setResendingCode(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -101,8 +141,41 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                   </svg>
                 </div>
-                <div className="ml-3">
+                <div className="ml-3 flex-1">
                   <p className="text-sm text-red-800">{error}</p>
+                  {error.includes('pendiente de verificación') && (
+                    <button
+                      type="button"
+                      onClick={handleResendCode}
+                      disabled={resendingCode}
+                      className="mt-2 text-sm text-blue-600 hover:text-blue-800 font-medium underline disabled:opacity-50"
+                    >
+                      {resendingCode ? 'Enviando...' : 'Reenviar código de verificación'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {resendMessage && (
+            <div className={`border rounded-lg p-4 ${resendMessage.includes('Error') || resendMessage.includes('error') ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  {resendMessage.includes('Error') || resendMessage.includes('error') ? (
+                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  ) : (
+                    <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                </div>
+                <div className="ml-3">
+                  <p className={`text-sm ${resendMessage.includes('Error') || resendMessage.includes('error') ? 'text-red-800' : 'text-green-800'}`}>
+                    {resendMessage}
+                  </p>
                 </div>
               </div>
             </div>

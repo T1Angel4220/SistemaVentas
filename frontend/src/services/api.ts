@@ -190,11 +190,12 @@ class ApiService {
   }
 
   async logout(): Promise<ApiResponse> {
+    // Notificamos al servidor (el token aún está disponible aquí)
     const response = await this.request('/auth/logout', {
       method: 'POST',
     });
     
-    this.setToken(null);
+    // No limpiamos el token aquí, se hace en el contexto después
     return response;
   }
 

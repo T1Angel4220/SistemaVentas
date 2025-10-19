@@ -25,15 +25,18 @@ const userSchemas = {
       'string.email': 'El correo debe ser un email válido',
       'any.required': 'El correo es requerido'
     }),
-    telefono: Joi.string().min(8).max(20).optional().messages({
+    telefono: Joi.string().min(8).max(20).allow('').optional().messages({
       'string.min': 'El teléfono debe tener al menos 8 caracteres',
       'string.max': 'El teléfono no puede tener más de 20 caracteres'
     }),
-    direccion: Joi.string().max(500).optional().messages({
-      'string.max': 'La dirección no puede tener más de 500 caracteres'
+    direccion: Joi.string().min(3).max(500).required().messages({
+      'string.min': 'La dirección debe tener al menos 3 caracteres',
+      'string.max': 'La dirección no puede tener más de 500 caracteres',
+      'any.required': 'La dirección es requerida'
     }),
-    genero: Joi.string().valid('masculino', 'femenino', 'otro').optional().messages({
-      'any.only': 'El género debe ser masculino, femenino u otro'
+    genero: Joi.string().valid('masculino', 'femenino', 'otro').required().messages({
+      'any.only': 'El género debe ser masculino, femenino u otro',
+      'any.required': 'El género es requerido'
     }),
     password: Joi.string().min(6).max(100).required().messages({
       'string.min': 'La contraseña debe tener al menos 6 caracteres',
@@ -86,14 +89,14 @@ const userSchemas = {
       'string.min': 'El apellido debe tener al menos 2 caracteres',
       'string.max': 'El apellido no puede tener más de 100 caracteres'
     }),
-    telefono: Joi.string().min(8).max(20).optional().messages({
+    telefono: Joi.string().min(8).max(20).allow('').optional().messages({
       'string.min': 'El teléfono debe tener al menos 8 caracteres',
       'string.max': 'El teléfono no puede tener más de 20 caracteres'
     }),
-    direccion: Joi.string().max(500).optional().messages({
+    direccion: Joi.string().max(500).allow('').optional().messages({
       'string.max': 'La dirección no puede tener más de 500 caracteres'
     }),
-    genero: Joi.string().valid('masculino', 'femenino', 'otro').optional().messages({
+    genero: Joi.string().valid('masculino', 'femenino', 'otro').allow('').optional().messages({
       'any.only': 'El género debe ser masculino, femenino u otro'
     })
   }),

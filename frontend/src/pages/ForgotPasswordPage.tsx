@@ -14,20 +14,6 @@ export const ForgotPasswordPage: React.FC = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [emailSent, setEmailSent] = useState(false);
-  const [countdown, setCountdown] = useState(15);
-  const [isPaused, setIsPaused] = useState(false);
-
-  // Manejar countdown cuando el email se envía
-  useEffect(() => {
-    if (emailSent && countdown > 0 && !isPaused) {
-      const timer = setTimeout(() => {
-        setCountdown(countdown - 1);
-      }, 1000);
-      return () => clearTimeout(timer);
-    } else if (emailSent && countdown === 0) {
-      navigate('/reset-password-code');
-    }
-  }, [emailSent, countdown, isPaused, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,7 +36,6 @@ export const ForgotPasswordPage: React.FC = () => {
       if (response.success) {
         setSuccess(response.message);
         setEmailSent(true);
-        setCountdown(15); // Iniciar countdown de 15 segundos
       } else {
         setError(response.message || 'Error al solicitar recuperación de contraseña');
       }
@@ -147,65 +132,18 @@ export const ForgotPasswordPage: React.FC = () => {
                   <h3 className="text-xl font-bold text-green-800 mb-3">
                     ¡Email Enviado Exitosamente!
                   </h3>
-                  <p className="text-green-700 text-base mb-4">
+                  <p className="text-green-700 text-base mb-6">
                     Si el correo existe en nuestro sistema, recibirás un email con un <strong>código de 6 dígitos</strong> para restablecer tu contraseña.
                   </p>
                   
-                  {/* Countdown visual mejorado */}
-                  <div className="bg-white rounded-lg p-6 border border-green-200 mb-4 shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                      <p className="text-sm text-gray-600 font-medium">Redirigiendo automáticamente en:</p>
-                      <button
-                        onClick={() => setIsPaused(!isPaused)}
-                        className="text-xs px-3 py-1 rounded-full transition-colors"
-                        style={{ 
-                          backgroundColor: isPaused ? '#10b981' : '#ef4444',
-                          color: 'white'
-                        }}
-                      >
-                        {isPaused ? '▶ Reanudar' : '⏸ Pausar'}
-                      </button>
-                    </div>
-                    
-                    <div className="text-center mb-4">
-                      <div className="text-4xl font-bold text-green-600 mb-2">
-                        {countdown}
-                      </div>
-                      <p className="text-sm text-gray-500">
-                        {countdown === 1 ? 'segundo' : 'segundos'}
-                      </p>
-                    </div>
-                    
-                    <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
-                      <div 
-                        className="bg-gradient-to-r from-green-500 to-emerald-500 h-3 rounded-full transition-all duration-1000 ease-out"
-                        style={{ width: `${(countdown / 15) * 100}%` }}
-                      ></div>
-                    </div>
-                    
-                    <div className="flex justify-between text-xs text-gray-500">
-                      <span>0s</span>
-                      <span className="font-medium">{isPaused ? 'Pausado' : 'Redirigiendo...'}</span>
-                      <span>15s</span>
-                    </div>
-                  </div>
-                  
                   <div className="text-center">
-                    <p className="text-sm text-green-600 font-medium mb-4">
-                      {isPaused ? '⏸ Redirección pausada' : '⏳ Te redirigiremos automáticamente'}
-                    </p>
-                    
-                    {/* Botón estratégicamente posicionado dentro del countdown */}
                     <Button
                       onClick={() => navigate('/reset-password-code')}
                       className="w-full bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 mb-4"
                     >
-                      🚀 Ir a ingresar código ahora
+                      <CheckCircle className="h-5 w-5 mr-2" />
+                      Ir a ingresar código de verificación
                     </Button>
-                    
-                    <p className="text-xs text-gray-500">
-                      O espera la redirección automática
-                    </p>
                   </div>
                 </div>
 
@@ -240,7 +178,6 @@ export const ForgotPasswordPage: React.FC = () => {
                       setEmailSent(false);
                       setEmail('');
                       setSuccess('');
-                      setCountdown(15);
                     }}
                     variant="outline"
                     className="w-full"

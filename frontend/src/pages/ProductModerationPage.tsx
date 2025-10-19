@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
 import { useAlert } from '../hooks/useAlert';
@@ -23,6 +24,7 @@ import {
 import type { Product, ProductsResponse } from '../types/product.types';
 
 export const ProductModerationPage: React.FC = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { canModerateProduct, getRoleDisplayName } = usePermissions();
   const { alert, showSuccess, showError, showWarning, hideAlert } = useAlert();
@@ -469,7 +471,7 @@ export const ProductModerationPage: React.FC = () => {
                       variant="outline" 
                       size="sm" 
                       className="flex-1 h-10 rounded-xl border-2 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 font-medium"
-                      onClick={() => window.open(`/products/${product.id}`, '_blank')}
+                      onClick={() => navigate(`/products/${product.id}`)}
                     >
                       <Eye className="h-4 w-4 mr-2" />
                       Ver Detalles

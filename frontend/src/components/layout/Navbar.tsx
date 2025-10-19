@@ -11,9 +11,12 @@ export const Navbar: React.FC = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      navigate('/login');
+      // Usar window.location para forzar recarga completa y evitar problemas de estado
+      window.location.href = '/login';
     } catch (error) {
       console.error('Error en logout:', error);
+      // Si hay error, forzar redirección de todas formas
+      window.location.href = '/login';
     }
   };
 

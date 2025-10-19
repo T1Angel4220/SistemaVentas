@@ -22,26 +22,22 @@ export const DashboardPage: React.FC = () => {
   const { user, logout, isLoading, refreshUser } = useAuth();
   const { canModerateProduct } = usePermissions();
 
-  // Debug: Verificar los datos del usuario
-  console.log('🔍 DashboardPage - user completo:', user);
-  console.log('🔍 DashboardPage - user.telefono:', user?.telefono);
-  console.log('🔍 DashboardPage - user.direccion:', user?.direccion);
-  console.log('🔍 DashboardPage - user.genero:', user?.genero);
-  console.log('🔍 DashboardPage - user.fecha_registro:', user?.fecha_registro);
-
-  // Refrescar datos del usuario al montar el componente
+  // Refrescar datos del usuario solo al montar el componente (una sola vez)
   React.useEffect(() => {
-    if (user && (!user.telefono || !user.direccion || !user.genero)) {
-      console.log('🔄 DashboardPage: Datos incompletos, refrescando...');
-      refreshUser();
-    }
-  }, [user, refreshUser]);
+    // Solo refrescamos si es la primera vez que se monta el componente
+    refreshUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Array vacío = solo se ejecuta al montar
 
   const handleLogout = async () => {
     try {
       await logout();
+      // Usar window.location para forzar recarga completa y evitar problemas de estado
+      window.location.href = '/login';
     } catch (error) {
       console.error('Error en logout:', error);
+      // Si hay error, forzar redirección de todas formas
+      window.location.href = '/login';
     }
   };
 

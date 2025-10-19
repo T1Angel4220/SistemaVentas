@@ -86,6 +86,9 @@ export const ContactVendorPage: React.FC = () => {
   }, [id, showError, navigate, user]);
 
   useEffect(() => {
+    // Forzar scroll al inicio
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    
     if (id) {
       loadProduct();
     }
@@ -231,7 +234,11 @@ export const ContactVendorPage: React.FC = () => {
         
         <div className="relative max-w-7xl mx-auto px-6 py-8">
           <div className="flex items-center space-x-8">
-            <Link to="/products">
+            <Link to={
+              user?.tipo_usuario === 'moderador' 
+                ? "/products/moderation" 
+                : "/products"
+            }>
               <Button variant="outline" size="sm" className="bg-white/20 text-white border-white/30 hover:bg-white hover:text-blue-600 backdrop-blur-sm rounded-xl px-6 py-3 font-medium transition-all duration-300 shadow-lg hover:shadow-xl">
                 <ArrowLeft className="h-5 w-5 mr-2" />
                 Regresar

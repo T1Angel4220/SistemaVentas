@@ -94,6 +94,16 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
       errors.telefono = 'El teléfono debe tener al menos 8 caracteres';
     }
 
+    if (!formData.direccion) {
+      errors.direccion = 'La dirección es requerida';
+    } else if (formData.direccion.length < 3) {
+      errors.direccion = 'La dirección debe tener al menos 3 caracteres';
+    }
+
+    if (!formData.genero) {
+      errors.genero = 'El género es requerido';
+    }
+
     if (!formData.password) {
       errors.password = 'La contraseña es requerida';
     } else if (formData.password.length < 6) {
@@ -311,26 +321,33 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
             
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700">
-                Género (opcional)
+                Género
               </label>
               <select
                 name="genero"
                 value={formData.genero}
                 onChange={handleInputChange}
                 disabled={isLoading}
-                className="block w-full py-3 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors disabled:bg-gray-50 disabled:cursor-not-allowed"
+                className={`block w-full py-3 px-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors ${
+                  validationErrors.genero 
+                    ? 'border-red-300 bg-red-50' 
+                    : 'border-gray-300 hover:border-gray-400'
+                } ${isLoading ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'}`}
               >
                 <option value="">Seleccionar género</option>
                 <option value="masculino">Masculino</option>
                 <option value="femenino">Femenino</option>
                 <option value="otro">Otro</option>
               </select>
+              {validationErrors.genero && (
+                <p className="text-sm text-red-600 mt-1">{validationErrors.genero}</p>
+              )}
             </div>
           </div>
 
           <div className="space-y-2">
             <label className="block text-sm font-semibold text-gray-700">
-              Dirección (opcional)
+              Dirección
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -343,9 +360,16 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
                 value={formData.direccion}
                 onChange={handleInputChange}
                 disabled={isLoading}
-                className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors disabled:bg-gray-50 disabled:cursor-not-allowed"
+                className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors ${
+                  validationErrors.direccion 
+                    ? 'border-red-300 bg-red-50' 
+                    : 'border-gray-300 hover:border-gray-400'
+                } ${isLoading ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'}`}
               />
             </div>
+            {validationErrors.direccion && (
+              <p className="text-sm text-red-600 mt-1">{validationErrors.direccion}</p>
+            )}
           </div>
 
           <div className="space-y-3">

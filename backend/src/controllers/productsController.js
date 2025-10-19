@@ -340,8 +340,12 @@ class ProductsController {
           i.*,
           c.nombre as categoria_nombre,
           c.descripcion as categoria_descripcion,
-          u.nombre || ' ' || u.apellido as vendedor_nombre,
+          u.nombre as vendedor_nombre,
+          u.apellido as vendedor_apellido,
           u.correo as vendedor_email,
+          u.correo as vendedor_correo,
+          u.telefono as vendedor_telefono,
+          u.direccion as vendedor_direccion,
           ub.nombre as ubicacion_nombre,
           ub.provincia, ub.canton, ub.distrito
         FROM items i
@@ -423,7 +427,7 @@ class ProductsController {
         JOIN categorias c ON i.categoria_id = c.id
         JOIN usuarios u ON i.vendedor_id = u.id
         LEFT JOIN ubicaciones ub ON i.ubicacion_id = ub.id
-        WHERE i.id = $1 AND i.estado = 'activo'`,
+        WHERE i.id = $1 AND i.estado IN ('activo', 'pendiente_revision', 'inactivo')`,
         [id]
       );
 

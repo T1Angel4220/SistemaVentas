@@ -102,10 +102,20 @@ export const ProductViewPage: React.FC = () => {
   };
 
   useEffect(() => {
+    // Forzar scroll al inicio INMEDIATAMENTE cuando se monta el componente
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    
     if (id) {
       loadProduct();
     }
   }, [id, loadProduct]);
+  
+  // Asegurar que siempre esté arriba después de cargar
+  useEffect(() => {
+    if (!loading && product) {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
+  }, [loading, product]);
 
   const handleSaveProduct = async () => {
     if (!user) {
@@ -244,12 +254,15 @@ export const ProductViewPage: React.FC = () => {
         <div className="relative max-w-7xl mx-auto px-6 py-8">
           <div className="flex items-center space-x-8">
             {/* Botón de regresar */}
-            <Link to="/products">
-              <Button variant="outline" size="sm" className="bg-white/20 text-white border-white/30 hover:bg-white hover:text-blue-600 backdrop-blur-sm rounded-xl px-6 py-3 font-medium transition-all duration-300 shadow-lg hover:shadow-xl">
-                <ArrowLeft className="h-5 w-5 mr-2" />
-                Regresar
-              </Button>
-            </Link>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => navigate('/products')}
+              className="bg-white/20 text-white border-white/30 hover:bg-white hover:text-blue-600 backdrop-blur-sm rounded-xl px-6 py-3 font-medium transition-all duration-300 shadow-lg hover:shadow-xl"
+            >
+              <ArrowLeft className="h-5 w-5 mr-2" />
+              Regresar
+            </Button>
             
             {/* Breadcrumb */}
             <div className="flex items-center space-x-2 text-base text-blue-100">
@@ -492,7 +505,10 @@ export const ProductViewPage: React.FC = () => {
                   </div>
                 </div>
                 
-                <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white h-10 rounded-md text-sm font-medium">
+                <Button 
+                  onClick={() => navigate(`/products/contact/${product.id}`)}
+                  className="w-full bg-orange-500 hover:bg-orange-600 text-white h-10 rounded-md text-sm font-medium"
+                >
                   <MessageCircle className="h-4 w-4 mr-2" />
                   Contactar vendedor
                 </Button>

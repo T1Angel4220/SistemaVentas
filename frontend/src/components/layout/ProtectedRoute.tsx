@@ -85,9 +85,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // Debug: Verificar el valor de email_verificado
-  console.log('🔍 ProtectedRoute - user:', user);
-  console.log('🔍 ProtectedRoute - user.email_verificado:', user.email_verificado, 'tipo:', typeof user.email_verificado);
   
   // Si el usuario no está cargado o está cargando, mostrar loading
   if (!user || isLoading) {

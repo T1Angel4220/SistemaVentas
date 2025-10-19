@@ -153,9 +153,17 @@ const login = async (req, res) => {
     
     // Verificar que el usuario esté activo
     if (user.estado !== 'activo') {
+      const estadosMensajes = {
+        'pendiente_verificacion': 'Tu cuenta está pendiente de verificación. Por favor, revisa tu correo electrónico.',
+        'inactivo': 'Tu cuenta ha sido desactivada. Contacta al administrador para más información.',
+        'suspendido': 'Tu cuenta ha sido suspendida. Contacta al administrador para más información.'
+      };
+      
+      const mensaje = estadosMensajes[user.estado] || 'Tu cuenta no está activa. Contacta al administrador.';
+      
       return res.status(401).json({
         success: false,
-        message: `Cuenta ${user.estado}. Contacta al administrador.`
+        message: mensaje
       });
     }
     
@@ -328,6 +336,87 @@ const verifyEmail = async (req, res) => {
   }
 };
 
+
+/**
+ * Reenviar código de verificación de email
+ */
+const resendVerificationCode = async (req, res) => {
+  try {
+    const { correo } = req.body;
+    
+    if (!correo) {
+      return res.status(400).json({
+        success: false,
+        message: 'El correo electrónico es requerido'
+      });
+    }
+    
+    // Buscar usuario por email
+    const userResult = await query(
+      'SELECT id, correo, nombre, estado, email_verificado FROM usuarios WHERE correo = $1',
+      [correo]
+    );
+    
+    if (userResult.rows.length === 0) {
+      // Por seguridad, no revelamos si el email existe o no
+      return res.json({
+        success: true,
+        message: 'Si el correo existe en nuestro sistema, recibirás un nuevo código de verificación.'
+      });
+    }
+    
+    const user = userResult.rows[0];
+    
+    // Verificar si ya está verificado
+    if (user.email_verificado) {
+      return res.status(400).json({
+        success: false,
+        message: 'Esta cuenta ya está verificada. Puedes iniciar sesión.'
+      });
+    }
+    
+    // Verificar que el usuario esté pendiente de verificación
+    if (user.estado !== 'pendiente_verificacion') {
+      return res.json({
+        success: true,
+        message: 'Si el correo existe en nuestro sistema, recibirás un nuevo código de verificación.'
+      });
+    }
+    
+    // Generar nuevo código de verificación
+    const verificationToken = generateEmailVerificationToken(null, correo);
+    
+    // Actualizar código en la base de datos
+    await query(
+      'UPDATE usuarios SET token_verificacion = $1, fecha_actualizacion = CURRENT_TIMESTAMP WHERE id = $2',
+      [verificationToken, user.id]
+    );
+    
+    // Enviar email de verificación
+    try {
+      await sendVerificationEmail(correo, user.nombre, verificationToken);
+      console.log('✅ Código de verificación reenviado a:', correo);
+    } catch (emailError) {
+      console.error('❌ Error enviando email de verificación:', emailError.message);
+      return res.status(500).json({
+        success: false,
+        message: 'Error al enviar el correo. Intenta nuevamente más tarde.'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Se ha enviado un nuevo código de verificación a tu correo electrónico.'
+    });
+    
+  } catch (error) {
+    console.error('❌ Error reenviando código de verificación:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor'
+    });
+  }
+};
 
 /**
  * Obtener lista de usuarios (solo para moderadores y administradores)
@@ -697,6 +786,7 @@ module.exports = {
   register,
   login,
   verifyEmail,
+  resendVerificationCode,
   requestPasswordReset,
   resetPassword,
   getProfile,

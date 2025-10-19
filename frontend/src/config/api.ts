@@ -9,6 +9,7 @@ export const API_CONFIG = {
       LOGIN: '/api/auth/login',
       REGISTER: '/api/auth/register',
       VERIFY_EMAIL: '/api/auth/verify-email',
+      RESEND_VERIFICATION_CODE: '/api/auth/resend-verification-code',
       PROFILE: '/api/auth/profile',
       LOGOUT: '/api/auth/logout',
       TEST: '/api/auth/test'

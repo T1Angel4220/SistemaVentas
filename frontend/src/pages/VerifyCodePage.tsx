@@ -12,6 +12,8 @@ export const VerifyCodePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [resendingCode, setResendingCode] = useState(false);
+  const [resendMessage, setResendMessage] = useState('');
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const email = searchParams.get('email');
@@ -51,6 +53,41 @@ export const VerifyCodePage: React.FC = () => {
     if (value.length <= 6) {
       setCode(value);
       setError('');
+    }
+  };
+
+  const handleResendCode = async () => {
+    if (!email) {
+      setError('No se encontró el correo electrónico');
+      return;
+    }
+
+    setResendingCode(true);
+    setResendMessage('');
+    setError('');
+    
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${API_URL}/api/auth/resend-verification-code`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ correo: email }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setResendMessage(data.message);
+      } else {
+        setError(data.message);
+      }
+    } catch (error) {
+      console.error('Error reenviando código:', error);
+      setError('Error al reenviar el código. Intenta nuevamente.');
+    } finally {
+      setResendingCode(false);
     }
   };
 
@@ -111,6 +148,21 @@ export const VerifyCodePage: React.FC = () => {
               </Alert>
             )}
 
+            {resendMessage && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-green-800">{resendMessage}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div>
               <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-2">
                 Código de Verificación
@@ -158,11 +210,18 @@ export const VerifyCodePage: React.FC = () => {
             <h3 className="text-sm font-medium text-blue-900 mb-2">
               ¿No recibiste el código?
             </h3>
-            <p className="text-xs text-blue-700">
+            <p className="text-xs text-blue-700 mb-3">
               • Revisa tu carpeta de spam<br/>
-              • El código expira en 10 minutos<br/>
-              • Si no lo recibiste, intenta registrarte nuevamente
+              • El código expira en 10 minutos
             </p>
+            <button
+              type="button"
+              onClick={handleResendCode}
+              disabled={resendingCode || !email}
+              className="text-sm text-blue-600 hover:text-blue-800 font-medium underline disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {resendingCode ? 'Enviando...' : 'Reenviar código de verificación'}
+            </button>
           </div>
         </div>
       </div>
