@@ -27,6 +27,27 @@ WHERE i.id = $1 AND i.estado IN ('activo', 'pendiente_revision', 'inactivo')
 - `vendedor_telefono`
 - `vendedor_direccion`
 
+### 3. Paginación de productos en moderación corregida
+**Archivo:** `backend/src/controllers/productsController.js`
+**Líneas:** 1051-1124
+
+**Problema:** Los placeholders SQL para LIMIT y OFFSET estaban mal construidos.
+
+**Cambio:**
+```javascript
+// ❌ ANTES:
+LIMIT $${queryParams.length - 1} OFFSET $${queryParams.length}
+
+// ✅ AHORA:
+limitPlaceholder = '$2'; // o '$1' según el caso
+offsetPlaceholder = '$3'; // o '$2' según el caso
+```
+
+**Mejoras:**
+- Límite por defecto cambiado de 10 a 12 productos
+- Se agregaron `has_next` y `has_prev` a la respuesta
+- Se asegura que page y limit sean números con `parseInt()`
+
 ---
 
 ## 🔧 Cómo Reiniciar el Backend

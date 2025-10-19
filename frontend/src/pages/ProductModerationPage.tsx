@@ -553,35 +553,104 @@ export const ProductModerationPage: React.FC = () => {
           ))}
         </div>
 
-        {/* Paginación */}
+        {/* Paginación mejorada */}
         {pagination.total_pages > 1 && (
           <div className="flex justify-center mt-8">
-            <div className="flex space-x-2">
-              <Button
-                variant="outline"
-                onClick={() => handlePageChange(pagination.current_page - 1)}
-                disabled={!pagination.has_prev}
-              >
-                Anterior
-              </Button>
-              
-              {Array.from({ length: pagination.total_pages }, (_, i) => i + 1).map((page) => (
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 px-6 py-4">
+              <div className="flex items-center space-x-3">
+                {/* Botón Anterior */}
                 <Button
-                  key={page}
-                  variant={page === pagination.current_page ? "default" : "outline"}
-                  onClick={() => handlePageChange(page)}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(pagination.current_page - 1)}
+                  disabled={!pagination.has_prev}
+                  className={`
+                    px-5 py-2.5 rounded-xl font-medium transition-all duration-200
+                    ${!pagination.has_prev 
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200' 
+                      : 'bg-white text-blue-600 border-blue-300 hover:bg-blue-50 hover:border-blue-400 hover:shadow-md'
+                    }
+                  `}
                 >
-                  {page}
+                  <span className="flex items-center">
+                    <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Anterior
+                  </span>
                 </Button>
-              ))}
+                
+                {/* Números de página */}
+                <div className="flex items-center space-x-1.5">
+                  {Array.from({ length: pagination.total_pages }, (_, i) => i + 1).map((page) => {
+                    const isCurrentPage = page === pagination.current_page;
+                    const isNearCurrent = Math.abs(page - pagination.current_page) <= 1;
+                    const isFirstOrLast = page === 1 || page === pagination.total_pages;
+                    
+                    // Mostrar solo páginas cercanas, primera y última
+                    if (!isNearCurrent && !isFirstOrLast && pagination.total_pages > 5) {
+                      // Mostrar puntos suspensivos
+                      if (page === pagination.current_page - 2 || page === pagination.current_page + 2) {
+                        return (
+                          <span key={page} className="px-2 text-gray-400 text-sm">
+                            ...
+                          </span>
+                        );
+                      }
+                      return null;
+                    }
+                    
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        className={`
+                          min-w-[2.75rem] h-11 rounded-xl font-semibold text-sm
+                          transition-all duration-200 transform
+                          ${isCurrentPage 
+                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/50 scale-105' 
+                            : 'bg-gray-50 text-gray-700 hover:bg-blue-50 hover:text-blue-600 hover:shadow-md hover:scale-105'
+                          }
+                        `}
+                      >
+                        {page}
+                      </button>
+                    );
+                  })}
+                </div>
+                
+                {/* Botón Siguiente */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(pagination.current_page + 1)}
+                  disabled={!pagination.has_next}
+                  className={`
+                    px-5 py-2.5 rounded-xl font-medium transition-all duration-200
+                    ${!pagination.has_next 
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200' 
+                      : 'bg-white text-blue-600 border-blue-300 hover:bg-blue-50 hover:border-blue-400 hover:shadow-md'
+                    }
+                  `}
+                >
+                  <span className="flex items-center">
+                    Siguiente
+                    <svg className="w-4 h-4 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </span>
+                </Button>
+              </div>
               
-              <Button
-                variant="outline"
-                onClick={() => handlePageChange(pagination.current_page + 1)}
-                disabled={!pagination.has_next}
-              >
-                Siguiente
-              </Button>
+              {/* Información adicional */}
+              <div className="mt-3 pt-3 border-t border-gray-100">
+                <p className="text-xs text-gray-500 text-center font-medium">
+                  Página <span className="text-blue-600 font-bold">{pagination.current_page}</span> de{' '}
+                  <span className="text-gray-700 font-bold">{pagination.total_pages}</span>
+                  <span className="mx-2">•</span>
+                  <span className="text-gray-700">{pagination.total_items}</span> productos en total
+                </p>
+              </div>
             </div>
           </div>
         )}

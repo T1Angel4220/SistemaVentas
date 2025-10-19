@@ -1050,20 +1050,26 @@ class ProductsController {
   // Obtener productos pendientes de moderación
   static async getPendingModeration(req, res) {
     try {
-      const { page = 1, limit = 10, estado } = req.query;
+      const { page = 1, limit = 12, estado } = req.query;
 
       // Calcular offset para paginación
-      const offset = (page - 1) * limit;
+      const offset = (parseInt(page) - 1) * parseInt(limit);
 
       // Construir la consulta dinámicamente según si hay filtro de estado
       let whereClause = '';
       let queryParams = [];
+      let limitPlaceholder = '';
+      let offsetPlaceholder = '';
       
       if (estado && estado.trim() !== '') {
         whereClause = 'WHERE i.estado = $1';
-        queryParams = [estado, limit, offset];
+        limitPlaceholder = '$2';
+        offsetPlaceholder = '$3';
+        queryParams = [estado, parseInt(limit), offset];
       } else {
-        queryParams = [limit, offset];
+        limitPlaceholder = '$1';
+        offsetPlaceholder = '$2';
+        queryParams = [parseInt(limit), offset];
       }
 
       const productos = await query(
@@ -1087,7 +1093,7 @@ class ProductsController {
                  i.fecha_revision, i.moderador_revision_id, i.motivo_rechazo,
                  c.nombre, u.nombre, u.apellido, ub.nombre
         ORDER BY i.fecha_publicacion ASC
-        LIMIT $${queryParams.length - 1} OFFSET $${queryParams.length}`,
+        LIMIT ${limitPlaceholder} OFFSET ${offsetPlaceholder}`,
         queryParams
       );
 
@@ -1103,7 +1109,7 @@ class ProductsController {
       const totalCount = await query(countQuery, countParams);
 
       const total = parseInt(totalCount.rows[0].total);
-      const totalPages = Math.ceil(total / limit);
+      const totalPages = Math.ceil(total / parseInt(limit));
 
       res.json({
         success: true,
@@ -1112,7 +1118,9 @@ class ProductsController {
           current_page: parseInt(page),
           total_pages: totalPages,
           total_items: total,
-          items_per_page: parseInt(limit)
+          items_per_page: parseInt(limit),
+          has_next: parseInt(page) < totalPages,
+          has_prev: parseInt(page) > 1
         }
       });
 

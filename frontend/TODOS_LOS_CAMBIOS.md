@@ -135,6 +135,43 @@ onClick={() => navigate(`/products/${product.id}`)}
 
 ---
 
+### 8. ❌ Paginación de productos en moderación no funcionaba
+**Problema:** La paginación en la página de moderación de productos no funcionaba correctamente. Los botones "Anterior" y "Siguiente" no cambiaban de página.
+
+**Causa:** En el backend, el endpoint `/api/products/moderation/pending` tenía un error en la construcción de los placeholders SQL para LIMIT y OFFSET. Usaba `$${queryParams.length - 1}` y `$${queryParams.length}` que no se evaluaban correctamente.
+
+**Solución:** `backend/src/controllers/productsController.js` (líneas 1051-1124)
+
+**Cambios aplicados:**
+```javascript
+// ❌ ANTES: Placeholders incorrectos
+LIMIT $${queryParams.length - 1} OFFSET $${queryParams.length}
+
+// ✅ AHORA: Placeholders correctos según el caso
+// Con filtro de estado:
+limitPlaceholder = '$2';
+offsetPlaceholder = '$3';
+queryParams = [estado, parseInt(limit), offset];
+
+// Sin filtro de estado:
+limitPlaceholder = '$1';
+offsetPlaceholder = '$2';
+queryParams = [parseInt(limit), offset];
+```
+
+**Mejoras adicionales:**
+1. ✅ Cambió el límite por defecto de 10 a 12 productos por página
+2. ✅ Agregó `parseInt()` para asegurar que page y limit sean números
+3. ✅ Agregó `has_next` y `has_prev` en la respuesta de paginación
+4. ✅ Mejoró el cálculo del offset: `(parseInt(page) - 1) * parseInt(limit)`
+
+**Resultado:**
+- ✅ Los botones "Anterior" y "Siguiente" ahora funcionan correctamente
+- ✅ La numeración de páginas se muestra correctamente
+- ✅ El filtro por estado no interfiere con la paginación
+
+---
+
 ## 📁 Archivos Modificados
 
 ### Frontend:
@@ -148,6 +185,7 @@ onClick={() => navigate(`/products/${product.id}`)}
 ### Backend:
 1. ✅ `backend/src/controllers/productsController.js` - Endpoint getProductForView permite más estados (línea 426)
 2. ✅ `backend/src/controllers/productsController.js` - Endpoint getProductById devuelve todos los datos del vendedor (líneas 343-348)
+3. ✅ `backend/src/controllers/productsController.js` - Endpoint getPendingModeration paginación corregida (líneas 1051-1124)
 
 ---
 
@@ -193,6 +231,16 @@ onClick={() => navigate(`/products/${product.id}`)}
 5. Presiona el botón "Regresar"
 6. ✅ Debe ir a `/products/moderation` (página de moderación)
 7. ❌ NO debe ir a `/products` (catálogo público)
+
+### Prueba 7: Paginación en moderación de productos
+1. Ingresa como MODERADOR
+2. Ve a `/products/moderation`
+3. Si hay más de 12 productos, verifica que se muestre la paginación
+4. Haz clic en "Siguiente" o en el número de página "2"
+5. ✅ Debe cargar la segunda página de productos
+6. ✅ El botón "Anterior" debe habilitarse
+7. Haz clic en "Anterior"
+8. ✅ Debe regresar a la página 1
 
 ---
 
@@ -242,4 +290,5 @@ Ahora:
 5. ✅ La recuperación de contraseña es más simple y directa
 6. ✅ Los moderadores pueden ver detalles en la misma pestaña
 7. ✅ Los botones "Regresar" consideran el rol del usuario correctamente
+8. ✅ La paginación en moderación de productos funciona correctamente
 

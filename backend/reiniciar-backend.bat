@@ -11,6 +11,7 @@ echo.
 echo Cambios aplicados:
 echo  [1] Productos pendientes ahora permiten contacto con vendedor
 echo  [2] Endpoint getProductById devuelve todos los datos del vendedor
+echo  [3] Paginacion de productos en moderacion corregida
 echo.
 pause
 echo.
