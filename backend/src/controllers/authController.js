@@ -718,9 +718,9 @@ const resetPassword = async (req, res) => {
       });
     }
     
-    // Buscar usuario por código de recuperación
+    // Buscar usuario por código de recuperación (incluir password_hash para comparación)
     const userResult = await query(
-      'SELECT id, correo, nombre, apellido, token_recuperacion, fecha_actualizacion FROM usuarios WHERE token_recuperacion = $1',
+      'SELECT id, correo, nombre, apellido, password_hash, token_recuperacion, fecha_actualizacion FROM usuarios WHERE token_recuperacion = $1',
       [code]
     );
     
@@ -748,6 +748,15 @@ const resetPassword = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'Código de recuperación expirado. Solicita uno nuevo.'
+      });
+    }
+    
+    // Verificar que la nueva contraseña no sea igual a la anterior
+    const isSamePassword = await bcrypt.compare(newPassword, user.password_hash);
+    if (isSamePassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'La nueva contraseña no puede ser igual a la contraseña anterior. Por favor, elige una contraseña diferente.'
       });
     }
     
