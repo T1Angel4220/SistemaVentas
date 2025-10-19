@@ -24,7 +24,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "tsx src/tests/testDb.ts && tsx src/tests/testMail.ts",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:auth": "jest authController",
     "test:db": "tsx src/tests/testDb.ts",
     "test:mail": "tsx src/tests/testMail.ts",
     "test:full": "node src/tests/database.test.js",
@@ -36,8 +39,12 @@
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/nodemailer": "^7.0.1",
-    "@types/pg": "^8.15.5"
+    "@types/pg": "^8.15.5",
+    "@types/supertest": "^6.0.3",
+    "jest": "^30.2.0",
+    "supertest": "^7.1.4"
   }
 }
