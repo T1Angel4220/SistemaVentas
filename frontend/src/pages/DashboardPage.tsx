@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
 import { Button } from '../components/ui/Button';
 import { Alert, AlertDescription } from '../components/ui/Alert';
+import { LogoutConfirmModal } from '../components/ui/LogoutConfirmModal';
 import {
   User,
   ShoppingCart,
@@ -21,6 +22,7 @@ export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout, isLoading, refreshUser } = useAuth();
   const { canModerateProduct } = usePermissions();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Refrescar datos del usuario solo al montar el componente (una sola vez)
   React.useEffect(() => {
@@ -29,7 +31,12 @@ export const DashboardPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Array vacío = solo se ejecuta al montar
 
-  const handleLogout = async () => {
+  const handleLogoutClick = () => {
+    setShowLogoutModal(true);
+  };
+
+  const handleLogoutConfirm = async () => {
+    setShowLogoutModal(false);
     try {
       await logout();
       // Usar window.location para forzar recarga completa y evitar problemas de estado
@@ -39,6 +46,10 @@ export const DashboardPage: React.FC = () => {
       // Si hay error, forzar redirección de todas formas
       window.location.href = '/login';
     }
+  };
+
+  const handleLogoutCancel = () => {
+    setShowLogoutModal(false);
   };
 
   if (!user || isLoading) {
@@ -96,7 +107,7 @@ export const DashboardPage: React.FC = () => {
             </div>
             <Button
               variant="outline"
-              onClick={handleLogout}
+              onClick={handleLogoutClick}
               disabled={isLoading}
               className="flex items-center space-x-2 hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-colors"
             >
@@ -361,6 +372,14 @@ export const DashboardPage: React.FC = () => {
           </div>
         )}
       </main>
+
+      {/* Modal de confirmación de logout */}
+      <LogoutConfirmModal
+        isOpen={showLogoutModal}
+        onConfirm={handleLogoutConfirm}
+        onCancel={handleLogoutCancel}
+        userName={`${user.nombre} ${user.apellido}`}
+      />
     </div>
   );
 };

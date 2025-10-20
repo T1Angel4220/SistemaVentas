@@ -1,14 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../ui/Button';
+import { LogoutConfirmModal } from '../ui/LogoutConfirmModal';
 import { LogOut, User, Settings, Shield } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  const handleLogout = async () => {
+  const handleLogoutClick = () => {
+    setShowLogoutModal(true);
+  };
+
+  const handleLogoutConfirm = async () => {
+    setShowLogoutModal(false);
     try {
       await logout();
       // Usar window.location para forzar recarga completa y evitar problemas de estado
@@ -18,6 +25,10 @@ export const Navbar: React.FC = () => {
       // Si hay error, forzar redirección de todas formas
       window.location.href = '/login';
     }
+  };
+
+  const handleLogoutCancel = () => {
+    setShowLogoutModal(false);
   };
 
   if (!isAuthenticated || !user) {
@@ -119,7 +130,7 @@ export const Navbar: React.FC = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={handleLogout}
+                onClick={handleLogoutClick}
                 className="text-gray-600 hover:text-gray-900"
               >
                 <LogOut className="h-4 w-4" />
@@ -128,6 +139,14 @@ export const Navbar: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal de confirmación de logout */}
+      <LogoutConfirmModal
+        isOpen={showLogoutModal}
+        onConfirm={handleLogoutConfirm}
+        onCancel={handleLogoutCancel}
+        userName={`${user.nombre || ''} ${user.apellido || ''}`.trim() || 'Usuario'}
+      />
     </nav>
   );
 };

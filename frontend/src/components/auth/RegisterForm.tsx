@@ -43,6 +43,17 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
     clearError();
   }, []);
 
+  // Función para capitalizar la primera letra de cada palabra
+  const capitalizeFirstLetter = (text: string): string => {
+    return text
+      .split(' ')
+      .map(word => {
+        if (word.length === 0) return word;
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      })
+      .join(' ');
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     let sanitizedValue = value;
@@ -53,6 +64,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
       case 'apellido':
         // Solo letras, espacios y tildes
         sanitizedValue = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+        // Capitalizar la primera letra de cada palabra automáticamente
+        sanitizedValue = capitalizeFirstLetter(sanitizedValue);
         break;
       
       case 'cedula':
