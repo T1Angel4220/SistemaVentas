@@ -21,6 +21,12 @@ export const ResetPasswordCodePage: React.FC = () => {
   const [success, setSuccess] = useState('');
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
+  // Limpiar mensajes cuando se monta el componente
+  React.useEffect(() => {
+    setError('');
+    setSuccess('');
+  }, []);
+
   const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (/^\d*$/.test(value) && value.length <= 6) {
@@ -72,6 +78,7 @@ export const ResetPasswordCodePage: React.FC = () => {
     setSuccess('');
 
     if (!validateForm()) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
@@ -80,14 +87,17 @@ export const ResetPasswordCodePage: React.FC = () => {
       const response = await apiService.resetPassword(formData.code, formData.newPassword);
       if (response.success) {
         setSuccess(response.message || 'Contraseña restablecida exitosamente');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         setTimeout(() => {
           navigate('/login');
         }, 3000);
       } else {
         setError(response.message || 'Error al restablecer la contraseña');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     } catch (err: any) {
       setError(err.message || 'Error de conexión al servidor');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setIsLoading(false);
     }
@@ -122,8 +132,110 @@ export const ResetPasswordCodePage: React.FC = () => {
           </div>
           
           <div className="p-8">
-            {error && <Alert variant="destructive" className="mb-4">{error}</Alert>}
-            {success && <Alert variant="success" className="mb-4">{success}</Alert>}
+            {/* Mensaje de Error Animado y Profesional */}
+            {error && (
+              <div className="relative overflow-hidden bg-gradient-to-br from-red-50 via-rose-50 to-pink-50 border-2 border-red-300 rounded-2xl p-6 shadow-xl animate-[slideInDown_0.4s_ease-out] mb-6">
+                {/* Icono de error con animación */}
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0">
+                    <div className="relative">
+                      {/* Círculo animado de fondo */}
+                      <div className="absolute inset-0 bg-red-400 rounded-full animate-[ping_1s_ease-out]"></div>
+                      <div className="relative bg-gradient-to-br from-red-500 to-rose-600 rounded-full p-3 shadow-lg animate-[bounceIn_0.5s_ease-out]">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round" 
+                            strokeWidth={2.5} 
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 pt-1 animate-[fadeIn_0.6s_ease-out_0.2s_both]">
+                    <h3 className="text-lg font-bold text-red-800 mb-1">
+                      ¡Oops! Algo salió mal
+                    </h3>
+                    <p className="text-sm text-red-700 leading-relaxed">
+                      {error}
+                    </p>
+                  </div>
+                </div>
+                {/* Efecto decorativo */}
+                <div className="absolute top-2 right-2 text-2xl opacity-20 animate-[wiggle_1s_ease-in-out_infinite]">
+                  ⚠️
+                </div>
+              </div>
+            )}
+
+            {/* Mensaje de Éxito Animado y Profesional */}
+            {success && (
+              <div className="relative overflow-hidden bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 border-2 border-green-300 rounded-2xl p-8 shadow-2xl animate-[slideInDown_0.5s_ease-out] mb-6">
+                {/* Confetti animation background */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                  <div className="absolute top-0 left-1/4 w-2 h-2 bg-green-400 rounded-full animate-[confetti_3s_ease-out]"></div>
+                  <div className="absolute top-0 left-1/2 w-2 h-2 bg-blue-400 rounded-full animate-[confetti_3s_ease-out_0.2s]"></div>
+                  <div className="absolute top-0 left-3/4 w-2 h-2 bg-purple-400 rounded-full animate-[confetti_3s_ease-out_0.4s]"></div>
+                  <div className="absolute top-0 left-1/3 w-2 h-2 bg-yellow-400 rounded-full animate-[confetti_3s_ease-out_0.6s]"></div>
+                  <div className="absolute top-0 left-2/3 w-2 h-2 bg-pink-400 rounded-full animate-[confetti_3s_ease-out_0.8s]"></div>
+                </div>
+                
+                {/* Success Icon with animation */}
+                <div className="flex justify-center mb-4">
+                  <div className="relative">
+                    {/* Círculo animado de fondo */}
+                    <div className="absolute inset-0 bg-green-500 rounded-full animate-[ping_1s_ease-out]"></div>
+                    <div className="relative bg-gradient-to-br from-green-500 to-emerald-600 rounded-full p-4 shadow-lg animate-[bounceIn_0.6s_ease-out]">
+                      <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          strokeWidth={3} 
+                          d="M5 13l4 4L19 7"
+                          className="animate-[drawCheck_0.5s_ease-out_0.3s_forwards]"
+                          style={{
+                            strokeDasharray: 20,
+                            strokeDashoffset: 20
+                          }}
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Success Message */}
+                <div className="text-center space-y-3 animate-[fadeIn_0.8s_ease-out_0.5s_both]">
+                  <h3 className="text-2xl font-bold text-green-800 mb-2">
+                    ¡Contraseña Restablecida! 🎉
+                  </h3>
+                  <p className="text-base text-green-700 leading-relaxed max-w-md mx-auto">
+                    {success}
+                  </p>
+                  
+                  {/* Loading indicator */}
+                  <div className="pt-4">
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    </div>
+                    <p className="text-sm text-green-600 mt-2 font-medium">
+                      Redirigiendo al login...
+                    </p>
+                  </div>
+                </div>
+                
+                {/* Decorative elements */}
+                <div className="absolute top-4 right-4 text-4xl opacity-20 animate-[spin_3s_linear_infinite]">
+                  ✨
+                </div>
+                <div className="absolute bottom-4 left-4 text-4xl opacity-20 animate-[spin_3s_linear_infinite_reverse]">
+                  🎊
+                </div>
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>

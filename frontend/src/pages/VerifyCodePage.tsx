@@ -18,11 +18,18 @@ export const VerifyCodePage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const email = searchParams.get('email');
 
+  // Limpiar mensajes cuando se monta el componente
+  React.useEffect(() => {
+    setError('');
+    setResendMessage('');
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!code || code.length !== 6) {
       setError('Por favor ingresa un código de 6 dígitos');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
@@ -34,15 +41,18 @@ export const VerifyCodePage: React.FC = () => {
       
       if (response.success) {
         setSuccess(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         setTimeout(() => {
           navigate('/login');
         }, 2000);
       } else {
         setError(response.message || 'Error verificando el código');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     } catch (error: any) {
       console.error('Error verificando código:', error);
       setError(error.response?.data?.message || 'Error verificando el código');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setIsLoading(false);
     }
@@ -142,10 +152,42 @@ export const VerifyCodePage: React.FC = () => {
         {/* Form */}
         <Card className="p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Mensaje de Error Animado y Profesional */}
             {error && (
-              <Alert variant="error">
-                {error}
-              </Alert>
+              <div className="relative overflow-hidden bg-gradient-to-br from-red-50 via-rose-50 to-pink-50 border-2 border-red-300 rounded-2xl p-6 shadow-xl animate-[slideInDown_0.4s_ease-out]">
+                {/* Icono de error con animación */}
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0">
+                    <div className="relative">
+                      {/* Círculo animado de fondo */}
+                      <div className="absolute inset-0 bg-red-400 rounded-full animate-[ping_1s_ease-out]"></div>
+                      <div className="relative bg-gradient-to-br from-red-500 to-rose-600 rounded-full p-3 shadow-lg animate-[bounceIn_0.5s_ease-out]">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round" 
+                            strokeWidth={2.5} 
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 pt-1 animate-[fadeIn_0.6s_ease-out_0.2s_both]">
+                    <h3 className="text-lg font-bold text-red-800 mb-1">
+                      ¡Oops! Algo salió mal
+                    </h3>
+                    <p className="text-sm text-red-700 leading-relaxed">
+                      {error}
+                    </p>
+                  </div>
+                </div>
+                {/* Efecto decorativo */}
+                <div className="absolute top-2 right-2 text-2xl opacity-20 animate-[wiggle_1s_ease-in-out_infinite]">
+                  ⚠️
+                </div>
+              </div>
             )}
 
             {resendMessage && (

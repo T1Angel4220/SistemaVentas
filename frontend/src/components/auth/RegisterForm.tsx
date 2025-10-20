@@ -36,12 +36,47 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [successMessage, setSuccessMessage] = useState('');
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+
+  // Limpiar error del contexto cuando se monta el componente
+  React.useEffect(() => {
+    clearError();
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    let sanitizedValue = value;
+
+    // Validaciones en tiempo real según el campo
+    switch (name) {
+      case 'nombre':
+      case 'apellido':
+        // Solo letras, espacios y tildes
+        sanitizedValue = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+        break;
+      
+      case 'cedula':
+        // Solo números (exactamente 10 dígitos)
+        sanitizedValue = value.replace(/[^0-9]/g, '').slice(0, 10);
+        break;
+      
+      case 'telefono':
+        // Solo números y guiones
+        sanitizedValue = value.replace(/[^0-9-]/g, '');
+        break;
+      
+      case 'correo':
+        // Eliminar espacios
+        sanitizedValue = value.trim();
+        break;
+      
+      default:
+        sanitizedValue = value;
+    }
+    
     setFormData(prev => ({
       ...prev,
-      [name]: value,
+      [name]: sanitizedValue,
     }));
     
     // Limpiar error de validación cuando el usuario empiece a escribir
@@ -68,30 +103,38 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
 
     if (!formData.cedula) {
       errors.cedula = 'La cédula es requerida';
-    } else if (formData.cedula.length < 9) {
-      errors.cedula = 'La cédula debe tener al menos 9 caracteres';
+    } else if (!/^[0-9]+$/.test(formData.cedula)) {
+      errors.cedula = 'La cédula solo puede contener números';
+    } else if (formData.cedula.length !== 10) {
+      errors.cedula = 'La cédula debe tener exactamente 10 dígitos';
     }
 
     if (!formData.nombre) {
       errors.nombre = 'El nombre es requerido';
     } else if (formData.nombre.length < 2) {
       errors.nombre = 'El nombre debe tener al menos 2 caracteres';
+    } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(formData.nombre)) {
+      errors.nombre = 'El nombre solo puede contener letras';
     }
 
     if (!formData.apellido) {
       errors.apellido = 'El apellido es requerido';
     } else if (formData.apellido.length < 2) {
       errors.apellido = 'El apellido debe tener al menos 2 caracteres';
+    } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(formData.apellido)) {
+      errors.apellido = 'El apellido solo puede contener letras';
     }
 
     if (!formData.correo) {
       errors.correo = 'El correo es requerido';
-    } else if (!/\S+@\S+\.\S+/.test(formData.correo)) {
-      errors.correo = 'El correo debe ser válido';
+    } else if (!/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formData.correo)) {
+      errors.correo = 'El correo debe ser válido (ejemplo: usuario@dominio.com)';
     }
 
     if (formData.telefono && formData.telefono.length < 8) {
       errors.telefono = 'El teléfono debe tener al menos 8 caracteres';
+    } else if (formData.telefono && !/^[0-9-]+$/.test(formData.telefono)) {
+      errors.telefono = 'El teléfono solo puede contener números';
     }
 
     if (!formData.direccion) {
@@ -124,6 +167,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
     e.preventDefault();
     
     if (!validateForm()) {
+      // Scroll hacia arriba para mostrar los errores
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
@@ -131,12 +176,17 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
       const { confirmPassword, ...userData } = formData;
       await register(userData);
       setSuccessMessage('¡Registro exitoso! Revisa tu email para obtener el código de verificación.');
-      // Redirigir a la página de verificación de código después de 2 segundos
+      setShowSuccessAnimation(true);
+      // Scroll hacia arriba para mostrar el mensaje de éxito
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Redirigir a la página de verificación de código después de 3 segundos
       setTimeout(() => {
         window.location.href = `/verify-code?email=${encodeURIComponent(formData.correo)}`;
-      }, 2000);
+      }, 3000);
     } catch (error) {
       console.error('Error en registro:', error);
+      // Scroll hacia arriba para mostrar el error del servidor
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -152,31 +202,113 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
       <div className="px-8 py-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <div className="flex">
+            <div className="relative overflow-hidden bg-gradient-to-br from-red-50 via-rose-50 to-pink-50 border-2 border-red-300 rounded-2xl p-6 shadow-xl animate-[slideInDown_0.4s_ease-out]">
+              {/* Icono de error con animación */}
+              <div className="flex items-start gap-4">
                 <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
+                  <div className="relative">
+                    {/* Círculo animado de fondo */}
+                    <div className="absolute inset-0 bg-red-400 rounded-full animate-[ping_1s_ease-out]"></div>
+                    <div className="relative bg-gradient-to-br from-red-500 to-rose-600 rounded-full p-3 shadow-lg animate-[bounceIn_0.5s_ease-out]">
+                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          strokeWidth={2.5} 
+                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                        />
+                      </svg>
+                    </div>
+                  </div>
                 </div>
-                <div className="ml-3">
-                  <p className="text-sm text-red-800">{error}</p>
+                
+                <div className="flex-1 pt-1 animate-[fadeIn_0.6s_ease-out_0.2s_both]">
+                  <h3 className="text-lg font-bold text-red-800 mb-1 flex items-center gap-2">
+                    <span>¡Oops! Algo salió mal</span>
+                  </h3>
+                  <p className="text-sm text-red-700 leading-relaxed">
+                    {error}
+                  </p>
                 </div>
+              </div>
+
+              {/* Efecto decorativo */}
+              <div className="absolute top-2 right-2 text-2xl opacity-20 animate-[wiggle_1s_ease-in-out_infinite]">
+                ⚠️
               </div>
             </div>
           )}
 
-          {successMessage && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          {showSuccessAnimation && (
+            <div className="relative overflow-hidden bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 border-2 border-green-300 rounded-2xl p-8 shadow-2xl animate-[slideInDown_0.5s_ease-out]">
+              {/* Confetti animation background */}
+              <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute top-0 left-1/4 w-2 h-2 bg-green-400 rounded-full animate-[confetti_3s_ease-out]"></div>
+                <div className="absolute top-0 left-1/2 w-2 h-2 bg-blue-400 rounded-full animate-[confetti_3s_ease-out_0.2s]"></div>
+                <div className="absolute top-0 left-3/4 w-2 h-2 bg-purple-400 rounded-full animate-[confetti_3s_ease-out_0.4s]"></div>
+                <div className="absolute top-0 left-1/3 w-2 h-2 bg-yellow-400 rounded-full animate-[confetti_3s_ease-out_0.6s]"></div>
+                <div className="absolute top-0 left-2/3 w-2 h-2 bg-pink-400 rounded-full animate-[confetti_3s_ease-out_0.8s]"></div>
+              </div>
+
+              {/* Success Icon with animation */}
+              <div className="flex justify-center mb-4">
+                <div className="relative">
+                  {/* Círculo animado de fondo */}
+                  <div className="absolute inset-0 bg-green-500 rounded-full animate-[ping_1s_ease-out]"></div>
+                  <div className="relative bg-gradient-to-br from-green-500 to-emerald-600 rounded-full p-4 shadow-lg animate-[bounceIn_0.6s_ease-out]">
+                    <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        strokeWidth={3} 
+                        d="M5 13l4 4L19 7"
+                        className="animate-[drawCheck_0.5s_ease-out_0.3s_forwards]"
+                        style={{
+                          strokeDasharray: 20,
+                          strokeDashoffset: 20
+                        }}
+                      />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              {/* Success Message */}
+              <div className="text-center space-y-3 animate-[fadeIn_0.8s_ease-out_0.5s_both]">
+                <h3 className="text-2xl font-bold text-green-800 mb-2">
+                  ¡Registro Exitoso! 🎉
+                </h3>
+                <p className="text-base text-green-700 leading-relaxed max-w-md mx-auto">
+                  Tu cuenta ha sido creada exitosamente. Hemos enviado un <strong>código de verificación de 6 dígitos</strong> a tu correo electrónico.
+                </p>
+                
+                {/* Email Badge */}
+                <div className="flex items-center justify-center gap-2 bg-white/60 backdrop-blur-sm rounded-lg px-4 py-2 mx-auto w-fit">
+                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
+                  <span className="text-sm font-semibold text-green-800">{formData.correo}</span>
                 </div>
-                <div className="ml-3">
-                  <p className="text-sm text-green-800">{successMessage}</p>
+
+                {/* Loading indicator */}
+                <div className="pt-4">
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  </div>
+                  <p className="text-sm text-green-600 mt-2 font-medium">
+                    Redirigiendo a verificación...
+                  </p>
                 </div>
+              </div>
+
+              {/* Decorative elements */}
+              <div className="absolute top-4 right-4 text-4xl opacity-20 animate-[spin_3s_linear_infinite]">
+                ✨
+              </div>
+              <div className="absolute bottom-4 left-4 text-4xl opacity-20 animate-[spin_3s_linear_infinite_reverse]">
+                🎊
               </div>
             </div>
           )}
@@ -197,6 +329,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
                   value={formData.nombre}
                   onChange={handleInputChange}
                   disabled={isLoading}
+                  maxLength={50}
+                  autoComplete="given-name"
                   className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors ${
                     validationErrors.nombre 
                       ? 'border-red-300 bg-red-50' 
@@ -224,6 +358,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
                   value={formData.apellido}
                   onChange={handleInputChange}
                   disabled={isLoading}
+                  maxLength={50}
+                  autoComplete="family-name"
                   className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors ${
                     validationErrors.apellido 
                       ? 'border-red-300 bg-red-50' 
@@ -248,10 +384,13 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
               <input
                 type="text"
                 name="cedula"
-                placeholder="123456789"
+                placeholder="1234567890"
                 value={formData.cedula}
                 onChange={handleInputChange}
                 disabled={isLoading}
+                maxLength={10}
+                inputMode="numeric"
+                autoComplete="off"
                 className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors ${
                   validationErrors.cedula 
                     ? 'border-red-300 bg-red-50' 
@@ -262,6 +401,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
             {validationErrors.cedula && (
               <p className="text-sm text-red-600 mt-1">{validationErrors.cedula}</p>
             )}
+            <p className="text-xs text-gray-500">
+              {formData.cedula.length}/10 dígitos
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -275,10 +417,12 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
               <input
                 type="email"
                 name="correo"
-                placeholder="tu@email.com"
+                placeholder="usuario@ejemplo.com"
                 value={formData.correo}
                 onChange={handleInputChange}
                 disabled={isLoading}
+                maxLength={100}
+                autoComplete="email"
                 className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors ${
                   validationErrors.correo 
                     ? 'border-red-300 bg-red-50' 
@@ -307,6 +451,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
                   value={formData.telefono}
                   onChange={handleInputChange}
                   disabled={isLoading}
+                  maxLength={15}
+                  inputMode="numeric"
+                  autoComplete="tel"
                   className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors ${
                     validationErrors.telefono 
                       ? 'border-red-300 bg-red-50' 
@@ -356,10 +503,12 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
               <input
                 type="text"
                 name="direccion"
-                placeholder="San José, Costa Rica"
+                placeholder="Ambato, Ecuador"
                 value={formData.direccion}
                 onChange={handleInputChange}
                 disabled={isLoading}
+                maxLength={200}
+                autoComplete="street-address"
                 className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors ${
                   validationErrors.direccion 
                     ? 'border-red-300 bg-red-50' 
