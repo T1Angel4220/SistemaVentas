@@ -94,13 +94,22 @@ export const Navbar: React.FC = () => {
               >
                 Chat
               </Link>
-              {(user.tipo_usuario === 'administrador' || user.tipo_usuario === 'moderador') && (
+              {user.tipo_usuario === 'moderador' && (
                 <Link
-                  to="/admin"
+                  to="/products/moderation"
                   className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium flex items-center"
                 >
                   <Shield className="h-4 w-4 mr-1" />
-                  Admin
+                  Moderador
+                </Link>
+              )}
+              {user.tipo_usuario === 'administrador' && (
+                <Link
+                  to="/products/moderation"
+                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                >
+                  <Shield className="h-4 w-4 mr-1" />
+                  Administración
                 </Link>
               )}
             </div>
