@@ -21,7 +21,8 @@ import {
   ToggleRight,
   CheckCircle,
   DollarSign,
-  Shield
+  Shield,
+  Camera
 } from 'lucide-react';
 import type { Product, ProductsResponse, ProductFilters } from '../types/product.types';
 import type { Category } from '../types/category.types';
@@ -212,8 +213,10 @@ export const ProductsPage: React.FC = () => {
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD'
-    }).format(price);
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(price) + ' USD';
   };
 
   const formatDate = (dateString: string) => {
@@ -356,9 +359,9 @@ export const ProductsPage: React.FC = () => {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8 relative z-10">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 -mt-8 relative z-10">
         {/* Filtros */}
-        <Card className="mb-8 shadow-2xl border-0 bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden">
+        <Card className="mb-12 shadow-2xl border-0 bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden">
           <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6">
             <CardTitle className="flex items-center space-x-3 text-gray-800">
               <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
@@ -398,8 +401,9 @@ export const ProductsPage: React.FC = () => {
               </div>
 
               {/* Filtros adicionales */}
-              <div className="border-t border-gray-100 pt-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="border-t border-gray-100 pt-6 space-y-6">
+                {/* Primera fila - Categoría y Precios */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {/* Categoría */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700 flex items-center">
@@ -417,11 +421,26 @@ export const ProductsPage: React.FC = () => {
                     />
                   </div>
 
+                  {/* Precio mínimo */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 flex items-center">
+                      <DollarSign className="h-4 w-4 mr-2 text-green-500" />
+                      Precio mínimo (USD)
+                    </label>
+                    <Input
+                      type="number"
+                      placeholder="Precio mínimo"
+                      value={filters.precio_min}
+                      onChange={(e) => handleFilterChange('precio_min', e.target.value)}
+                      className="h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 shadow-sm rounded-xl bg-white/80 backdrop-blur-sm"
+                    />
+                  </div>
+
                   {/* Precio máximo */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700 flex items-center">
                       <DollarSign className="h-4 w-4 mr-2 text-green-500" />
-                      Precio máximo ($)
+                      Precio máximo (USD)
                     </label>
                     <Input
                       type="number"
@@ -431,42 +450,47 @@ export const ProductsPage: React.FC = () => {
                       className="h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 shadow-sm rounded-xl bg-white/80 backdrop-blur-sm"
                     />
                   </div>
-
-                  {/* Estado */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700 flex items-center">
-                      <CheckCircle className="h-4 w-4 mr-2 text-orange-500" />
-                      Estado
-                    </label>
-                    <select 
-                      value={filters.estado} 
-                      onChange={(e) => handleFilterChange('estado', e.target.value)}
-                      className="h-12 w-full rounded-xl border border-gray-200 bg-white/80 backdrop-blur-sm px-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all duration-200 hover:shadow-md"
-                    >
-                      <option value="activo">Solo Activos</option>
-                      <option value="pendiente_revision">Pendientes</option>
-                      <option value="rechazado">Rechazados</option>
-                      <option value="">Todos los estados</option>
-                    </select>
-                  </div>
-
-                  {/* Disponibilidad */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700 flex items-center">
-                      <ToggleRight className="h-4 w-4 mr-2 text-green-500" />
-                      Disponibilidad
-                    </label>
-                    <select 
-                      value={filters.disponibilidad} 
-                      onChange={(e) => handleFilterChange('disponibilidad', e.target.value)}
-                      className="h-12 w-full rounded-xl border border-gray-200 bg-white/80 backdrop-blur-sm px-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all duration-200 hover:shadow-md"
-                    >
-                      <option value="true">Solo Disponibles</option>
-                      <option value="false">No Disponibles</option>
-                      <option value="">Toda disponibilidad</option>
-                    </select>
-                  </div>
                 </div>
+
+                {/* Segunda fila - Estado y Disponibilidad (solo vendedores/moderadores/admins) */}
+                {user && (user.tipo_usuario === 'vendedor' || user.tipo_usuario === 'moderador' || user.tipo_usuario === 'administrador') && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Estado - Solo visible para vendedores, moderadores y administradores */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700 flex items-center">
+                        <CheckCircle className="h-4 w-4 mr-2 text-orange-500" />
+                        Estado
+                      </label>
+                      <select 
+                        value={filters.estado} 
+                        onChange={(e) => handleFilterChange('estado', e.target.value)}
+                        className="h-12 w-full rounded-xl border border-gray-200 bg-white/80 backdrop-blur-sm px-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all duration-200 hover:shadow-md"
+                      >
+                        <option value="activo">Solo Activos</option>
+                        <option value="pendiente_revision">Pendientes</option>
+                        <option value="rechazado">Rechazados</option>
+                        <option value="">Todos los estados</option>
+                      </select>
+                    </div>
+
+                    {/* Disponibilidad - Solo visible para vendedores, moderadores y administradores */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700 flex items-center">
+                        <ToggleRight className="h-4 w-4 mr-2 text-green-500" />
+                        Disponibilidad
+                      </label>
+                      <select 
+                        value={filters.disponibilidad} 
+                        onChange={(e) => handleFilterChange('disponibilidad', e.target.value)}
+                        className="h-12 w-full rounded-xl border border-gray-200 bg-white/80 backdrop-blur-sm px-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all duration-200 hover:shadow-md"
+                      >
+                        <option value="true">Solo Disponibles</option>
+                        <option value="false">No Disponibles</option>
+                        <option value="">Toda disponibilidad</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             
@@ -513,7 +537,7 @@ export const ProductsPage: React.FC = () => {
         </Card>
 
         {/* Resultados */}
-        <div className="mb-8">
+        <div className="mb-10">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
               <Package className="h-4 w-4 text-blue-600" />
@@ -526,16 +550,21 @@ export const ProductsPage: React.FC = () => {
 
         {/* Grid de productos */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {[...Array(8)].map((_, i) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+            {[...Array(6)].map((_, i) => (
               <Card key={i} className="animate-pulse shadow-xl rounded-2xl overflow-hidden">
-                <div className="h-56 bg-gradient-to-br from-gray-200 via-gray-100 to-gray-200"></div>
-                <CardContent className="p-6">
-                  <div className="h-6 bg-gray-200 rounded-xl mb-3"></div>
-                  <div className="h-4 bg-gray-200 rounded-lg mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded-lg mb-4 w-3/4"></div>
-                  <div className="h-8 bg-gray-200 rounded-xl mb-3"></div>
-                  <div className="h-10 bg-gray-200 rounded-xl"></div>
+                <div className="h-64 bg-gradient-to-br from-gray-200 via-gray-100 to-gray-200"></div>
+                <CardContent className="p-7 space-y-5">
+                  <div className="space-y-3">
+                    <div className="h-6 bg-gray-200 rounded-xl"></div>
+                    <div className="h-4 bg-gray-200 rounded-lg"></div>
+                    <div className="h-4 bg-gray-200 rounded-lg w-3/4"></div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="h-10 bg-gray-200 rounded-xl w-2/3"></div>
+                    <div className="h-6 bg-gray-200 rounded-full w-1/2"></div>
+                  </div>
+                  <div className="h-12 bg-gray-200 rounded-xl"></div>
                 </CardContent>
               </Card>
             ))}
@@ -573,11 +602,15 @@ export const ProductsPage: React.FC = () => {
             </CardContent>
           </Card>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                   {products.map((product) => (
-                    <Card key={product.id} className="group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-2xl overflow-hidden">
+                    <Card key={product.id} className={`group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 backdrop-blur-sm shadow-xl rounded-2xl overflow-hidden flex flex-col ${
+                      product.tipo === 'servicio' 
+                        ? 'bg-gradient-to-br from-purple-50/90 to-blue-50/90 border-2 border-purple-200' 
+                        : 'bg-white/90 border-0'
+                    }`}>
                       <div className="relative overflow-hidden">
-                        <div className="h-56 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-300">
+                        <div className="h-64 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-300">
                           {product.total_imagenes > 0 && product.primera_imagen ? (
                             <>
                               <img
@@ -595,12 +628,13 @@ export const ProductsPage: React.FC = () => {
                               )}
                             </>
                           ) : (
-                            <div className="text-center text-gray-600">
-                              <div className="w-16 h-16 bg-white/80 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
-                                <Package className="h-8 w-8 text-gray-500" />
+                            <div className="text-center text-gray-500">
+                              <div className="w-20 h-20 bg-gradient-to-br from-gray-200 to-gray-300 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                                <Camera className="h-10 w-10 text-gray-400" />
                               </div>
-                              <p className="text-sm font-medium">
-                                {product.total_imagenes > 0 ? `${product.total_imagenes} imagen${product.total_imagenes !== 1 ? 'es' : ''}` : 'Sin imágenes'}
+                              <p className="text-sm font-semibold text-gray-600 mb-1">Sin Foto</p>
+                              <p className="text-xs text-gray-400">
+                                {product.total_imagenes > 0 ? `${product.total_imagenes} imagen${product.total_imagenes !== 1 ? 'es' : ''}` : 'No disponible'}
                               </p>
                             </div>
                           )}
@@ -616,48 +650,61 @@ export const ProductsPage: React.FC = () => {
                           </div>
                         )}
                         <div className="absolute top-4 left-4">
-                          <Badge className="bg-white/95 backdrop-blur-sm border-0 shadow-lg px-3 py-1 rounded-full">
+                          <Badge className={`backdrop-blur-sm shadow-lg px-3 py-1.5 rounded-full font-semibold ${
+                            product.tipo === 'servicio'
+                              ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white border-0'
+                              : 'bg-white/95 text-gray-700 border-0'
+                          }`}>
                             {getTypeIcon(product.tipo)}
-                            <span className="ml-2 capitalize font-medium text-gray-700">{product.tipo}</span>
+                            <span className="ml-2 capitalize text-sm">{product.tipo}</span>
                           </Badge>
                         </div>
                       </div>
                 
-                      <CardContent className="p-6">
-                        <div className="space-y-4">
-                          <h3 className="font-bold text-gray-900 line-clamp-2 text-xl group-hover:text-blue-600 transition-colors">
-                            {product.nombre}
-                          </h3>
-                          <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
-                            {product.descripcion}
-                          </p>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                              {formatPrice(product.precio)}
-                            </span>
+                      <CardContent className="p-7 flex flex-col flex-grow">
+                        <div className="space-y-5 flex-grow">
+                          <div className="space-y-3">
+                            <h3 className="font-bold text-gray-900 line-clamp-2 text-lg leading-snug group-hover:text-blue-600 transition-colors min-h-[3.5rem]">
+                              {product.nombre}
+                            </h3>
+                            <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed min-h-[2.5rem]">
+                              {product.descripcion}
+                            </p>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <span className="bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">
-                              {product.categoria_nombre}
-                            </span>
-                          </div>
-                          {product.ubicacion_nombre && (
-                            <div className="flex items-center space-x-2 text-sm text-gray-500">
-                              <div className="w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center">
-                                <MapPin className="h-3 w-3 text-blue-500" />
-                              </div>
-                              <span>{product.ubicacion_nombre}</span>
+                          
+                          <div className="space-y-3">
+                            <div className="flex items-baseline space-x-2">
+                              <span className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                                {formatPrice(product.precio)}
+                              </span>
                             </div>
-                          )}
-                          <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t border-gray-100">
-                            <span className="font-medium">Por: {product.vendedor_nombre}</span>
-                            <span>{formatDate(product.fecha_publicacion)}</span>
+                            
+                            <div className="flex items-center space-x-2">
+                              <span className="bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 px-4 py-1.5 rounded-full text-xs font-semibold">
+                                {product.categoria_nombre}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-2.5 pt-3 border-t border-gray-100">
+                            {product.ubicacion_nombre && (
+                              <div className="flex items-center space-x-2 text-sm text-gray-500">
+                                <div className="w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                  <MapPin className="h-3 w-3 text-blue-500" />
+                                </div>
+                                <span className="truncate">{product.ubicacion_nombre}</span>
+                              </div>
+                            )}
+                            <div className="flex items-center justify-between text-xs text-gray-500">
+                              <span className="font-medium truncate flex-1 mr-2">Por: {product.vendedor_nombre}</span>
+                              <span className="flex-shrink-0">{formatDate(product.fecha_publicacion)}</span>
+                            </div>
                           </div>
                         </div>
                   
-                        <div className="flex space-x-3 mt-6">
+                        <div className="flex space-x-3 mt-7 pt-6 border-t border-gray-100">
                           <Link to={`/products/${product.id}`} className="flex-1">
-                            <Button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl">
+                            <Button className="w-full h-11 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl text-sm font-semibold">
                               <Eye className="h-4 w-4 mr-2" />
                               Ver detalles
                             </Button>
@@ -673,7 +720,7 @@ export const ProductsPage: React.FC = () => {
                                     : handleSaveProduct(product.id)
                                 }
                                 disabled={savingProduct === product.id}
-                                className={`w-12 h-10 border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl ${
+                                className={`w-11 h-11 border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl ${
                                   savedProducts.includes(product.id)
                                     ? 'bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700'
                                     : 'bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600'
@@ -686,7 +733,7 @@ export const ProductsPage: React.FC = () => {
                                 )}
                               </Button>
                               <Link to={`/products/contact/${product.id}`}>
-                                <Button className="w-12 h-10 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl">
+                                <Button className="w-11 h-11 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl">
                                   <ShoppingCart className="h-4 w-4" />
                                 </Button>
                               </Link>
