@@ -279,7 +279,7 @@ export const ProductDetailPage: React.FC = () => {
                 ? "/products/moderation" 
                 : user.tipo_usuario === 'comprador'
                 ? "/products"
-                : "/my-products"  // vendedor
+                : "/products"  // vendedor
             }>
               <Button variant="outline" size="sm" className="bg-white/20 text-white border-white/30 hover:bg-white hover:text-blue-600 backdrop-blur-sm rounded-xl px-6 py-3 font-medium transition-all duration-300 shadow-lg hover:shadow-xl">
                 <ArrowLeft className="h-5 w-5 mr-2" />
