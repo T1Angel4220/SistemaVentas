@@ -138,11 +138,11 @@ export const Navbar: React.FC = () => {
               </Link>
               <Button
                 variant="ghost"
-                size="icon"
                 onClick={handleLogoutClick}
-                className="text-gray-600 hover:text-gray-900"
+                className="text-gray-600 hover:text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
               >
                 <LogOut className="h-4 w-4" />
+                <span className="text-sm font-medium">Salir</span>
               </Button>
             </div>
           </div>
