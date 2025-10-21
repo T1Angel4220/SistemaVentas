@@ -24,7 +24,10 @@ import {
   Shield,
   CheckCircle,
   XCircle,
-  Eye
+  Eye,
+  ShoppingCart,
+  Camera,
+  DollarSign
 } from 'lucide-react';
 import type { ProductDetail } from '../types/product.types';
 
@@ -262,16 +265,17 @@ export const ProductDetailPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header con gradiente azul-púrpura */}
+      {/* Header con gradiente azul-púrpura - RESPONSIVE MEJORADO */}
       <div className="relative bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white overflow-hidden shadow-lg">
         {/* Patrón de fondo */}
         <div className="absolute inset-0 bg-black/10">
           <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-transparent"></div>
         </div>
         
-        <div className="relative max-w-7xl mx-auto px-6 py-8">
-          <div className="flex items-center space-x-8">
-            {/* Botón de regresar */}
+        <div className="relative max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8">
+          {/* Layout responsive: columna en móvil, fila en desktop */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 md:gap-6">
+            {/* Botón de regresar - RESPONSIVE */}
             <Link to={
               !user  // Si no hay usuario (visitante)
                 ? "/products"
@@ -281,27 +285,39 @@ export const ProductDetailPage: React.FC = () => {
                 ? "/products"
                 : "/products"  // vendedor
             }>
-              <Button variant="outline" size="sm" className="bg-white/20 text-white border-white/30 hover:bg-white hover:text-blue-600 backdrop-blur-sm rounded-xl px-6 py-3 font-medium transition-all duration-300 shadow-lg hover:shadow-xl">
-                <ArrowLeft className="h-5 w-5 mr-2" />
-                Regresar
-                </Button>
-              </Link>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="bg-white/20 text-white border-white/30 hover:bg-white hover:text-blue-600 backdrop-blur-sm rounded-lg sm:rounded-xl px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 font-medium transition-all duration-300 shadow-lg hover:shadow-xl text-sm sm:text-base w-full sm:w-auto"
+              >
+                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2" />
+                <span>Regresar</span>
+              </Button>
+            </Link>
             
-            {/* Breadcrumb */}
-            <div className="flex items-center space-x-2 text-base text-blue-100">
+            {/* Breadcrumb - RESPONSIVE */}
+            <div className="flex items-center flex-wrap gap-x-1.5 sm:gap-x-2 gap-y-1 text-xs sm:text-sm md:text-base text-blue-100">
               {(user?.tipo_usuario === 'moderador' || user?.tipo_usuario === 'administrador') ? (
                 <>
-                  <Link to="/products/moderation" className="hover:text-white transition-colors">Moderación</Link>
-                  <span>/</span>
+                  <Link to="/products/moderation" className="hover:text-white transition-colors whitespace-nowrap">
+                    Moderación
+                  </Link>
+                  <span className="text-blue-200">/</span>
                   <span className="text-white font-medium">Revisión de producto</span>
                 </>
               ) : (
                 <>
-                  <Link to="/products" className="hover:text-white transition-colors">Productos</Link>
-              <span>/</span>
-                  <span className="text-white">{product.categoria_nombre}</span>
-              <span>/</span>
-                  <span className="text-white font-medium">{product.nombre}</span>
+                  <Link to="/products" className="hover:text-white transition-colors whitespace-nowrap">
+                    Productos
+                  </Link>
+                  <span className="text-blue-200">/</span>
+                  <span className="text-white whitespace-nowrap truncate max-w-[120px] sm:max-w-none">
+                    {product.categoria_nombre}
+                  </span>
+                  <span className="text-blue-200 hidden sm:inline">/</span>
+                  <span className="text-white font-medium truncate max-w-[150px] sm:max-w-[200px] md:max-w-none hidden sm:inline">
+                    {product.nombre}
+                  </span>
                 </>
               )}
             </div>
@@ -309,9 +325,9 @@ export const ProductDetailPage: React.FC = () => {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-6 py-6">
-        {/* Layout principal estilo Amazon */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+        {/* Layout principal estilo Amazon - RESPONSIVE */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12">
           {/* Columna izquierda - Imágenes y descripción */}
                   <div className="space-y-4">
                     {/* Imagen principal */}
@@ -327,8 +343,8 @@ export const ProductDetailPage: React.FC = () => {
                       <img
                         src={product.imagenes[currentImageIndex]?.url_imagen}
                         alt={product.nombre}
-                      className="w-full h-[500px] object-contain bg-white"
-                    />
+                        className="w-full h-[300px] sm:h-[400px] lg:h-[500px] object-contain bg-white"
+                      />
                     
                     {/* Overlay de zoom */}
                     {isZoomed && (
@@ -354,20 +370,32 @@ export const ProductDetailPage: React.FC = () => {
                     </div>
                   )}
                   
-                  {/* Indicador de zoom */}
-                  <div className="absolute bottom-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    <div className="bg-white/90 rounded px-2 py-1 text-xs text-gray-600 shadow-sm">
+                  {/* Indicador de zoom - MEJORADO + RESPONSIVE (solo desktop) */}
+                  <div className="hidden lg:block absolute bottom-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <div className="bg-black/80 backdrop-blur-sm rounded-lg px-3 py-2 text-white text-xs font-medium shadow-xl flex items-center space-x-2">
+                      <Eye className="h-4 w-4" />
+                      <span>Pasa el cursor para hacer zoom</span>
                     </div>
                   </div>
+                  
+                  {/* Indicador de múltiples imágenes - MEJORADO */}
+                  {product.imagenes.length > 1 && (
+                    <div className="absolute top-4 left-4">
+                      <div className="bg-blue-600/90 backdrop-blur-sm rounded-lg px-3 py-1.5 text-white text-xs font-bold shadow-lg flex items-center space-x-1">
+                        <Camera className="h-4 w-4" />
+                        <span>{product.imagenes.length} fotos</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
-                <div className="h-[500px] bg-gray-100 flex items-center justify-center">
-                  <div className="text-center">
-                    <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-600">Sin imágenes disponibles</h3>
-                          </div>
-                        </div>
-                      )}
+                <div className="h-[300px] sm:h-[400px] lg:h-[500px] bg-gray-100 flex items-center justify-center">
+                  <div className="text-center px-4">
+                    <Package className="h-12 w-12 sm:h-16 sm:w-16 text-gray-400 mx-auto mb-3 sm:mb-4" />
+                    <h3 className="text-base sm:text-lg font-medium text-gray-600">Sin imágenes disponibles</h3>
+                  </div>
+                </div>
+              )}
                     </div>
                     
                     {/* Miniaturas */}
@@ -394,38 +422,38 @@ export const ProductDetailPage: React.FC = () => {
                     )}
 
 
-            {/* Información específica de servicios - Solo para servicios */}
+            {/* Información específica de servicios - MEJORADO: Con mejor profundidad + RESPONSIVE */}
             {product.tipo === 'servicio' && product.servicio && (
-              <div className="border border-gray-200 rounded-lg p-4 bg-gradient-to-r from-purple-50 to-blue-50">
-                <h3 className="font-medium text-gray-900 mb-3 flex items-center">
-                  <Clock className="h-4 w-4 mr-2 text-purple-600" />
+              <div className="border-l-4 border-purple-500 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg p-4 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <h3 className="font-semibold text-gray-900 mb-4 flex items-center text-base">
+                  <Clock className="h-5 w-5 mr-2 text-purple-600" />
                   Detalles del servicio
                 </h3>
                 <div className="space-y-3 text-sm">
                   {product.servicio.horario_atencion && (
-                    <div className="flex items-start space-x-2">
-                      <Clock className="h-4 w-4 text-purple-500 mt-0.5 flex-shrink-0" />
-                      <div>
-                        <span className="text-gray-600 block">Horario de atención:</span>
-                        <span className="text-gray-900 font-medium">{product.servicio.horario_atencion}</span>
+                    <div className="flex items-start space-x-3 p-2 bg-white/60 rounded-lg">
+                      <Clock className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <span className="text-gray-600 block text-xs font-medium mb-1">Horario de atención</span>
+                        <span className="text-gray-900 font-semibold">{product.servicio.horario_atencion}</span>
                       </div>
                     </div>
                   )}
                   {product.servicio.dias_disponibles && (
-                    <div className="flex items-start space-x-2">
-                      <Calendar className="h-4 w-4 text-purple-500 mt-0.5 flex-shrink-0" />
-                      <div>
-                        <span className="text-gray-600 block">Días disponibles:</span>
-                        <span className="text-gray-900 font-medium">{product.servicio.dias_disponibles}</span>
+                    <div className="flex items-start space-x-3 p-2 bg-white/60 rounded-lg">
+                      <Calendar className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <span className="text-gray-600 block text-xs font-medium mb-1">Días disponibles</span>
+                        <span className="text-gray-900 font-semibold">{product.servicio.dias_disponibles}</span>
                       </div>
                     </div>
                   )}
                   {product.servicio.duracion_estimada && (
-                    <div className="flex items-start space-x-2">
-                      <Timer className="h-4 w-4 text-purple-500 mt-0.5 flex-shrink-0" />
-                      <div>
-                        <span className="text-gray-600 block">Duración estimada:</span>
-                        <span className="text-gray-900 font-medium">{product.servicio.duracion_estimada}</span>
+                    <div className="flex items-start space-x-3 p-2 bg-white/60 rounded-lg">
+                      <Timer className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <span className="text-gray-600 block text-xs font-medium mb-1">Duración estimada</span>
+                        <span className="text-gray-900 font-semibold">{product.servicio.duracion_estimada}</span>
                       </div>
                     </div>
                   )}
@@ -436,22 +464,29 @@ export const ProductDetailPage: React.FC = () => {
           </div>
 
           {/* Columna derecha - Información del producto */}
-          <div className="space-y-6">
-            {/* Título del producto */}
+          <div className="space-y-4 sm:space-y-6">
+            {/* Título del producto - MEJORADO: Mayor peso visual + RESPONSIVE */}
             <div>
-              <h1 className="text-2xl font-medium text-gray-900 leading-tight mb-2">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 leading-tight mb-2 sm:mb-3 tracking-tight">
                 {product.nombre}
               </h1>
-              <div className="text-sm text-gray-500 mb-4">
-                Código: {product.codigo}
+              <div className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 flex items-center">
+                <span className="text-gray-500">Código:</span>
+                <span className="font-semibold text-gray-900 ml-2 bg-gray-100 px-3 py-1 rounded-md text-xs sm:text-sm">
+                  {product.codigo}
+                </span>
               </div>
               
-                  {/* Precio */}
-              <div className="mb-4">
-                <span className="text-3xl font-bold text-gray-900">
+              {/* Precio - MEJORADO: Súper prominente con sombras + RESPONSIVE */}
+              <div className="mb-4 sm:mb-6 bg-gradient-to-r from-green-50 via-emerald-50 to-green-100 border-l-4 border-green-500 p-5 sm:p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+                <div className="text-xs sm:text-sm text-green-700 mb-2 font-bold uppercase tracking-wider flex items-center">
+                  <DollarSign className="h-4 w-4 mr-1" />
+                  Precio
+                </div>
+                <span className="text-4xl sm:text-5xl lg:text-6xl font-black bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent inline-block leading-none">
                   ${product.precio ? Number(product.precio).toFixed(2) : '0.00'}
                 </span>
-                    </div>
+              </div>
               
               {/* Estado - Solo visible para moderadores, administradores y vendedor dueño */}
               {user && (
@@ -465,8 +500,24 @@ export const ProductDetailPage: React.FC = () => {
                   </span>
                 </div>
               )}
-                  </div>
+            </div>
                   
+            {/* NUEVO: Botón de acción principal para COMPRADORES + RESPONSIVE */}
+            {user?.tipo_usuario === 'comprador' && product.estado === 'activo' && product.disponibilidad && (
+              <div className="sticky top-4 z-10">
+                <Button 
+                  onClick={() => navigate(`/products/contact/${product.id}`)}
+                  className="w-full h-12 sm:h-14 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-base sm:text-lg font-bold shadow-2xl hover:shadow-3xl transition-all duration-300 rounded-xl"
+                >
+                  <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" />
+                  <span>Contactar Vendedor</span>
+                </Button>
+                <p className="text-xs text-center text-gray-500 mt-2">
+                  ✓ Disponible para compra inmediata
+                </p>
+              </div>
+            )}
+
             {/* Información de estado pendiente */}
             {product.estado === 'pendiente_revision' && (
               <Alert className="border-yellow-200 bg-yellow-50 rounded-lg">
@@ -477,9 +528,9 @@ export const ProductDetailPage: React.FC = () => {
               </Alert>
             )}
 
-            {/* Acciones de Moderación */}
+            {/* Acciones de Moderación - MEJORADO: Con profundidad + RESPONSIVE */}
             {(user?.tipo_usuario === 'moderador' || user?.tipo_usuario === 'administrador') && (product.estado === 'pendiente_revision' || product.estado === 'activo') && (
-              <div className="border border-blue-200 rounded-lg p-4 bg-gradient-to-r from-blue-50 to-indigo-50">
+              <div className="border border-blue-200 rounded-lg p-4 bg-gradient-to-r from-blue-50 to-indigo-50 shadow-lg hover:shadow-xl transition-shadow duration-300">
                 <h3 className="font-medium text-gray-900 mb-3 flex items-center">
                   <Shield className="h-4 w-4 mr-2 text-blue-600" />
                   Acciones de Moderación
@@ -574,125 +625,127 @@ export const ProductDetailPage: React.FC = () => {
               </div>
             )}
 
-            {/* Acciones de Gestión (Solo para Vendedores, NO para Moderadores) */}
+            {/* Acciones de Gestión - MEJORADO: Con profundidad + RESPONSIVE */}
             {(canModifyProduct(product.vendedor_id) || canDeleteProduct(product.vendedor_id)) && user?.tipo_usuario !== 'moderador' && (
-              <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                <h3 className="font-medium text-gray-900 mb-3">Gestionar producto</h3>
-                <div className="space-y-2">
+              <div className="border-l-4 border-gray-500 bg-gradient-to-br from-gray-50 to-slate-100 rounded-lg p-4 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <h3 className="font-semibold text-gray-900 mb-4 flex items-center text-base">
+                  <Shield className="h-5 w-5 mr-2 text-gray-600" />
+                  Gestionar producto
+                </h3>
+                <div className="space-y-3">
                   {canModifyProduct(product.vendedor_id) && !product.es_peligroso && (
                     <Button 
                       onClick={() => navigate(`/products/${product.id}/edit`)}
-                      variant="outline"
-                      className="w-full h-10 text-sm"
+                      className="w-full h-11 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 text-sm font-semibold"
                     >
                       <Edit className="h-4 w-4 mr-2" />
-                      Editar
+                      Editar Producto
                     </Button>
                   )}
                     
                   {canDeleteProduct(product.vendedor_id) && !product.es_peligroso && (
-                      <Button 
+                    <Button 
                       onClick={handleDeleteProduct}
-                      variant="outline"
-                      className="w-full h-10 text-sm text-red-600 border-red-300 hover:bg-red-50"
+                      className="w-full h-11 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 text-sm font-semibold"
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
-                      Eliminar
-                      </Button>
-                    )}
-                  </div>
+                      Eliminar Producto
+                    </Button>
+                  )}
                 </div>
-            )}
-
-            {/* Información del vendedor - Solo si no es el propietario */}
-            {user && user.id !== product.vendedor_id && (
-              <div className="border border-gray-200 rounded-lg p-4">
-                <h3 className="font-medium text-gray-900 mb-3">Vendedor</h3>
-                <div className="flex items-center space-x-3 mb-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-blue-600 font-medium text-sm">
-                      {product.vendedor_nombre?.charAt(0) || 'U'}
-                    </span>
-                  </div>
-                  <div>
-                    <div className="font-medium text-gray-900">{product.vendedor_nombre}</div>
-                    <div className="text-sm text-gray-600">{product.vendedor_email}</div>
-                  </div>
-                </div>
-                <Button 
-                  onClick={() => navigate(`/products/contact/${product.id}`)}
-                  className="w-full bg-orange-500 hover:bg-orange-600 text-white h-10 rounded-md text-sm font-medium"
-                >
-                  Contactar vendedor
-                </Button>
               </div>
             )}
 
-            {/* Ubicación */}
+            {/* Información del vendedor - MEJORADO: Más compacto + Sombras + RESPONSIVE */}
+            {user && user.id !== product.vendedor_id && (
+              <div className="border border-gray-200 rounded-lg p-4 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
+                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mr-2">
+                    <span className="text-white font-bold text-sm">
+                      {product.vendedor_nombre?.charAt(0) || 'U'}
+                    </span>
+                  </div>
+                  Vendedor
+                </h3>
+                <div className="space-y-1 mb-3">
+                  <div className="font-medium text-gray-900 text-lg">{product.vendedor_nombre}</div>
+                  <div className="text-sm text-gray-600">{product.vendedor_email}</div>
+                </div>
+                {user?.tipo_usuario !== 'comprador' && (
+                  <Button 
+                    onClick={() => navigate(`/products/contact/${product.id}`)}
+                    className="w-full bg-orange-500 hover:bg-orange-600 text-white h-10 rounded-lg text-sm font-medium shadow-lg hover:shadow-xl transition-all"
+                  >
+                    Contactar vendedor
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {/* Ubicación - MEJORADO: Con sombras y mejor profundidad + RESPONSIVE */}
             {(product.ubicacion_nombre || product.provincia || product.canton) && (
-              <div className="border border-gray-200 rounded-lg p-4">
-                <h3 className="font-medium text-gray-900 mb-3 flex items-center">
-                  <MapPin className="h-4 w-4 mr-2 text-blue-600" />
+              <div className="border-l-4 border-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <h3 className="font-semibold text-gray-900 mb-3 flex items-center text-base">
+                  <MapPin className="h-5 w-5 mr-2 text-blue-600" />
                   Ubicación
                 </h3>
-                <div className="space-y-2">
-            {product.ubicacion_nombre && (
-                <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-600 w-16">Dirección:</span>
+                <div className="space-y-2 text-sm">
+                  {product.ubicacion_nombre && (
+                    <div className="flex items-start space-x-2">
+                      <span className="text-gray-600 w-20 flex-shrink-0">Dirección:</span>
                       <span className="text-gray-900 font-medium">{product.ubicacion_nombre}</span>
                     </div>
                   )}
-                      {product.provincia && (
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-600 w-16">Provincia:</span>
+                  {product.provincia && (
+                    <div className="flex items-start space-x-2">
+                      <span className="text-gray-600 w-20 flex-shrink-0">Provincia:</span>
                       <span className="text-gray-900">{product.provincia}</span>
                     </div>
                   )}
                   {product.canton && (
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-600 w-16">Cantón:</span>
+                    <div className="flex items-start space-x-2">
+                      <span className="text-gray-600 w-20 flex-shrink-0">Cantón:</span>
                       <span className="text-gray-900">{product.canton}</span>
                     </div>
                   )}
                   {product.distrito && (
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-600 w-16">Distrito:</span>
+                    <div className="flex items-start space-x-2">
+                      <span className="text-gray-600 w-20 flex-shrink-0">Distrito:</span>
                       <span className="text-gray-900">{product.distrito}</span>
                     </div>
                   )}
                 </div>
-                    </div>
+              </div>
             )}
 
-            {/* Información adicional */}
-            <div className="border border-gray-200 rounded-lg p-4">
-              <h3 className="font-medium text-gray-900 mb-3 flex items-center">
-                <Tag className="h-4 w-4 mr-2 text-green-600" />
+            {/* Información adicional - MEJORADO: Con sombras y profundidad + RESPONSIVE */}
+            <div className="border-l-4 border-purple-500 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-4 shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <h3 className="font-semibold text-gray-900 mb-3 flex items-center text-base">
+                <Tag className="h-5 w-5 mr-2 text-purple-600" />
                 Información del {product.tipo === 'servicio' ? 'servicio' : 'producto'}
               </h3>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Categoría:</span>
-                  <span className="text-gray-900 font-medium">{product.categoria_nombre}</span>
+              <div className="space-y-3">
+                <div className="py-1.5">
+                  <span className="text-gray-600 text-xs font-medium uppercase tracking-wide block mb-1">Categoría</span>
+                  <span className="text-gray-900 font-bold text-base">{product.categoria_nombre}</span>
                 </div>
                 {product.categoria_descripcion && (
-                  <div className="mt-2 p-2 bg-gray-50 rounded-lg">
+                  <div className="py-1.5 pl-3 border-l-2 border-purple-300 bg-white/40 rounded-r-lg">
                     <div className="flex items-start space-x-2">
-                      <FileText className="h-3 w-3 text-gray-500 mt-0.5 flex-shrink-0" />
-                      <div>
-                        <span className="text-xs text-gray-500 block mb-1">Descripción de la categoría:</span>
-                        <span className="text-gray-700 text-xs">{product.categoria_descripcion}</span>
-                      </div>
+                      <FileText className="h-4 w-4 text-purple-500 mt-0.5 flex-shrink-0" />
+                      <span className="text-gray-700 text-xs leading-relaxed">{product.categoria_descripcion}</span>
                     </div>
-                </div>
+                  </div>
                 )}
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Publicado:</span>
-                  <span className="text-gray-900">{formatDate(product.fecha_publicacion)}</span>
+                <div className="py-1.5">
+                  <span className="text-gray-600 text-xs font-medium uppercase tracking-wide block mb-1">Publicado</span>
+                  <span className="text-gray-900 font-semibold text-base">{formatDate(product.fecha_publicacion)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Tipo:</span>
-                  <span className="text-gray-900 font-medium">{product.tipo === 'servicio' ? 'Servicio' : 'Producto'}</span>
+                <div className="py-1.5">
+                  <span className="text-gray-600 text-xs font-medium uppercase tracking-wide block mb-1">Tipo</span>
+                  <span className={`font-bold text-lg ${product.tipo === 'servicio' ? 'text-purple-700' : 'text-blue-700'}`}>
+                    {product.tipo === 'servicio' ? '🔧 Servicio' : '📦 Producto'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -728,17 +781,56 @@ export const ProductDetailPage: React.FC = () => {
                   </div>
         )}
 
-        {/* Descripción del producto - estilo Amazon */}
-        <div className="mt-12">
-          <div className="border-t border-gray-200 pt-8">
-            <h2 className="text-xl font-medium text-gray-900 mb-4">Descripción del producto</h2>
-            <div className="prose max-w-none">
-                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                      {product.descripcion}
-                    </p>
-                  </div>
-                    </div>
+        {/* Descripción del producto - MEJORADO: Formato enriquecido + Mayor contraste + RESPONSIVE */}
+        <div className="mt-8 sm:mt-12 border-t-2 border-gray-200 pt-6 sm:pt-8">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 sm:mb-6 flex items-center">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+              <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
+            <span>Descripción detallada</span>
+          </h2>
+          <div className="bg-gradient-to-br from-white via-blue-50 to-indigo-50 rounded-2xl p-4 sm:p-6 lg:p-8 border-2 border-blue-300 shadow-xl hover:shadow-2xl transition-shadow duration-300 backdrop-blur-sm">
+            <div className="prose prose-lg max-w-none">
+              <div 
+                className="text-gray-800 leading-relaxed text-base whitespace-pre-wrap"
+                style={{
+                  lineHeight: '1.8',
+                  wordBreak: 'break-word'
+                }}
+              >
+                {product.descripcion.split('\n').map((paragraph, index) => {
+                  if (!paragraph.trim()) return null;
+                  
+                  // Detectar si es una lista (comienza con - o *)
+                  if (paragraph.trim().startsWith('-') || paragraph.trim().startsWith('*')) {
+                    return (
+                      <div key={index} className="flex items-start space-x-2 my-2">
+                        <span className="text-blue-600 font-bold mt-1">•</span>
+                        <span className="flex-1">{paragraph.trim().substring(1).trim()}</span>
+                      </div>
+                    );
+                  }
+                  
+                  // Detectar si es un título (todo en mayúsculas o termina con :)
+                  if (paragraph === paragraph.toUpperCase() || paragraph.trim().endsWith(':')) {
+                    return (
+                      <h3 key={index} className="font-bold text-lg text-gray-900 mt-6 mb-3 first:mt-0">
+                        {paragraph}
+                      </h3>
+                    );
+                  }
+                  
+                  // Párrafo normal
+                  return (
+                    <p key={index} className="mb-4 last:mb-0">
+                      {paragraph}
+                    </p>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Alertas de estado adicionales */}
         <div className="mt-8 space-y-4">
