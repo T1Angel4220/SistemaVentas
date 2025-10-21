@@ -605,9 +605,16 @@ export const ProductsPage: React.FC = () => {
                             </div>
                           )}
                         </div>
-                        <div className="absolute top-4 right-4">
-                          {getStatusBadge(product)}
-                        </div>
+                        {/* Badge de estado - Solo visible para moderadores, administradores y vendedor dueño */}
+                        {user && (
+                          user.tipo_usuario === 'moderador' || 
+                          user.tipo_usuario === 'administrador' || 
+                          product.vendedor_id === user.id
+                        ) && (
+                          <div className="absolute top-4 right-4">
+                            {getStatusBadge(product)}
+                          </div>
+                        )}
                         <div className="absolute top-4 left-4">
                           <Badge className="bg-white/95 backdrop-blur-sm border-0 shadow-lg px-3 py-1 rounded-full">
                             {getTypeIcon(product.tipo)}

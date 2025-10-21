@@ -10,12 +10,12 @@ import {
   Shield, 
   Users, 
   Star,
-  CheckCircle,
-  ArrowRight
+  ArrowRight,
+  Eye
 } from 'lucide-react';
 
 export const HomePage: React.FC = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -31,8 +31,14 @@ export const HomePage: React.FC = () => {
             </p>
             {!isAuthenticated ? (
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/register">
+                <Link to="/products">
                   <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100">
+                    <Eye className="mr-2 h-5 w-5" />
+                    Ver Productos
+                  </Button>
+                </Link>
+                <Link to="/register">
+                  <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
                     Comenzar Ahora
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
@@ -201,8 +207,14 @@ export const HomePage: React.FC = () => {
           </p>
           {!isAuthenticated ? (
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/register">
+              <Link to="/products">
                 <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
+                  <Eye className="mr-2 h-5 w-5" />
+                  Ver Productos
+                </Button>
+              </Link>
+              <Link to="/register">
+                <Button size="lg" className="bg-green-600 hover:bg-green-700">
                   Crear Cuenta Gratis
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>

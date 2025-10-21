@@ -273,11 +273,13 @@ export const ProductDetailPage: React.FC = () => {
           <div className="flex items-center space-x-8">
             {/* Botón de regresar */}
             <Link to={
-              user?.tipo_usuario === 'moderador' || user?.tipo_usuario === 'administrador'
-                ? "/products/moderation" 
-                : user?.tipo_usuario === 'comprador'
+              !user  // Si no hay usuario (visitante)
                 ? "/products"
-                : "/my-products"
+                : user.tipo_usuario === 'moderador' || user.tipo_usuario === 'administrador'
+                ? "/products/moderation" 
+                : user.tipo_usuario === 'comprador'
+                ? "/products"
+                : "/my-products"  // vendedor
             }>
               <Button variant="outline" size="sm" className="bg-white/20 text-white border-white/30 hover:bg-white hover:text-blue-600 backdrop-blur-sm rounded-xl px-6 py-3 font-medium transition-all duration-300 shadow-lg hover:shadow-xl">
                 <ArrowLeft className="h-5 w-5 mr-2" />
@@ -451,12 +453,18 @@ export const ProductDetailPage: React.FC = () => {
                 </span>
                     </div>
               
-              {/* Estado */}
-              <div className="mb-4">
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
-                  {product.estado === 'pendiente_revision' ? 'Pendiente de revisión' : product.estado.replace('_', ' ')}
-                </span>
-                    </div>
+              {/* Estado - Solo visible para moderadores, administradores y vendedor dueño */}
+              {user && (
+                user.tipo_usuario === 'moderador' || 
+                user.tipo_usuario === 'administrador' || 
+                product.vendedor_id === user.id
+              ) && (
+                <div className="mb-4">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                    {product.estado === 'pendiente_revision' ? 'Pendiente de revisión' : product.estado.replace('_', ' ')}
+                  </span>
+                </div>
+              )}
                   </div>
                   
             {/* Información de estado pendiente */}
