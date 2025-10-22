@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { Navbar } from './components/layout/Navbar';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
+import { GlobalSessionAlertContainer } from './components/ui/GlobalSessionAlertContainer';
 
 // Páginas
 import { HomePage } from './pages/HomePage';
@@ -34,6 +35,7 @@ function App() {
   return (
     <AuthProvider>
       <Router>
+        <GlobalSessionAlertContainer />
         <div className="min-h-screen bg-gray-50">
           <Navbar />
           <main>

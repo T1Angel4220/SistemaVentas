@@ -287,16 +287,20 @@ router.put('/activate-user/:userId', authenticate, requireModerator, async (req,
       motivo || 'Usuario activado por moderador'
     ]);
     
-    // Enviar email de notificación
+    // Enviar email de notificación de reactivación
+    console.log('📧 Intentando enviar email de reactivación a:', user.correo);
     try {
+      const nombreCompleto = `${user.nombre || ''} ${user.apellido || ''}`.trim() || user.correo;
       await require('../services/email').sendAccountStatusEmail(
         user.correo,
-        user.nombre,
+        nombreCompleto,
         'activo',
-        motivo || 'Tu cuenta ha sido activada'
+        motivo || 'Tu cuenta ha sido reactivada exitosamente'
       );
+      console.log('✅ Email de reactivación enviado exitosamente a:', user.correo);
     } catch (emailError) {
-      console.error('❌ Error enviando email de activación:', emailError.message);
+      console.error('❌ Error enviando email de reactivación:', emailError.message);
+      console.error('❌ Stack:', emailError.stack);
     }
     
     res.json({
@@ -453,16 +457,20 @@ router.put('/suspend-user/:userId', authenticate, requireModerator, async (req, 
       motivo || 'Usuario suspendido por moderador'
     ]);
     
-    // Enviar email de notificación
+    // Enviar email de notificación de suspensión
+    console.log('📧 Intentando enviar email de suspensión a:', user.correo);
     try {
+      const nombreCompleto = `${user.nombre || ''} ${user.apellido || ''}`.trim() || user.correo;
       await require('../services/email').sendAccountStatusEmail(
         user.correo,
-        user.nombre,
+        nombreCompleto,
         'suspendido',
-        motivo || 'Tu cuenta ha sido suspendida'
+        motivo || 'Tu cuenta ha sido suspendida por incumplimiento de las políticas de uso'
       );
+      console.log('✅ Email de suspensión enviado exitosamente a:', user.correo);
     } catch (emailError) {
       console.error('❌ Error enviando email de suspensión:', emailError.message);
+      console.error('❌ Stack:', emailError.stack);
     }
     
     res.json({

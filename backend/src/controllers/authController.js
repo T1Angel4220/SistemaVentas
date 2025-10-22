@@ -156,14 +156,15 @@ const login = async (req, res) => {
       const estadosMensajes = {
         'pendiente_verificacion': 'Tu cuenta está pendiente de verificación. Por favor, revisa tu correo electrónico.',
         'inactivo': 'Tu cuenta ha sido desactivada. Contacta al administrador para más información.',
-        'suspendido': 'Tu cuenta ha sido suspendida. Contacta al administrador para más información.'
+        'suspendido': 'Tu cuenta ha sido suspendida por incumplimiento de las políticas de uso. No puedes acceder al sistema en este momento. Por favor, contacta al administrador para obtener más información sobre tu situación.'
       };
       
       const mensaje = estadosMensajes[user.estado] || 'Tu cuenta no está activa. Contacta al administrador.';
       
       return res.status(401).json({
         success: false,
-        message: mensaje
+        message: mensaje,
+        accountStatus: user.estado
       });
     }
     
@@ -178,6 +179,25 @@ const login = async (req, res) => {
     // Generar tokens de sesión
     const tokens = generateSessionTokens(user);
     
+    // Obtener la IP real del cliente (considerando proxies)
+    const getClientIp = (req) => {
+      // Intentar obtener IP de headers de proxy primero
+      const forwardedFor = req.headers['x-forwarded-for'];
+      if (forwardedFor) {
+        // x-forwarded-for puede ser una lista de IPs, tomar la primera (cliente original)
+        return forwardedFor.split(',')[0].trim();
+      }
+      
+      // Fallback a otras opciones
+      return req.headers['x-real-ip'] || 
+             req.connection.remoteAddress || 
+             req.socket.remoteAddress ||
+             req.ip ||
+             'IP desconocida';
+    };
+    
+    const clientIp = getClientIp(req);
+    
     // Crear sesión en la base de datos
     const sessionResult = await query(`
       INSERT INTO sesiones_usuario (
@@ -188,8 +208,8 @@ const login = async (req, res) => {
       user.id,
       tokens.accessToken,
       new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 días
-      req.ip || req.connection.remoteAddress,
-      req.get('User-Agent')
+      clientIp,
+      req.get('User-Agent') || 'User-Agent desconocido'
     ]);
     
     // Actualizar último acceso
@@ -203,8 +223,8 @@ const login = async (req, res) => {
       await sendNewSessionEmail(
         user.correo, 
         user.nombre, 
-        req.ip || req.connection.remoteAddress,
-        req.get('User-Agent')
+        clientIp,
+        req.get('User-Agent') || 'User-Agent desconocido'
       );
     } catch (emailError) {
       console.error('❌ Error enviando notificación de sesión:', emailError.message);
@@ -651,6 +671,16 @@ const requestPasswordReset = async (req, res) => {
     
     // Verificar que el usuario esté activo
     if (user.estado !== 'activo') {
+      // Mensaje específico para cuentas suspendidas
+      if (user.estado === 'suspendido') {
+        return res.status(403).json({
+          success: false,
+          message: 'No puedes recuperar tu contraseña porque tu cuenta ha sido suspendida por incumplimiento de las políticas de uso. Por favor, contacta al administrador del sistema para obtener más información sobre tu situación.',
+          accountStatus: 'suspendido'
+        });
+      }
+      
+      // Para otros estados (inactivo, pendiente), mensaje genérico por seguridad
       return res.json({
         success: true,
         message: 'Si el correo existe en nuestro sistema, recibirás un email con las instrucciones para restablecer tu contraseña'

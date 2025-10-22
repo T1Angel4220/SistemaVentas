@@ -52,7 +52,7 @@ export const UserManagementPage: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState<'activate' | 'deactivate' | 'suspend' | 'view'>('view');
+  const [modalType, setModalType] = useState<'activate' | 'suspend' | 'view'>('view');
   const [actionReason, setActionReason] = useState('');
 
   // Cargar usuarios
@@ -162,10 +162,6 @@ export const UserManagementPage: React.FC = () => {
           await apiService.activateUser(userId, reason);
           setSuccess('Usuario activado exitosamente');
           break;
-        case 'deactivate':
-          await apiService.deactivateUser(userId, reason);
-          setSuccess('Usuario desactivado exitosamente');
-          break;
         case 'suspend':
           await apiService.suspendUser(userId, reason);
           setSuccess('Usuario suspendido exitosamente');
@@ -184,7 +180,7 @@ export const UserManagementPage: React.FC = () => {
   };
 
   // Abrir modal
-  const openModal = (user: User, type: 'activate' | 'deactivate' | 'suspend' | 'view') => {
+  const openModal = (user: User, type: 'activate' | 'suspend' | 'view') => {
     setSelectedUser(user);
     setModalType(type);
     setShowModal(true);
@@ -406,6 +402,7 @@ export const UserManagementPage: React.FC = () => {
                                   size="sm"
                                   onClick={() => openModal(user, 'activate')}
                                   className="text-green-600 hover:text-green-700"
+                                  title="Reactivar usuario"
                                 >
                                   <UserCheck className="h-4 w-4" />
                                 </Button>
@@ -415,19 +412,9 @@ export const UserManagementPage: React.FC = () => {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => openModal(user, 'deactivate')}
-                                  className="text-yellow-600 hover:text-yellow-700"
-                                >
-                                  <UserX className="h-4 w-4" />
-                                </Button>
-                              )}
-                              
-                              {user.estado === 'activo' && user.tipo_usuario !== 'administrador' && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
                                   onClick={() => openModal(user, 'suspend')}
                                   className="text-red-600 hover:text-red-700"
+                                  title="Suspender usuario"
                                 >
                                   <UserMinus className="h-4 w-4" />
                                 </Button>
@@ -456,21 +443,18 @@ export const UserManagementPage: React.FC = () => {
                   <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
                     {modalType === 'view' && <Eye className="h-6 w-6" />}
                     {modalType === 'activate' && <CheckCircle className="h-6 w-6" />}
-                    {modalType === 'deactivate' && <UserX className="h-6 w-6" />}
                     {modalType === 'suspend' && <UserMinus className="h-6 w-6" />}
                   </div>
                   <div>
                     <h3 className="text-xl font-bold">
                       {modalType === 'view' && 'Detalles del Usuario'}
-                      {modalType === 'activate' && 'Activar Usuario'}
-                      {modalType === 'deactivate' && 'Desactivar Usuario'}
+                      {modalType === 'activate' && 'Reactivar Usuario'}
                       {modalType === 'suspend' && 'Suspender Usuario'}
                     </h3>
                     <p className="text-blue-100 text-sm">
                       {modalType === 'view' && 'Información completa del usuario'}
                       {modalType === 'activate' && 'Reactivar acceso al sistema'}
-                      {modalType === 'deactivate' && 'Deshabilitar acceso temporalmente'}
-                      {modalType === 'suspend' && 'Suspender cuenta del usuario'}
+                      {modalType === 'suspend' && 'Suspender cuenta por violación de políticas'}
                     </p>
                   </div>
                 </div>
@@ -567,12 +551,19 @@ export const UserManagementPage: React.FC = () => {
                 </div>
               ) : (
                 <div className="space-y-6">
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                  <div className={`border rounded-xl p-4 ${
+                    modalType === 'activate' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+                  }`}>
                     <div className="flex items-center space-x-2">
-                      <UserX className="h-5 w-5 text-yellow-600" />
-                      <p className="text-sm font-medium text-yellow-800">
-                        {modalType === 'activate' && `¿Estás seguro de que quieres activar a ${selectedUser.nombre} ${selectedUser.apellido}?`}
-                        {modalType === 'deactivate' && `¿Estás seguro de que quieres desactivar a ${selectedUser.nombre} ${selectedUser.apellido}?`}
+                      {modalType === 'activate' ? (
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                      ) : (
+                        <AlertTriangle className="h-5 w-5 text-red-600" />
+                      )}
+                      <p className={`text-sm font-medium ${
+                        modalType === 'activate' ? 'text-green-800' : 'text-red-800'
+                      }`}>
+                        {modalType === 'activate' && `¿Estás seguro de que quieres reactivar a ${selectedUser.nombre} ${selectedUser.apellido}?`}
                         {modalType === 'suspend' && `¿Estás seguro de que quieres suspender a ${selectedUser.nombre} ${selectedUser.apellido}?`}
                       </p>
                     </div>
@@ -580,14 +571,16 @@ export const UserManagementPage: React.FC = () => {
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Motivo (opcional)
+                      Motivo {modalType === 'suspend' ? '(recomendado)' : '(opcional)'}
                     </label>
                     <textarea
                       value={actionReason}
                       onChange={(e) => setActionReason(e.target.value)}
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                       rows={3}
-                      placeholder="Describe el motivo de esta acción..."
+                      placeholder={modalType === 'suspend' 
+                        ? "Especifica el motivo de la suspensión (violación de políticas, reportes, etc.)"
+                        : "Describe el motivo de esta acción..."}
                     />
                   </div>
                 </div>
@@ -608,14 +601,13 @@ export const UserManagementPage: React.FC = () => {
                   onClick={() => handleAction(modalType, selectedUser.id, actionReason)}
                   disabled={loading}
                   className={`px-6 ${
-                    modalType === 'activate' ? 'bg-green-600 hover:bg-green-700' :
-                    modalType === 'deactivate' ? 'bg-yellow-600 hover:bg-yellow-700' :
-                    'bg-red-600 hover:bg-red-700'
+                    modalType === 'activate' 
+                      ? 'bg-green-600 hover:bg-green-700' 
+                      : 'bg-red-600 hover:bg-red-700'
                   }`}
                 >
                   {loading ? 'Procesando...' : 
-                   modalType === 'activate' ? 'Activar' :
-                   modalType === 'deactivate' ? 'Desactivar' : 'Suspender'
+                   modalType === 'activate' ? 'Reactivar Usuario' : 'Suspender Usuario'
                   }
                 </Button>
               )}

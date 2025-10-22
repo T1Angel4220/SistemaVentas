@@ -17,6 +17,9 @@ const locationsRoutes = require('./routes/locations');
 // Crear aplicación Express
 const app = express();
 
+// Configurar Express para confiar en proxies (necesario para obtener la IP real del cliente)
+app.set('trust proxy', true);
+
 // Middleware de seguridad (temporalmente deshabilitado para imágenes)
 // app.use(helmet({
 //   contentSecurityPolicy: {

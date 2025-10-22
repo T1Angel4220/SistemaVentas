@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
 import { Alert } from '../components/ui/Alert';
 import { ArrowLeft, Mail, Shield, CheckCircle } from 'lucide-react';
@@ -90,38 +89,98 @@ export const ForgotPasswordPage: React.FC = () => {
               <div className="p-8">
                 {/* Mensaje de Error Animado y Profesional */}
                 {error && (
-                  <div className="relative overflow-hidden bg-gradient-to-br from-red-50 via-rose-50 to-pink-50 border-2 border-red-300 rounded-2xl p-6 shadow-xl animate-[slideInDown_0.4s_ease-out] mb-6">
+                  <div className={`relative overflow-hidden ${
+                    error.includes('suspendida') 
+                      ? 'bg-gradient-to-br from-orange-50 via-red-50 to-rose-50 border-2 border-red-400' 
+                      : 'bg-gradient-to-br from-red-50 via-rose-50 to-pink-50 border-2 border-red-300'
+                  } rounded-2xl p-6 shadow-xl animate-[slideInDown_0.4s_ease-out] mb-6`}>
                     {/* Icono de error con animación */}
                     <div className="flex items-start gap-4">
                       <div className="flex-shrink-0">
                         <div className="relative">
                           {/* Círculo animado de fondo */}
-                          <div className="absolute inset-0 bg-red-400 rounded-full animate-[ping_1s_ease-out]"></div>
-                          <div className="relative bg-gradient-to-br from-red-500 to-rose-600 rounded-full p-3 shadow-lg animate-[bounceIn_0.5s_ease-out]">
-                            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path 
-                                strokeLinecap="round" 
-                                strokeLinejoin="round" 
-                                strokeWidth={2.5} 
-                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                              />
-                            </svg>
+                          <div className={`absolute inset-0 ${
+                            error.includes('suspendida') ? 'bg-red-500' : 'bg-red-400'
+                          } rounded-full animate-[ping_1s_ease-out]`}></div>
+                          <div className={`relative ${
+                            error.includes('suspendida') 
+                              ? 'bg-gradient-to-br from-red-600 to-red-800' 
+                              : 'bg-gradient-to-br from-red-500 to-rose-600'
+                          } rounded-full p-3 shadow-lg animate-[bounceIn_0.5s_ease-out]`}>
+                            {error.includes('suspendida') ? (
+                              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path 
+                                  strokeLinecap="round" 
+                                  strokeLinejoin="round" 
+                                  strokeWidth={2.5} 
+                                  d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+                                />
+                              </svg>
+                            ) : (
+                              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path 
+                                  strokeLinecap="round" 
+                                  strokeLinejoin="round" 
+                                  strokeWidth={2.5} 
+                                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                                />
+                              </svg>
+                            )}
                           </div>
                         </div>
                       </div>
                       
                       <div className="flex-1 pt-1 animate-[fadeIn_0.6s_ease-out_0.2s_both]">
-                        <h3 className="text-lg font-bold text-red-800 mb-1">
-                          ¡Oops! Algo salió mal
+                        <h3 className={`text-lg font-bold mb-1 ${
+                          error.includes('suspendida') ? 'text-red-900' : 'text-red-800'
+                        }`}>
+                          {error.includes('suspendida') ? '🚫 Cuenta Suspendida' : '¡Oops! Algo salió mal'}
                         </h3>
-                        <p className="text-sm text-red-700 leading-relaxed">
+                        <p className={`text-sm leading-relaxed mb-3 ${
+                          error.includes('suspendida') ? 'text-red-800' : 'text-red-700'
+                        }`}>
                           {error}
                         </p>
+                        
+                        {error.includes('suspendida') && (
+                          <div className="mt-4 p-4 bg-white/80 backdrop-blur-sm rounded-xl border border-red-200 shadow-md">
+                            <div className="flex items-start gap-3">
+                              <div className="flex-shrink-0">
+                                <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="text-sm font-bold text-gray-900 mb-2">
+                                  ¿Qué debes hacer?
+                                </h4>
+                                <ul className="space-y-2 text-sm text-gray-700">
+                                  <li className="flex items-start gap-2">
+                                    <span className="text-blue-600 font-bold mt-0.5">•</span>
+                                    <span><strong>Contacta al administrador</strong> del sistema para conocer los motivos de la suspensión</span>
+                                  </li>
+                                  <li className="flex items-start gap-2">
+                                    <span className="text-blue-600 font-bold mt-0.5">•</span>
+                                    <span>Revisa las <strong>políticas de uso</strong> de la plataforma</span>
+                                  </li>
+                                  <li className="flex items-start gap-2">
+                                    <span className="text-blue-600 font-bold mt-0.5">•</span>
+                                    <span>Si crees que es un error, <strong>solicita una apelación</strong> explicando tu situación</span>
+                                  </li>
+                                  <li className="flex items-start gap-2">
+                                    <span className="text-orange-600 font-bold mt-0.5">⚠</span>
+                                    <span className="text-orange-800"><strong>No podrás recuperar tu contraseña</strong> mientras tu cuenta esté suspendida</span>
+                                  </li>
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                     {/* Efecto decorativo */}
                     <div className="absolute top-2 right-2 text-2xl opacity-20 animate-[wiggle_1s_ease-in-out_infinite]">
-                      ⚠️
+                      {error.includes('suspendida') ? '🚫' : '⚠️'}
                     </div>
                   </div>
                 )}
@@ -134,16 +193,20 @@ export const ForgotPasswordPage: React.FC = () => {
                     <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                       Correo Electrónico
                     </label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="tu@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      disabled={isLoading}
-                      icon={<Mail className="h-4 w-4 text-gray-400" />}
-                      className="w-full"
-                    />
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Mail className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="email"
+                        type="email"
+                        placeholder="tu@email.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        disabled={isLoading}
+                        className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:bg-gray-50 disabled:cursor-not-allowed"
+                      />
+                    </div>
                   </div>
                   
                   <Button
