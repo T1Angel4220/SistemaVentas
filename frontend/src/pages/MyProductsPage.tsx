@@ -15,7 +15,8 @@ import {
   Eye, 
   Calendar,
   AlertCircle,
-  ArrowLeft
+  ArrowLeft,
+  Camera
 } from 'lucide-react';
 import type { Product, ProductsResponse } from '../types/product.types';
 
@@ -228,36 +229,44 @@ export const MyProductsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header con gradiente azul-púrpura */}
+      {/* Header con gradiente azul-púrpura - RESPONSIVE MEJORADO */}
       <header className="relative bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white overflow-hidden shadow-lg">
         {/* Patrón de fondo */}
         <div className="absolute inset-0 bg-black/10">
           <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-transparent"></div>
         </div>
         
-        <div className="relative max-w-7xl mx-auto px-6 py-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-8">
-              {/* Botón Volver */}
-              <Link to="/products">
-                <Button variant="outline" className="bg-white/20 border-white/30 text-white hover:bg-white/30 hover:border-white/50 transition-all duration-200 rounded-xl px-4 py-2 flex items-center space-x-2">
-                  <ArrowLeft className="h-4 w-4" />
-                  <span className="font-medium">Volver</span>
+        <div className="relative max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8">
+          {/* Layout responsive: columna en móvil, fila en desktop */}
+          <div className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            {/* Sección izquierda: Botón Volver + Título */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 md:gap-6">
+              {/* Botón Volver - RESPONSIVE */}
+              <Link to="/products" className="w-full sm:w-auto">
+                <Button 
+                  variant="outline" 
+                  className="bg-white/20 border-white/30 text-white hover:bg-white hover:text-blue-600 backdrop-blur-sm rounded-lg sm:rounded-xl px-4 py-2 sm:px-5 sm:py-2.5 font-medium transition-all duration-300 shadow-lg hover:shadow-xl text-sm sm:text-base w-full sm:w-auto flex items-center justify-center space-x-2"
+                >
+                  <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <span>Volver</span>
                 </Button>
               </Link>
               
+              {/* Título y descripción - RESPONSIVE */}
               <div>
-                <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-black mb-1 sm:mb-2 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent tracking-tight">
                   Mis Productos
                 </h1>
-                <p className="text-blue-100 text-base">
+                <p className="text-blue-100 text-sm sm:text-base">
                   Gestiona tus productos y servicios publicados
                 </p>
               </div>
             </div>
-            <Link to="/products/create">
-              <Button className="bg-white/20 text-white border-white/30 hover:bg-white hover:text-blue-600 backdrop-blur-sm rounded-xl px-6 py-3 font-medium transition-all duration-300 shadow-lg hover:shadow-xl">
-                <Plus className="h-5 w-5 mr-2" />
+            
+            {/* Botón Crear Producto - RESPONSIVE */}
+            <Link to="/products/create" className="w-full sm:w-auto">
+              <Button className="bg-white/20 text-white border-white/30 hover:bg-white hover:text-blue-600 backdrop-blur-sm rounded-lg sm:rounded-xl px-4 py-2.5 sm:px-5 sm:py-3 md:px-6 font-medium transition-all duration-300 shadow-lg hover:shadow-xl text-sm sm:text-base w-full sm:w-auto flex items-center justify-center space-x-2">
+                <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
                 <span className="font-medium">Crear Producto</span>
               </Button>
             </Link>
@@ -265,82 +274,82 @@ export const MyProductsPage: React.FC = () => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        {/* Estadísticas mejoradas */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8">
+        {/* Estadísticas mejoradas - RESPONSIVE */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-5 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-blue-700">Total productos</p>
-                  <p className="text-3xl font-bold text-blue-900 mt-1">{pagination.total_items}</p>
+                  <p className="text-xs sm:text-sm font-medium text-blue-700">Total productos</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-blue-900 mt-1">{pagination.total_items}</p>
                 </div>
-                <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg">
-                  <Package className="h-6 w-6 text-white" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+                  <Package className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-5 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-green-700">Activos</p>
-                  <p className="text-3xl font-bold text-green-900 mt-1">
+                  <p className="text-xs sm:text-sm font-medium text-green-700">Activos</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-green-900 mt-1">
                     {products.filter(p => p.estado === 'activo' && p.disponibilidad).length}
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center shadow-lg">
-                  <div className="h-6 w-6 bg-white rounded-full"></div>
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-500 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+                  <div className="h-5 w-5 sm:h-6 sm:w-6 bg-white rounded-full"></div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200 shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-5 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-yellow-700">Pendientes</p>
-                  <p className="text-3xl font-bold text-yellow-900 mt-1">
+                  <p className="text-xs sm:text-sm font-medium text-yellow-700">Pendientes</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-yellow-900 mt-1">
                     {products.filter(p => p.estado === 'pendiente_revision').length}
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-yellow-500 rounded-xl flex items-center justify-center shadow-lg">
-                  <div className="h-6 w-6 bg-white rounded-full"></div>
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-500 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+                  <div className="h-5 w-5 sm:h-6 sm:w-6 bg-white rounded-full"></div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200 shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-5 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-red-700">Rechazados</p>
-                  <p className="text-3xl font-bold text-red-900 mt-1">
+                  <p className="text-xs sm:text-sm font-medium text-red-700">Rechazados</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-red-900 mt-1">
                     {products.filter(p => p.estado === 'rechazado').length}
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-red-500 rounded-xl flex items-center justify-center shadow-lg">
-                  <div className="h-6 w-6 bg-white rounded-full"></div>
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-500 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+                  <div className="h-5 w-5 sm:h-6 sm:w-6 bg-white rounded-full"></div>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Filtros mejorados */}
-        <Card className="mb-8 bg-white/80 backdrop-blur-sm shadow-lg border-gray-200">
-          <CardContent className="p-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0 sm:space-x-6">
-              <div className="flex-1">
-                <label className="text-sm font-semibold text-gray-700 mb-2 block">Filtrar por estado</label>
+        {/* Filtros mejorados - RESPONSIVE */}
+        <Card className="mb-6 sm:mb-8 bg-white/80 backdrop-blur-sm shadow-lg border-gray-200">
+          <CardContent className="p-4 sm:p-5 md:p-6">
+            <div className="flex flex-col space-y-4">
+              <div className="w-full">
+                <label className="text-xs sm:text-sm font-semibold text-gray-700 mb-2 block">Filtrar por estado</label>
                 <select 
                   value={filters.estado} 
                   onChange={(e) => handleFilterChange('estado', e.target.value)}
-                  className="w-full sm:w-64 flex h-12 items-center justify-between rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm hover:border-gray-300 transition-colors"
+                  className="w-full flex h-10 sm:h-12 items-center justify-between rounded-lg sm:rounded-xl border-2 border-gray-200 bg-white px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm hover:border-gray-300 transition-colors"
                 >
                   <option value="">Todos los estados</option>
                   <option value="activo">Activos</option>
@@ -349,8 +358,8 @@ export const MyProductsPage: React.FC = () => {
                   <option value="suspendido">Suspendidos</option>
                 </select>
               </div>
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 rounded-xl border border-blue-200">
-                <div className="text-sm font-medium text-blue-700">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-3 sm:px-4 py-2 sm:py-3 rounded-lg sm:rounded-xl border border-blue-200">
+                <div className="text-xs sm:text-sm font-medium text-blue-700 text-center sm:text-left">
                   Mostrando <span className="font-bold text-blue-900">{products.length}</span> de <span className="font-bold text-blue-900">{pagination.total_items}</span> productos
                 </div>
               </div>
@@ -358,9 +367,9 @@ export const MyProductsPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Grid de productos */}
+        {/* Grid de productos - RESPONSIVE */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
             {[...Array(6)].map((_, i) => (
               <Card key={i} className="animate-pulse">
                 <div className="h-48 bg-gray-200 rounded-t-lg"></div>
@@ -393,7 +402,7 @@ export const MyProductsPage: React.FC = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
             {products.map((product) => (
               <Card key={product.id} className="bg-white/90 backdrop-blur-sm shadow-lg hover:shadow-2xl transition-all duration-300 border-0 rounded-2xl overflow-hidden group">
                 <div className="relative">
@@ -415,12 +424,19 @@ export const MyProductsPage: React.FC = () => {
                         )}
                       </>
                     ) : (
-                      <div className="text-center text-gray-600">
-                        <div className="w-16 h-16 bg-white/80 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
-                          <Package className="h-8 w-8 text-gray-500" />
+                      <div className="text-center text-gray-500">
+                        <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg ${
+                          product.tipo === 'servicio'
+                            ? 'bg-gradient-to-br from-purple-200 to-blue-300'
+                            : 'bg-gradient-to-br from-gray-200 to-gray-300'
+                        }`}>
+                          <Camera className={`h-10 w-10 ${
+                            product.tipo === 'servicio' ? 'text-purple-600' : 'text-gray-400'
+                          }`} />
                         </div>
-                        <p className="text-sm font-medium">
-                          {product.total_imagenes > 0 ? `${product.total_imagenes} imagen${product.total_imagenes !== 1 ? 'es' : ''}` : 'Sin imágenes'}
+                        <p className="text-sm font-semibold text-gray-600 mb-1">Sin Foto</p>
+                        <p className="text-xs text-gray-400">
+                          {product.total_imagenes > 0 ? `${product.total_imagenes} imagen${product.total_imagenes !== 1 ? 'es' : ''}` : 'No disponible'}
                         </p>
                       </div>
                     )}
@@ -477,40 +493,35 @@ export const MyProductsPage: React.FC = () => {
                     </div>
                   </div>
                   
-                  {/* Botones de acción mejorados */}
-                  <div className="flex space-x-2 mt-6">
+                  {/* Botones de acción - UNIFORMES CON ProductsPage.tsx */}
+                  <div className="flex space-x-2 sm:space-x-3 mt-6">
                     <Link to={`/products/${product.id}`} className="flex-1">
-                      <Button variant="outline" size="sm" className="w-full h-10 rounded-xl border-2 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 font-medium">
-                        <Eye className="h-4 w-4 mr-2" />
-                        Ver
+                      <Button className="w-full h-10 sm:h-11 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl text-xs sm:text-sm font-semibold">
+                        <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                        <span>Ver detalles</span>
                       </Button>
                     </Link>
                     
                     {product.estado !== 'rechazado' && !product.es_peligroso && (
                       <Button 
-                        variant="outline" 
-                        size="sm" 
                         onClick={() => handleEditProduct(product.id)}
-                        className="h-10 w-10 rounded-xl border-2 border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300"
+                        className="h-10 w-10 sm:h-11 sm:w-11 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl flex-shrink-0"
                       >
-                        <Edit className="h-4 w-4" />
+                        <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                       </Button>
                     )}
                     
-                    
-                    {/* Botón de eliminar - Deshabilitado para productos peligrosos */}
+                    {/* Botón de eliminar - Uniformado con estilo de ProductsPage */}
                     <Button
-                      variant="outline"
-                      size="sm"
                       onClick={() => handleDeleteProduct(product.id, product.nombre)}
                       disabled={product.es_peligroso || product.estado === 'peligroso'}
-                      className={`h-10 w-10 rounded-xl border-2 font-medium ${
+                      className={`h-10 w-10 sm:h-11 sm:w-11 border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl flex-shrink-0 ${
                         product.es_peligroso || product.estado === 'peligroso'
-                          ? 'border-gray-200 text-gray-300 cursor-not-allowed opacity-50'
-                          : 'border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300'
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-50'
+                          : 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white'
                       }`}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
                   </div>
                 </CardContent>
