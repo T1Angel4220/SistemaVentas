@@ -127,11 +127,73 @@ export const SessionManagementPage: React.FC = () => {
   };
 
   const getBrowserInfo = (userAgent: string) => {
-    if (userAgent.includes('Chrome')) return 'Chrome';
-    if (userAgent.includes('Firefox')) return 'Firefox';
-    if (userAgent.includes('Safari')) return 'Safari';
-    if (userAgent.includes('Edge')) return 'Edge';
-    return 'Navegador desconocido';
+    if (!userAgent || userAgent === 'User-Agent desconocido') {
+      return 'Navegador desconocido';
+    }
+    
+    // Orden importante: verificar primero los navegadores más específicos
+    // porque muchos incluyen "Chrome" en su user-agent
+    
+    // Edgium (nuevo Edge basado en Chromium)
+    if (userAgent.includes('Edg/') || userAgent.includes('Edge/')) {
+      return 'Microsoft Edge';
+    }
+    
+    // Opera
+    if (userAgent.includes('OPR/') || userAgent.includes('Opera')) {
+      return 'Opera';
+    }
+    
+    // Brave
+    if (userAgent.includes('Brave')) {
+      return 'Brave';
+    }
+    
+    // Chrome (debe ir después de Edge, Opera, Brave)
+    if (userAgent.includes('Chrome/') && !userAgent.includes('Edg/')) {
+      return 'Google Chrome';
+    }
+    
+    // Safari (debe ir después de Chrome porque Chrome incluye "Safari")
+    if (userAgent.includes('Safari/') && !userAgent.includes('Chrome')) {
+      return 'Safari';
+    }
+    
+    // Firefox
+    if (userAgent.includes('Firefox/')) {
+      return 'Firefox';
+    }
+    
+    // Internet Explorer
+    if (userAgent.includes('MSIE') || userAgent.includes('Trident/')) {
+      return 'Internet Explorer';
+    }
+    
+    return 'Otro navegador';
+  };
+
+  const formatIpAddress = (ip: string) => {
+    if (!ip || ip === 'IP desconocida') {
+      return 'IP desconocida';
+    }
+    
+    // Localhost IPv6
+    if (ip === '::1' || ip === '0:0:0:0:0:0:0:1') {
+      return 'localhost (::1)';
+    }
+    
+    // Localhost IPv4
+    if (ip === '127.0.0.1') {
+      return 'localhost (127.0.0.1)';
+    }
+    
+    // IP privadas (red local)
+    if (ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('172.')) {
+      return `${ip} (Red local)`;
+    }
+    
+    // IP pública
+    return ip;
   };
 
   const formatDate = (dateString: string) => {
@@ -293,7 +355,7 @@ export const SessionManagementPage: React.FC = () => {
                               <div className="space-y-1 text-sm text-gray-600">
                                 <div className="flex items-center space-x-2">
                                   <Globe className="h-4 w-4" />
-                                  <span>{session.ip_address}</span>
+                                  <span>{formatIpAddress(session.ip_address)}</span>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                   <Clock className="h-4 w-4" />

@@ -48,6 +48,22 @@ const authenticate = async (req, res, next) => {
       });
     }
     
+    // ✅ NUEVO: Verificar que el usuario tiene al menos una sesión activa
+    // Esto asegura que si un admin/moderador cierra las sesiones, el usuario sea deslogueado
+    const sessionResult = await query(
+      'SELECT id FROM sesiones_usuario WHERE usuario_id = $1 AND activa = true AND fecha_expiracion > NOW() LIMIT 1',
+      [decoded.id]
+    );
+    
+    if (sessionResult.rows.length === 0) {
+      console.log(`⚠️ Usuario ${user.correo} intentó acceder con token válido pero sin sesión activa`);
+      return res.status(401).json({
+        success: false,
+        message: 'Tu sesión ha sido cerrada. Por favor, inicia sesión nuevamente.',
+        code: 'SESSION_CLOSED'
+      });
+    }
+    
     // Nota: No bloqueamos el acceso si el email no está verificado
     // El frontend se encargará de mostrar el mensaje apropiado
     

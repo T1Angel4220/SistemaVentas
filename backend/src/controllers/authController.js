@@ -156,14 +156,15 @@ const login = async (req, res) => {
       const estadosMensajes = {
         'pendiente_verificacion': 'Tu cuenta está pendiente de verificación. Por favor, revisa tu correo electrónico.',
         'inactivo': 'Tu cuenta ha sido desactivada. Contacta al administrador para más información.',
-        'suspendido': 'Tu cuenta ha sido suspendida. Contacta al administrador para más información.'
+        'suspendido': 'Tu cuenta ha sido suspendida por incumplimiento de las políticas de uso. No puedes acceder al sistema en este momento. Por favor, contacta al administrador para obtener más información sobre tu situación.'
       };
       
       const mensaje = estadosMensajes[user.estado] || 'Tu cuenta no está activa. Contacta al administrador.';
       
       return res.status(401).json({
         success: false,
-        message: mensaje
+        message: mensaje,
+        accountStatus: user.estado
       });
     }
     
@@ -178,6 +179,25 @@ const login = async (req, res) => {
     // Generar tokens de sesión
     const tokens = generateSessionTokens(user);
     
+    // Obtener la IP real del cliente (considerando proxies)
+    const getClientIp = (req) => {
+      // Intentar obtener IP de headers de proxy primero
+      const forwardedFor = req.headers['x-forwarded-for'];
+      if (forwardedFor) {
+        // x-forwarded-for puede ser una lista de IPs, tomar la primera (cliente original)
+        return forwardedFor.split(',')[0].trim();
+      }
+      
+      // Fallback a otras opciones
+      return req.headers['x-real-ip'] || 
+             req.connection.remoteAddress || 
+             req.socket.remoteAddress ||
+             req.ip ||
+             'IP desconocida';
+    };
+    
+    const clientIp = getClientIp(req);
+    
     // Crear sesión en la base de datos
     const sessionResult = await query(`
       INSERT INTO sesiones_usuario (
@@ -188,8 +208,8 @@ const login = async (req, res) => {
       user.id,
       tokens.accessToken,
       new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 días
-      req.ip || req.connection.remoteAddress,
-      req.get('User-Agent')
+      clientIp,
+      req.get('User-Agent') || 'User-Agent desconocido'
     ]);
     
     // Actualizar último acceso
@@ -203,8 +223,8 @@ const login = async (req, res) => {
       await sendNewSessionEmail(
         user.correo, 
         user.nombre, 
-        req.ip || req.connection.remoteAddress,
-        req.get('User-Agent')
+        clientIp,
+        req.get('User-Agent') || 'User-Agent desconocido'
       );
     } catch (emailError) {
       console.error('❌ Error enviando notificación de sesión:', emailError.message);
@@ -651,6 +671,16 @@ const requestPasswordReset = async (req, res) => {
     
     // Verificar que el usuario esté activo
     if (user.estado !== 'activo') {
+      // Mensaje específico para cuentas suspendidas
+      if (user.estado === 'suspendido') {
+        return res.status(403).json({
+          success: false,
+          message: 'No puedes recuperar tu contraseña porque tu cuenta ha sido suspendida por incumplimiento de las políticas de uso. Por favor, contacta al administrador del sistema para obtener más información sobre tu situación.',
+          accountStatus: 'suspendido'
+        });
+      }
+      
+      // Para otros estados (inactivo, pendiente), mensaje genérico por seguridad
       return res.json({
         success: true,
         message: 'Si el correo existe en nuestro sistema, recibirás un email con las instrucciones para restablecer tu contraseña'
@@ -791,6 +821,179 @@ const resetPassword = async (req, res) => {
   }
 };
 
+/**
+ * Actualizar perfil de usuario
+ */
+const updateProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { nombre, apellido, telefono, direccion, genero } = req.body;
+
+    console.log('🔄 Actualizando perfil del usuario ID:', userId);
+
+    // Validar que al menos un campo esté presente
+    if (!nombre && !apellido && !telefono && !direccion && !genero) {
+      return res.status(400).json({
+        success: false,
+        message: 'Debe proporcionar al menos un campo para actualizar'
+      });
+    }
+
+    // Construir la consulta de actualización dinámicamente
+    const updates = [];
+    const values = [];
+    let paramIndex = 1;
+
+    if (nombre) {
+      updates.push(`nombre = $${paramIndex}`);
+      values.push(nombre);
+      paramIndex++;
+    }
+    if (apellido) {
+      updates.push(`apellido = $${paramIndex}`);
+      values.push(apellido);
+      paramIndex++;
+    }
+    if (telefono) {
+      updates.push(`telefono = $${paramIndex}`);
+      values.push(telefono);
+      paramIndex++;
+    }
+    if (direccion) {
+      updates.push(`direccion = $${paramIndex}`);
+      values.push(direccion);
+      paramIndex++;
+    }
+    if (genero) {
+      updates.push(`genero = $${paramIndex}`);
+      values.push(genero);
+      paramIndex++;
+    }
+
+    values.push(userId);
+
+    const updateQuery = `
+      UPDATE usuarios 
+      SET ${updates.join(', ')}, fecha_actualizacion = CURRENT_TIMESTAMP
+      WHERE id = $${paramIndex}
+      RETURNING id, cedula, nombre, apellido, correo, telefono, direccion, genero,
+                tipo_usuario, estado, email_verificado, fecha_registro, fecha_ultimo_acceso
+    `;
+
+    const result = await query(updateQuery, values);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Usuario no encontrado'
+      });
+    }
+
+    console.log('✅ Perfil actualizado exitosamente');
+
+    return res.status(200).json({
+      success: true,
+      message: 'Perfil actualizado exitosamente',
+      user: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('❌ Error actualizando perfil:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor',
+      error: config.server.nodeEnv === 'development' ? error.message : {}
+    });
+  }
+};
+
+/**
+ * Cambiar contraseña del usuario
+ */
+const changePassword = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { currentPassword, newPassword } = req.body;
+
+    console.log('🔒 Cambiando contraseña para usuario ID:', userId);
+
+    // Validar que se proporcionen ambas contraseñas
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Debe proporcionar la contraseña actual y la nueva contraseña'
+      });
+    }
+
+    // Validar longitud mínima de la nueva contraseña
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'La nueva contraseña debe tener al menos 6 caracteres'
+      });
+    }
+
+    // Obtener el usuario con su contraseña actual
+    const userResult = await query(
+      'SELECT id, password_hash FROM usuarios WHERE id = $1',
+      [userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Usuario no encontrado'
+      });
+    }
+
+    const user = userResult.rows[0];
+
+    // Verificar que la contraseña actual sea correcta
+    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password_hash);
+
+    if (!isCurrentPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: 'La contraseña actual es incorrecta'
+      });
+    }
+
+    // Verificar que la nueva contraseña sea diferente de la actual
+    const isSamePassword = await bcrypt.compare(newPassword, user.password_hash);
+
+    if (isSamePassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'La nueva contraseña debe ser diferente de la contraseña actual'
+      });
+    }
+
+    // Encriptar la nueva contraseña
+    const newPasswordHash = await bcrypt.hash(newPassword, config.bcrypt.saltRounds);
+
+    // Actualizar la contraseña en la base de datos
+    await query(
+      'UPDATE usuarios SET password_hash = $1, fecha_actualizacion = CURRENT_TIMESTAMP WHERE id = $2',
+      [newPasswordHash, userId]
+    );
+
+    console.log('✅ Contraseña cambiada exitosamente');
+
+    return res.status(200).json({
+      success: true,
+      message: 'Contraseña actualizada exitosamente'
+    });
+
+  } catch (error) {
+    console.error('❌ Error cambiando contraseña:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor',
+      error: config.server.nodeEnv === 'development' ? error.message : {}
+    });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -799,6 +1002,8 @@ module.exports = {
   requestPasswordReset,
   resetPassword,
   getProfile,
+  updateProfile,
+  changePassword,
   getUsers,
   logout,
   testAuth
