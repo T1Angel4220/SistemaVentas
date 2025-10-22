@@ -27,7 +27,9 @@ import {
   Eye,
   ShoppingCart,
   Camera,
-  DollarSign
+  DollarSign,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import type { ProductDetail } from '../types/product.types';
 
@@ -95,6 +97,28 @@ export const ProductDetailPage: React.FC = () => {
       loadProduct();
     }
   }, [id, loadProduct]);
+
+  // 🆕 Navegación con teclado (flechas izquierda/derecha)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!product || product.imagenes.length <= 1) return;
+      
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        setCurrentImageIndex((prev) => 
+          prev === 0 ? product.imagenes.length - 1 : prev - 1
+        );
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        setCurrentImageIndex((prev) => 
+          prev === product.imagenes.length - 1 ? 0 : prev + 1
+        );
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [product]);
 
 
   const handleDeleteProduct = async () => {
@@ -292,8 +316,8 @@ export const ProductDetailPage: React.FC = () => {
               >
                 <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2" />
                 <span>Regresar</span>
-              </Button>
-            </Link>
+                </Button>
+              </Link>
             
             {/* Breadcrumb - RESPONSIVE */}
             <div className="flex items-center flex-wrap gap-x-1.5 sm:gap-x-2 gap-y-1 text-xs sm:text-sm md:text-base text-blue-100">
@@ -311,11 +335,17 @@ export const ProductDetailPage: React.FC = () => {
                     Productos
                   </Link>
                   <span className="text-blue-200">/</span>
-                  <span className="text-white whitespace-nowrap truncate max-w-[120px] sm:max-w-none">
+                  <span 
+                    className="text-white whitespace-nowrap truncate max-w-[120px] sm:max-w-[180px] md:max-w-[220px]"
+                    title={product.categoria_nombre}
+                  >
                     {product.categoria_nombre}
                   </span>
                   <span className="text-blue-200 hidden sm:inline">/</span>
-                  <span className="text-white font-medium truncate max-w-[150px] sm:max-w-[200px] md:max-w-none hidden sm:inline">
+                  <span 
+                    className="text-white font-medium truncate max-w-[150px] sm:max-w-[200px] md:max-w-[280px] lg:max-w-[400px] hidden sm:inline"
+                    title={product.nombre}
+                  >
                     {product.nombre}
                   </span>
                 </>
@@ -344,7 +374,7 @@ export const ProductDetailPage: React.FC = () => {
                         src={product.imagenes[currentImageIndex]?.url_imagen}
                         alt={product.nombre}
                         className="w-full h-[300px] sm:h-[400px] lg:h-[500px] object-contain bg-white"
-                      />
+                    />
                     
                     {/* Overlay de zoom */}
                     {isZoomed && (
@@ -360,6 +390,39 @@ export const ProductDetailPage: React.FC = () => {
                       </div>
                     )}
                   </div>
+                  
+                  {/* 🆕 Botones de navegación de imágenes (FLECHAS) */}
+                  {product.imagenes.length > 1 && (
+                    <>
+                      {/* Flecha Izquierda */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCurrentImageIndex((prev) => 
+                            prev === 0 ? product.imagenes.length - 1 : prev - 1
+                          );
+                        }}
+                        className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-2 sm:p-3 rounded-full transition-all duration-200 shadow-xl hover:scale-110 opacity-0 group-hover:opacity-100 z-10"
+                        aria-label="Imagen anterior"
+                      >
+                        <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
+                      </button>
+                      
+                      {/* Flecha Derecha */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCurrentImageIndex((prev) => 
+                            prev === product.imagenes.length - 1 ? 0 : prev + 1
+                          );
+                        }}
+                        className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-2 sm:p-3 rounded-full transition-all duration-200 shadow-xl hover:scale-110 opacity-0 group-hover:opacity-100 z-10"
+                        aria-label="Imagen siguiente"
+                      >
+                        <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
+                      </button>
+                    </>
+                  )}
                   
                   {/* Contador de imágenes */}
                       {product.imagenes.length > 1 && (
@@ -393,9 +456,9 @@ export const ProductDetailPage: React.FC = () => {
                   <div className="text-center px-4">
                     <Package className="h-12 w-12 sm:h-16 sm:w-16 text-gray-400 mx-auto mb-3 sm:mb-4" />
                     <h3 className="text-base sm:text-lg font-medium text-gray-600">Sin imágenes disponibles</h3>
-                  </div>
-                </div>
-              )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                     
                     {/* Miniaturas */}
@@ -443,8 +506,17 @@ export const ProductDetailPage: React.FC = () => {
                     <div className="flex items-start space-x-3 p-2 bg-white/60 rounded-lg">
                       <Calendar className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
                       <div className="flex-1">
-                        <span className="text-gray-600 block text-xs font-medium mb-1">Días disponibles</span>
-                        <span className="text-gray-900 font-semibold">{product.servicio.dias_disponibles}</span>
+                        <span className="text-gray-600 block text-xs font-medium mb-2">Días disponibles</span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {product.servicio.dias_disponibles.split(',').map((dia: string, index: number) => (
+                            <span
+                              key={index}
+                              className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 border border-purple-200 shadow-sm"
+                            >
+                              {dia.trim().charAt(0).toUpperCase() + dia.trim().slice(1)}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -465,9 +537,9 @@ export const ProductDetailPage: React.FC = () => {
 
           {/* Columna derecha - Información del producto */}
           <div className="space-y-4 sm:space-y-6">
-            {/* Título del producto - MEJORADO: Mayor peso visual + RESPONSIVE */}
+            {/* Título del producto - MEJORADO: Mayor peso visual + RESPONSIVE + Manejo de texto largo */}
             <div>
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 leading-tight mb-2 sm:mb-3 tracking-tight">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 leading-tight mb-2 sm:mb-3 tracking-tight break-words">
                 {product.nombre}
               </h1>
               <div className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 flex items-center">
@@ -486,7 +558,7 @@ export const ProductDetailPage: React.FC = () => {
                 <span className="text-4xl sm:text-5xl lg:text-6xl font-black bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent inline-block leading-none">
                   ${product.precio ? Number(product.precio).toFixed(2) : '0.00'}
                 </span>
-              </div>
+                    </div>
               
               {/* Estado - Solo visible para moderadores, administradores y vendedor dueño */}
               {user && (
@@ -500,7 +572,7 @@ export const ProductDetailPage: React.FC = () => {
                   </span>
                 </div>
               )}
-            </div>
+                  </div>
                   
             {/* NUEVO: Botón de acción principal para COMPRADORES + RESPONSIVE */}
             {user?.tipo_usuario === 'comprador' && product.estado === 'activo' && product.disponibilidad && (
@@ -517,7 +589,7 @@ export const ProductDetailPage: React.FC = () => {
                 </p>
               </div>
             )}
-
+                  
             {/* Información de estado pendiente */}
             {product.estado === 'pendiente_revision' && (
               <Alert className="border-yellow-200 bg-yellow-50 rounded-lg">
@@ -644,16 +716,16 @@ export const ProductDetailPage: React.FC = () => {
                   )}
                     
                   {canDeleteProduct(product.vendedor_id) && !product.es_peligroso && (
-                    <Button 
+                      <Button 
                       onClick={handleDeleteProduct}
                       className="w-full h-11 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 text-sm font-semibold"
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
                       Eliminar Producto
-                    </Button>
-                  )}
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
             )}
 
             {/* Información del vendedor - MEJORADO: Más compacto + Sombras + RESPONSIVE */}
@@ -669,15 +741,15 @@ export const ProductDetailPage: React.FC = () => {
                 </h3>
                 <div className="space-y-1 mb-3">
                   <div className="font-medium text-gray-900 text-lg">{product.vendedor_nombre}</div>
-                  <div className="text-sm text-gray-600">{product.vendedor_email}</div>
-                </div>
+                    <div className="text-sm text-gray-600">{product.vendedor_email}</div>
+                  </div>
                 {user?.tipo_usuario !== 'comprador' && (
-                  <Button 
-                    onClick={() => navigate(`/products/contact/${product.id}`)}
+                <Button 
+                  onClick={() => navigate(`/products/contact/${product.id}`)}
                     className="w-full bg-orange-500 hover:bg-orange-600 text-white h-10 rounded-lg text-sm font-medium shadow-lg hover:shadow-xl transition-all"
-                  >
-                    Contactar vendedor
-                  </Button>
+                >
+                  Contactar vendedor
+                </Button>
                 )}
               </div>
             )}
@@ -690,13 +762,13 @@ export const ProductDetailPage: React.FC = () => {
                   Ubicación
                 </h3>
                 <div className="space-y-2 text-sm">
-                  {product.ubicacion_nombre && (
+            {product.ubicacion_nombre && (
                     <div className="flex items-start space-x-2">
                       <span className="text-gray-600 w-20 flex-shrink-0">Dirección:</span>
                       <span className="text-gray-900 font-medium">{product.ubicacion_nombre}</span>
                     </div>
                   )}
-                  {product.provincia && (
+                      {product.provincia && (
                     <div className="flex items-start space-x-2">
                       <span className="text-gray-600 w-20 flex-shrink-0">Provincia:</span>
                       <span className="text-gray-900">{product.provincia}</span>
@@ -715,7 +787,7 @@ export const ProductDetailPage: React.FC = () => {
                     </div>
                   )}
                 </div>
-              </div>
+                    </div>
             )}
 
             {/* Información adicional - MEJORADO: Con sombras y profundidad + RESPONSIVE */}
@@ -735,7 +807,7 @@ export const ProductDetailPage: React.FC = () => {
                       <FileText className="h-4 w-4 text-purple-500 mt-0.5 flex-shrink-0" />
                       <span className="text-gray-700 text-xs leading-relaxed">{product.categoria_descripcion}</span>
                     </div>
-                  </div>
+                </div>
                 )}
                 <div className="py-1.5">
                   <span className="text-gray-600 text-xs font-medium uppercase tracking-wide block mb-1">Publicado</span>
@@ -801,12 +873,24 @@ export const ProductDetailPage: React.FC = () => {
                 {product.descripcion.split('\n').map((paragraph, index) => {
                   if (!paragraph.trim()) return null;
                   
+                  // Función para renderizar texto con negritas **texto**
+                  const renderWithBold = (text: string) => {
+                    const parts = text.split(/(\*\*.*?\*\*)/g);
+                    return parts.map((part, i) => {
+                      if (part.startsWith('**') && part.endsWith('**')) {
+                        return <strong key={i} className="font-bold text-gray-900">{part.slice(2, -2)}</strong>;
+                      }
+                      return <span key={i}>{part}</span>;
+                    });
+                  };
+                  
                   // Detectar si es una lista (comienza con - o *)
                   if (paragraph.trim().startsWith('-') || paragraph.trim().startsWith('*')) {
+                    const listText = paragraph.trim().substring(1).trim();
                     return (
                       <div key={index} className="flex items-start space-x-2 my-2">
                         <span className="text-blue-600 font-bold mt-1">•</span>
-                        <span className="flex-1">{paragraph.trim().substring(1).trim()}</span>
+                        <span className="flex-1">{renderWithBold(listText)}</span>
                       </div>
                     );
                   }
@@ -815,7 +899,7 @@ export const ProductDetailPage: React.FC = () => {
                   if (paragraph === paragraph.toUpperCase() || paragraph.trim().endsWith(':')) {
                     return (
                       <h3 key={index} className="font-bold text-lg text-gray-900 mt-6 mb-3 first:mt-0">
-                        {paragraph}
+                        {renderWithBold(paragraph)}
                       </h3>
                     );
                   }
@@ -823,14 +907,14 @@ export const ProductDetailPage: React.FC = () => {
                   // Párrafo normal
                   return (
                     <p key={index} className="mb-4 last:mb-0">
-                      {paragraph}
+                      {renderWithBold(paragraph)}
                     </p>
                   );
                 })}
               </div>
+                  </div>
+                    </div>
             </div>
-          </div>
-        </div>
 
         {/* Alertas de estado adicionales */}
         <div className="mt-8 space-y-4">

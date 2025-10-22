@@ -1,15 +1,17 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { RegisterForm } from '../components/auth/RegisterForm';
 import { ShoppingCart, Shield, Users, MessageCircle } from 'lucide-react';
 
 export const RegisterPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
+  const location = useLocation();
 
-  // Si ya está autenticado, redirigir al dashboard
+  // Si ya está autenticado, redirigir a la página anterior o al dashboard
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard';
+    return <Navigate to={from} replace />;
   }
 
   return (
