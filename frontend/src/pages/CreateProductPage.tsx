@@ -43,6 +43,10 @@ export const CreateProductPage: React.FC = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [deletedExistingImages, setDeletedExistingImages] = useState<number[]>([]);
+  
+  // Estado para detectar cambios en modo edición
+  const [initialFormData, setInitialFormData] = useState<ProductForm | null>(null);
+  const [initialImages, setInitialImages] = useState<string[]>([]);
 
   // Usar hooks optimizados para evitar múltiples requests
   const { data: categories, loading: categoriesLoading, error: categoriesError } = useCategories();
@@ -79,8 +83,47 @@ export const CreateProductPage: React.FC = () => {
         const product = data.data;
         setIsEditMode(true);
         
-        // Cargar datos del formulario
-        setForm({
+        // Función auxiliar para convertir hora 12h a 24h
+        const parseTime12to24 = (time12: string): string => {
+          const match = time12.trim().match(/(\d+):(\d+)\s*(AM|PM)/i);
+          if (!match) return '';
+          
+          let hours = parseInt(match[1]);
+          const minutes = match[2];
+          const period = match[3].toUpperCase();
+          
+          if (period === 'AM' && hours === 12) hours = 0;
+          if (period === 'PM' && hours !== 12) hours += 12;
+          
+          return `${hours.toString().padStart(2, '0')}:${minutes}`;
+        };
+
+        // Extraer horario_inicio y horario_fin del horario_atencion
+        let horarioInicio = '';
+        let horarioFin = '';
+        
+        if (product.servicio?.horario_atencion) {
+          const horarioParts = product.servicio.horario_atencion.split('-').map((p: string) => p.trim());
+          if (horarioParts.length === 2) {
+            horarioInicio = parseTime12to24(horarioParts[0]);
+            horarioFin = parseTime12to24(horarioParts[1]);
+          }
+        }
+
+        // Limpiar y deduplicar días disponibles
+        let diasLimpios: string[] = [];
+        if (product.servicio?.dias_disponibles) {
+          const diasArray = product.servicio.dias_disponibles
+            .split(',')
+            .map((dia: string) => dia.trim().toLowerCase()) // Trim y lowercase
+            .filter((dia: string) => dia !== ''); // Eliminar vacíos
+          
+          // Eliminar duplicados usando Set
+          diasLimpios = [...new Set(diasArray)] as string[];
+        }
+
+        // Construir objeto de formulario
+        const formData: ProductForm = {
           codigo: product.codigo || '',
           nombre: product.nombre || '',
           descripcion: product.descripcion || '',
@@ -95,19 +138,28 @@ export const CreateProductPage: React.FC = () => {
           disponibilidad: product.disponibilidad === true, // Solo true si explícitamente es true
           estado: product.estado || 'pendiente_revision',
           horario_atencion: product.servicio?.horario_atencion || '',
-          horario_inicio: '', // Se extraerá del horario_atencion
-          horario_fin: '', // Se extraerá del horario_atencion
-          dias_disponibles: product.servicio?.dias_disponibles ? product.servicio.dias_disponibles.split(',') : [],
-          duracion_estimada: product.servicio?.duracion_estimada || ''
-        });
+          horario_inicio: horarioInicio,
+          horario_fin: horarioFin,
+          dias_disponibles: diasLimpios,
+          // Limpiar valores inválidos de duración (placeholder o vacío)
+          duracion_estimada: (product.servicio?.duracion_estimada && product.servicio.duracion_estimada !== 'Selecciona duración') 
+            ? product.servicio.duracion_estimada 
+            : ''
+        };
+
+        // Cargar datos del formulario
+        setForm(formData);
+        
+        // Guardar copia de los datos iniciales para detectar cambios
+        setInitialFormData(JSON.parse(JSON.stringify(formData))); // Deep copy
 
         // Cargar imágenes existentes
-        if (product.imagenes && product.imagenes.length > 0) {
-          const imageUrls = product.imagenes.map((img: { url_imagen: string }) => img.url_imagen);
+        const imageUrls = product.imagenes && product.imagenes.length > 0 
+          ? product.imagenes.map((img: { url_imagen: string }) => img.url_imagen)
+          : [];
+        
           setExistingImages(imageUrls);
-        } else {
-          setExistingImages([]);
-        }
+        setInitialImages([...imageUrls]); // Guardar copia de imágenes iniciales
         
         // Limpiar estado de imágenes eliminadas
         setDeletedExistingImages([]);
@@ -138,7 +190,88 @@ export const CreateProductPage: React.FC = () => {
   }, [user, navigate, id, loadProductData]);
 
   const handleInputChange = (field: keyof ProductForm, value: string | string[]) => {
-    setForm(prev => ({ ...prev, [field]: value }));
+    let processedValue = value;
+    
+    // Validaciones específicas por campo (estilo Amazon)
+    if (typeof value === 'string') {
+      switch (field) {
+        case 'codigo':
+          // Solo alfanumérico, guiones y guiones bajos (sin espacios)
+          processedValue = value
+            .replace(/[^a-zA-Z0-9_-]/g, '')
+            .toUpperCase()
+            .slice(0, 20); // Máximo 20 caracteres
+          break;
+          
+        case 'nombre': {
+          // Permitir letras, números, espacios y algunos caracteres especiales básicos
+          processedValue = value
+            .replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s.,;:()-]/g, '')
+            .slice(0, 100); // Máximo 100 caracteres
+          break;
+        }
+          
+        case 'precio': {
+          // Solo números y punto decimal
+          processedValue = value
+            .replace(/[^0-9.]/g, '')
+            .replace(/(\..*)\./g, '$1'); // Solo un punto decimal
+          
+          // Validar formato de precio (máximo 2 decimales)
+          const parts = processedValue.split('.');
+          if (parts[1] && parts[1].length > 2) {
+            processedValue = `${parts[0]}.${parts[1].slice(0, 2)}`;
+          }
+          
+          // Máximo 7 dígitos antes del punto (9,999,999.99)
+          if (parts[0] && parts[0].length > 7) {
+            processedValue = parts[1] ? `${parts[0].slice(0, 7)}.${parts[1]}` : parts[0].slice(0, 7);
+          }
+          break;
+        }
+          
+        case 'descripcion':
+          // Permitir casi todo excepto HTML y scripts
+          processedValue = value
+            .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+            .replace(/<[^>]*>/g, '')
+            .slice(0, 5000); // Máximo 5000 caracteres
+          break;
+          
+        case 'ubicacion_provincia':
+        case 'ubicacion_canton':
+        case 'ubicacion_distrito':
+          // Solo letras y espacios
+          processedValue = value
+            .replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')
+            .slice(0, 50); // Máximo 50 caracteres
+          break;
+          
+        case 'ubicacion_direccion':
+          // Permitir letras, números, espacios y caracteres comunes en direcciones
+          processedValue = value
+            .replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s.,#-]/g, '')
+            .slice(0, 200); // Máximo 200 caracteres
+          break;
+          
+        case 'duracion_estimada':
+          // Solo letras, números, espacios, guiones y caracteres útiles para duraciones
+          processedValue = value
+            .replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s-]/g, '')
+            .slice(0, 50); // Máximo 50 caracteres
+          break;
+          
+        case 'horario_inicio':
+        case 'horario_fin':
+          // Los horarios vienen en formato HH:mm del input type="time"
+          // No necesitan transformación, solo asignación
+          processedValue = value;
+          break;
+      }
+    }
+    
+    setForm(prev => ({ ...prev, [field]: processedValue }));
+    
     // Limpiar error del campo cuando el usuario empiece a escribir
     if (errors[field]) {
       setErrors(prev => {
@@ -252,46 +385,156 @@ export const CreateProductPage: React.FC = () => {
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
+    // Validación de Código (estilo Amazon)
     if (!form.codigo.trim()) {
       newErrors.codigo = 'El código es requerido';
     } else if (form.codigo.length < 3) {
       newErrors.codigo = 'El código debe tener al menos 3 caracteres';
+    } else if (form.codigo.length > 20) {
+      newErrors.codigo = 'El código no puede exceder 20 caracteres';
+    } else if (!/^[A-Z0-9_-]+$/.test(form.codigo)) {
+      newErrors.codigo = 'El código solo puede contener letras mayúsculas, números, guiones y guiones bajos';
     }
 
+    // Validación de Nombre
     if (!form.nombre.trim()) {
       newErrors.nombre = 'El nombre es requerido';
-    } else if (form.nombre.length < 3) {
+    } else if (form.nombre.trim().length < 3) {
       newErrors.nombre = 'El nombre debe tener al menos 3 caracteres';
+    } else if (form.nombre.length > 100) {
+      newErrors.nombre = 'El nombre no puede exceder 100 caracteres';
+    } else if (form.nombre.trim().length < 5) {
+      newErrors.nombre = 'El nombre debe ser más descriptivo (mínimo 5 caracteres)';
     }
 
-    if (!form.descripcion.trim()) {
-      newErrors.descripcion = 'La descripción es requerida';
-    } else if (form.descripcion.length < 10) {
-      newErrors.descripcion = 'La descripción debe tener al menos 10 caracteres';
-    }
-
+    // Validación de Precio (estilo Amazon)
     if (!form.precio.trim()) {
       newErrors.precio = 'El precio es requerido';
     } else {
       const price = parseFloat(form.precio);
-      if (isNaN(price) || price <= 0) {
-        newErrors.precio = 'El precio debe ser un número mayor a 0';
+      if (isNaN(price)) {
+        newErrors.precio = 'El precio debe ser un número válido';
+      } else if (price <= 0) {
+        newErrors.precio = 'El precio debe ser mayor a $0.00';
+      } else if (price < 0.01) {
+        newErrors.precio = 'El precio mínimo es $0.01';
+      } else if (price > 9999999.99) {
+        newErrors.precio = 'El precio máximo es $9,999,999.99';
+      } else if (!/^\d+(\.\d{1,2})?$/.test(form.precio)) {
+        newErrors.precio = 'El precio solo puede tener hasta 2 decimales';
       }
     }
 
-    if (!form.categoria_id) {
-      newErrors.categoria_id = 'La categoría es requerida';
+    // Validación de Descripción
+    if (!form.descripcion.trim()) {
+      newErrors.descripcion = 'La descripción es requerida';
+    } else if (form.descripcion.trim().length < 20) {
+      newErrors.descripcion = 'La descripción debe tener al menos 20 caracteres para ser útil';
+    } else if (form.descripcion.length > 5000) {
+      newErrors.descripcion = 'La descripción no puede exceder 5000 caracteres';
     }
 
+    // Validación de Categoría
+    if (!form.categoria_id) {
+      newErrors.categoria_id = 'Debe seleccionar una categoría';
+    }
+
+    // Validación de Ubicación
+    if (!form.ubicacion_provincia.trim()) {
+      newErrors.ubicacion_provincia = 'La provincia es requerida';
+    } else if (form.ubicacion_provincia.trim().length < 3) {
+      newErrors.ubicacion_provincia = 'La provincia debe tener al menos 3 caracteres';
+    }
+
+    if (!form.ubicacion_canton.trim()) {
+      newErrors.ubicacion_canton = 'El cantón es requerido';
+    } else if (form.ubicacion_canton.trim().length < 3) {
+      newErrors.ubicacion_canton = 'El cantón debe tener al menos 3 caracteres';
+    }
+
+    if (!form.ubicacion_direccion.trim()) {
+      newErrors.ubicacion_direccion = 'La dirección es requerida';
+    } else if (form.ubicacion_direccion.trim().length < 10) {
+      newErrors.ubicacion_direccion = 'La dirección debe ser más específica (mínimo 10 caracteres)';
+    }
+
+    // Validaciones específicas para Servicios (estilo Amazon)
     if (form.tipo === 'servicio') {
-      if (!form.horario_inicio.trim()) {
+      // Validar hora de inicio
+      if (!form.horario_inicio || !form.horario_inicio.trim()) {
         newErrors.horario_inicio = 'La hora de inicio es requerida para servicios';
       }
-      if (!form.horario_fin.trim()) {
+      
+      // Validar hora de fin
+      if (!form.horario_fin || !form.horario_fin.trim()) {
         newErrors.horario_fin = 'La hora de fin es requerida para servicios';
       }
-      if (form.dias_disponibles.length === 0) {
+      
+      // Validar que hora fin sea mayor que hora inicio
+      if (form.horario_inicio && form.horario_fin) {
+        const [inicioHoras, inicioMinutos] = form.horario_inicio.split(':').map(Number);
+        const [finHoras, finMinutos] = form.horario_fin.split(':').map(Number);
+        const inicioTotal = inicioHoras * 60 + inicioMinutos;
+        const finTotal = finHoras * 60 + finMinutos;
+        
+        if (finTotal <= inicioTotal) {
+          newErrors.horario_fin = 'La hora de fin debe ser posterior a la hora de inicio';
+        }
+        
+        // Validar que el rango sea razonable (mínimo 30 minutos, máximo 24 horas)
+        const diferenciaMinutos = finTotal - inicioTotal;
+        if (diferenciaMinutos < 30) {
+          newErrors.horario_fin = 'El horario de atención debe ser de al menos 30 minutos';
+        }
+      }
+      
+      // Validar días disponibles
+      if (!form.dias_disponibles || form.dias_disponibles.length === 0) {
         newErrors.dias_disponibles = 'Debe seleccionar al menos un día disponible';
+      }
+      
+      // Validar duración estimada
+      if (!form.duracion_estimada || !form.duracion_estimada.trim() || form.duracion_estimada === 'Selecciona duración') {
+        newErrors.duracion_estimada = 'La duración estimada es requerida para servicios';
+      } else if (form.duracion_estimada.trim().length < 3) {
+        newErrors.duracion_estimada = 'La duración debe ser descriptiva (ej: "1 hora", "30 minutos")';
+      }
+      
+      // 🆕 VALIDACIÓN CRÍTICA: La duración NO debe exceder el horario de atención
+      if (form.horario_inicio && form.horario_fin && form.duracion_estimada && form.duracion_estimada !== 'Selecciona duración') {
+        // Calcular tiempo disponible en el horario
+        const [inicioHoras, inicioMinutos] = form.horario_inicio.split(':').map(Number);
+        const [finHoras, finMinutos] = form.horario_fin.split(':').map(Number);
+        const inicioTotal = inicioHoras * 60 + inicioMinutos;
+        const finTotal = finHoras * 60 + finMinutos;
+        const tiempoDisponibleMinutos = finTotal - inicioTotal;
+        
+        // Convertir duración estimada a minutos
+        const duracionTexto = form.duracion_estimada.toLowerCase();
+        let duracionEstimadaMinutos = 0;
+        
+        // Parsear horas
+        const horasMatch = duracionTexto.match(/(\d+)\s*(hora|hr|h)/i);
+        if (horasMatch) {
+          duracionEstimadaMinutos += parseInt(horasMatch[1]) * 60;
+        }
+        
+        // Parsear minutos
+        const minutosMatch = duracionTexto.match(/(\d+)\s*(minuto|min|m)/i);
+        if (minutosMatch) {
+          duracionEstimadaMinutos += parseInt(minutosMatch[1]);
+        }
+        
+        // Validar consistencia lógica
+        if (duracionEstimadaMinutos > 0 && duracionEstimadaMinutos > tiempoDisponibleMinutos) {
+          const horasDisponibles = Math.floor(tiempoDisponibleMinutos / 60);
+          const minutosDisponibles = tiempoDisponibleMinutos % 60;
+          const tiempoDisponibleTexto = horasDisponibles > 0 
+            ? `${horasDisponibles} hora${horasDisponibles !== 1 ? 's' : ''} ${minutosDisponibles > 0 ? `y ${minutosDisponibles} minutos` : ''}`
+            : `${minutosDisponibles} minutos`;
+          
+          newErrors.duracion_estimada = `⚠️ Inconsistencia lógica: La duración del servicio (${form.duracion_estimada}) excede tu horario de atención disponible (${tiempoDisponibleTexto}). Ajusta el horario o reduce la duración.`;
+        }
       }
     }
 
@@ -299,10 +542,52 @@ export const CreateProductPage: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Función para detectar si hay cambios en modo edición
+  const hasChanges = (): boolean => {
+    if (!isEditMode || !initialFormData) return true; // En modo creación siempre continuar
+
+    // Comparar datos del formulario (excluyendo horario_atencion que se genera dinámicamente)
+    const formChanged = Object.keys(form).some(key => {
+      if (key === 'horario_atencion') return false; // Este se genera, no comparar
+      
+      const currentValue = form[key as keyof ProductForm];
+      const initialValue = initialFormData[key as keyof ProductForm];
+      
+      // Comparar arrays (días disponibles)
+      if (Array.isArray(currentValue) && Array.isArray(initialValue)) {
+        if (currentValue.length !== initialValue.length) return true;
+        const sortedCurrent = [...currentValue].sort();
+        const sortedInitial = [...initialValue].sort();
+        return sortedCurrent.some((val, idx) => val !== sortedInitial[idx]);
+      }
+      
+      // Comparar valores simples
+      return currentValue !== initialValue;
+    });
+
+    // Comparar imágenes
+    const imagesChanged = 
+      images.length > 0 || // Hay nuevas imágenes
+      deletedExistingImages.length > 0 || // Se eliminaron imágenes
+      existingImages.length !== initialImages.length; // Cambió el número de imágenes
+
+    return formChanged || imagesChanged;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
+      return;
+    }
+
+    // En modo edición, verificar si hay cambios
+    if (isEditMode && !hasChanges()) {
+      showSuccess(
+        'Sin cambios', 
+        'No se han realizado cambios en el formulario. Todo está actualizado.',
+        () => navigate(`/products/${id}`) // Redirigir a la vista del producto
+      );
       return;
     }
 
@@ -327,9 +612,11 @@ export const CreateProductPage: React.FC = () => {
       
       // Agregar datos del formulario (excluyendo campos específicos de servicio que se procesarán por separado)
       Object.entries(form).forEach(([key, value]) => {
-        if (key === 'horario_inicio' || key === 'horario_fin' || key === 'dias_disponibles') {
-          return; // Estos se procesarán por separado
+        // Excluir campos de servicio que se procesarán después
+        if (key === 'horario_inicio' || key === 'horario_fin' || key === 'dias_disponibles' || key === 'duracion_estimada' || key === 'horario_atencion') {
+          return; // Estos se procesarán por separado en la sección de servicio
         }
+        
         if (value !== undefined && value !== null && value !== '') {
           formData.append(key, value.toString());
         }
@@ -350,9 +637,16 @@ export const CreateProductPage: React.FC = () => {
           formData.append('horario_atencion', horarioCompleto);
         }
         
-        // Convertir array de días a string separado por comas
+        // Convertir array de días a string separado por comas (eliminar duplicados)
         if (form.dias_disponibles.length > 0) {
-          formData.append('dias_disponibles', form.dias_disponibles.join(', '));
+          // Eliminar duplicados y normalizar (trim + lowercase)
+          const diasUnicos = [...new Set(form.dias_disponibles.map(d => d.trim().toLowerCase()))];
+          formData.append('dias_disponibles', diasUnicos.join(', '));
+        }
+        
+        // Agregar duración estimada (ya validada, pero asegurar que no sea placeholder)
+        if (form.duracion_estimada && form.duracion_estimada !== 'Selecciona duración' && form.duracion_estimada.trim() !== '') {
+          formData.append('duracion_estimada', form.duracion_estimada);
         }
       }
 
@@ -611,125 +905,196 @@ export const CreateProductPage: React.FC = () => {
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                {/* Campo Código */}
+                {/* Campo Código - CON VALIDACIÓN EN TIEMPO REAL */}
                 <div className="space-y-2">
-                  <Label htmlFor="codigo" className="flex items-center text-sm font-semibold text-gray-700">
-                    <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
-                      <Package className="h-3 w-3 text-blue-600" />
-                    </div>
+                  <Label htmlFor="codigo" className="flex items-center justify-between text-sm font-semibold text-gray-700">
+                    <div className="flex items-center">
+                      <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
+                        <Package className="h-3 w-3 text-blue-600" />
+                      </div>
                     Código del {form.tipo} *
+                    </div>
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                      form.codigo.length === 0 
+                        ? 'bg-gray-100 text-gray-500'
+                        : form.codigo.length >= 3 
+                        ? 'bg-green-100 text-green-700' 
+                        : 'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {form.codigo.length}/20
+                    </span>
                   </Label>
                   <Input
                     id="codigo"
                     value={form.codigo}
                     onChange={(e) => handleInputChange('codigo', e.target.value)}
-                    placeholder="Ej: PROD-001"
+                    placeholder="Ej: PROD-001 (mayúsculas, números, - y _)"
                     className={`w-full h-12 rounded-xl border-2 transition-all shadow-sm hover:shadow-md ${
                       errors.codigo 
                         ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50' 
+                        : form.codigo.length >= 3
+                        ? 'border-green-500 focus:border-green-500 focus:ring-green-500 bg-green-50/30'
                         : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500'
                     }`}
                   />
-                  {errors.codigo && (
+                  {errors.codigo ? (
                     <p className="text-red-500 text-xs font-medium flex items-center mt-1">
                       <AlertCircle className="h-3 w-3 mr-1" />
                       {errors.codigo}
                     </p>
+                  ) : (
+                    <p className="text-xs text-gray-500 flex items-center justify-between">
+                      <span className="flex items-center">
+                        <Info className="h-3 w-3 mr-1" />
+                        Solo MAYÚSCULAS, números, guiones (-) y guiones bajos (_)
+                      </span>
+                      {form.codigo.length >= 3 && (
+                        <span className="text-green-600 font-medium">✓ Válido</span>
+                      )}
+                    </p>
                   )}
-                  <p className="text-xs text-gray-500 flex items-center">
-                    <Info className="h-3 w-3 mr-1" />
-                    Identificador único (mínimo 3 caracteres)
-                  </p>
                 </div>
 
-                {/* Campo Precio - MEJORADO CON AYUDA VISUAL */}
+                {/* Campo Precio - CON VALIDACIÓN EN TIEMPO REAL */}
                 <div className="space-y-2">
-                  <Label htmlFor="precio" className="flex items-center text-sm font-semibold text-gray-700">
-                    <div className="w-6 h-6 bg-green-100 rounded-lg flex items-center justify-center mr-2">
-                      <DollarSign className="h-3 w-3 text-green-600" />
+                  <Label htmlFor="precio" className="flex items-center justify-between text-sm font-semibold text-gray-700">
+                    <div className="flex items-center">
+                      <div className="w-6 h-6 bg-green-100 rounded-lg flex items-center justify-center mr-2">
+                        <DollarSign className="h-3 w-3 text-green-600" />
+                      </div>
+                      Precio (USD) *
                     </div>
-                    Precio (USD) *
+                    {form.precio && parseFloat(form.precio) > 0 && (
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                        ${parseFloat(form.precio).toFixed(2)}
+                      </span>
+                    )}
                   </Label>
                   <div className="relative">
-                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">
+                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold text-lg">
                       $
                     </div>
-                    <Input
-                      id="precio"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={form.precio}
-                      onChange={(e) => handleInputChange('precio', e.target.value)}
-                      placeholder="0.00"
-                      className={`w-full h-12 pl-8 rounded-xl border-2 transition-all shadow-sm hover:shadow-md ${
-                        errors.precio 
+                  <Input
+                    id="precio"
+                      type="text"
+                      inputMode="decimal"
+                    value={form.precio}
+                    onChange={(e) => handleInputChange('precio', e.target.value)}
+                    placeholder="0.00"
+                      className={`w-full h-12 pl-8 rounded-xl border-2 transition-all shadow-sm hover:shadow-md text-lg font-semibold ${
+                      errors.precio 
                           ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50' 
+                          : form.precio && parseFloat(form.precio) >= 0.01
+                          ? 'border-green-500 focus:border-green-500 focus:ring-green-500 bg-green-50/30'
                           : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500'
-                      }`}
-                    />
+                    }`}
+                  />
                   </div>
-                  {errors.precio && (
+                  {errors.precio ? (
                     <p className="text-red-500 text-xs font-medium flex items-center mt-1">
                       <AlertCircle className="h-3 w-3 mr-1" />
                       {errors.precio}
                     </p>
+                  ) : (
+                    <p className="text-xs text-gray-500 flex items-center justify-between">
+                      <span className="flex items-center">
+                        <Info className="h-3 w-3 mr-1" />
+                        Rango: $0.01 - $9,999,999.99 (máx. 2 decimales)
+                      </span>
+                      {form.precio && parseFloat(form.precio) >= 0.01 && (
+                        <span className="text-green-600 font-medium">✓ Válido</span>
+                      )}
+                    </p>
                   )}
-                  <p className="text-xs text-gray-500 flex items-center">
-                    <Info className="h-3 w-3 mr-1" />
-                    Acepta decimales (Ej: 25.99)
-                  </p>
                 </div>
               </div>
 
-              {/* Campo Nombre */}
+              {/* Campo Nombre - CON VALIDACIÓN EN TIEMPO REAL */}
               <div className="mb-6 space-y-2">
-                <Label htmlFor="nombre" className="flex items-center text-sm font-semibold text-gray-700">
-                  <div className="w-6 h-6 bg-purple-100 rounded-lg flex items-center justify-center mr-2">
-                    {form.tipo === 'servicio' ? (
-                      <Calendar className="h-3 w-3 text-purple-600" />
-                    ) : (
-                      <Package className="h-3 w-3 text-purple-600" />
-                    )}
-                  </div>
+                <Label htmlFor="nombre" className="flex items-center justify-between text-sm font-semibold text-gray-700">
+                  <div className="flex items-center">
+                    <div className="w-6 h-6 bg-purple-100 rounded-lg flex items-center justify-center mr-2">
+                      {form.tipo === 'servicio' ? (
+                        <Calendar className="h-3 w-3 text-purple-600" />
+                      ) : (
+                        <Package className="h-3 w-3 text-purple-600" />
+                      )}
+                    </div>
                   Nombre del {form.tipo} *
+                  </div>
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                    form.nombre.length === 0 
+                      ? 'bg-gray-100 text-gray-500'
+                      : form.nombre.length >= 5 
+                      ? 'bg-green-100 text-green-700' 
+                      : 'bg-yellow-100 text-yellow-700'
+                  }`}>
+                    {form.nombre.length}/100
+                  </span>
                 </Label>
                 <Input
                   id="nombre"
                   value={form.nombre}
                   onChange={(e) => handleInputChange('nombre', e.target.value)}
-                  placeholder={`Nombre descriptivo del ${form.tipo}`}
+                  placeholder={`Ej: ${form.tipo === 'servicio' ? 'Diseño gráfico profesional' : 'Laptop Dell Inspiron 15'}`}
                   className={`w-full h-12 rounded-xl border-2 transition-all shadow-sm hover:shadow-md ${
                     errors.nombre 
                       ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50' 
+                      : form.nombre.length >= 5
+                      ? 'border-green-500 focus:border-green-500 focus:ring-green-500 bg-green-50/30'
                       : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500'
                   }`}
                 />
-                {errors.nombre && (
+                {errors.nombre ? (
                   <p className="text-red-500 text-xs font-medium flex items-center mt-1">
                     <AlertCircle className="h-3 w-3 mr-1" />
                     {errors.nombre}
                   </p>
+                ) : (
+                  <p className="text-xs text-gray-500 flex items-center justify-between">
+                    <span className="flex items-center">
+                      <Info className="h-3 w-3 mr-1" />
+                      Mínimo 5 caracteres - Sé descriptivo para atraer compradores
+                    </span>
+                    {form.nombre.length >= 5 && (
+                      <span className="text-green-600 font-medium">✓ Válido</span>
+                    )}
+                  </p>
                 )}
               </div>
 
-              {/* Campo Descripción */}
+              {/* Campo Descripción - CON VALIDACIÓN AVANZADA */}
               <div className="space-y-2">
-                <Label htmlFor="descripcion" className="flex items-center text-sm font-semibold text-gray-700">
-                  <div className="w-6 h-6 bg-indigo-100 rounded-lg flex items-center justify-center mr-2">
-                    <AlertCircle className="h-3 w-3 text-indigo-600" />
-                  </div>
+                <Label htmlFor="descripcion" className="flex items-center justify-between text-sm font-semibold text-gray-700">
+                  <div className="flex items-center">
+                    <div className="w-6 h-6 bg-indigo-100 rounded-lg flex items-center justify-center mr-2">
+                      <AlertCircle className="h-3 w-3 text-indigo-600" />
+                    </div>
                   Descripción *
+                  </div>
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                    form.descripcion.length === 0 
+                      ? 'bg-gray-100 text-gray-500'
+                      : form.descripcion.length >= 20 
+                      ? 'bg-green-100 text-green-700' 
+                      : form.descripcion.length >= 10
+                      ? 'bg-yellow-100 text-yellow-700'
+                      : 'bg-red-100 text-red-700'
+                  }`}>
+                    {form.descripcion.length}/5000
+                  </span>
                 </Label>
                 <Textarea
                   id="descripcion"
                   value={form.descripcion}
                   onChange={(e) => handleInputChange('descripcion', e.target.value)}
-                  placeholder={`Describe detalladamente tu ${form.tipo}...`}
-                  rows={5}
+                  placeholder={`Describe detalladamente tu ${form.tipo}:\n• Características principales\n• Estado/condición\n• Incluye/no incluye\n• Garantías o políticas\n• Cualquier detalle relevante`}
+                  rows={6}
                   className={`w-full rounded-xl border-2 transition-all resize-none shadow-sm hover:shadow-md ${
                     errors.descripcion 
                       ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50' 
+                      : form.descripcion.length >= 20
+                      ? 'border-green-500 focus:border-green-500 focus:ring-green-500 bg-green-50/30'
                       : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500'
                   }`}
                 />
@@ -740,24 +1105,44 @@ export const CreateProductPage: React.FC = () => {
                       {errors.descripcion}
                     </p>
                   ) : (
-                    <p className="text-xs text-gray-500">Mínimo 10 caracteres</p>
+                    <p className="text-xs text-gray-500 flex items-center">
+                      <Info className="h-3 w-3 mr-1" />
+                      Mínimo 20 caracteres - Descripciones detalladas venden más
+                    </p>
                   )}
-                  <p className={`text-xs font-semibold px-3 py-1 rounded-full ${
-                    form.descripcion.length < 10 
-                      ? 'bg-red-100 text-red-600' 
-                      : 'bg-green-100 text-green-600'
-                  }`}>
-                    {form.descripcion.length} caracteres
-                  </p>
+                  <div className="flex items-center space-x-2">
+                    {form.descripcion.length >= 20 && (
+                      <span className="text-green-600 font-medium text-xs">✓ Completo</span>
+                    )}
+                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                      form.descripcion.length < 20 
+                        ? 'bg-red-100 text-red-700' 
+                        : form.descripcion.length < 100
+                        ? 'bg-yellow-100 text-yellow-700'
+                        : 'bg-green-100 text-green-700'
+                    }`}>
+                      {form.descripcion.length >= 20 ? '✓' : form.descripcion.length} {form.descripcion.length < 20 && '/ 20 mín'}
+                    </span>
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Campos específicos de servicio */}
+          {/* Campos específicos de servicio - CON VALIDACIÓN MEJORADA */}
           {form.tipo === 'servicio' && (
-            <Card className="shadow-lg border-0 bg-white rounded-lg overflow-hidden">
+            <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden">
               <CardContent className="p-6">
+                <div className="flex items-center space-x-3 mb-5">
+                  <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                    <Clock className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">Detalles del Servicio</h2>
+                    <p className="text-xs text-gray-600">Configura horarios y disponibilidad</p>
+                  </div>
+                </div>
+
                 <ServiceDetailsForm
                   horarioInicio={form.horario_inicio}
                   horarioFin={form.horario_fin}
@@ -769,15 +1154,92 @@ export const CreateProductPage: React.FC = () => {
                   onDuracionEstimadaChange={(duration) => handleInputChange('duracion_estimada', duration)}
                 />
                 
-                {/* Mostrar errores de validación */}
+                {/* 🆕 ADVERTENCIA EN TIEMPO REAL: Inconsistencia lógica duración vs horario */}
+                {(() => {
+                  // Solo mostrar si hay datos completos
+                  if (!form.horario_inicio || !form.horario_fin || !form.duracion_estimada || form.duracion_estimada === 'Selecciona duración') {
+                    return null;
+                  }
+                  
+                  // Calcular tiempo disponible
+                  const [inicioHoras, inicioMinutos] = form.horario_inicio.split(':').map(Number);
+                  const [finHoras, finMinutos] = form.horario_fin.split(':').map(Number);
+                  const tiempoDisponibleMinutos = (finHoras * 60 + finMinutos) - (inicioHoras * 60 + inicioMinutos);
+                  
+                  // Parsear duración
+                  const duracionTexto = form.duracion_estimada.toLowerCase();
+                  let duracionEstimadaMinutos = 0;
+                  const horasMatch = duracionTexto.match(/(\d+)\s*(hora|hr|h)/i);
+                  const minutosMatch = duracionTexto.match(/(\d+)\s*(minuto|min|m)/i);
+                  if (horasMatch) duracionEstimadaMinutos += parseInt(horasMatch[1]) * 60;
+                  if (minutosMatch) duracionEstimadaMinutos += parseInt(minutosMatch[1]);
+                  
+                  // Verificar inconsistencia
+                  if (duracionEstimadaMinutos > 0 && duracionEstimadaMinutos > tiempoDisponibleMinutos) {
+                    const horasDisp = Math.floor(tiempoDisponibleMinutos / 60);
+                    const minsDisp = tiempoDisponibleMinutos % 60;
+                    const tiempoDispTexto = horasDisp > 0 
+                      ? `${horasDisp}h ${minsDisp > 0 ? minsDisp + 'm' : ''}`
+                      : `${minsDisp}m`;
+                    
+                    return (
+                      <div className="mt-4 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-l-4 border-amber-500 rounded-xl shadow-md">
+                        <div className="flex items-start space-x-3">
+                          <div className="flex-shrink-0">
+                            <AlertCircle className="h-6 w-6 text-amber-600 animate-pulse" />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="text-sm font-bold text-amber-900 mb-1">
+                              ⚠️ Inconsistencia Lógica Detectada
+                            </h4>
+                            <p className="text-sm text-amber-800 mb-2">
+                              <strong>La duración del servicio ({form.duracion_estimada})</strong> excede el tiempo disponible en tu horario de atención <strong>({tiempoDispTexto})</strong>.
+                            </p>
+                            <div className="bg-white/60 rounded-lg p-3 space-y-1 text-xs">
+                              <p className="text-amber-900">
+                                <strong>💡 Solución:</strong>
+                              </p>
+                              <ul className="list-disc list-inside text-amber-800 space-y-0.5 ml-2">
+                                <li>Amplía tu horario de atención, o</li>
+                                <li>Reduce la duración estimada del servicio</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+                
+                {/* Mostrar errores de validación - ESTILO MEJORADO */}
+                {(errors.horario_inicio || errors.horario_fin || errors.dias_disponibles || errors.duracion_estimada) && (
+                  <div className="mt-4 space-y-2">
                 {errors.horario_inicio && (
-                  <p className="text-red-500 text-sm mt-2">{errors.horario_inicio}</p>
+                      <div className="flex items-center space-x-2 p-3 bg-red-50 border border-red-200 rounded-xl">
+                        <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
+                        <p className="text-red-700 text-sm font-medium">{errors.horario_inicio}</p>
+                      </div>
                 )}
                 {errors.horario_fin && (
-                  <p className="text-red-500 text-sm mt-2">{errors.horario_fin}</p>
+                      <div className="flex items-center space-x-2 p-3 bg-red-50 border border-red-200 rounded-xl">
+                        <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
+                        <p className="text-red-700 text-sm font-medium">{errors.horario_fin}</p>
+                      </div>
                 )}
                     {errors.dias_disponibles && (
-                  <p className="text-red-500 text-sm mt-2">{errors.dias_disponibles}</p>
+                      <div className="flex items-center space-x-2 p-3 bg-red-50 border border-red-200 rounded-xl">
+                        <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
+                        <p className="text-red-700 text-sm font-medium">{errors.dias_disponibles}</p>
+                      </div>
+                    )}
+                    {errors.duracion_estimada && (
+                      <div className="flex items-center space-x-2 p-3 bg-red-50 border border-red-200 rounded-xl">
+                        <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
+                        <p className="text-red-700 text-sm font-medium">{errors.duracion_estimada}</p>
+                      </div>
+                    )}
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -824,43 +1286,43 @@ export const CreateProductPage: React.FC = () => {
                 </div>
                 
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Provincia - CON TOOLTIP */}
                     <div className="space-y-2">
                       <Label htmlFor="ubicacion_provincia" className="text-sm font-semibold text-gray-700 flex items-center">
                         <MapPin className="h-3 w-3 mr-1 text-green-600" />
-                        Provincia *
-                      </Label>
-                      <Input
-                        id="ubicacion_provincia"
-                        type="text"
+                      Provincia *
+                    </Label>
+                    <Input
+                      id="ubicacion_provincia"
+                      type="text"
                         placeholder="Ej: San José, Alajuela..."
-                        value={form.ubicacion_provincia}
-                        onChange={(e) => handleInputChange('ubicacion_provincia', e.target.value)}
+                      value={form.ubicacion_provincia}
+                      onChange={(e) => handleInputChange('ubicacion_provincia', e.target.value)}
                         className="h-11 rounded-xl border-2 border-gray-200 focus:border-green-500 focus:ring-green-500 shadow-sm hover:shadow-md transition-all"
-                        required
-                      />
+                      required
+                    />
                       <p className="text-xs text-gray-500 flex items-center">
                         <Info className="h-3 w-3 mr-1" />
                         Escribe la provincia de Costa Rica
                       </p>
-                    </div>
+                  </div>
 
                     {/* Cantón - CON TOOLTIP */}
                     <div className="space-y-2">
                       <Label htmlFor="ubicacion_canton" className="text-sm font-semibold text-gray-700 flex items-center">
                         <MapPin className="h-3 w-3 mr-1 text-green-600" />
-                        Cantón *
-                      </Label>
-                      <Input
-                        id="ubicacion_canton"
-                        type="text"
+                      Cantón *
+                    </Label>
+                    <Input
+                      id="ubicacion_canton"
+                      type="text"
                         placeholder="Ej: Santa Ana, Escazú..."
-                        value={form.ubicacion_canton}
-                        onChange={(e) => handleInputChange('ubicacion_canton', e.target.value)}
+                      value={form.ubicacion_canton}
+                      onChange={(e) => handleInputChange('ubicacion_canton', e.target.value)}
                         className="h-11 rounded-xl border-2 border-gray-200 focus:border-green-500 focus:ring-green-500 shadow-sm hover:shadow-md transition-all"
-                        required
-                      />
+                      required
+                    />
                       <p className="text-xs text-gray-500 flex items-center">
                         <Info className="h-3 w-3 mr-1" />
                         Escribe el cantón correspondiente
@@ -869,40 +1331,40 @@ export const CreateProductPage: React.FC = () => {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Distrito */}
+                  {/* Distrito */}
                     <div className="space-y-2">
                       <Label htmlFor="ubicacion_distrito" className="text-sm font-semibold text-gray-700 flex items-center">
                         <MapPin className="h-3 w-3 mr-1 text-gray-500" />
-                        Distrito
+                      Distrito
                         <span className="ml-1 text-xs text-gray-500">(opcional)</span>
-                      </Label>
-                      <Input
-                        id="ubicacion_distrito"
-                        type="text"
+                    </Label>
+                    <Input
+                      id="ubicacion_distrito"
+                      type="text"
                         placeholder="Ej: Pozos, Uruca..."
-                        value={form.ubicacion_distrito}
-                        onChange={(e) => handleInputChange('ubicacion_distrito', e.target.value)}
+                      value={form.ubicacion_distrito}
+                      onChange={(e) => handleInputChange('ubicacion_distrito', e.target.value)}
                         className="h-11 rounded-xl border-2 border-gray-200 focus:border-green-500 focus:ring-green-500 shadow-sm hover:shadow-md transition-all"
-                      />
-                    </div>
+                    />
+                  </div>
 
-                    {/* Dirección */}
+                  {/* Dirección */}
                     <div className="space-y-2">
                       <Label htmlFor="ubicacion_direccion" className="text-sm font-semibold text-gray-700 flex items-center">
                         <MapPin className="h-3 w-3 mr-1 text-green-600" />
-                        Dirección específica *
-                      </Label>
-                      <Input
-                        id="ubicacion_direccion"
-                        type="text"
-                        placeholder="Ej: 100m norte del supermercado"
-                        value={form.ubicacion_direccion}
-                        onChange={(e) => handleInputChange('ubicacion_direccion', e.target.value)}
+                      Dirección específica *
+                    </Label>
+                <Input
+                      id="ubicacion_direccion"
+                      type="text"
+                      placeholder="Ej: 100m norte del supermercado"
+                      value={form.ubicacion_direccion}
+                      onChange={(e) => handleInputChange('ubicacion_direccion', e.target.value)}
                         className="h-11 rounded-xl border-2 border-gray-200 focus:border-green-500 focus:ring-green-500 shadow-sm hover:shadow-md transition-all"
-                        required
-                      />
+                      required
+                    />
                     </div>
-                  </div>
+                </div>
                 </div>
 
                 {/* Información de ayuda mejorada */}
@@ -982,9 +1444,9 @@ export const CreateProductPage: React.FC = () => {
                   <div>
                     <h2 className="text-xl font-bold text-gray-900">
                       {isEditMode ? 'Gestionar Imágenes' : 'Imágenes del Producto'}
-                    </h2>
+                </h2>
                     <p className="text-xs text-gray-600">Máximo 5 imágenes por producto</p>
-                  </div>
+              </div>
                 </div>
                 {(() => {
                   const existingImagesCount = isEditMode 
@@ -1021,18 +1483,18 @@ export const CreateProductPage: React.FC = () => {
                     isAtLimit 
                       ? 'border-red-300 bg-red-50/50 cursor-not-allowed' 
                       : 'border-gray-300 hover:border-purple-500 hover:bg-purple-50 cursor-pointer'
-                  }`}>
-                    <input
-                      type="file"
-                      id="image-upload"
-                      multiple
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
+              }`}>
+                <input
+                  type="file"
+                  id="image-upload"
+                  multiple
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
                       disabled={isAtLimit}
-                    />
-                    <label
-                      htmlFor="image-upload"
+                />
+                <label
+                  htmlFor="image-upload"
                       className={`${isAtLimit ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                     >
                       <Upload className={`h-12 w-12 mx-auto mb-4 ${
@@ -1043,23 +1505,23 @@ export const CreateProductPage: React.FC = () => {
                       }`}>
                         {isAtLimit
                           ? '❌ Máximo de imágenes alcanzado'
-                          : isEditMode 
+                      : isEditMode 
                           ? '📸 Click para agregar nuevas imágenes'
                           : '📸 Click para subir imágenes'}
-                      </p>
+                  </p>
                       <p className="text-sm text-gray-600">
-                        {isEditMode 
+                    {isEditMode 
                           ? `Tienes ${existingImagesCount} imagen${existingImagesCount !== 1 ? 'es' : ''} existente${existingImagesCount !== 1 ? 's' : ''} | Puedes agregar ${maxImages - totalImages} más`
-                          : 'Máximo 5 imágenes, hasta 5MB cada una'
-                        }
-                      </p>
+                      : 'Máximo 5 imágenes, hasta 5MB cada una'
+                    }
+                  </p>
                       {isEditMode && isAtLimit && (
                         <p className="text-xs text-red-600 mt-2 font-medium">
                           💡 Elimina imágenes existentes para agregar nuevas
                         </p>
                       )}
-                    </label>
-                  </div>
+                </label>
+              </div>
                 );
               })()}
 
@@ -1275,10 +1737,10 @@ export const CreateProductPage: React.FC = () => {
               </div>
 
               {/* Botón de publicar */}
-              <Button
-                type="submit"
+            <Button
+              type="submit"
                 form="product-form"
-                disabled={loading || success}
+              disabled={loading || success}
                 className="w-full sm:w-auto h-12 sm:h-14 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 sm:px-10 rounded-xl font-bold text-base sm:text-lg shadow-2xl hover:shadow-3xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={(e) => {
                   e.preventDefault();
@@ -1288,25 +1750,25 @@ export const CreateProductPage: React.FC = () => {
                     form.requestSubmit();
                   }
                 }}
-              >
-                {loading ? (
-                  <>
+            >
+              {loading ? (
+                <>
                     <Clock className="h-5 w-5 mr-2 animate-spin" />
                     <span>{isEditMode ? 'Actualizando...' : 'Creando...'}</span>
-                  </>
-                ) : success ? (
-                  <>
+                </>
+              ) : success ? (
+                <>
                     <CheckCircle2 className="h-5 w-5 mr-2" />
                     <span>{isEditMode ? '¡Actualizado!' : '¡Creado!'}</span>
-                  </>
-                ) : (
-                  <>
+                </>
+              ) : (
+                <>
                     <Save className="h-5 w-5 mr-2" />
                     <span>{isEditMode ? 'Actualizar' : 'Publicar'} {form.tipo}</span>
-                  </>
-                )}
-              </Button>
-            </div>
+                </>
+              )}
+            </Button>
+          </div>
           </div>
         </div>
       </main>

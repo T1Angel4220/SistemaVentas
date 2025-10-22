@@ -30,12 +30,12 @@ export const useAlert = () => {
     setAlert(prev => ({ ...prev, isOpen: false }));
   }, []);
 
-  const showSuccess = useCallback((title: string, message: string, onConfirm?: () => void) => {
+  const showSuccess = useCallback((title: string, message: string, onConfirm?: () => void, confirmText?: string) => {
     showAlert({
       title,
       message,
       type: 'success',
-      confirmText: 'Entendido',
+      confirmText: confirmText || 'Entendido',
       onConfirm
     });
   }, [showAlert]);

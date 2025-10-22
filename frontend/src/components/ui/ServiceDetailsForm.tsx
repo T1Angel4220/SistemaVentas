@@ -38,11 +38,6 @@ export const ServiceDetailsForm: React.FC<ServiceDetailsFormProps> = ({
 
   return (
     <div className={`space-y-6 ${className}`}>
-      <div className="flex items-center space-x-2 mb-4">
-        <Clock className="h-5 w-5 text-blue-600" />
-        <h3 className="text-lg font-semibold text-gray-900">Detalles del Servicio</h3>
-      </div>
-
       {/* Horario de Atención */}
       <div className="space-y-4">
         <div className="flex items-center space-x-2">
@@ -98,13 +93,14 @@ export const ServiceDetailsForm: React.FC<ServiceDetailsFormProps> = ({
       <div className="space-y-4">
         <div className="flex items-center space-x-2">
           <Timer className="h-4 w-4 text-gray-600" />
-          <h4 className="text-sm font-medium text-gray-700">Duración Estimada</h4>
+          <h4 className="text-sm font-medium text-gray-700">Duración Estimada *</h4>
         </div>
         
         <ClockDurationPicker
           label=""
           value={duracionEstimada}
           onChange={onDuracionEstimadaChange}
+          required
         />
       </div>
 

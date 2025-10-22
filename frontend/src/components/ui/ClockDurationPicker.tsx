@@ -6,6 +6,7 @@ interface ClockDurationPickerProps {
   onChange: (duration: string) => void;
   label: string;
   className?: string;
+  required?: boolean;
 }
 
 export const ClockDurationPicker: React.FC<ClockDurationPickerProps> = ({
@@ -95,8 +96,13 @@ export const ClockDurationPicker: React.FC<ClockDurationPickerProps> = ({
   };
 
   const handleConfirm = () => {
-    const duration = formatDuration();
-    onChange(duration);
+    // Si ambos son 0, enviar cadena vacía para que la validación funcione
+    if (hours === 0 && minutes === 0) {
+      onChange('');
+    } else {
+      const duration = formatDuration();
+      onChange(duration);
+    }
     setIsOpen(false);
   };
 
