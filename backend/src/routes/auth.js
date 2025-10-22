@@ -202,6 +202,20 @@ router.post('/reset-password', validateRequest(resetPasswordSchema), authControl
 router.get('/profile', authenticate, authController.getProfile);
 
 /**
+ * @route PUT /api/auth/profile
+ * @desc Actualizar perfil del usuario autenticado
+ * @access Private
+ */
+router.put('/profile', authenticate, authController.updateProfile);
+
+/**
+ * @route PUT /api/auth/change-password
+ * @desc Cambiar contraseña del usuario autenticado
+ * @access Private
+ */
+router.put('/change-password', authenticate, authController.changePassword);
+
+/**
  * @route GET /api/auth/users
  * @desc Obtener lista de usuarios (solo moderadores y administradores)
  * @access Private (Moderator/Admin)
