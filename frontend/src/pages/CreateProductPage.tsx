@@ -23,7 +23,10 @@ import {
   ArrowLeft,
   Clock,
   AlertCircle,
-  CheckCircle2
+  CheckCircle2,
+  DollarSign,
+  MapPin,
+  Info
 } from 'lucide-react';
 import type { ProductForm, ImageFile } from '../types/product.types';
 
@@ -154,9 +157,30 @@ export const CreateProductPage: React.FC = () => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
-    const newImages: ImageFile[] = [];
     const maxImages = 5;
-    const remainingSlots = maxImages - images.length;
+    
+    // Calcular imágenes existentes que NO han sido eliminadas (modo edición)
+    const existingImagesCount = isEditMode 
+      ? existingImages.length - deletedExistingImages.length 
+      : 0;
+    
+    // Total actual de imágenes
+    const currentTotal = existingImagesCount + images.length;
+    
+    // Slots disponibles
+    const remainingSlots = maxImages - currentTotal;
+    
+    // Validar que haya espacio disponible
+    if (remainingSlots <= 0) {
+      setErrors(prev => ({ 
+        ...prev, 
+        images: `Ya tienes el máximo de ${maxImages} imágenes. ${isEditMode ? 'Elimina algunas imágenes existentes para agregar nuevas.' : ''}` 
+      }));
+      event.target.value = '';
+      return;
+    }
+
+    const newImages: ImageFile[] = [];
     
     Array.from(files).slice(0, remainingSlots).forEach((file) => {
       // Validar tipo de archivo
@@ -191,6 +215,12 @@ export const CreateProductPage: React.FC = () => {
           return newErrors;
         });
       }
+    } else if (files.length > remainingSlots) {
+      // Informar al usuario si intentó subir más de las permitidas
+      setErrors(prev => ({ 
+        ...prev, 
+        images: `Solo puedes agregar ${remainingSlots} imagen${remainingSlots !== 1 ? 'es' : ''} más. Límite: ${maxImages} imágenes totales.` 
+      }));
     }
 
     // Resetear el input para permitir subir el mismo archivo de nuevo
@@ -460,29 +490,29 @@ export const CreateProductPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-      {/* Hero Header mejorado */}
-      <div className="relative bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white overflow-hidden">
+      {/* Hero Header mejorado - ESTILO UNIFICADO */}
+      <div className="relative bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white overflow-hidden shadow-lg">
         {/* Patrón de fondo */}
         <div className="absolute inset-0 bg-black/10">
           <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-transparent"></div>
         </div>
         
-        <div className="relative max-w-7xl mx-auto px-6 py-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-8">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
               <Button 
                 variant="outline" 
                 onClick={() => navigate('/my-products')}
-                className="bg-white/20 text-white border-white/30 hover:bg-white hover:text-blue-600 backdrop-blur-sm rounded-xl px-6 py-3 font-medium transition-all duration-300 shadow-lg hover:shadow-xl"
+                className="bg-white/20 text-white border-white/30 hover:bg-white hover:text-blue-600 backdrop-blur-sm rounded-xl px-5 sm:px-6 py-2.5 sm:py-3 font-medium transition-all duration-300 shadow-lg hover:shadow-xl w-full sm:w-auto"
               >
-                <ArrowLeft className="h-5 w-5 mr-2" />
+                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                 Volver
               </Button>
               <div>
-                <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+                <h1 className="text-2xl sm:text-3xl font-black mb-1 sm:mb-2 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent tracking-tight">
                   {isEditMode ? 'Editar' : 'Crear'} {form.tipo === 'producto' ? 'Producto' : 'Servicio'}
                 </h1>
-                <p className="text-blue-100 text-base">
+                <p className="text-blue-100 text-sm sm:text-base">
                   {isEditMode 
                     ? `Modifica la información de tu ${form.tipo}` 
                     : `Completa la información para publicar tu ${form.tipo}`
@@ -491,11 +521,11 @@ export const CreateProductPage: React.FC = () => {
               </div>
             </div>
             <div className="hidden md:block">
-              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-2xl border border-white/30">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-2xl border border-white/30">
                 {form.tipo === 'producto' ? (
-                  <Package className="w-8 h-8 text-white" />
+                  <Package className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
                 ) : (
-                  <Calendar className="w-8 h-8 text-white" />
+                  <Calendar className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
                 )}
               </div>
             </div>
@@ -531,48 +561,62 @@ export const CreateProductPage: React.FC = () => {
           </Alert>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Tipo de publicación - Estilo Amazon horizontal */}
-          <Card className="shadow-lg border-0 bg-white rounded-lg overflow-hidden">
+        <form id="product-form" onSubmit={handleSubmit} className="space-y-8">
+          {/* Tipo de publicación - MEJORADO */}
+          <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden">
             <CardContent className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Tipo de Publicación</h2>
-              <div className="flex space-x-4">
+              <div className="flex items-center space-x-3 mb-5">
+                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <Package className="h-5 w-5 text-blue-600" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">Tipo de Publicación</h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <button
                   type="button"
                   onClick={() => handleInputChange('tipo', 'producto')}
-                  className={`flex items-center space-x-3 px-6 py-3 rounded-lg border-2 transition-all duration-200 ${
+                  className={`flex items-center justify-center space-x-3 px-6 py-4 rounded-xl border-2 transition-all duration-200 shadow-lg hover:shadow-xl ${
                     form.tipo === 'producto'
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                      ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-700'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-700 bg-white'
                   }`}
                 >
-                  <Package className="h-5 w-5" />
-                  <span className="font-medium">Producto</span>
+                  <Package className="h-6 w-6" />
+                  <span className="font-semibold text-base">Producto</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => handleInputChange('tipo', 'servicio')}
-                  className={`flex items-center space-x-3 px-6 py-3 rounded-lg border-2 transition-all duration-200 ${
+                  className={`flex items-center justify-center space-x-3 px-6 py-4 rounded-xl border-2 transition-all duration-200 shadow-lg hover:shadow-xl ${
                     form.tipo === 'servicio'
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                      ? 'border-purple-500 bg-gradient-to-br from-purple-50 to-pink-50 text-purple-700'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-700 bg-white'
                   }`}
                 >
-                  <Calendar className="h-5 w-5" />
-                  <span className="font-medium">Servicio</span>
+                  <Calendar className="h-6 w-6" />
+                  <span className="font-semibold text-base">Servicio</span>
                 </button>
               </div>
             </CardContent>
           </Card>
 
-          {/* Información básica - Estilo Amazon */}
-          <Card className="shadow-lg border-0 bg-white rounded-lg overflow-hidden">
+          {/* Información básica - MEJORADO */}
+          <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden">
             <CardContent className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">Información Básica</h2>
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">Información Básica</h2>
+              </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div>
-                  <Label htmlFor="codigo" className="block text-sm font-medium text-gray-700 mb-2">
+                {/* Campo Código */}
+                <div className="space-y-2">
+                  <Label htmlFor="codigo" className="flex items-center text-sm font-semibold text-gray-700">
+                    <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center mr-2">
+                      <Package className="h-3 w-3 text-blue-600" />
+                    </div>
                     Código del {form.tipo} *
                   </Label>
                   <Input
@@ -580,42 +624,74 @@ export const CreateProductPage: React.FC = () => {
                     value={form.codigo}
                     onChange={(e) => handleInputChange('codigo', e.target.value)}
                     placeholder="Ej: PROD-001"
-                    className={`w-full h-10 rounded-md border transition-colors ${
+                    className={`w-full h-12 rounded-xl border-2 transition-all shadow-sm hover:shadow-md ${
                       errors.codigo 
-                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
-                        : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50' 
+                        : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500'
                     }`}
                   />
                   {errors.codigo && (
-                    <p className="text-red-500 text-sm mt-1">{errors.codigo}</p>
+                    <p className="text-red-500 text-xs font-medium flex items-center mt-1">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      {errors.codigo}
+                    </p>
                   )}
+                  <p className="text-xs text-gray-500 flex items-center">
+                    <Info className="h-3 w-3 mr-1" />
+                    Identificador único (mínimo 3 caracteres)
+                  </p>
                 </div>
 
-                <div>
-                  <Label htmlFor="precio" className="block text-sm font-medium text-gray-700 mb-2">
-                    Precio ($) *
+                {/* Campo Precio - MEJORADO CON AYUDA VISUAL */}
+                <div className="space-y-2">
+                  <Label htmlFor="precio" className="flex items-center text-sm font-semibold text-gray-700">
+                    <div className="w-6 h-6 bg-green-100 rounded-lg flex items-center justify-center mr-2">
+                      <DollarSign className="h-3 w-3 text-green-600" />
+                    </div>
+                    Precio (USD) *
                   </Label>
-                  <Input
-                    id="precio"
-                    type="number"
-                    step="0.01"
-                    value={form.precio}
-                    onChange={(e) => handleInputChange('precio', e.target.value)}
-                    placeholder="0.00"
-                    className={`w-full h-10 rounded-md border transition-colors ${
-                      errors.precio 
-                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
-                        : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
-                    }`}
-                  />
+                  <div className="relative">
+                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">
+                      $
+                    </div>
+                    <Input
+                      id="precio"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={form.precio}
+                      onChange={(e) => handleInputChange('precio', e.target.value)}
+                      placeholder="0.00"
+                      className={`w-full h-12 pl-8 rounded-xl border-2 transition-all shadow-sm hover:shadow-md ${
+                        errors.precio 
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50' 
+                          : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500'
+                      }`}
+                    />
+                  </div>
                   {errors.precio && (
-                    <p className="text-red-500 text-sm mt-1">{errors.precio}</p>
+                    <p className="text-red-500 text-xs font-medium flex items-center mt-1">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      {errors.precio}
+                    </p>
                   )}
+                  <p className="text-xs text-gray-500 flex items-center">
+                    <Info className="h-3 w-3 mr-1" />
+                    Acepta decimales (Ej: 25.99)
+                  </p>
                 </div>
               </div>
 
-              <div className="mb-6">
-                <Label htmlFor="nombre" className="block text-sm font-medium text-gray-700 mb-2">
+              {/* Campo Nombre */}
+              <div className="mb-6 space-y-2">
+                <Label htmlFor="nombre" className="flex items-center text-sm font-semibold text-gray-700">
+                  <div className="w-6 h-6 bg-purple-100 rounded-lg flex items-center justify-center mr-2">
+                    {form.tipo === 'servicio' ? (
+                      <Calendar className="h-3 w-3 text-purple-600" />
+                    ) : (
+                      <Package className="h-3 w-3 text-purple-600" />
+                    )}
+                  </div>
                   Nombre del {form.tipo} *
                 </Label>
                 <Input
@@ -623,19 +699,26 @@ export const CreateProductPage: React.FC = () => {
                   value={form.nombre}
                   onChange={(e) => handleInputChange('nombre', e.target.value)}
                   placeholder={`Nombre descriptivo del ${form.tipo}`}
-                  className={`w-full h-10 rounded-md border transition-colors ${
+                  className={`w-full h-12 rounded-xl border-2 transition-all shadow-sm hover:shadow-md ${
                     errors.nombre 
-                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
-                      : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50' 
+                      : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500'
                   }`}
                 />
                 {errors.nombre && (
-                  <p className="text-red-500 text-sm mt-1">{errors.nombre}</p>
+                  <p className="text-red-500 text-xs font-medium flex items-center mt-1">
+                    <AlertCircle className="h-3 w-3 mr-1" />
+                    {errors.nombre}
+                  </p>
                 )}
               </div>
 
-              <div>
-                <Label htmlFor="descripcion" className="block text-sm font-medium text-gray-700 mb-2">
+              {/* Campo Descripción */}
+              <div className="space-y-2">
+                <Label htmlFor="descripcion" className="flex items-center text-sm font-semibold text-gray-700">
+                  <div className="w-6 h-6 bg-indigo-100 rounded-lg flex items-center justify-center mr-2">
+                    <AlertCircle className="h-3 w-3 text-indigo-600" />
+                  </div>
                   Descripción *
                 </Label>
                 <Textarea
@@ -643,23 +726,28 @@ export const CreateProductPage: React.FC = () => {
                   value={form.descripcion}
                   onChange={(e) => handleInputChange('descripcion', e.target.value)}
                   placeholder={`Describe detalladamente tu ${form.tipo}...`}
-                  rows={4}
-                  className={`w-full rounded-md border transition-colors resize-none ${
+                  rows={5}
+                  className={`w-full rounded-xl border-2 transition-all resize-none shadow-sm hover:shadow-md ${
                     errors.descripcion 
-                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
-                      : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50' 
+                      : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500'
                   }`}
                 />
-                <div className="flex justify-between items-center mt-1">
+                <div className="flex justify-between items-center mt-2">
                   {errors.descripcion ? (
-                    <p className="text-red-500 text-sm">{errors.descripcion}</p>
+                    <p className="text-red-500 text-xs font-medium flex items-center">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      {errors.descripcion}
+                    </p>
                   ) : (
-                    <div></div>
+                    <p className="text-xs text-gray-500">Mínimo 10 caracteres</p>
                   )}
-                  <p className={`text-sm ${
-                    form.descripcion.length < 10 ? 'text-red-500' : 'text-green-600'
+                  <p className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                    form.descripcion.length < 10 
+                      ? 'bg-red-100 text-red-600' 
+                      : 'bg-green-100 text-green-600'
                   }`}>
-                    {form.descripcion.length} caracteres (mínimo 10)
+                    {form.descripcion.length} caracteres
                   </p>
                 </div>
               </div>
@@ -695,11 +783,20 @@ export const CreateProductPage: React.FC = () => {
             </Card>
           )}
 
-          {/* Categoría y Ubicación - Estilo Amazon horizontal */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="shadow-lg border-0 bg-white rounded-lg overflow-hidden">
+          {/* Categoría y Ubicación - BLOQUES MÁS DEFINIDOS */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Categoría - Bloque mejorado */}
+            <Card className="shadow-xl border-2 border-blue-200 bg-gradient-to-br from-blue-50/50 to-white rounded-2xl overflow-hidden">
               <CardContent className="p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Categoría *</h2>
+                <div className="flex items-center space-x-3 mb-5">
+                  <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <Package className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">Categoría *</h2>
+                    <p className="text-xs text-gray-600">Selecciona la categoría más apropiada</p>
+                  </div>
+                </div>
                 <HierarchicalCategorySearch
                   categories={categories}
                   selectedCategoryId={form.categoria_id}
@@ -713,78 +810,115 @@ export const CreateProductPage: React.FC = () => {
               </CardContent>
             </Card>
 
-            <Card className="shadow-lg border-0 bg-white rounded-lg overflow-hidden">
+            {/* Ubicación - Bloque mejorado con ayuda contextual */}
+            <Card className="shadow-xl border-2 border-green-200 bg-gradient-to-br from-green-50/50 to-white rounded-2xl overflow-hidden">
               <CardContent className="p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Ubicación</h2>
+                <div className="flex items-center space-x-3 mb-5">
+                  <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+                    <MapPin className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">Ubicación</h2>
+                    <p className="text-xs text-gray-600">Indica dónde se encuentra tu {form.tipo}</p>
+                  </div>
+                </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Provincia */}
-                  <div>
-                    <Label htmlFor="ubicacion_provincia" className="text-sm font-medium text-gray-700">
-                      Provincia *
-                    </Label>
-                    <Input
-                      id="ubicacion_provincia"
-                      type="text"
-                      placeholder="Ej: San José"
-                      value={form.ubicacion_provincia}
-                      onChange={(e) => handleInputChange('ubicacion_provincia', e.target.value)}
-                      className="mt-1"
-                      required
-                    />
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Provincia - CON TOOLTIP */}
+                    <div className="space-y-2">
+                      <Label htmlFor="ubicacion_provincia" className="text-sm font-semibold text-gray-700 flex items-center">
+                        <MapPin className="h-3 w-3 mr-1 text-green-600" />
+                        Provincia *
+                      </Label>
+                      <Input
+                        id="ubicacion_provincia"
+                        type="text"
+                        placeholder="Ej: San José, Alajuela..."
+                        value={form.ubicacion_provincia}
+                        onChange={(e) => handleInputChange('ubicacion_provincia', e.target.value)}
+                        className="h-11 rounded-xl border-2 border-gray-200 focus:border-green-500 focus:ring-green-500 shadow-sm hover:shadow-md transition-all"
+                        required
+                      />
+                      <p className="text-xs text-gray-500 flex items-center">
+                        <Info className="h-3 w-3 mr-1" />
+                        Escribe la provincia de Costa Rica
+                      </p>
+                    </div>
+
+                    {/* Cantón - CON TOOLTIP */}
+                    <div className="space-y-2">
+                      <Label htmlFor="ubicacion_canton" className="text-sm font-semibold text-gray-700 flex items-center">
+                        <MapPin className="h-3 w-3 mr-1 text-green-600" />
+                        Cantón *
+                      </Label>
+                      <Input
+                        id="ubicacion_canton"
+                        type="text"
+                        placeholder="Ej: Santa Ana, Escazú..."
+                        value={form.ubicacion_canton}
+                        onChange={(e) => handleInputChange('ubicacion_canton', e.target.value)}
+                        className="h-11 rounded-xl border-2 border-gray-200 focus:border-green-500 focus:ring-green-500 shadow-sm hover:shadow-md transition-all"
+                        required
+                      />
+                      <p className="text-xs text-gray-500 flex items-center">
+                        <Info className="h-3 w-3 mr-1" />
+                        Escribe el cantón correspondiente
+                      </p>
+                    </div>
                   </div>
 
-                  {/* Cantón */}
-                  <div>
-                    <Label htmlFor="ubicacion_canton" className="text-sm font-medium text-gray-700">
-                      Cantón *
-                    </Label>
-                    <Input
-                      id="ubicacion_canton"
-                      type="text"
-                      placeholder="Ej: Santa Ana"
-                      value={form.ubicacion_canton}
-                      onChange={(e) => handleInputChange('ubicacion_canton', e.target.value)}
-                      className="mt-1"
-                      required
-                    />
-                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Distrito */}
+                    <div className="space-y-2">
+                      <Label htmlFor="ubicacion_distrito" className="text-sm font-semibold text-gray-700 flex items-center">
+                        <MapPin className="h-3 w-3 mr-1 text-gray-500" />
+                        Distrito
+                        <span className="ml-1 text-xs text-gray-500">(opcional)</span>
+                      </Label>
+                      <Input
+                        id="ubicacion_distrito"
+                        type="text"
+                        placeholder="Ej: Pozos, Uruca..."
+                        value={form.ubicacion_distrito}
+                        onChange={(e) => handleInputChange('ubicacion_distrito', e.target.value)}
+                        className="h-11 rounded-xl border-2 border-gray-200 focus:border-green-500 focus:ring-green-500 shadow-sm hover:shadow-md transition-all"
+                      />
+                    </div>
 
-                  {/* Distrito */}
-                  <div>
-                    <Label htmlFor="ubicacion_distrito" className="text-sm font-medium text-gray-700">
-                      Distrito
-                    </Label>
-                    <Input
-                      id="ubicacion_distrito"
-                      type="text"
-                      placeholder="Ej: Santa Ana (opcional)"
-                      value={form.ubicacion_distrito}
-                      onChange={(e) => handleInputChange('ubicacion_distrito', e.target.value)}
-                      className="mt-1"
-                    />
+                    {/* Dirección */}
+                    <div className="space-y-2">
+                      <Label htmlFor="ubicacion_direccion" className="text-sm font-semibold text-gray-700 flex items-center">
+                        <MapPin className="h-3 w-3 mr-1 text-green-600" />
+                        Dirección específica *
+                      </Label>
+                      <Input
+                        id="ubicacion_direccion"
+                        type="text"
+                        placeholder="Ej: 100m norte del supermercado"
+                        value={form.ubicacion_direccion}
+                        onChange={(e) => handleInputChange('ubicacion_direccion', e.target.value)}
+                        className="h-11 rounded-xl border-2 border-gray-200 focus:border-green-500 focus:ring-green-500 shadow-sm hover:shadow-md transition-all"
+                        required
+                      />
+                    </div>
                   </div>
-
-                  {/* Dirección */}
-                  <div>
-                    <Label htmlFor="ubicacion_direccion" className="text-sm font-medium text-gray-700">
-                      Dirección específica *
-                    </Label>
-                <Input
-                      id="ubicacion_direccion"
-                      type="text"
-                      placeholder="Ej: 100m norte del supermercado"
-                      value={form.ubicacion_direccion}
-                      onChange={(e) => handleInputChange('ubicacion_direccion', e.target.value)}
-                      className="mt-1"
-                      required
-                    />
                 </div>
-                </div>
 
-                <p className="text-sm text-gray-500 mt-3">
-                  * Campos obligatorios: Provincia, Cantón y Dirección. El distrito es opcional.
-                </p>
+                {/* Información de ayuda mejorada */}
+                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-xl">
+                  <div className="flex items-start space-x-2">
+                    <Info className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                    <div className="text-xs text-green-700">
+                      <p className="font-semibold mb-1">Consejos para ubicación:</p>
+                      <ul className="space-y-0.5">
+                        <li>• Escribe la información lo más precisa posible</li>
+                        <li>• Los compradores verán esta información para contactarte</li>
+                        <li>• Campos con * son obligatorios</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -837,52 +971,97 @@ export const CreateProductPage: React.FC = () => {
             </Card>
           )}
 
-          {/* Imágenes - Estilo Amazon */}
-          <Card className="shadow-lg border-0 bg-white rounded-lg overflow-hidden">
+          {/* Imágenes - VALIDACIÓN MEJORADA */}
+          <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  {isEditMode ? 'Agregar nuevas imágenes' : 'Imágenes'}
-                </h2>
-                <span className="text-sm text-gray-500">{images.length}/5</span>
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                    <Upload className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">
+                      {isEditMode ? 'Gestionar Imágenes' : 'Imágenes del Producto'}
+                    </h2>
+                    <p className="text-xs text-gray-600">Máximo 5 imágenes por producto</p>
+                  </div>
+                </div>
+                {(() => {
+                  const existingImagesCount = isEditMode 
+                    ? existingImages.length - deletedExistingImages.length 
+                    : 0;
+                  const totalImages = existingImagesCount + images.length;
+                  const maxImages = 5;
+                  const isAtLimit = totalImages >= maxImages;
+                  
+                  return (
+                    <div className={`px-4 py-2 rounded-xl font-bold text-sm ${
+                      isAtLimit 
+                        ? 'bg-red-100 text-red-700' 
+                        : totalImages >= 3 
+                        ? 'bg-yellow-100 text-yellow-700' 
+                        : 'bg-green-100 text-green-700'
+                    }`}>
+                      {totalImages}/{maxImages}
+                    </div>
+                  );
+                })()}
               </div>
               
-              <div className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                images.length >= 5 
-                  ? 'border-gray-200 bg-gray-50' 
-                  : 'border-gray-300 hover:border-blue-500 hover:bg-blue-50'
-              }`}>
-                <input
-                  type="file"
-                  id="image-upload"
-                  multiple
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                  disabled={images.length >= 5}
-                />
-                <label
-                  htmlFor="image-upload"
-                  className={`cursor-pointer ${images.length >= 5 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  <Upload className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                  <p className={`font-medium mb-1 ${
-                    images.length >= 5 ? 'text-gray-500' : 'text-gray-700'
+              {(() => {
+                const existingImagesCount = isEditMode 
+                  ? existingImages.length - deletedExistingImages.length 
+                  : 0;
+                const totalImages = existingImagesCount + images.length;
+                const maxImages = 5;
+                const isAtLimit = totalImages >= maxImages;
+                
+                return (
+                  <div className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 ${
+                    isAtLimit 
+                      ? 'border-red-300 bg-red-50/50 cursor-not-allowed' 
+                      : 'border-gray-300 hover:border-purple-500 hover:bg-purple-50 cursor-pointer'
                   }`}>
-                    {images.length >= 5
-                      ? 'Máximo de imágenes alcanzado'
-                      : isEditMode 
-                        ? 'Click para agregar nuevas imágenes'
-                      : 'Click para subir imágenes'}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {isEditMode 
-                      ? 'Máximo 5 imágenes nuevas, hasta 5MB cada una'
-                      : 'Máximo 5 imágenes, hasta 5MB cada una'
-                    }
-                  </p>
-                </label>
-              </div>
+                    <input
+                      type="file"
+                      id="image-upload"
+                      multiple
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      disabled={isAtLimit}
+                    />
+                    <label
+                      htmlFor="image-upload"
+                      className={`${isAtLimit ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                    >
+                      <Upload className={`h-12 w-12 mx-auto mb-4 ${
+                        isAtLimit ? 'text-red-400' : 'text-purple-400'
+                      }`} />
+                      <p className={`font-semibold mb-2 text-base ${
+                        isAtLimit ? 'text-red-700' : 'text-gray-700'
+                      }`}>
+                        {isAtLimit
+                          ? '❌ Máximo de imágenes alcanzado'
+                          : isEditMode 
+                          ? '📸 Click para agregar nuevas imágenes'
+                          : '📸 Click para subir imágenes'}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {isEditMode 
+                          ? `Tienes ${existingImagesCount} imagen${existingImagesCount !== 1 ? 'es' : ''} existente${existingImagesCount !== 1 ? 's' : ''} | Puedes agregar ${maxImages - totalImages} más`
+                          : 'Máximo 5 imágenes, hasta 5MB cada una'
+                        }
+                      </p>
+                      {isEditMode && isAtLimit && (
+                        <p className="text-xs text-red-600 mt-2 font-medium">
+                          💡 Elimina imágenes existentes para agregar nuevas
+                        </p>
+                      )}
+                    </label>
+                  </div>
+                );
+              })()}
 
               {errors.images && (
                 <Alert variant="destructive" className="mt-4">
@@ -1066,32 +1245,70 @@ export const CreateProductPage: React.FC = () => {
             </Card>
           )}
 
-          {/* Botón de envío - Estilo Amazon */}
-          <div className="flex justify-end">
-            <Button
-              type="submit"
-              disabled={loading || success}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
-            >
-              {loading ? (
-                <>
-                  <Clock className="h-4 w-4 mr-2 animate-spin" />
-                  {isEditMode ? 'Actualizando...' : 'Creando...'}
-                </>
-              ) : success ? (
-                <>
-                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                  {isEditMode ? '¡Actualizado!' : '¡Creado!'}
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  {isEditMode ? 'Actualizar' : 'Publicar'} {form.tipo}
-                </>
-              )}
-            </Button>
-          </div>
+          {/* Espaciado para el sticky button */}
+          <div className="h-24"></div>
         </form>
+
+        {/* Botón de envío STICKY - MEJORA FINAL PARA 10/10 */}
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t-2 border-gray-200 shadow-2xl">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+              {/* Información del progreso */}
+              <div className="hidden sm:block">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                    {form.tipo === 'producto' ? (
+                      <Package className="h-5 w-5 text-blue-600" />
+                    ) : (
+                      <Calendar className="h-5 w-5 text-purple-600" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">
+                      {isEditMode ? 'Editando' : 'Creando'} {form.tipo}
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      {form.nombre || 'Sin nombre aún'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Botón de publicar */}
+              <Button
+                type="submit"
+                form="product-form"
+                disabled={loading || success}
+                className="w-full sm:w-auto h-12 sm:h-14 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 sm:px-10 rounded-xl font-bold text-base sm:text-lg shadow-2xl hover:shadow-3xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={(e) => {
+                  e.preventDefault();
+                  // Trigger form submit
+                  const form = document.getElementById('product-form') as HTMLFormElement;
+                  if (form) {
+                    form.requestSubmit();
+                  }
+                }}
+              >
+                {loading ? (
+                  <>
+                    <Clock className="h-5 w-5 mr-2 animate-spin" />
+                    <span>{isEditMode ? 'Actualizando...' : 'Creando...'}</span>
+                  </>
+                ) : success ? (
+                  <>
+                    <CheckCircle2 className="h-5 w-5 mr-2" />
+                    <span>{isEditMode ? '¡Actualizado!' : '¡Creado!'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-5 w-5 mr-2" />
+                    <span>{isEditMode ? 'Actualizar' : 'Publicar'} {form.tipo}</span>
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
       </main>
 
       {/* Alert Dialog */}
