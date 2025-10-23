@@ -82,12 +82,12 @@ export const Navbar: React.FC = () => {
   return (
     <nav className="bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-8">
-            <Link to="/dashboard" className="text-xl font-bold text-gray-900">
+        <div className="flex items-center h-16 gap-8">
+          <div className="flex items-center space-x-8 flex-1">
+            <Link to="/dashboard" className="text-xl font-bold text-gray-900 whitespace-nowrap">
               Sistema de Ventas
             </Link>
-            <div className="hidden md:flex items-center space-x-6">
+            <div className="hidden md:flex items-center space-x-6 flex-1">
               <Link
                 to="/dashboard"
                 className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
@@ -186,8 +186,8 @@ export const Navbar: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center space-x-6">
-            <div className="hidden md:block text-right mr-3">
+          <div className="flex items-center gap-4">
+            <div className="hidden md:block text-right">
               <p className="text-sm font-medium text-gray-900">
                 {user.nombre || ''} {user.apellido || ''}
               </p>
@@ -196,26 +196,24 @@ export const Navbar: React.FC = () => {
               </p>
             </div>
             
-            <div className="flex items-center space-x-3">
-              <Link to="/profile">
-                <Button variant="ghost" size="icon">
-                  <User className="h-4 w-4" />
-                </Button>
-              </Link>
-              <Link to="/settings">
-                <Button variant="ghost" size="icon">
-                  <Settings className="h-4 w-4" />
-                </Button>
-              </Link>
-              <Button
-                variant="ghost"
-                onClick={handleLogoutClick}
-                className="text-gray-600 hover:text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
-              >
-                <LogOut className="h-4 w-4" />
-                <span className="text-sm font-medium">Salir</span>
+            <Link to="/profile">
+              <Button variant="ghost" size="icon">
+                <User className="h-4 w-4" />
               </Button>
-            </div>
+            </Link>
+            <Link to="/settings">
+              <Button variant="ghost" size="icon">
+                <Settings className="h-4 w-4" />
+              </Button>
+            </Link>
+            <Button
+              variant="ghost"
+              onClick={handleLogoutClick}
+              className="text-gray-600 hover:text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="text-sm font-medium">Salir</span>
+            </Button>
           </div>
         </div>
       </div>

@@ -112,11 +112,23 @@ export interface ProductPagination {
   has_prev: boolean;
 }
 
+// Estadísticas de moderación
+export interface ModerationStatistics {
+  total: number;
+  pendientes: number;
+  aprobados: number;
+  rechazados: number;
+  suspendidos: number;
+  peligrosos: number;
+  en_apelacion: number;
+}
+
 // Respuesta de API para productos
 export interface ProductsResponse {
   success: boolean;
   data: Product[];
   pagination: ProductPagination;
+  estadisticas?: ModerationStatistics;
 }
 
 // Respuesta de API para un producto individual

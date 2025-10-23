@@ -365,8 +365,7 @@ export const MyProductsPage: React.FC = () => {
                       ⚠️ Tienes {dangerousProductsCount} producto{dangerousProductsCount > 1 ? 's' : ''} marcado{dangerousProductsCount > 1 ? 's' : ''} como peligroso{dangerousProductsCount > 1 ? 's' : ''}
                     </p>
                     <p className="text-sm text-red-800">
-                      Estos productos no son visibles para ti ni para los compradores. 
-                      Haz clic en "Ver Historial" para ver los motivos y poder apelar si consideras que hay un error.
+                      Solo podras ver el informe por el cual fue marcado como peligroso, no podras ni apelar ni editar el producto y peor eliminar.
                     </p>
                   </div>
                   <Button

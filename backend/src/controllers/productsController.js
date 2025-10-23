@@ -1169,6 +1169,19 @@ class ProductsController {
       const total = parseInt(totalCount.rows[0].total);
       const totalPages = Math.ceil(total / parseInt(limit));
 
+      // Obtener estadísticas globales (independiente de paginación y filtros)
+      const estadisticas = await query(`
+        SELECT 
+          COUNT(*) as total,
+          COUNT(*) FILTER (WHERE estado = 'pendiente_revision') as pendientes,
+          COUNT(*) FILTER (WHERE estado = 'activo') as aprobados,
+          COUNT(*) FILTER (WHERE estado = 'rechazado') as rechazados,
+          COUNT(*) FILTER (WHERE estado = 'suspendido') as suspendidos,
+          COUNT(*) FILTER (WHERE estado = 'peligroso') as peligrosos,
+          COUNT(*) FILTER (WHERE estado = 'en_apelacion') as en_apelacion
+        FROM items
+      `);
+
       res.json({
         success: true,
         data: productos.rows,
@@ -1179,6 +1192,15 @@ class ProductsController {
           items_per_page: parseInt(limit),
           has_next: parseInt(page) < totalPages,
           has_prev: parseInt(page) > 1
+        },
+        estadisticas: {
+          total: parseInt(estadisticas.rows[0].total),
+          pendientes: parseInt(estadisticas.rows[0].pendientes),
+          aprobados: parseInt(estadisticas.rows[0].aprobados),
+          rechazados: parseInt(estadisticas.rows[0].rechazados),
+          suspendidos: parseInt(estadisticas.rows[0].suspendidos),
+          peligrosos: parseInt(estadisticas.rows[0].peligrosos),
+          en_apelacion: parseInt(estadisticas.rows[0].en_apelacion)
         }
       });
 
