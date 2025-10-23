@@ -1,14 +1,38 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../ui/Button';
 import { LogoutConfirmModal } from '../ui/LogoutConfirmModal';
-import { LogOut, User, Settings, Shield } from 'lucide-react';
+import { LogOut, User, Settings, Shield, AlertTriangle } from 'lucide-react';
+import { apiService } from '../../services/api';
 
 export const Navbar: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
-  const navigate = useNavigate();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [dangerousProductsCount, setDangerousProductsCount] = useState(0);
+
+  // Cargar conteo de productos peligrosos si es vendedor
+  useEffect(() => {
+    const loadDangerousCount = async () => {
+      if (user?.tipo_usuario === 'vendedor') {
+        try {
+          const response = await fetch('http://localhost:3001/api/products/my-dangerous', {
+            headers: {
+              'Authorization': `Bearer ${apiService.getToken()}`
+            }
+          });
+          const data = await response.json();
+          if (data.success) {
+            setDangerousProductsCount(data.data.length);
+          }
+        } catch (error) {
+          console.error('Error al cargar conteo de productos peligrosos:', error);
+        }
+      }
+    };
+    
+    loadDangerousCount();
+  }, [user]);
 
   const handleLogoutClick = () => {
     setShowLogoutModal(true);
@@ -86,6 +110,19 @@ export const Navbar: React.FC = () => {
                   className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
                 >
                   Mis Productos
+                </Link>
+              )}
+              {/* Solo mostrar "Productos Peligrosos" si es vendedor Y tiene productos peligrosos */}
+              {user.tipo_usuario === 'vendedor' && dangerousProductsCount > 0 && (
+                <Link
+                  to="/my-products/dangerous"
+                  className="text-red-600 hover:text-red-800 hover:bg-red-50 px-3 py-2 rounded-md text-sm font-medium flex items-center relative"
+                >
+                  <AlertTriangle className="h-4 w-4 mr-1" />
+                  Peligrosos
+                  <span className="ml-1.5 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                    {dangerousProductsCount}
+                  </span>
                 </Link>
               )}
               <Link

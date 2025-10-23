@@ -7,6 +7,7 @@ import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { AlertDialog } from '../components/ui/AlertDialog';
+import { Alert, AlertDescription } from '../components/ui/Alert';
 import { 
   Package, 
   Plus, 
@@ -17,7 +18,9 @@ import {
   AlertCircle,
   ArrowLeft,
   Camera,
-  FileText
+  AlertTriangle,
+  Shield,
+  MessageSquare
 } from 'lucide-react';
 import type { Product, ProductsResponse } from '../types/product.types';
 import { AppealProductDialog } from '../components/ui/AppealProductDialog';
@@ -28,6 +31,7 @@ export const MyProductsPage: React.FC = () => {
   const { alert, showSuccess, showError, showWarning, hideAlert } = useAlert();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dangerousProductsCount, setDangerousProductsCount] = useState(0);
   const [pagination, setPagination] = useState({
     current_page: 1,
     total_pages: 1,
@@ -78,11 +82,30 @@ export const MyProductsPage: React.FC = () => {
     }
   }, [filters]);
 
+  const loadDangerousProductsCount = useCallback(async () => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/products/my-dangerous`, {
+        headers: {
+          'Authorization': `Bearer ${apiService.getToken()}`
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setDangerousProductsCount(data.data.length);
+      }
+    } catch (error) {
+      console.error('Error al cargar productos peligrosos:', error);
+    }
+  }, []);
+
   useEffect(() => {
     if (user && (user.tipo_usuario === 'vendedor' || user.tipo_usuario === 'administrador')) {
       loadProducts();
+      loadDangerousProductsCount();
     }
-  }, [user, filters, loadProducts]);
+  }, [user, filters, loadProducts, loadDangerousProductsCount]);
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({
@@ -223,6 +246,10 @@ export const MyProductsPage: React.FC = () => {
       suspendido: {
         color: 'bg-gray-100 text-gray-800 border-gray-200',
         text: 'Suspendido'
+      },
+      en_apelacion: {
+        color: 'bg-blue-100 text-blue-800 border-blue-200',
+        text: 'En Apelación'
       }
     };
     
@@ -246,9 +273,10 @@ export const MyProductsPage: React.FC = () => {
     const messages = {
       activo: 'Tu producto está activo y visible para los compradores.',
       pendiente_revision: 'Tu producto está siendo revisado por los moderadores.',
-      rechazado: 'Tu producto fue rechazado. Revisa los comentarios y haz las correcciones necesarias.',
-      suspendido: 'Tu producto ha sido suspendido temporalmente.',
-      peligroso: 'Tu producto fue marcado como peligroso y no puede ser editado.'
+      rechazado: 'Tu producto fue rechazado. Puedes apelar esta decisión o editar el producto para corregirlo.',
+      suspendido: 'Tu producto ha sido suspendido. Si consideras que es un error, puedes apelar esta decisión.',
+      peligroso: 'Tu producto fue marcado como peligroso y no puede ser editado.',
+      en_apelacion: 'Tu apelación está siendo revisada por los moderadores. Recibirás una respuesta pronto.'
     };
     return messages[estado as keyof typeof messages] || 'Estado desconocido';
   };
@@ -322,6 +350,35 @@ export const MyProductsPage: React.FC = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8">
+        {/* Alerta de productos peligrosos */}
+        {dangerousProductsCount > 0 && (
+          <div className="mb-6">
+            <Alert className="border-l-4 border-red-500 bg-red-50">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              <AlertDescription className="ml-3">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div>
+                    <p className="font-bold text-red-900 mb-1">
+                      ⚠️ Tienes {dangerousProductsCount} producto{dangerousProductsCount > 1 ? 's' : ''} marcado{dangerousProductsCount > 1 ? 's' : ''} como peligroso{dangerousProductsCount > 1 ? 's' : ''}
+                    </p>
+                    <p className="text-sm text-red-800">
+                      Estos productos no son visibles para ti ni para los compradores. 
+                      Haz clic en "Ver Historial" para ver los motivos y poder apelar si consideras que hay un error.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => navigate('/my-products/dangerous')}
+                    className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg hover:shadow-xl transition-all whitespace-nowrap"
+                  >
+                    <Shield className="h-4 w-4 mr-2" />
+                    Ver Historial
+                  </Button>
+                </div>
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+        
         {/* Estadísticas mejoradas - RESPONSIVE */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300">
@@ -541,22 +598,22 @@ export const MyProductsPage: React.FC = () => {
                   </div>
                   
                   {/* Botones de acción - UNIFORMES CON ProductsPage.tsx */}
-                  <div className="flex space-x-2 sm:space-x-3 mt-6">
-                    <Link to={`/products/${product.id}`} className="flex-1">
+                  <div className="flex flex-wrap gap-2 sm:gap-3 mt-6">
+                    <Link to={`/products/${product.id}`} className="flex-1 min-w-[120px]">
                       <Button className="w-full h-10 sm:h-11 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl text-xs sm:text-sm font-semibold">
                         <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
                         <span>Ver detalles</span>
                       </Button>
                     </Link>
                     
-                    {/* Botón de apelar - Solo para productos rechazados */}
-                    {(product.estado === 'rechazado' || product.estado === 'peligroso') && (
+                    {/* Botón de apelar - SOLO para rechazado o suspendido, NO para peligroso */}
+                    {(product.estado === 'rechazado' || product.estado === 'suspendido') && (
                       <Button 
                         onClick={() => handleAppealProduct(product)}
-                        className="h-10 w-10 sm:h-11 sm:w-11 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl flex-shrink-0"
-                        title="Apelar decisión"
+                        className="flex-1 min-w-[120px] h-10 sm:h-11 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl text-xs sm:text-sm font-semibold"
                       >
-                        <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
+                        <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                        <span>Apelar</span>
                       </Button>
                     )}
                     

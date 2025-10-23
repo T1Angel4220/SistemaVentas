@@ -1411,6 +1411,50 @@ class ProductsController {
       });
     }
   }
+
+  // Obtener historial de productos peligrosos del vendedor
+  static async getMyDangerousProducts(req, res) {
+    try {
+      const vendedor_id = req.user.id;
+
+      // Obtener productos peligrosos del vendedor
+      const result = await query(
+        `SELECT 
+          i.id,
+          i.codigo,
+          i.nombre,
+          i.descripcion,
+          i.tipo,
+          i.fecha_deteccion_peligroso,
+          i.motivo_rechazo,
+          i.moderador_revision_id,
+          c.nombre as categoria_nombre,
+          u.nombre as moderador_nombre,
+          u.apellido as moderador_apellido,
+          (SELECT url_imagen FROM item_imagenes WHERE item_id = i.id ORDER BY orden LIMIT 1) as primera_imagen
+        FROM items i
+        LEFT JOIN categorias c ON i.categoria_id = c.id
+        LEFT JOIN usuarios u ON i.moderador_revision_id = u.id
+        WHERE i.vendedor_id = $1 
+        AND i.es_peligroso = true
+        ORDER BY i.fecha_deteccion_peligroso DESC`,
+        [vendedor_id]
+      );
+
+      res.json({
+        success: true,
+        data: result.rows
+      });
+
+    } catch (error) {
+      console.error('Error al obtener productos peligrosos:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error al obtener productos peligrosos',
+        error: error.message
+      });
+    }
+  }
 }
 
 module.exports = ProductsController;

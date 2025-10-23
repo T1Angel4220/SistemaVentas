@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import type { ProductDetail } from '../types/product.types';
 import { ReportProductDialog } from '../components/ui/ReportProductDialog';
+import { ModerationReasonModal } from '../components/ui/ModerationReasonModal';
 
 export const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -52,6 +53,14 @@ export const ProductDetailPage: React.FC = () => {
   
   // Estado para modal de reporte
   const [reportModalOpen, setReportModalOpen] = useState(false);
+
+  // Estado para modal de motivo de moderación
+  const [moderationModal, setModerationModal] = useState<{
+    isOpen: boolean;
+    action: 'rechazar' | 'suspender' | 'marcar_peligroso';
+    productId: number;
+    productName: string;
+  } | null>(null);
 
   const handleReportProduct = () => {
     setReportModalOpen(true);
@@ -111,7 +120,7 @@ export const ProductDetailPage: React.FC = () => {
             break;
         }
 
-        showSuccess(titulo, mensaje, () => navigate('/moderation/products'));
+        showSuccess(titulo, mensaje, () => navigate('/products/moderation'));
       } else {
         showError('Error', data.message || 'Error al moderar producto');
       }
@@ -134,78 +143,39 @@ export const ProductDetailPage: React.FC = () => {
 
   const handleRejectProduct = () => {
     if (!product) return;
-    const motivo = prompt(
-      `🔴 RECHAZAR PRODUCTO: "${product.nombre}"\n\n` +
-      `El producto será marcado como RECHAZADO.\n\n` +
-      `✅ El vendedor PODRÁ:\n` +
-      `   • Ver el producto en su lista\n` +
-      `   • Editarlo para corregir problemas\n` +
-      `   • Eliminarlo si lo desea\n` +
-      `   • Apelar esta decisión\n\n` +
-      `Por favor, ingresa el MOTIVO del rechazo (obligatorio):`
-    );
-
-    if (motivo === null) return;
-    
-    if (!motivo.trim()) {
-      showError('Motivo requerido', 'Debes proporcionar un motivo para rechazar el producto.');
-      return;
-    }
-
-    handleModerateProduct('rechazar', motivo);
+    setModerationModal({
+      isOpen: true,
+      action: 'rechazar',
+      productId: product.id,
+      productName: product.nombre
+    });
   };
 
   const handleSuspendProduct = () => {
     if (!product) return;
-    const motivo = prompt(
-      `🟡 SUSPENDER PRODUCTO: "${product.nombre}"\n\n` +
-      `El producto será SUSPENDIDO temporalmente.\n\n` +
-      `✅ El vendedor PODRÁ:\n` +
-      `   • Ver el producto en su lista\n` +
-      `   • Apelar esta decisión\n\n` +
-      `❌ El vendedor NO PODRÁ:\n` +
-      `   • Editarlo hasta que se resuelva\n` +
-      `   • Eliminarlo hasta que se resuelva\n\n` +
-      `Por favor, ingresa el MOTIVO de la suspensión (obligatorio):`
-    );
-
-    if (motivo === null) return;
-    
-    if (!motivo.trim()) {
-      showError('Motivo requerido', 'Debes proporcionar un motivo para suspender el producto.');
-      return;
-    }
-
-    handleModerateProduct('suspender', motivo);
+    setModerationModal({
+      isOpen: true,
+      action: 'suspender',
+      productId: product.id,
+      productName: product.nombre
+    });
   };
 
   const handleMarkAsDangerous = () => {
     if (!product) return;
-    const motivo = prompt(
-      `🚫 MARCAR COMO PELIGROSO: "${product.nombre}"\n\n` +
-      `⚠️ ATENCIÓN: Esta es una acción crítica.\n\n` +
-      `El producto será marcado como PELIGROSO y:\n\n` +
-      `❌ Será OCULTO completamente:\n` +
-      `   • No visible para el vendedor\n` +
-      `   • No visible para compradores\n` +
-      `   • Solo visible para moderadores/admins\n\n` +
-      `❌ El vendedor NO PODRÁ:\n` +
-      `   • Verlo en su lista\n` +
-      `   • Editarlo\n` +
-      `   • Eliminarlo (solo admins)\n\n` +
-      `✅ El vendedor SÍ PODRÁ:\n` +
-      `   • Apelar esta decisión\n\n` +
-      `Por favor, ingresa el MOTIVO por el cual es peligroso (obligatorio):`
-    );
+    setModerationModal({
+      isOpen: true,
+      action: 'marcar_peligroso',
+      productId: product.id,
+      productName: product.nombre
+    });
+  };
 
-    if (motivo === null) return;
-    
-    if (!motivo.trim()) {
-      showError('Motivo requerido', 'Debes proporcionar un motivo para marcar como peligroso.');
-      return;
+  const handleModerationConfirm = (motivo: string) => {
+    if (moderationModal) {
+      handleModerateProduct(moderationModal.action, motivo);
+      setModerationModal(null);
     }
-
-    handleModerateProduct('marcar_peligroso', motivo);
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -1069,6 +1039,17 @@ export const ProductDetailPage: React.FC = () => {
           productId={product.id}
           productName={product.nombre}
           onSuccess={handleReportSuccess}
+        />
+      )}
+
+      {/* Modal de Motivo de Moderación */}
+      {moderationModal && (
+        <ModerationReasonModal
+          isOpen={moderationModal.isOpen}
+          onClose={() => setModerationModal(null)}
+          onConfirm={handleModerationConfirm}
+          action={moderationModal.action}
+          productName={moderationModal.productName}
         />
       )}
     </div>

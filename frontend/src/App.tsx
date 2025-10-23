@@ -29,6 +29,7 @@ import { ProductModerationPage } from './pages/ProductModerationPage';
 import { SavedProductsPage } from './pages/SavedProductsPage';
 import { ReportsManagementPage } from './pages/ReportsManagementPage';
 import { AppealsManagementPage } from './pages/AppealsManagementPage';
+import { DangerousProductsHistoryPage } from './pages/DangerousProductsHistoryPage';
 
 // Componentes de error
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -153,6 +154,14 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['vendedor', 'administrador']}>
                     <MyProductsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/my-products/dangerous" 
+                element={
+                  <ProtectedRoute allowedRoles={['vendedor', 'administrador']}>
+                    <DangerousProductsHistoryPage />
                   </ProtectedRoute>
                 } 
               />

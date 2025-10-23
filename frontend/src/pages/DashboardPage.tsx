@@ -15,7 +15,8 @@ import {
   UserPlus,
   Shield,
   Flag,
-  FileText
+  FileText,
+  AlertTriangle
 } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
@@ -222,6 +223,22 @@ export const DashboardPage: React.FC = () => {
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Vender</h3>
                   <p className="text-sm text-gray-600">Publica tus productos y servicios</p>
+                </div>
+              </div>
+            )}
+
+            {/* Solo mostrar "Productos Peligrosos" si es vendedor o admin */}
+            {(user.tipo_usuario === 'vendedor' || user.tipo_usuario === 'administrador') && (
+              <div 
+                onClick={() => navigate('/my-products/dangerous')}
+                className="bg-white rounded-2xl shadow-lg border border-red-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1"
+              >
+                <div className="p-6">
+                  <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <AlertTriangle className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Productos Peligrosos</h3>
+                  <p className="text-sm text-gray-600">Ver historial de productos marcados</p>
                 </div>
               </div>
             )}

@@ -105,7 +105,7 @@ export const AppealsManagementPage: React.FC = () => {
           'Authorization': `Bearer ${apiService.getToken()}`
         },
         body: JSON.stringify({
-          accion: resolveAction,
+          decision: resolveAction,
           decision_apelacion: decisionApelacion
         })
       });
