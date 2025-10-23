@@ -41,11 +41,19 @@ class AppealsController {
         });
       }
 
-      // Verificar que el producto está rechazado o es peligroso
-      if (producto.estado !== 'rechazado' && producto.estado !== 'peligroso') {
+      // Verificar que el producto está rechazado o suspendido (NO peligroso)
+      // Los productos peligrosos NO pueden ser apelados debido a la gravedad de la violación
+      if (producto.es_peligroso || producto.estado === 'peligroso') {
         return res.status(400).json({
           success: false,
-          message: 'Solo se pueden apelar productos rechazados o marcados como peligrosos'
+          message: 'Los productos marcados como peligrosos no pueden ser apelados debido a la gravedad de la violación'
+        });
+      }
+
+      if (producto.estado !== 'rechazado' && producto.estado !== 'suspendido') {
+        return res.status(400).json({
+          success: false,
+          message: 'Solo se pueden apelar productos rechazados o suspendidos'
         });
       }
 
@@ -71,8 +79,8 @@ class AppealsController {
         [item_id, usuario_apelante_id, motivo_apelacion, informacion_adicional || null, 'en_apelacion']
       );
 
-      // Actualizar el estado del producto a "en_apelacion" si estaba rechazado
-      if (producto.estado === 'rechazado') {
+      // Actualizar el estado del producto a "en_apelacion" si estaba rechazado o suspendido
+      if (producto.estado === 'rechazado' || producto.estado === 'suspendido') {
         await query(
           'UPDATE items SET estado = $1 WHERE id = $2',
           ['en_apelacion', item_id]

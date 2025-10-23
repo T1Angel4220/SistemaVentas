@@ -86,6 +86,7 @@ export interface ProductForm {
   ubicacion_direccion: string;
   disponibilidad: boolean;
   estado: string;
+  motivo_rechazo?: string;
   // Campos específicos para servicios
   horario_atencion: string;
   horario_inicio: string;

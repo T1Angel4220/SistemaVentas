@@ -159,6 +159,21 @@ export const AppealProductDialog: React.FC<AppealProductDialogProps> = ({
             </div>
           )}
 
+          {/* Advertencia sobre productos apelables */}
+          <div className="bg-orange-50 border-l-4 border-orange-500 rounded-lg p-4">
+            <div className="flex items-start space-x-3">
+              <AlertCircle className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm text-orange-900 font-semibold">
+                  ⚠️ Solo se pueden apelar productos <strong>rechazados</strong> o <strong>suspendidos</strong>
+                </p>
+                <p className="text-xs text-orange-800 mt-1">
+                  Los productos marcados como <strong>peligrosos</strong> no pueden ser apelados debido a la gravedad de la violación.
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Información importante */}
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
             <div className="flex items-start space-x-3">

@@ -273,9 +273,9 @@ export const MyProductsPage: React.FC = () => {
     const messages = {
       activo: 'Tu producto está activo y visible para los compradores.',
       pendiente_revision: 'Tu producto está siendo revisado por los moderadores.',
-      rechazado: 'Tu producto fue rechazado. Puedes apelar esta decisión o editar el producto para corregirlo.',
-      suspendido: 'Tu producto ha sido suspendido. Si consideras que es un error, puedes apelar esta decisión.',
-      peligroso: 'Tu producto fue marcado como peligroso y no puede ser editado.',
+      rechazado: 'Tu producto fue rechazado. Haz clic en "Corregir" para ver el motivo y hacer los cambios necesarios.',
+      suspendido: 'Tu producto ha sido suspendido por una violación grave. Puedes apelar esta decisión para solicitar una revisión.',
+      peligroso: 'Tu producto fue marcado como peligroso. No se puede editar ni apelar. Contacta al equipo de moderación si crees que es un error.',
       en_apelacion: 'Tu apelación está siendo revisada por los moderadores. Recibirás una respuesta pronto.'
     };
     return messages[estado as keyof typeof messages] || 'Estado desconocido';
@@ -606,8 +606,19 @@ export const MyProductsPage: React.FC = () => {
                       </Button>
                     </Link>
                     
-                    {/* Botón de apelar - SOLO para rechazado o suspendido, NO para peligroso */}
-                    {(product.estado === 'rechazado' || product.estado === 'suspendido') && (
+                    {/* Botón para productos rechazados - Redirige a EDITAR */}
+                    {product.estado === 'rechazado' && (
+                      <Button 
+                        onClick={() => handleEditProduct(product.id)}
+                        className="flex-1 min-w-[120px] h-10 sm:h-11 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl text-xs sm:text-sm font-semibold"
+                      >
+                        <Edit className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                        <span>Corregir</span>
+                      </Button>
+                    )}
+                    
+                    {/* Botón para productos suspendidos - Abre modal de apelación formal */}
+                    {product.estado === 'suspendido' && (
                       <Button 
                         onClick={() => handleAppealProduct(product)}
                         className="flex-1 min-w-[120px] h-10 sm:h-11 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl text-xs sm:text-sm font-semibold"
