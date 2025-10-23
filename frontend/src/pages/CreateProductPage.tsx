@@ -163,6 +163,36 @@ export const CreateProductPage: React.FC = () => {
         
         // Limpiar estado de imágenes eliminadas
         setDeletedExistingImages([]);
+        
+        // ⚠️ Verificar si el producto está en revisión (solo admin puede editarlo)
+        if (product.estado === 'pendiente_revision' && user?.tipo_usuario !== 'administrador') {
+          showError(
+            '⏳ Producto en Revisión',
+            'No puedes editar este producto mientras esté pendiente de revisión. Espera a que los moderadores lo revisen.',
+            () => navigate('/my-products')
+          );
+          return;
+        }
+        
+        // ⚠️ Verificar si el producto está suspendido
+        if (product.estado === 'suspendido' && user?.tipo_usuario !== 'administrador') {
+          showError(
+            '🚫 Producto Suspendido',
+            'Este producto ha sido suspendido por los moderadores. No puedes editarlo. Contacta con los moderadores para más información.',
+            () => navigate('/my-products')
+          );
+          return;
+        }
+        
+        // ⚠️ Verificar si el producto es peligroso
+        if (product.es_peligroso && user?.tipo_usuario !== 'administrador') {
+          showError(
+            '🚫 Producto Peligroso',
+            'Este producto ha sido marcado como peligroso y no puede ser editado.',
+            () => navigate('/my-products')
+          );
+          return;
+        }
       } else {
         showError('Error', 'No se pudo cargar el producto para editar');
         navigate('/my-products');
@@ -174,7 +204,7 @@ export const CreateProductPage: React.FC = () => {
     } finally {
       setLoadingData(false);
     }
-  }, [showError, navigate]);
+  }, [showError, navigate, user]);
 
   useEffect(() => {
     // Verificar permisos
@@ -715,22 +745,29 @@ export const CreateProductPage: React.FC = () => {
         // Construir mensaje basado en información adicional
         let mensajeExito = `El producto ha sido ${actionText} correctamente.`;
         let tipoAlerta = 'success';
+        let esPeligroso = false;
         
         if (data.informacion) {
-          if (data.informacion.estado === 'peligroso') {
-            tipoAlerta = 'warning';
-            mensajeExito = `⚠️ Producto ${actionText} pero marcado como peligroso automáticamente. Motivo: ${data.informacion.motivo}`;
+          if (data.informacion.estado_nuevo === 'peligroso' || data.informacion.no_eliminable === true) {
+            tipoAlerta = 'error';
+            esPeligroso = true;
+            mensajeExito = `⚠️ ATENCIÓN: El contenido de este producto ha sido detectado como peligroso o inapropiado.\n\n` +
+                          `Motivo: ${data.informacion.motivo}\n\n` +
+                          `El producto ha sido ocultado automáticamente y NO podrás verlo, editarlo ni eliminarlo. ` +
+                          `Solo los moderadores tienen acceso para revisión.\n\n` +
+                          `Si consideras que esto es un error, puedes apelar esta decisión.`;
           } else if (data.informacion.requiere_revision) {
             tipoAlerta = 'info';
             mensajeExito = `ℹ️ Producto ${actionText} y enviado para revisión. ${data.informacion.motivo || ''}`;
           }
         }
         
-        if (tipoAlerta === 'warning') {
-          showWarning(
-            'Producto Marcado como Peligroso', 
+        if (esPeligroso) {
+          // Redirigir a /my-products si el producto fue marcado como peligroso
+          showError(
+            '🚫 Contenido Prohibido Detectado', 
             mensajeExito,
-            () => navigate(`/products/${data.data.id || id}`)
+            () => navigate('/my-products')
           );
         } else if (tipoAlerta === 'info') {
           showSuccess(

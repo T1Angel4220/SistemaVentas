@@ -189,8 +189,8 @@ const detectarContenidoInadecuado = (nombre, descripcion) => {
   }
 
   // Determinar la categoría principal (la de mayor riesgo)
-  const categoriasAltoRiesgo = ['drogas', 'armas', 'violencia', 'ilegal'];
-  const categoriasMedioRiesgo = ['sexual', 'discriminacion', 'peligrosos'];
+  const categoriasAltoRiesgo = ['drogas', 'armas', 'violencia', 'ilegal', 'sexual', 'servicios_ilegales'];
+  const categoriasMedioRiesgo = ['discriminacion', 'peligrosos', 'medicos'];
   
   let categoriaDetectada = null;
   if (Array.from(categoriasDetectadas).some(cat => categoriasAltoRiesgo.includes(cat))) {
@@ -259,8 +259,8 @@ const detectarContenidoInadecuado = (nombre, descripcion) => {
 
 // Función para calcular el nivel de riesgo
 const calcularNivelRiesgo = (palabrasDetectadas, categoria) => {
-  const categoriasAltoRiesgo = ['drogas', 'armas', 'violencia', 'ilegal'];
-  const categoriasMedioRiesgo = ['sexual', 'discriminacion', 'peligrosos'];
+  const categoriasAltoRiesgo = ['drogas', 'armas', 'violencia', 'ilegal', 'sexual', 'servicios_ilegales'];
+  const categoriasMedioRiesgo = ['discriminacion', 'peligrosos', 'medicos'];
   
   if (categoriasAltoRiesgo.includes(categoria)) {
     return 'alto';

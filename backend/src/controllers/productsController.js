@@ -222,7 +222,9 @@ class ProductsController {
         search
       } = req.query;
 
-      let whereConditions = ['i.estado = $1', 'i.disponibilidad = $2'];
+      // Ocultar productos peligrosos para todos los usuarios públicos (compradores)
+      // Los productos peligrosos solo son visibles para moderadores en su panel de moderación
+      let whereConditions = ['i.estado = $1', 'i.disponibilidad = $2', 'i.es_peligroso = false'];
       let queryParams = [estado, disponibilidad];
       let paramCount = 2;
 
@@ -563,6 +565,22 @@ class ProductsController {
         });
       }
 
+      // Verificar que no esté en revisión (solo admins pueden editar productos en revisión)
+      if (producto.estado === 'pendiente_revision' && req.user.tipo_usuario !== 'administrador') {
+        return res.status(400).json({
+          success: false,
+          message: 'No se puede editar un producto que está pendiente de revisión. Espera a que los moderadores lo revisen.'
+        });
+      }
+
+      // Verificar que no esté suspendido (solo admins pueden editar productos suspendidos)
+      if (producto.estado === 'suspendido' && req.user.tipo_usuario !== 'administrador') {
+        return res.status(400).json({
+          success: false,
+          message: 'No se puede editar un producto que ha sido suspendido. Contacta con los moderadores para más información.'
+        });
+      }
+
       // Detectar contenido inadecuado en los campos actualizados
       const nombreParaDetectar = nombre || producto.nombre;
       const descripcionParaDetectar = descripcion || producto.descripcion;
@@ -805,11 +823,27 @@ class ProductsController {
         });
       }
 
-      // Verificar que no esté marcado como peligroso
-      if (producto.es_peligroso) {
+      // Verificar que no esté marcado como peligroso (solo admins pueden eliminar)
+      if (producto.es_peligroso && req.user.tipo_usuario !== 'administrador') {
         return res.status(400).json({
           success: false,
-          message: 'No se puede eliminar un producto marcado como peligroso'
+          message: 'No se puede eliminar un producto marcado como peligroso. Solo los administradores pueden hacerlo.'
+        });
+      }
+
+      // Verificar que no esté en revisión (solo admins pueden eliminar productos en revisión)
+      if (producto.estado === 'pendiente_revision' && req.user.tipo_usuario !== 'administrador') {
+        return res.status(400).json({
+          success: false,
+          message: 'No se puede eliminar un producto que está pendiente de revisión. Espera a que los moderadores lo revisen.'
+        });
+      }
+
+      // Verificar que no esté suspendido (solo admins pueden eliminar productos suspendidos)
+      if (producto.estado === 'suspendido' && req.user.tipo_usuario !== 'administrador') {
+        return res.status(400).json({
+          success: false,
+          message: 'No se puede eliminar un producto que ha sido suspendido. Contacta con los moderadores para más información.'
         });
       }
 
@@ -892,12 +926,21 @@ class ProductsController {
       const vendedor_id = req.user.id;
       const { page = 1, limit = 10, estado } = req.query;
 
+      // Verificar si es moderador o administrador
+      const isModerator = ['moderador', 'administrador'].includes(req.user.tipo_usuario);
+
       let whereClause = 'i.vendedor_id = $1';
       let queryParams = [vendedor_id];
 
+      // Ocultar productos peligrosos para vendedores normales
+      // Moderadores y administradores SÍ pueden ver productos peligrosos para revisión
+      if (!isModerator) {
+        whereClause += ' AND i.es_peligroso = false';
+      }
+
       if (estado) {
-        whereClause += ' AND i.estado = $2';
         queryParams.push(estado);
+        whereClause += ` AND i.estado = $${queryParams.length}`;
       }
 
       // Calcular offset para paginación
@@ -907,7 +950,7 @@ class ProductsController {
       const productos = await query(
         `SELECT 
           i.id, i.codigo, i.nombre, i.descripcion, i.precio, 
-          i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion, i.es_peligroso,
+          i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion, i.es_peligroso, i.motivo_rechazo,
           c.nombre as categoria_nombre,
           COUNT(ii.id) as total_imagenes,
           (SELECT ii2.url_imagen FROM item_imagenes ii2 WHERE ii2.item_id = i.id ORDER BY ii2.orden LIMIT 1) as primera_imagen
@@ -916,7 +959,7 @@ class ProductsController {
         LEFT JOIN item_imagenes ii ON i.id = ii.item_id
         WHERE ${whereClause}
         GROUP BY i.id, i.codigo, i.nombre, i.descripcion, i.precio, 
-                 i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion, i.es_peligroso, c.nombre
+                 i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion, i.es_peligroso, i.motivo_rechazo, c.nombre
         ORDER BY i.fecha_publicacion DESC
         LIMIT $${queryParams.length - 1} OFFSET $${queryParams.length}`,
         queryParams
@@ -993,15 +1036,16 @@ class ProductsController {
       switch (accion) {
         case 'aprobar':
           nuevoEstado = 'activo';
+          esPeligroso = false; // Al aprobar, quitar flag de peligroso si lo tenía
           break;
         case 'rechazar':
-          nuevoEstado = 'suspendido';
+          nuevoEstado = 'rechazado'; // ✅ CORREGIDO: Rechazar → estado 'rechazado' (vendedor puede editar/corregir)
           break;
         case 'suspender':
-          nuevoEstado = 'suspendido';
+          nuevoEstado = 'suspendido'; // Suspensión temporal (no puede editar hasta resolución)
           break;
         case 'marcar_peligroso':
-          nuevoEstado = 'peligroso';
+          nuevoEstado = 'peligroso'; // Producto oculto (no puede editar/ver, solo admin)
           esPeligroso = true;
           fechaDeteccionPeligroso = new Date();
           break;

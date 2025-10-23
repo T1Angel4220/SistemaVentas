@@ -27,6 +27,8 @@ import { CreateProductPage } from './pages/CreateProductPage';
 import { MyProductsPage } from './pages/MyProductsPage';
 import { ProductModerationPage } from './pages/ProductModerationPage';
 import { SavedProductsPage } from './pages/SavedProductsPage';
+import { ReportsManagementPage } from './pages/ReportsManagementPage';
+import { AppealsManagementPage } from './pages/AppealsManagementPage';
 
 // Componentes de error
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -159,6 +161,22 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['moderador', 'administrador']}>
                     <ProductModerationPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/moderation/reports" 
+                element={
+                  <ProtectedRoute allowedRoles={['moderador', 'administrador']}>
+                    <ReportsManagementPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/moderation/appeals" 
+                element={
+                  <ProtectedRoute allowedRoles={['moderador', 'administrador']}>
+                    <AppealsManagementPage />
                   </ProtectedRoute>
                 } 
               />

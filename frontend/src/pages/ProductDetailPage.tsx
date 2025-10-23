@@ -29,15 +29,17 @@ import {
   Camera,
   DollarSign,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Flag
 } from 'lucide-react';
 import type { ProductDetail } from '../types/product.types';
+import { ReportProductDialog } from '../components/ui/ReportProductDialog';
 
 export const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { canModifyProduct, canDeleteProduct } = usePermissions();
+  const { canModifyProduct, canDeleteProduct, canModerateProduct, getRoleDisplayName } = usePermissions();
   const { alert, showSuccess, showError, showWarning, hideAlert } = useAlert();
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -47,6 +49,164 @@ export const ProductDetailPage: React.FC = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
   const [reviewLoading, setReviewLoading] = useState(false);
+  
+  // Estado para modal de reporte
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+
+  const handleReportProduct = () => {
+    setReportModalOpen(true);
+  };
+
+  const handleReportSuccess = () => {
+    showSuccess(
+      '¡Reporte enviado!',
+      'Tu reporte ha sido enviado correctamente. Será revisado por un moderador.',
+      () => {}
+    );
+    setReportModalOpen(false);
+  };
+
+  // Handlers de moderación
+  const handleModerateProduct = async (action: string, motivo?: string) => {
+    if (!product) return;
+    
+    try {
+      setReviewLoading(true);
+      
+      const response = await fetch(`http://localhost:3001/api/products/${product.id}/moderate`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiService.getToken()}`
+        },
+        body: JSON.stringify({
+          accion: action,
+          motivo: motivo || `Producto ${action} por ${getRoleDisplayName()}`,
+          decision_final: `Decisión: ${action}`
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        let titulo = '';
+        let mensaje = '';
+
+        switch (action) {
+          case 'aprobar':
+            titulo = '✅ Producto Aprobado';
+            mensaje = `"${product.nombre}" ha sido APROBADO exitosamente.\n\nEl producto ahora es visible para todos los compradores.`;
+            break;
+          case 'rechazar':
+            titulo = '🔴 Producto Rechazado';
+            mensaje = `"${product.nombre}" ha sido RECHAZADO.\n\nEl vendedor podrá verlo, editarlo, eliminarlo o apelar esta decisión.`;
+            break;
+          case 'suspender':
+            titulo = '🟡 Producto Suspendido';
+            mensaje = `"${product.nombre}" ha sido SUSPENDIDO temporalmente.\n\nEl vendedor podrá verlo y apelar, pero no editarlo ni eliminarlo hasta que se resuelva.`;
+            break;
+          case 'marcar_peligroso':
+            titulo = '🚫 Producto Marcado como Peligroso';
+            mensaje = `"${product.nombre}" ha sido marcado como PELIGROSO.\n\nEl producto está ahora OCULTO para vendedor y compradores.\nSolo moderadores y administradores pueden verlo.\n\nEl vendedor podrá apelar esta decisión.`;
+            break;
+        }
+
+        showSuccess(titulo, mensaje, () => navigate('/moderation/products'));
+      } else {
+        showError('Error', data.message || 'Error al moderar producto');
+      }
+    } catch (error) {
+      console.error('Error al moderar producto:', error);
+      showError('Error', 'Error de conexión al moderar producto');
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
+  const handleApproveProduct = () => {
+    if (!product) return;
+    showWarning(
+      '¿Aprobar producto?',
+      `¿Estás seguro de que quieres aprobar "${product.nombre}"?\n\nEste producto será APROBADO y visible para todos los compradores en la plataforma.`,
+      () => handleModerateProduct('aprobar')
+    );
+  };
+
+  const handleRejectProduct = () => {
+    if (!product) return;
+    const motivo = prompt(
+      `🔴 RECHAZAR PRODUCTO: "${product.nombre}"\n\n` +
+      `El producto será marcado como RECHAZADO.\n\n` +
+      `✅ El vendedor PODRÁ:\n` +
+      `   • Ver el producto en su lista\n` +
+      `   • Editarlo para corregir problemas\n` +
+      `   • Eliminarlo si lo desea\n` +
+      `   • Apelar esta decisión\n\n` +
+      `Por favor, ingresa el MOTIVO del rechazo (obligatorio):`
+    );
+
+    if (motivo === null) return;
+    
+    if (!motivo.trim()) {
+      showError('Motivo requerido', 'Debes proporcionar un motivo para rechazar el producto.');
+      return;
+    }
+
+    handleModerateProduct('rechazar', motivo);
+  };
+
+  const handleSuspendProduct = () => {
+    if (!product) return;
+    const motivo = prompt(
+      `🟡 SUSPENDER PRODUCTO: "${product.nombre}"\n\n` +
+      `El producto será SUSPENDIDO temporalmente.\n\n` +
+      `✅ El vendedor PODRÁ:\n` +
+      `   • Ver el producto en su lista\n` +
+      `   • Apelar esta decisión\n\n` +
+      `❌ El vendedor NO PODRÁ:\n` +
+      `   • Editarlo hasta que se resuelva\n` +
+      `   • Eliminarlo hasta que se resuelva\n\n` +
+      `Por favor, ingresa el MOTIVO de la suspensión (obligatorio):`
+    );
+
+    if (motivo === null) return;
+    
+    if (!motivo.trim()) {
+      showError('Motivo requerido', 'Debes proporcionar un motivo para suspender el producto.');
+      return;
+    }
+
+    handleModerateProduct('suspender', motivo);
+  };
+
+  const handleMarkAsDangerous = () => {
+    if (!product) return;
+    const motivo = prompt(
+      `🚫 MARCAR COMO PELIGROSO: "${product.nombre}"\n\n` +
+      `⚠️ ATENCIÓN: Esta es una acción crítica.\n\n` +
+      `El producto será marcado como PELIGROSO y:\n\n` +
+      `❌ Será OCULTO completamente:\n` +
+      `   • No visible para el vendedor\n` +
+      `   • No visible para compradores\n` +
+      `   • Solo visible para moderadores/admins\n\n` +
+      `❌ El vendedor NO PODRÁ:\n` +
+      `   • Verlo en su lista\n` +
+      `   • Editarlo\n` +
+      `   • Eliminarlo (solo admins)\n\n` +
+      `✅ El vendedor SÍ PODRÁ:\n` +
+      `   • Apelar esta decisión\n\n` +
+      `Por favor, ingresa el MOTIVO por el cual es peligroso (obligatorio):`
+    );
+
+    if (motivo === null) return;
+    
+    if (!motivo.trim()) {
+      showError('Motivo requerido', 'Debes proporcionar un motivo para marcar como peligroso.');
+      return;
+    }
+
+    handleModerateProduct('marcar_peligroso', motivo);
+  };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -77,7 +237,25 @@ export const ProductDetailPage: React.FC = () => {
       const data = await response.json();
       
       if (data.success) {
-        setProduct(data.data);
+        const productData = data.data;
+        
+        // Verificar si es un producto peligroso y el usuario es el vendedor (no moderador/admin)
+        if (productData.es_peligroso && user) {
+          const isOwner = user.id === productData.vendedor_id;
+          const isModerator = user.tipo_usuario === 'moderador' || user.tipo_usuario === 'administrador';
+          
+          // Si es el propietario pero NO es moderador/admin, bloquear acceso
+          if (isOwner && !isModerator) {
+            showError(
+              '🚫 Acceso Denegado',
+              'Este producto ha sido marcado como peligroso y no está disponible para visualización. Solo los moderadores pueden acceder a él para revisión.',
+              () => navigate('/my-products')
+            );
+            return; // No establecer el producto
+          }
+        }
+        
+        setProduct(productData);
       } else {
         setError(data.message || 'Error al cargar el producto');
       }
@@ -87,7 +265,7 @@ export const ProductDetailPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, user, navigate, showError]);
 
   useEffect(() => {
     // Forzar scroll al inicio
@@ -158,86 +336,6 @@ export const ProductDetailPage: React.FC = () => {
     );
   };
 
-  const handleMarkAsReviewed = async () => {
-    if (!product || !user) return;
-    
-    setReviewLoading(true);
-    try {
-      const response = await fetch(`http://localhost:3001/api/products/${product.id}/moderate`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiService.getToken()}`
-        },
-        body: JSON.stringify({
-          accion: 'marcar_revisado_detalle',
-          motivo: 'Producto marcado como revisado en detalle',
-          decision_final: 'Revisado en detalle'
-        })
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        showSuccess('¡Producto Revisado!', 'El producto ha sido marcado como revisado.');
-        // Recargar el producto para obtener la fecha_revision actualizada
-        loadProduct();
-      } else {
-        showError('Error al marcar como revisado', data.message || 'No se pudo marcar el producto como revisado.');
-      }
-    } catch (error) {
-      console.error('Error al marcar como revisado:', error);
-      showError('Error de conexión', 'No se pudo conectar con el servidor para marcar el producto como revisado.');
-    } finally {
-      setReviewLoading(false);
-    }
-  };
-
-  const handleModerationAction = async (action: string, productName: string) => {
-    if (!product || !user) return;
-    
-    const actionText = action === 'aprobar' ? 'aprobar' : 'rechazar';
-    const actionTitle = action === 'aprobar' ? '¿Aprobar producto?' : '¿Rechazar producto?';
-    const actionMessage = action === 'aprobar' 
-      ? `¿Estás seguro de que quieres aprobar "${productName}"? Este producto será visible para todos los compradores.`
-      : `¿Estás seguro de que quieres rechazar "${productName}"? Este producto será suspendido y no será visible para los compradores.`;
-    
-    showWarning(
-      actionTitle,
-      actionMessage,
-      async () => {
-        try {
-          const response = await fetch(`http://localhost:3001/api/products/${product.id}/moderate`, {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${apiService.getToken()}`
-            },
-            body: JSON.stringify({
-              accion: action,
-              motivo: `Producto ${actionText} por ${user.tipo_usuario}`,
-              decision_final: `Decisión: ${action === 'aprobar' ? 'Aprobado' : 'Rechazado'}`
-            })
-          });
-
-          const data = await response.json();
-          
-          if (data.success) {
-            showSuccess(
-              'Acción completada',
-              `El producto "${productName}" ha sido ${actionText} exitosamente.`,
-              () => navigate('/products/moderation')
-            );
-          } else {
-            showError('Error', data.message || 'Error al moderar producto');
-          }
-        } catch (error) {
-          console.error('Error al moderar producto:', error);
-          showError('Error', 'Error de conexión al moderar producto');
-        }
-      },
-      undefined // onCancel - no necesita hacer nada especial
-    );
-  };
 
 
   const formatDate = (dateString: string) => {
@@ -576,13 +674,21 @@ export const ProductDetailPage: React.FC = () => {
                   
             {/* NUEVO: Botón de acción principal para COMPRADORES + RESPONSIVE */}
             {user?.tipo_usuario === 'comprador' && product.estado === 'activo' && product.disponibilidad && (
-              <div className="sticky top-4 z-10">
+              <div className="sticky top-4 z-10 space-y-3">
                 <Button 
                   onClick={() => navigate(`/products/contact/${product.id}`)}
                   className="w-full h-12 sm:h-14 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-base sm:text-lg font-bold shadow-2xl hover:shadow-3xl transition-all duration-300 rounded-xl"
                 >
                   <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" />
                   <span>Contactar Vendedor</span>
+                </Button>
+                <Button 
+                  onClick={handleReportProduct}
+                  variant="outline"
+                  className="w-full h-10 sm:h-11 border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 text-sm sm:text-base font-semibold shadow-sm hover:shadow-md transition-all duration-300 rounded-xl"
+                >
+                  <Flag className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                  <span>Reportar producto</span>
                 </Button>
                 <p className="text-xs text-center text-gray-500 mt-2">
                   ✓ Disponible para compra inmediata
@@ -601,101 +707,6 @@ export const ProductDetailPage: React.FC = () => {
             )}
 
             {/* Acciones de Moderación - MEJORADO: Con profundidad + RESPONSIVE */}
-            {(user?.tipo_usuario === 'moderador' || user?.tipo_usuario === 'administrador') && (product.estado === 'pendiente_revision' || product.estado === 'activo') && (
-              <div className="border border-blue-200 rounded-lg p-4 bg-gradient-to-r from-blue-50 to-indigo-50 shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <h3 className="font-medium text-gray-900 mb-3 flex items-center">
-                  <Shield className="h-4 w-4 mr-2 text-blue-600" />
-                  Acciones de Moderación
-                </h3>
-                
-                {product.estado === 'pendiente_revision' ? (
-                  // Flujo para productos pendientes de revisión
-                  !product.fecha_revision ? (
-                    // Botón para marcar como revisado
-                    <div className="text-center">
-                      <Button 
-                        onClick={handleMarkAsReviewed}
-                        disabled={reviewLoading}
-                        className="w-full h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200 text-base font-medium"
-                      >
-                        {reviewLoading ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                            Marcando como revisado...
-                          </>
-                        ) : (
-                          <>
-                            <Eye className="h-5 w-5 mr-2" />
-                            Marcar como Revisado
-                          </>
-                        )}
-                      </Button>
-                      <p className="text-xs text-gray-600 mt-3 text-center">
-                        Primero marca el producto como revisado, luego podrás aprobarlo o rechazarlo
-                      </p>
-                    </div>
-                  ) : (
-                    // Botones de aprobación/rechazo (solo después de marcar como revisado)
-                    <>
-                      <div className="mb-3 p-3 bg-green-100 border border-green-200 rounded-lg">
-                        <div className="flex items-center text-green-800">
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                          <span className="text-sm font-medium">Producto marcado como revisado</span>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <Button 
-                          onClick={() => handleModerationAction('aprobar', product.nombre)}
-                          className="w-full h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200"
-                        >
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                          Aprobar
-                        </Button>
-                        <Button 
-                          onClick={() => handleModerationAction('rechazar', product.nombre)}
-                          className="w-full h-10 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200"
-                        >
-                          <XCircle className="h-4 w-4 mr-2" />
-                          Rechazar
-                        </Button>
-                      </div>
-                      <p className="text-xs text-gray-600 mt-3 text-center">
-                        Ahora puedes tomar una decisión sobre este producto
-                      </p>
-                    </>
-                  )
-                ) : (
-                  // Flujo para productos activos - pueden ser suspendidos o marcados como peligrosos
-                  <>
-                    <div className="mb-3 p-3 bg-green-100 border border-green-200 rounded-lg">
-                      <div className="flex items-center text-green-800">
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        <span className="text-sm font-medium">Producto activo - Acciones disponibles</span>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Button 
-                        onClick={() => handleModerationAction('suspender', product.nombre)}
-                        className="w-full h-10 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200"
-                      >
-                        <AlertTriangle className="h-4 w-4 mr-2" />
-                        Suspender
-                      </Button>
-                      <Button 
-                        onClick={() => handleModerationAction('marcar_peligroso', product.nombre)}
-                        className="w-full h-10 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200"
-                      >
-                        <AlertTriangle className="h-4 w-4 mr-2" />
-                        Marcar como Peligroso
-                      </Button>
-                    </div>
-                    <p className="text-xs text-gray-600 mt-3 text-center">
-                      Puedes suspender el producto o marcarlo como peligroso
-                    </p>
-                  </>
-                )}
-              </div>
-            )}
 
             {/* Acciones de Gestión - MEJORADO: Con profundidad + RESPONSIVE */}
             {(canModifyProduct(product.vendedor_id) || canDeleteProduct(product.vendedor_id)) && user?.tipo_usuario !== 'moderador' && (
@@ -705,7 +716,7 @@ export const ProductDetailPage: React.FC = () => {
                   Gestionar producto
                 </h3>
                 <div className="space-y-3">
-                  {canModifyProduct(product.vendedor_id) && !product.es_peligroso && (
+                  {canModifyProduct(product.vendedor_id) && !product.es_peligroso && product.estado !== 'pendiente_revision' && product.estado !== 'suspendido' && (
                     <Button 
                       onClick={() => navigate(`/products/${product.id}/edit`)}
                       className="w-full h-11 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 text-sm font-semibold"
@@ -715,7 +726,7 @@ export const ProductDetailPage: React.FC = () => {
                     </Button>
                   )}
                     
-                  {canDeleteProduct(product.vendedor_id) && !product.es_peligroso && (
+                  {canDeleteProduct(product.vendedor_id) && !product.es_peligroso && product.estado !== 'pendiente_revision' && product.estado !== 'suspendido' && (
                       <Button 
                       onClick={handleDeleteProduct}
                       className="w-full h-11 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 text-sm font-semibold"
@@ -724,8 +735,107 @@ export const ProductDetailPage: React.FC = () => {
                       Eliminar Producto
                       </Button>
                     )}
+                    
+                  {/* Mensaje informativo si el producto está en revisión */}
+                  {product.estado === 'pendiente_revision' && user?.tipo_usuario !== 'administrador' && (
+                    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded">
+                      <p className="text-sm text-yellow-800">
+                        <strong>⏳ En revisión:</strong> No puedes editar ni eliminar este producto hasta que los moderadores lo revisen.
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* Mensaje informativo si el producto está suspendido */}
+                  {product.estado === 'suspendido' && user?.tipo_usuario !== 'administrador' && (
+                    <div className="bg-red-50 border-l-4 border-red-400 p-3 rounded">
+                      <p className="text-sm text-red-800">
+                        <strong>🚫 Suspendido:</strong> Este producto ha sido suspendido por los moderadores. No puedes editarlo ni eliminarlo. Contacta con los moderadores para más información.
+                      </p>
+                    </div>
+                  )}
                   </div>
                 </div>
+            )}
+
+            {/* Acciones de Moderación - SOLO para Moderadores y Administradores */}
+            {canModerateProduct() && (
+              <div className="border-l-4 border-slate-700 bg-gradient-to-br from-slate-50 to-gray-100 rounded-lg p-4 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <h3 className="font-semibold text-gray-900 mb-4 flex items-center text-base">
+                  <Shield className="h-5 w-5 mr-2 text-slate-700" />
+                  Acciones de Moderación
+                </h3>
+                
+                {/* Botones principales: Aprobar, Rechazar, Suspender */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
+                  <Button 
+                    size="sm"
+                    onClick={handleApproveProduct}
+                    disabled={reviewLoading}
+                    className="h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
+                    title="Aprobar producto"
+                  >
+                    {reviewLoading ? (
+                      <Clock className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <CheckCircle className="h-4 w-4" />
+                    )}
+                    <span className="ml-2">Aprobar</span>
+                  </Button>
+                  
+                  <Button 
+                    size="sm"
+                    onClick={handleRejectProduct}
+                    disabled={reviewLoading}
+                    className="h-10 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
+                    title="Rechazar por errores corregibles (vendedor puede editar)"
+                  >
+                    {reviewLoading ? (
+                      <Clock className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <XCircle className="h-4 w-4" />
+                    )}
+                    <span className="ml-2">Rechazar</span>
+                  </Button>
+                  
+                  <Button 
+                    size="sm"
+                    onClick={handleSuspendProduct}
+                    disabled={reviewLoading}
+                    className="h-10 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
+                    title="Suspender por violación grave (vendedor NO puede editar)"
+                  >
+                    {reviewLoading ? (
+                      <Clock className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <AlertTriangle className="h-4 w-4" />
+                    )}
+                    <span className="ml-2">Suspender</span>
+                  </Button>
+                </div>
+                
+                {/* Acción crítica: Marcar como Peligroso */}
+                <div className="pt-3 border-t border-slate-200">
+                  <Button 
+                    size="sm"
+                    onClick={handleMarkAsDangerous}
+                    disabled={reviewLoading}
+                    className="w-full h-10 bg-gradient-to-r from-red-700 to-red-900 hover:from-red-800 hover:to-red-950 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
+                    title="Contenido prohibido - Producto OCULTO completamente"
+                  >
+                    {reviewLoading ? (
+                      <Clock className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <AlertTriangle className="h-4 w-4" />
+                    )}
+                    <span className="ml-2">🚫 Marcar como Peligroso</span>
+                  </Button>
+                </div>
+
+                {/* Nota informativa */}
+                <div className="mt-3 p-2 bg-slate-100 border border-slate-200 rounded text-xs text-slate-700">
+                  <strong>Nota:</strong> Todas las acciones son permanentes y quedan registradas en el historial de moderación.
+                </div>
+              </div>
             )}
 
             {/* Información del vendedor - MEJORADO: Más compacto + Sombras + RESPONSIVE */}
@@ -950,6 +1060,17 @@ export const ProductDetailPage: React.FC = () => {
         onConfirm={alert.onConfirm}
         onCancel={alert.onCancel}
       />
+
+      {/* Modal de Reporte */}
+      {product && (
+        <ReportProductDialog
+          isOpen={reportModalOpen}
+          onClose={() => setReportModalOpen(false)}
+          productId={product.id}
+          productName={product.nombre}
+          onSuccess={handleReportSuccess}
+        />
+      )}
     </div>
   );
 };

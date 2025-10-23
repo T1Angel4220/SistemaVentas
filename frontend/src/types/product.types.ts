@@ -4,7 +4,7 @@
 
 // Tipos básicos
 export type ProductType = 'producto' | 'servicio';
-export type ProductStatus = 'activo' | 'inactivo' | 'pendiente_revision' | 'rechazado' | 'peligroso' | 'suspendido';
+export type ProductStatus = 'activo' | 'inactivo' | 'pendiente_revision' | 'rechazado' | 'peligroso' | 'suspendido' | 'en_apelacion';
 
 // Interface básica de producto (para listados)
 export interface Product {
@@ -25,6 +25,7 @@ export interface Product {
   primera_imagen?: string;
   es_peligroso?: boolean;
   fecha_revision?: string;
+  motivo_rechazo?: string;
 }
 
 // Interface detallada de producto (para vista individual)
@@ -52,6 +53,7 @@ export interface ProductDetail {
   servicio?: ServiceDetails;
   es_peligroso?: boolean;
   fecha_revision?: string;
+  motivo_rechazo?: string;
 }
 
 // Imágenes de producto

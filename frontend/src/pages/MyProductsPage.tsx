@@ -16,9 +16,11 @@ import {
   Calendar,
   AlertCircle,
   ArrowLeft,
-  Camera
+  Camera,
+  FileText
 } from 'lucide-react';
 import type { Product, ProductsResponse } from '../types/product.types';
+import { AppealProductDialog } from '../components/ui/AppealProductDialog';
 
 export const MyProductsPage: React.FC = () => {
   const { user } = useAuth();
@@ -40,6 +42,14 @@ export const MyProductsPage: React.FC = () => {
     page: 1,
     limit: 12
   });
+
+  // Estado para modal de apelación
+  const [appealModalOpen, setAppealModalOpen] = useState(false);
+  const [selectedProductForAppeal, setSelectedProductForAppeal] = useState<{
+    id: number;
+    nombre: string;
+    motivo_rechazo?: string;
+  } | null>(null);
 
   const loadProducts = useCallback(async () => {
     try {
@@ -91,7 +101,25 @@ export const MyProductsPage: React.FC = () => {
     navigate(`/products/${productId}/edit`);
   };
 
-  const handleDeleteProduct = async (productId: number, productName: string) => {
+  const handleDeleteProduct = async (productId: number, productName: string, productEstado: string) => {
+    // Verificar si el producto está en revisión
+    if (productEstado === 'pendiente_revision' && user?.tipo_usuario !== 'administrador') {
+      showError(
+        '⏳ Producto en Revisión',
+        'No puedes eliminar este producto mientras esté pendiente de revisión. Espera a que los moderadores lo revisen.'
+      );
+      return;
+    }
+
+    // Verificar si el producto está suspendido
+    if (productEstado === 'suspendido' && user?.tipo_usuario !== 'administrador') {
+      showError(
+        '🚫 Producto Suspendido',
+        'No puedes eliminar este producto porque ha sido suspendido por los moderadores. Contacta con ellos para más información.'
+      );
+      return;
+    }
+
     showWarning(
       '¿Eliminar producto?',
       `¿Estás seguro de que quieres eliminar "${productName}"? Esta acción no se puede deshacer.`,
@@ -121,6 +149,25 @@ export const MyProductsPage: React.FC = () => {
       },
       undefined // onCancel - no necesita hacer nada especial
     );
+  };
+
+  const handleAppealProduct = (product: Product) => {
+    setSelectedProductForAppeal({
+      id: product.id,
+      nombre: product.nombre,
+      motivo_rechazo: product.motivo_rechazo || undefined
+    });
+    setAppealModalOpen(true);
+  };
+
+  const handleAppealSuccess = () => {
+    showSuccess(
+      '¡Apelación enviada!',
+      'Tu apelación ha sido enviada correctamente. Será revisada por un moderador.',
+      () => loadProducts()
+    );
+    setAppealModalOpen(false);
+    setSelectedProductForAppeal(null);
   };
 
   const formatPrice = (price: number) => {
@@ -502,10 +549,22 @@ export const MyProductsPage: React.FC = () => {
                       </Button>
                     </Link>
                     
-                    {product.estado !== 'rechazado' && !product.es_peligroso && (
+                    {/* Botón de apelar - Solo para productos rechazados */}
+                    {(product.estado === 'rechazado' || product.estado === 'peligroso') && (
+                      <Button 
+                        onClick={() => handleAppealProduct(product)}
+                        className="h-10 w-10 sm:h-11 sm:w-11 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl flex-shrink-0"
+                        title="Apelar decisión"
+                      >
+                        <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
+                      </Button>
+                    )}
+                    
+                    {product.estado !== 'rechazado' && !product.es_peligroso && product.estado !== 'pendiente_revision' && product.estado !== 'suspendido' && (
                       <Button 
                         onClick={() => handleEditProduct(product.id)}
                         className="h-10 w-10 sm:h-11 sm:w-11 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl flex-shrink-0"
+                        title="Editar producto"
                       >
                         <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                       </Button>
@@ -513,13 +572,18 @@ export const MyProductsPage: React.FC = () => {
                     
                     {/* Botón de eliminar - Uniformado con estilo de ProductsPage */}
                     <Button
-                      onClick={() => handleDeleteProduct(product.id, product.nombre)}
-                      disabled={product.es_peligroso || product.estado === 'peligroso'}
+                      onClick={() => handleDeleteProduct(product.id, product.nombre, product.estado)}
+                      disabled={product.es_peligroso || product.estado === 'peligroso' || product.estado === 'pendiente_revision' || product.estado === 'suspendido'}
                       className={`h-10 w-10 sm:h-11 sm:w-11 border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl flex-shrink-0 ${
-                        product.es_peligroso || product.estado === 'peligroso'
+                        product.es_peligroso || product.estado === 'peligroso' || product.estado === 'pendiente_revision' || product.estado === 'suspendido'
                           ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-50'
                           : 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white'
                       }`}
+                      title={
+                        product.estado === 'pendiente_revision' ? 'No puedes eliminar un producto en revisión' :
+                        product.estado === 'suspendido' ? 'No puedes eliminar un producto suspendido' :
+                        'Eliminar producto'
+                      }
                     >
                       <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
@@ -589,6 +653,21 @@ export const MyProductsPage: React.FC = () => {
         onConfirm={alert.onConfirm}
         onCancel={alert.onCancel}
       />
+
+      {/* Modal de Apelación */}
+      {selectedProductForAppeal && (
+        <AppealProductDialog
+          isOpen={appealModalOpen}
+          onClose={() => {
+            setAppealModalOpen(false);
+            setSelectedProductForAppeal(null);
+          }}
+          productId={selectedProductForAppeal.id}
+          productName={selectedProductForAppeal.nombre}
+          motivoRechazo={selectedProductForAppeal.motivo_rechazo}
+          onSuccess={handleAppealSuccess}
+        />
+      )}
     </div>
   );
 };
