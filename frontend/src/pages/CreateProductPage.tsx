@@ -12,6 +12,8 @@ import { Label } from '../components/ui/Label';
 import { Alert, AlertDescription } from '../components/ui/Alert';
 import { AlertDialog } from '../components/ui/AlertDialog';
 import HierarchicalCategorySearch from '../components/ui/HierarchicalCategorySearch';
+import HierarchicalLocationSearch from '../components/ui/HierarchicalLocationSearch';
+import type { Location } from '../components/ui/HierarchicalLocationSearch';
 import { ServiceDetailsForm } from '../components/ui/ServiceDetailsForm';
 import { VisibilityToggle } from '../components/ui/VisibilityToggle';
 import { 
@@ -53,6 +55,7 @@ export const CreateProductPage: React.FC = () => {
 
   // Usar hooks optimizados para evitar múltiples requests
   const { data: categories, loading: categoriesLoading, error: categoriesError } = useCategories();
+  const [locations, setLocations] = useState<Location[]>([]);
 
   const [form, setForm] = useState<ProductForm>({
     codigo: '',
@@ -134,10 +137,10 @@ export const CreateProductPage: React.FC = () => {
           tipo: product.tipo || 'producto',
           categoria_id: product.categoria_id?.toString() || '',
           ubicacion_id: product.ubicacion_id?.toString() || '',
-          ubicacion_provincia: product.provincia || '',
-          ubicacion_canton: product.canton || '',
-          ubicacion_distrito: product.distrito || '',
-          ubicacion_direccion: product.ubicacion_nombre || '',
+          ubicacion_provincia: product.ubicacion_provincia || '',
+          ubicacion_canton: product.ubicacion_canton || '',
+          ubicacion_distrito: product.ubicacion_distrito || '',
+          ubicacion_direccion: product.ubicacion_direccion || '',
           disponibilidad: product.disponibilidad === true, // Solo true si explícitamente es true
           estado: product.estado || 'pendiente_revision',
           motivo_rechazo: product.motivo_rechazo || '',
@@ -222,6 +225,24 @@ export const CreateProductPage: React.FC = () => {
       loadProductData(id);
     }
   }, [user, navigate, id, loadProductData]);
+
+  // Cargar ubicaciones al montar el componente
+  useEffect(() => {
+    const loadLocations = async () => {
+      try {
+        // Pedir todas las ubicaciones (sin paginación)
+        const response = await fetch('http://localhost:3001/api/locations?limit=1000');
+        const data = await response.json();
+        if (data.success) {
+          setLocations(data.data);
+        }
+      } catch (error) {
+        console.error('Error al cargar ubicaciones:', error);
+      }
+    };
+
+    loadLocations();
+  }, []);
 
   const handleInputChange = (field: keyof ProductForm, value: string | string[]) => {
     let processedValue = value;
@@ -1432,85 +1453,23 @@ export const CreateProductPage: React.FC = () => {
                 </div>
                 
                 <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Provincia - CON TOOLTIP */}
-                    <div className="space-y-2">
-                      <Label htmlFor="ubicacion_provincia" className="text-sm font-semibold text-gray-700 flex items-center">
-                        <MapPin className="h-3 w-3 mr-1 text-green-600" />
-                      Provincia *
-                    </Label>
-                    <Input
-                      id="ubicacion_provincia"
-                      type="text"
-                        placeholder="Ej: San José, Alajuela..."
-                      value={form.ubicacion_provincia}
-                      onChange={(e) => handleInputChange('ubicacion_provincia', e.target.value)}
-                        className="h-11 rounded-xl border-2 border-gray-200 focus:border-green-500 focus:ring-green-500 shadow-sm hover:shadow-md transition-all"
-                      required
-                    />
-                      <p className="text-xs text-gray-500 flex items-center">
-                        <Info className="h-3 w-3 mr-1" />
-                        Escribe la provincia de Costa Rica
-                      </p>
-                  </div>
-
-                    {/* Cantón - CON TOOLTIP */}
-                    <div className="space-y-2">
-                      <Label htmlFor="ubicacion_canton" className="text-sm font-semibold text-gray-700 flex items-center">
-                        <MapPin className="h-3 w-3 mr-1 text-green-600" />
-                      Cantón *
-                    </Label>
-                    <Input
-                      id="ubicacion_canton"
-                      type="text"
-                        placeholder="Ej: Santa Ana, Escazú..."
-                      value={form.ubicacion_canton}
-                      onChange={(e) => handleInputChange('ubicacion_canton', e.target.value)}
-                        className="h-11 rounded-xl border-2 border-gray-200 focus:border-green-500 focus:ring-green-500 shadow-sm hover:shadow-md transition-all"
-                      required
-                    />
-                      <p className="text-xs text-gray-500 flex items-center">
-                        <Info className="h-3 w-3 mr-1" />
-                        Escribe el cantón correspondiente
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Distrito */}
-                    <div className="space-y-2">
-                      <Label htmlFor="ubicacion_distrito" className="text-sm font-semibold text-gray-700 flex items-center">
-                        <MapPin className="h-3 w-3 mr-1 text-gray-500" />
-                      Distrito
-                        <span className="ml-1 text-xs text-gray-500">(opcional)</span>
-                    </Label>
-                    <Input
-                      id="ubicacion_distrito"
-                      type="text"
-                        placeholder="Ej: Pozos, Uruca..."
-                      value={form.ubicacion_distrito}
-                      onChange={(e) => handleInputChange('ubicacion_distrito', e.target.value)}
-                        className="h-11 rounded-xl border-2 border-gray-200 focus:border-green-500 focus:ring-green-500 shadow-sm hover:shadow-md transition-all"
-                    />
-                  </div>
-
-                  {/* Dirección */}
-                    <div className="space-y-2">
-                      <Label htmlFor="ubicacion_direccion" className="text-sm font-semibold text-gray-700 flex items-center">
-                        <MapPin className="h-3 w-3 mr-1 text-green-600" />
-                      Dirección específica *
-                    </Label>
-                <Input
-                      id="ubicacion_direccion"
-                      type="text"
-                      placeholder="Ej: 100m norte del supermercado"
-                      value={form.ubicacion_direccion}
-                      onChange={(e) => handleInputChange('ubicacion_direccion', e.target.value)}
-                        className="h-11 rounded-xl border-2 border-gray-200 focus:border-green-500 focus:ring-green-500 shadow-sm hover:shadow-md transition-all"
-                      required
-                    />
-                    </div>
-                </div>
+                  <HierarchicalLocationSearch
+                    locations={locations}
+                    onLocationSelect={(locationData) => {
+                      setForm(prev => ({
+                        ...prev,
+                        ubicacion_id: locationData.locationId,
+                        ubicacion_provincia: locationData.provincia,
+                        ubicacion_canton: locationData.canton,
+                        ubicacion_distrito: locationData.distrito,
+                        ubicacion_direccion: locationData.direccion
+                      }));
+                    }}
+                    initialProvincia={form.ubicacion_provincia}
+                    initialCanton={form.ubicacion_canton}
+                    initialDistrito={form.ubicacion_distrito}
+                    initialDireccion={form.ubicacion_direccion}
+                  />
                 </div>
 
                 {/* Información de ayuda mejorada */}
@@ -1520,7 +1479,8 @@ export const CreateProductPage: React.FC = () => {
                     <div className="text-xs text-green-700">
                       <p className="font-semibold mb-1">Consejos para ubicación:</p>
                       <ul className="space-y-0.5">
-                        <li>• Escribe la información lo más precisa posible</li>
+                        <li>• Selecciona la provincia y cantón de Ecuador donde se encuentra tu {form.tipo}</li>
+                        <li>• El distrito y dirección específica son opcionales pero recomendados</li>
                         <li>• Los compradores verán esta información para contactarte</li>
                         <li>• Campos con * son obligatorios</li>
                       </ul>

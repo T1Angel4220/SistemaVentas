@@ -93,29 +93,30 @@ class ProductsController {
       // Manejar ubicación con campos separados
       let ubicacionIdFinal = ubicacion_id;
       
-      // Si se proporcionan los campos separados de ubicación, crear o buscar ubicación
-      if (ubicacion_provincia && ubicacion_canton && ubicacion_direccion) {
+      // Si se proporcionan los campos separados de ubicación, buscar ubicación existente
+      if (ubicacion_provincia && ubicacion_canton) {
         try {
-          // Buscar si ya existe una ubicación con estos datos exactos
+          // Buscar la ubicación base (solo provincia + canton)
+          // El distrito y dirección se guardan en la tabla items, NO en ubicaciones
           const ubicacionExistente = await query(
-            'SELECT id FROM ubicaciones WHERE nombre = $1 AND provincia = $2 AND canton = $3 AND (distrito = $4 OR ($4 IS NULL AND distrito IS NULL))',
-            [ubicacion_direccion, ubicacion_provincia, ubicacion_canton, ubicacion_distrito || null]
+            'SELECT id FROM ubicaciones WHERE provincia = $1 AND canton = $2 LIMIT 1',
+            [ubicacion_provincia, ubicacion_canton]
           );
           
           if (ubicacionExistente.rows.length > 0) {
             ubicacionIdFinal = ubicacionExistente.rows[0].id;
           } else {
-            // Crear nueva ubicación con todos los campos
-            const nuevaUbicacion = await query(
-              'INSERT INTO ubicaciones (nombre, provincia, canton, distrito) VALUES ($1, $2, $3, $4) RETURNING id',
-              [ubicacion_direccion, ubicacion_provincia, ubicacion_canton, ubicacion_distrito || null]
-            );
-            ubicacionIdFinal = nuevaUbicacion.rows[0].id;
+            return res.status(400).json({
+              success: false,
+              message: 'Ubicación no válida. Por favor selecciona una provincia y cantón válidos.'
+            });
           }
         } catch (error) {
           console.error('Error al manejar ubicación:', error);
-          // Si hay error, usar null para ubicación
-          ubicacionIdFinal = null;
+          return res.status(500).json({
+            success: false,
+            message: 'Error al procesar la ubicación'
+          });
         }
       }
 
@@ -126,10 +127,13 @@ class ProductsController {
       const nuevoProducto = await query(
         `INSERT INTO items (
           codigo, nombre, descripcion, precio, ubicacion_id, 
+          ubicacion_provincia, ubicacion_canton, ubicacion_distrito, ubicacion_direccion,
           tipo, categoria_id, vendedor_id, estado, disponibilidad, es_peligroso, motivo_rechazo
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
         RETURNING *`,
-        [codigo, nombre, descripcion, precio, ubicacionIdFinal, tipo, categoria_id, vendedor_id, estadoInicial, disponibilidad, esPeligroso, motivoRechazo]
+        [codigo, nombre, descripcion, precio, ubicacionIdFinal, 
+         ubicacion_provincia, ubicacion_canton, ubicacion_distrito, ubicacion_direccion,
+         tipo, categoria_id, vendedor_id, estadoInicial, disponibilidad, esPeligroso, motivoRechazo]
       );
 
       const producto = nuevoProducto.rows[0];
@@ -214,7 +218,11 @@ class ProductsController {
         tipo, 
         precio_min, 
         precio_max, 
-        ubicacion_id, 
+        ubicacion_id,
+        provincia,
+        canton,
+        distrito,
+        direccion,
         estado = 'activo',
         disponibilidad = true,
         page = 1,
@@ -259,6 +267,34 @@ class ProductsController {
         queryParams.push(ubicacion_id);
       }
 
+      // Filtrar por provincia (usar campo directo de items)
+      if (provincia) {
+        paramCount++;
+        whereConditions.push(`i.ubicacion_provincia = $${paramCount}`);
+        queryParams.push(provincia);
+      }
+
+      // Filtrar por cantón (usar campo directo de items)
+      if (canton) {
+        paramCount++;
+        whereConditions.push(`i.ubicacion_canton = $${paramCount}`);
+        queryParams.push(canton);
+      }
+
+      // Filtrar por distrito (usar campo directo de items)
+      if (distrito) {
+        paramCount++;
+        whereConditions.push(`i.ubicacion_distrito ILIKE $${paramCount}`);
+        queryParams.push(`%${distrito}%`);
+      }
+
+      // Filtrar por dirección (usar campo directo de items)
+      if (direccion) {
+        paramCount++;
+        whereConditions.push(`i.ubicacion_direccion ILIKE $${paramCount}`);
+        queryParams.push(`%${direccion}%`);
+      }
+
       if (search) {
         paramCount++;
         whereConditions.push(`(i.nombre ILIKE $${paramCount} OR i.descripcion ILIKE $${paramCount})`);
@@ -279,6 +315,7 @@ class ProductsController {
         `SELECT 
           i.id, i.codigo, i.nombre, i.descripcion, i.precio, 
           i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion, i.es_peligroso,
+          i.ubicacion_provincia, i.ubicacion_canton, i.ubicacion_distrito, i.ubicacion_direccion,
           c.nombre as categoria_nombre,
           u.nombre || ' ' || u.apellido as vendedor_nombre,
           ub.nombre as ubicacion_nombre,
@@ -292,6 +329,7 @@ class ProductsController {
         WHERE ${whereClause}
         GROUP BY i.id, i.codigo, i.nombre, i.descripcion, i.precio, 
                  i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion, i.es_peligroso,
+                 i.ubicacion_provincia, i.ubicacion_canton, i.ubicacion_distrito, i.ubicacion_direccion,
                  c.nombre, u.nombre, u.apellido, ub.nombre
         ORDER BY i.fecha_publicacion DESC
         LIMIT $${paramCount - 1} OFFSET $${paramCount}`,
@@ -349,7 +387,10 @@ class ProductsController {
           u.telefono as vendedor_telefono,
           u.direccion as vendedor_direccion,
           ub.nombre as ubicacion_nombre,
-          ub.provincia, ub.canton, ub.distrito
+          i.ubicacion_provincia,
+          i.ubicacion_canton,
+          i.ubicacion_distrito,
+          i.ubicacion_direccion
         FROM items i
         JOIN categorias c ON i.categoria_id = c.id
         JOIN usuarios u ON i.vendedor_id = u.id
@@ -438,7 +479,10 @@ class ProductsController {
           u.telefono as vendedor_telefono,
           u.direccion as vendedor_direccion,
           ub.nombre as ubicacion_nombre,
-          ub.provincia, ub.canton, ub.distrito
+          i.ubicacion_provincia,
+          i.ubicacion_canton,
+          i.ubicacion_distrito,
+          i.ubicacion_direccion
         FROM items i
         JOIN categorias c ON i.categoria_id = c.id
         JOIN usuarios u ON i.vendedor_id = u.id
@@ -607,29 +651,30 @@ class ProductsController {
       // Manejar ubicación con campos separados
       let ubicacionIdFinal = ubicacion_id;
       
-      // Si se proporcionan los campos separados de ubicación, crear o buscar ubicación
-      if (ubicacion_provincia && ubicacion_canton && ubicacion_direccion) {
+      // Si se proporcionan los campos separados de ubicación, buscar ubicación existente
+      if (ubicacion_provincia && ubicacion_canton) {
         try {
-          // Buscar si ya existe una ubicación con estos datos exactos
+          // Buscar la ubicación base (solo provincia + canton)
+          // El distrito y dirección se guardan en la tabla items, NO en ubicaciones
           const ubicacionExistente = await query(
-            'SELECT id FROM ubicaciones WHERE nombre = $1 AND provincia = $2 AND canton = $3 AND (distrito = $4 OR ($4 IS NULL AND distrito IS NULL))',
-            [ubicacion_direccion, ubicacion_provincia, ubicacion_canton, ubicacion_distrito || null]
+            'SELECT id FROM ubicaciones WHERE provincia = $1 AND canton = $2 LIMIT 1',
+            [ubicacion_provincia, ubicacion_canton]
           );
           
           if (ubicacionExistente.rows.length > 0) {
             ubicacionIdFinal = ubicacionExistente.rows[0].id;
           } else {
-            // Crear nueva ubicación con todos los campos
-            const nuevaUbicacion = await query(
-              'INSERT INTO ubicaciones (nombre, provincia, canton, distrito) VALUES ($1, $2, $3, $4) RETURNING id',
-              [ubicacion_direccion, ubicacion_provincia, ubicacion_canton, ubicacion_distrito || null]
-            );
-            ubicacionIdFinal = nuevaUbicacion.rows[0].id;
+            return res.status(400).json({
+              success: false,
+              message: 'Ubicación no válida. Por favor selecciona una provincia y cantón válidos.'
+            });
           }
         } catch (error) {
           console.error('Error al manejar ubicación:', error);
-          // Si hay error, usar null para ubicación
-          ubicacionIdFinal = null;
+          return res.status(500).json({
+            success: false,
+            message: 'Error al procesar la ubicación'
+          });
         }
       }
 
@@ -653,15 +698,21 @@ class ProductsController {
           descripcion = COALESCE($2, descripcion),
           precio = COALESCE($3, precio),
           ubicacion_id = COALESCE($4, ubicacion_id),
-          categoria_id = COALESCE($5, categoria_id),
-          disponibilidad = COALESCE($6, disponibilidad),
-          estado = COALESCE($7, estado),
-          es_peligroso = COALESCE($8, es_peligroso),
-          motivo_rechazo = COALESCE($9, motivo_rechazo),
+          ubicacion_provincia = COALESCE($5, ubicacion_provincia),
+          ubicacion_canton = COALESCE($6, ubicacion_canton),
+          ubicacion_distrito = COALESCE($7, ubicacion_distrito),
+          ubicacion_direccion = COALESCE($8, ubicacion_direccion),
+          categoria_id = COALESCE($9, categoria_id),
+          disponibilidad = COALESCE($10, disponibilidad),
+          estado = COALESCE($11, estado),
+          es_peligroso = COALESCE($12, es_peligroso),
+          motivo_rechazo = COALESCE($13, motivo_rechazo),
           fecha_actualizacion = CURRENT_TIMESTAMP
-        WHERE id = $10
+        WHERE id = $14
         RETURNING *`,
-        [nombre, descripcion, precio, ubicacionIdFinal, categoria_id, disponibilidadFinal, nuevoEstado, esPeligroso, motivoRechazo, id]
+        [nombre, descripcion, precio, ubicacionIdFinal, 
+         ubicacion_provincia, ubicacion_canton, ubicacion_distrito, ubicacion_direccion,
+         categoria_id, disponibilidadFinal, nuevoEstado, esPeligroso, motivoRechazo, id]
       );
 
       // Si es un servicio, actualizar información adicional
@@ -951,6 +1002,7 @@ class ProductsController {
         `SELECT 
           i.id, i.codigo, i.nombre, i.descripcion, i.precio, 
           i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion, i.es_peligroso, i.motivo_rechazo,
+          i.ubicacion_provincia, i.ubicacion_canton, i.ubicacion_distrito, i.ubicacion_direccion,
           c.nombre as categoria_nombre,
           COUNT(ii.id) as total_imagenes,
           (SELECT ii2.url_imagen FROM item_imagenes ii2 WHERE ii2.item_id = i.id ORDER BY ii2.orden LIMIT 1) as primera_imagen
@@ -959,7 +1011,9 @@ class ProductsController {
         LEFT JOIN item_imagenes ii ON i.id = ii.item_id
         WHERE ${whereClause}
         GROUP BY i.id, i.codigo, i.nombre, i.descripcion, i.precio, 
-                 i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion, i.es_peligroso, i.motivo_rechazo, c.nombre
+                 i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion, i.es_peligroso, i.motivo_rechazo,
+                 i.ubicacion_provincia, i.ubicacion_canton, i.ubicacion_distrito, i.ubicacion_direccion,
+                 c.nombre
         ORDER BY i.fecha_publicacion DESC
         LIMIT $${queryParams.length - 1} OFFSET $${queryParams.length}`,
         queryParams
@@ -1135,6 +1189,7 @@ class ProductsController {
           i.id, i.codigo, i.nombre, i.descripcion, i.precio, 
           i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion, i.es_peligroso,
           i.fecha_revision, i.moderador_revision_id, i.motivo_rechazo,
+          i.ubicacion_provincia, i.ubicacion_canton, i.ubicacion_distrito, i.ubicacion_direccion,
           c.nombre as categoria_nombre,
           u.nombre || ' ' || u.apellido as vendedor_nombre,
           ub.nombre as ubicacion_nombre,
@@ -1149,6 +1204,7 @@ class ProductsController {
         GROUP BY i.id, i.codigo, i.nombre, i.descripcion, i.precio, 
                  i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion, i.es_peligroso,
                  i.fecha_revision, i.moderador_revision_id, i.motivo_rechazo,
+                 i.ubicacion_provincia, i.ubicacion_canton, i.ubicacion_distrito, i.ubicacion_direccion,
                  c.nombre, u.nombre, u.apellido, ub.nombre
         ORDER BY i.fecha_publicacion ASC
         LIMIT ${limitPlaceholder} OFFSET ${offsetPlaceholder}`,

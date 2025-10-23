@@ -8,7 +8,8 @@ router.get('/', LocationsController.getLocations);                           // 
 router.get('/stats', LocationsController.getLocationStats);                  // GET /api/locations/stats - Estadísticas de ubicaciones
 router.get('/provinces', LocationsController.getProvinces);                 // GET /api/locations/provinces - Listar provincias
 router.get('/provinces/:provincia/cantons', LocationsController.getCantonsByProvince); // GET /api/locations/provinces/:provincia/cantons - Cantones por provincia
-router.get('/provinces/:provincia/cantons/:canton/districts', LocationsController.getDistrictsByCanton); // GET /api/locations/provinces/:provincia/cantons/:canton/districts - Distritos por cantón
+// RUTA DESACTIVADA: Los distritos ahora se guardan en la tabla items, no en ubicaciones
+// router.get('/provinces/:provincia/cantons/:canton/districts', LocationsController.getDistrictsByCanton); // GET /api/locations/provinces/:provincia/cantons/:canton/districts - Distritos por cantón
 router.get('/:id', LocationsController.getLocationById);                    // GET /api/locations/:id - Obtener ubicación específica
 
 // Rutas protegidas (solo administradores)

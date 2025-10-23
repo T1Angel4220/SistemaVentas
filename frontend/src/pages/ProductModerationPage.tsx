@@ -571,10 +571,14 @@ export const ProductModerationPage: React.FC = () => {
                     </span>
                   </div>
                   
-                  {product.ubicacion_nombre && (
+                  {(product.ubicacion_provincia || product.ubicacion_canton) && (
                     <div className="flex items-center space-x-1 text-sm text-gray-500">
                       <MapPin className="h-4 w-4" />
-                      <span>{product.ubicacion_nombre}</span>
+                      <span>
+                        {product.ubicacion_provincia && product.ubicacion_canton 
+                          ? `${product.ubicacion_provincia}, ${product.ubicacion_canton}`
+                          : product.ubicacion_provincia || product.ubicacion_canton}
+                      </span>
                     </div>
                   )}
                   

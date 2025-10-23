@@ -516,35 +516,35 @@ export const ProductViewPage: React.FC = () => {
             </div>
 
             {/* Ubicación */}
-            {(product.ubicacion_nombre || product.provincia || product.canton) && (
-              <div className="border border-gray-200 rounded-lg p-4">
+            {(product.ubicacion_provincia || product.ubicacion_canton || product.ubicacion_distrito || product.ubicacion_direccion) && (
+              <div className="border border-gray-200 rounded-lg p-4 bg-gradient-to-br from-blue-50 to-indigo-50">
                 <h3 className="font-medium text-gray-900 mb-3 flex items-center">
                   <MapPin className="h-4 w-4 mr-2 text-blue-600" />
-                  Ubicación
+                  📍 Ubicación del producto
                 </h3>
                 <div className="space-y-2">
-                  {product.ubicacion_nombre && (
+                  {product.ubicacion_provincia && (
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-600 w-16">Dirección:</span>
-                      <span className="text-gray-900 font-medium">{product.ubicacion_nombre}</span>
+                      <span className="text-sm text-gray-600 w-20 font-medium">Provincia:</span>
+                      <span className="text-gray-900 font-semibold">{product.ubicacion_provincia}</span>
                     </div>
                   )}
-                  {product.provincia && (
+                  {product.ubicacion_canton && (
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-600 w-16">Provincia:</span>
-                      <span className="text-gray-900">{product.provincia}</span>
+                      <span className="text-sm text-gray-600 w-20 font-medium">Cantón:</span>
+                      <span className="text-gray-900 font-semibold">{product.ubicacion_canton}</span>
                     </div>
                   )}
-                  {product.canton && (
+                  {product.ubicacion_distrito && (
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-600 w-16">Cantón:</span>
-                      <span className="text-gray-900">{product.canton}</span>
+                      <span className="text-sm text-gray-600 w-20 font-medium">Distrito:</span>
+                      <span className="text-gray-900">{product.ubicacion_distrito}</span>
                     </div>
                   )}
-                  {product.distrito && (
+                  {product.ubicacion_direccion && (
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-600 w-16">Distrito:</span>
-                      <span className="text-gray-900">{product.distrito}</span>
+                      <span className="text-sm text-gray-600 w-20 font-medium">Dirección:</span>
+                      <span className="text-gray-900">{product.ubicacion_direccion}</span>
                     </div>
                   )}
                 </div>

@@ -20,9 +20,15 @@ export interface Product {
   categoria_nombre: string;
   vendedor_nombre: string;
   vendedor_id?: number;
-  ubicacion_nombre?: string;
+  // Campos de ubicación
+  ubicacion_provincia?: string;
+  ubicacion_canton?: string;
+  ubicacion_distrito?: string;
+  ubicacion_direccion?: string;
+  // Imágenes
   total_imagenes: number;
   primera_imagen?: string;
+  // Campos de moderación
   es_peligroso?: boolean;
   fecha_revision?: string;
   motivo_rechazo?: string;
@@ -45,12 +51,16 @@ export interface ProductDetail {
   vendedor_nombre: string;
   vendedor_email: string;
   vendedor_id: number;
-  ubicacion_nombre?: string;
-  provincia?: string;
-  canton?: string;
-  distrito?: string;
+  // Campos de ubicación
+  ubicacion_provincia?: string;
+  ubicacion_canton?: string;
+  ubicacion_distrito?: string;
+  ubicacion_direccion?: string;
+  // Imágenes
   imagenes: ProductImage[];
+  // Detalles de servicio
   servicio?: ServiceDetails;
+  // Campos de moderación
   es_peligroso?: boolean;
   fecha_revision?: string;
   motivo_rechazo?: string;
@@ -146,6 +156,10 @@ export interface ProductFilters {
   precio_max: string;
   estado: string;
   disponibilidad: string;
+  provincia?: string;
+  canton?: string;
+  distrito?: string;
+  direccion?: string;
   page: number;
   limit: number;
 }

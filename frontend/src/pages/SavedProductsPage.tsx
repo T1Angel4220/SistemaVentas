@@ -359,12 +359,18 @@ export const SavedProductsPage: React.FC = () => {
                       {/* Información unificada: Ubicación y Fecha */}
                       <div className="space-y-2">
                         {/* Ubicación */}
-                        <div className="flex items-center text-xs sm:text-sm text-gray-600">
-                          <div className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex items-center justify-center flex-shrink-0">
-                            <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500" />
+                        {(product.ubicacion_provincia || product.ubicacion_canton) && (
+                          <div className="flex items-center text-xs sm:text-sm text-gray-600">
+                            <div className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex items-center justify-center flex-shrink-0">
+                              <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500" />
+                            </div>
+                            <span className="truncate font-medium">
+                              {product.ubicacion_provincia && product.ubicacion_canton 
+                                ? `${product.ubicacion_provincia}, ${product.ubicacion_canton}`
+                                : product.ubicacion_provincia || product.ubicacion_canton || 'Sin ubicación'}
+                            </span>
                           </div>
-                          <span className="truncate font-medium">{product.ubicacion_nombre}</span>
-                        </div>
+                        )}
                         
                         {/* Fecha guardado */}
                         <div className="flex items-center text-xs sm:text-sm text-gray-600">
