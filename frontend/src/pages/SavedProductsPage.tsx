@@ -31,7 +31,7 @@ export const SavedProductsPage: React.FC = () => {
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
 
   const loadSavedProducts = useCallback(async () => {
-    if (!user || user.tipo_usuario !== 'comprador') return;
+    if (!user || (user.tipo_usuario !== 'comprador' && user.tipo_usuario !== 'vendedor')) return;
     
     // Evitar múltiples peticiones simultáneas
     if (isLoadingProducts) {
@@ -84,11 +84,11 @@ export const SavedProductsPage: React.FC = () => {
 
   useEffect(() => {
     if (location.pathname === '/products/saved') {
-      if (user && user.tipo_usuario === 'comprador') {
+      if (user && (user.tipo_usuario === 'comprador' || user.tipo_usuario === 'vendedor')) {
         loadSavedProducts();
       } else {
         setLoading(false);
-        setError('Debes iniciar sesión como comprador para ver tus productos guardados');
+        setError('Debes iniciar sesión como comprador o vendedor para ver tus productos guardados');
       }
     }
   }, [user, loadSavedProducts, location.pathname]);
@@ -168,7 +168,7 @@ export const SavedProductsPage: React.FC = () => {
     );
   };
 
-  if (!user || user.tipo_usuario !== 'comprador') {
+  if (!user || (user.tipo_usuario !== 'comprador' && user.tipo_usuario !== 'vendedor')) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
         <Card className="max-w-md w-full shadow-2xl border-0 bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden">
@@ -181,8 +181,8 @@ export const SavedProductsPage: React.FC = () => {
             </h2>
             <p className="text-gray-600 text-lg mb-8">
               {!user 
-                ? 'Debes iniciar sesión como comprador para ver tus productos guardados'
-                : 'Solo los compradores pueden acceder a esta sección'
+                ? 'Debes iniciar sesión como comprador o vendedor para ver tus productos guardados'
+                : 'Solo los compradores y vendedores pueden acceder a esta sección'
               }
             </p>
             <Link to={!user ? "/login" : "/products"}>

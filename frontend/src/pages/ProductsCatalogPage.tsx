@@ -130,13 +130,13 @@ export const ProductsCatalogPage: React.FC = () => {
 
   const handleSaveProduct = async (productId: number) => {
     if (!user) {
-      showError('Error', 'Debes iniciar sesión como comprador para guardar productos');
+      showError('Error', 'Debes iniciar sesión para guardar productos');
       return;
     }
 
-    // Solo compradores pueden guardar productos
-    if (user.tipo_usuario !== 'comprador') {
-      showError('Error', 'Solo los compradores pueden guardar productos');
+    // Solo compradores y vendedores pueden guardar productos
+    if (user.tipo_usuario !== 'comprador' && user.tipo_usuario !== 'vendedor') {
+      showError('Error', 'Solo los compradores y vendedores pueden guardar productos');
       return;
     }
 
@@ -166,7 +166,7 @@ export const ProductsCatalogPage: React.FC = () => {
   };
 
   const handleUnsaveProduct = async (productId: number) => {
-    if (!user || user.tipo_usuario !== 'comprador') return;
+    if (!user || (user.tipo_usuario !== 'comprador' && user.tipo_usuario !== 'vendedor')) return;
 
     setSavingProduct(productId);
     try {
@@ -259,8 +259,8 @@ export const ProductsCatalogPage: React.FC = () => {
               </p>
             </div>
             <div className="flex items-center space-x-4">
-              {/* Solo compradores pueden ver favoritos */}
-              {user?.tipo_usuario === 'comprador' && (
+              {/* Solo compradores y vendedores pueden ver favoritos */}
+              {(user?.tipo_usuario === 'comprador' || user?.tipo_usuario === 'vendedor') && (
                 <Link to="/products/saved">
                   <Button variant="outline" size="sm" className="bg-white/20 text-white border-white/30 hover:bg-white hover:text-blue-600 backdrop-blur-sm rounded-xl px-6 py-3 font-medium transition-all duration-300 shadow-lg hover:shadow-xl">
                     <Heart className="h-5 w-5 mr-2" />
@@ -412,8 +412,8 @@ export const ProductsCatalogPage: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Botón de favorito - Solo para compradores */}
-                    {user?.tipo_usuario === 'comprador' && (
+                    {/* Botón de favorito - Solo para compradores y vendedores */}
+                    {(user?.tipo_usuario === 'comprador' || user?.tipo_usuario === 'vendedor') && (
                       <div className="absolute top-2 left-2">
                         <Button
                           size="sm"
@@ -479,8 +479,8 @@ export const ProductsCatalogPage: React.FC = () => {
                         </Button>
                       </Link>
                       
-                      {/* Botón de favorito - Solo para compradores */}
-                      {user?.tipo_usuario === 'comprador' && (
+                      {/* Botón de favorito - Solo para compradores y vendedores */}
+                      {(user?.tipo_usuario === 'comprador' || user?.tipo_usuario === 'vendedor') && (
                         <Button
                           size="sm"
                           variant="outline"

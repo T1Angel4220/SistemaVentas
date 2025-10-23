@@ -119,13 +119,13 @@ export const ProductViewPage: React.FC = () => {
 
   const handleSaveProduct = async () => {
     if (!user) {
-      showError('Error', 'Debes iniciar sesión como comprador para guardar productos');
+      showError('Error', 'Debes iniciar sesión para guardar productos');
       return;
     }
 
-    // Solo compradores pueden guardar productos
-    if (user.tipo_usuario !== 'comprador') {
-      showError('Error', 'Solo los compradores pueden guardar productos');
+    // Solo compradores y vendedores pueden guardar productos
+    if (user.tipo_usuario !== 'comprador' && user.tipo_usuario !== 'vendedor') {
+      showError('Error', 'Solo los compradores y vendedores pueden guardar productos');
       return;
     }
 
@@ -155,7 +155,7 @@ export const ProductViewPage: React.FC = () => {
   };
 
   const handleUnsaveProduct = async () => {
-    if (!user || user.tipo_usuario !== 'comprador') return;
+    if (!user || (user.tipo_usuario !== 'comprador' && user.tipo_usuario !== 'vendedor')) return;
 
     setSavingProduct(true);
     try {
@@ -429,8 +429,8 @@ export const ProductViewPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Acciones para compradores */}
-            {user?.tipo_usuario === 'comprador' && (
+            {/* Acciones para compradores y vendedores */}
+            {(user?.tipo_usuario === 'comprador' || user?.tipo_usuario === 'vendedor') && (
               <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
                 <h3 className="font-medium text-gray-900 mb-3">Acciones disponibles</h3>
                 <div className="space-y-3">
@@ -469,13 +469,13 @@ export const ProductViewPage: React.FC = () => {
             )}
 
             {/* Mensaje para visualizadores */}
-            {(!user || user.tipo_usuario !== 'comprador') && (
+            {(!user || (user.tipo_usuario !== 'comprador' && user.tipo_usuario !== 'vendedor')) && (
               <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
                 <h3 className="font-medium text-blue-900 mb-3">¿Te interesa este producto?</h3>
                 <p className="text-blue-800 text-sm mb-3">
                   {!user 
-                    ? 'Inicia sesión como comprador para guardar productos en tus favoritos y contactar al vendedor.'
-                    : 'Regístrate como comprador para guardar productos en tus favoritos y contactar al vendedor.'
+                    ? 'Inicia sesión para guardar productos en tus favoritos y contactar al vendedor.'
+                    : 'Regístrate como comprador o vendedor para guardar productos en tus favoritos y contactar al vendedor.'
                   }
                 </p>
                 <Link to={!user ? "/login" : "/register"}>

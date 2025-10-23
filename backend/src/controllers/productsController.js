@@ -1201,11 +1201,11 @@ class ProductsController {
       // console.log('🔍 DEBUG - req.user:', req.user);
       const userId = req.user.id;
 
-      // Verificar que el usuario sea comprador
-      if (req.user.tipo_usuario !== 'comprador') {
+      // Verificar que el usuario sea comprador o vendedor
+      if (req.user.tipo_usuario !== 'comprador' && req.user.tipo_usuario !== 'vendedor') {
         return res.status(403).json({
           success: false,
-          message: 'Solo los compradores pueden ver productos guardados'
+          message: 'Solo los compradores y vendedores pueden ver productos guardados'
         });
       }
 
@@ -1270,11 +1270,11 @@ class ProductsController {
       const { id: productoId } = req.params;
       const userId = req.user.id;
 
-      // Verificar que el usuario sea comprador
-      if (req.user.tipo_usuario !== 'comprador') {
+      // Verificar que el usuario sea comprador o vendedor
+      if (req.user.tipo_usuario !== 'comprador' && req.user.tipo_usuario !== 'vendedor') {
         return res.status(403).json({
           success: false,
-          message: 'Solo los compradores pueden guardar productos'
+          message: 'Solo los compradores y vendedores pueden guardar productos'
         });
       }
 
@@ -1337,11 +1337,11 @@ class ProductsController {
       const { id: productoId } = req.params;
       const userId = req.user.id;
 
-      // Verificar que el usuario sea comprador
-      if (req.user.tipo_usuario !== 'comprador') {
+      // Verificar que el usuario sea comprador o vendedor
+      if (req.user.tipo_usuario !== 'comprador' && req.user.tipo_usuario !== 'vendedor') {
         return res.status(403).json({
           success: false,
-          message: 'Solo los compradores pueden eliminar productos guardados'
+          message: 'Solo los compradores y vendedores pueden eliminar productos guardados'
         });
       }
 
@@ -1384,11 +1384,11 @@ class ProductsController {
       const { id: productoId } = req.params;
       const userId = req.user.id;
 
-      // Verificar que el usuario sea comprador
-      if (req.user.tipo_usuario !== 'comprador') {
+      // Verificar que el usuario sea comprador o vendedor
+      if (req.user.tipo_usuario !== 'comprador' && req.user.tipo_usuario !== 'vendedor') {
         return res.status(403).json({
           success: false,
-          message: 'Solo los compradores pueden verificar productos guardados'
+          message: 'Solo los compradores y vendedores pueden verificar productos guardados'
         });
       }
 

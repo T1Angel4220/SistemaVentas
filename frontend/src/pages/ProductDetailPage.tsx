@@ -373,9 +373,7 @@ export const ProductDetailPage: React.FC = () => {
                 ? "/products"
                 : user.tipo_usuario === 'moderador' || user.tipo_usuario === 'administrador'
                 ? "/products/moderation" 
-                : user.tipo_usuario === 'comprador'
-                ? "/products"
-                : "/products"  // vendedor
+                : "/products"  // comprador o vendedor
             }>
               <Button 
                 variant="outline" 
@@ -642,8 +640,8 @@ export const ProductDetailPage: React.FC = () => {
               )}
                   </div>
                   
-            {/* NUEVO: Botón de acción principal para COMPRADORES + RESPONSIVE */}
-            {user?.tipo_usuario === 'comprador' && product.estado === 'activo' && product.disponibilidad && (
+            {/* NUEVO: Botón de acción principal para COMPRADORES Y VENDEDORES + RESPONSIVE */}
+            {(user?.tipo_usuario === 'comprador' || user?.tipo_usuario === 'vendedor') && product.estado === 'activo' && product.disponibilidad && (
               <div className="sticky top-4 z-10 space-y-3">
                 <Button 
                   onClick={() => navigate(`/products/contact/${product.id}`)}
@@ -823,7 +821,7 @@ export const ProductDetailPage: React.FC = () => {
                   <div className="font-medium text-gray-900 text-lg">{product.vendedor_nombre}</div>
                     <div className="text-sm text-gray-600">{product.vendedor_email}</div>
                   </div>
-                {user?.tipo_usuario !== 'comprador' && (
+                {user?.tipo_usuario !== 'comprador' && user?.tipo_usuario !== 'vendedor' && (
                 <Button 
                   onClick={() => navigate(`/products/contact/${product.id}`)}
                     className="w-full bg-orange-500 hover:bg-orange-600 text-white h-10 rounded-lg text-sm font-medium shadow-lg hover:shadow-xl transition-all"

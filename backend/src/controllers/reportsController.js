@@ -69,10 +69,7 @@ class ReportsController {
         });
       }
 
-      // Determinar si es un reporte de moderador (se actúa inmediatamente)
-      const esModerador = ['moderador', 'administrador'].includes(req.user.tipo_usuario);
-
-      // Crear el reporte
+      // Crear el reporte (todos los reportes quedan pendientes de revisión)
       const result = await query(
         `INSERT INTO reportes 
         (item_id, usuario_reportador_id, tipo_reporte, descripcion, comentario_opcional, estado)
@@ -81,18 +78,13 @@ class ReportsController {
         [item_id, usuario_reportador_id, tipo_reporte, motivo_reporte, informacion_adicional || null, 'pendiente']
       );
 
-      // Si es un moderador reportando, suspender el producto inmediatamente
-      if (esModerador) {
-        await query(
-          'UPDATE items SET estado = $1, moderador_revision_id = $2, fecha_revision = CURRENT_TIMESTAMP WHERE id = $3',
-          ['suspendido', usuario_reportador_id, item_id]
-        );
-      }
-
+      // Mensaje diferenciado según el tipo de usuario
+      const esModerador = ['moderador', 'administrador'].includes(req.user.tipo_usuario);
+      
       res.status(201).json({
         success: true,
         message: esModerador 
-          ? 'Reporte creado y producto suspendido inmediatamente' 
+          ? 'Reporte creado exitosamente. Será revisado por otro moderador o administrador.' 
           : 'Reporte creado exitosamente. Será revisado por un moderador.',
         data: result.rows[0]
       });

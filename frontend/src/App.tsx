@@ -122,7 +122,7 @@ function App() {
               <Route 
                 path="/products/saved" 
                 element={
-                  <ProtectedRoute allowedRoles={['comprador']}>
+                  <ProtectedRoute allowedRoles={['comprador', 'vendedor']}>
                     <SavedProductsPage />
                   </ProtectedRoute>
                 } 

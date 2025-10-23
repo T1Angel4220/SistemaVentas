@@ -20,7 +20,9 @@ import {
   Camera,
   AlertTriangle,
   Shield,
-  MessageSquare
+  MessageSquare,
+  CheckCircle,
+  ToggleRight
 } from 'lucide-react';
 import type { Product, ProductsResponse } from '../types/product.types';
 import { AppealProductDialog } from '../components/ui/AppealProductDialog';
@@ -43,6 +45,7 @@ export const MyProductsPage: React.FC = () => {
 
   const [filters, setFilters] = useState({
     estado: '',
+    disponibilidad: '',
     page: 1,
     limit: 12
   });
@@ -448,20 +451,43 @@ export const MyProductsPage: React.FC = () => {
         <Card className="mb-6 sm:mb-8 bg-white/80 backdrop-blur-sm shadow-lg border-gray-200">
           <CardContent className="p-4 sm:p-5 md:p-6">
             <div className="flex flex-col space-y-4">
-              <div className="w-full">
-                <label className="text-xs sm:text-sm font-semibold text-gray-700 mb-2 block">Filtrar por estado</label>
-                <select 
-                  value={filters.estado} 
-                  onChange={(e) => handleFilterChange('estado', e.target.value)}
-                  className="w-full flex h-10 sm:h-12 items-center justify-between rounded-lg sm:rounded-xl border-2 border-gray-200 bg-white px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm hover:border-gray-300 transition-colors"
-                >
-                  <option value="">Todos los estados</option>
-                  <option value="activo">Activos</option>
-                  <option value="pendiente_revision">Pendientes de revisión</option>
-                  <option value="rechazado">Rechazados</option>
-                  <option value="suspendido">Suspendidos</option>
-                </select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                {/* Filtro de Estado */}
+                <div className="space-y-2">
+                  <label className="text-xs sm:text-sm font-semibold text-gray-700 flex items-center">
+                    <CheckCircle className="h-4 w-4 mr-2 text-orange-500" />
+                    Estado
+                  </label>
+                  <select 
+                    value={filters.estado} 
+                    onChange={(e) => handleFilterChange('estado', e.target.value)}
+                    className="w-full flex h-10 sm:h-12 items-center justify-between rounded-lg sm:rounded-xl border-2 border-gray-200 bg-white px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm hover:border-gray-300 transition-colors"
+                  >
+                    <option value="">Todos los estados</option>
+                    <option value="activo">Solo Activos</option>
+                    <option value="pendiente_revision">Pendientes de revisión</option>
+                    <option value="rechazado">Rechazados</option>
+                  </select>
+                </div>
+
+                {/* Filtro de Disponibilidad */}
+                <div className="space-y-2">
+                  <label className="text-xs sm:text-sm font-semibold text-gray-700 flex items-center">
+                    <ToggleRight className="h-4 w-4 mr-2 text-green-500" />
+                    Disponibilidad
+                  </label>
+                  <select 
+                    value={filters.disponibilidad} 
+                    onChange={(e) => handleFilterChange('disponibilidad', e.target.value)}
+                    className="w-full flex h-10 sm:h-12 items-center justify-between rounded-lg sm:rounded-xl border-2 border-gray-200 bg-white px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm hover:border-gray-300 transition-colors"
+                  >
+                    <option value="">Toda disponibilidad</option>
+                    <option value="true">Solo Disponibles</option>
+                    <option value="false">No Disponibles</option>
+                  </select>
+                </div>
               </div>
+
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-3 sm:px-4 py-2 sm:py-3 rounded-lg sm:rounded-xl border border-blue-200">
                 <div className="text-xs sm:text-sm font-medium text-blue-700 text-center sm:text-left">
                   Mostrando <span className="font-bold text-blue-900">{products.length}</span> de <span className="font-bold text-blue-900">{pagination.total_items}</span> productos

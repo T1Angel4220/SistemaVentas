@@ -19,7 +19,8 @@ import {
   Clock,
   User,
   Shield,
-  MessageSquare
+  MessageSquare,
+  Camera
 } from 'lucide-react';
 
 interface Appeal {
@@ -38,6 +39,8 @@ interface Appeal {
   vendedor_apellido: string;
   vendedor_correo: string;
   motivo_rechazo_original?: string;
+  primera_imagen?: string;
+  total_imagenes?: number;
 }
 
 export const AppealsManagementPage: React.FC = () => {
@@ -292,6 +295,29 @@ export const AppealsManagementPage: React.FC = () => {
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Columna 1: Info del Producto */}
                     <div className="space-y-4">
+                      {/* Imagen del producto */}
+                      <div className="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl overflow-hidden shadow-md">
+                        {appeal.primera_imagen ? (
+                          <div className="relative w-full h-full">
+                            <img
+                              src={appeal.primera_imagen}
+                              alt={appeal.producto_nombre}
+                              className="w-full h-full object-cover"
+                            />
+                            {appeal.total_imagenes && appeal.total_imagenes > 1 && (
+                              <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur-sm rounded-lg px-2 py-1 text-white text-xs font-medium">
+                                +{appeal.total_imagenes - 1} más
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                            <Camera className="h-12 w-12 mb-2" />
+                            <span className="text-sm font-medium">Sin imagen</span>
+                          </div>
+                        )}
+                      </div>
+
                       <div className="flex items-start justify-between">
                         <div>
                           <h3 className="font-bold text-lg text-gray-900 mb-1">

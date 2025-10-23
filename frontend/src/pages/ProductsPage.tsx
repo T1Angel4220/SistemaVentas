@@ -18,15 +18,15 @@ import {
   Heart,
   Eye,
   ShoppingCart,
-  ToggleRight,
-  CheckCircle,
   DollarSign,
   Shield,
-  Camera
+  Camera,
+  Flag
 } from 'lucide-react';
 import type { Product, ProductsResponse, ProductFilters } from '../types/product.types';
 import type { Category } from '../types/category.types';
 import HierarchicalCategorySearch from '../components/ui/HierarchicalCategorySearch';
+import { ReportProductDialog } from '../components/ui/ReportProductDialog';
 
 export const ProductsPage: React.FC = () => {
   const { user } = useAuth();
@@ -60,6 +60,10 @@ export const ProductsPage: React.FC = () => {
   // Estado para productos guardados
   const [savedProducts, setSavedProducts] = useState<number[]>([]);
   const [savingProduct, setSavingProduct] = useState<number | null>(null);
+  
+  // Estado para modal de reportes
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [selectedProductForReport, setSelectedProductForReport] = useState<{id: number; nombre: string} | null>(null);
 
   const loadProducts = useCallback(async () => {
     try {
@@ -101,7 +105,7 @@ export const ProductsPage: React.FC = () => {
   };
 
   const loadSavedProducts = useCallback(async () => {
-    if (!user || user.tipo_usuario !== 'comprador') return;
+    if (!user || (user.tipo_usuario !== 'comprador' && user.tipo_usuario !== 'vendedor')) return;
     
     try {
       const response = await fetch('http://localhost:3001/api/products/saved', {
@@ -136,12 +140,12 @@ export const ProductsPage: React.FC = () => {
 
   const handleSaveProduct = async (productId: number) => {
     if (!user) {
-      showError('Error', 'Debes iniciar sesión como comprador para guardar productos');
+      showError('Error', 'Debes iniciar sesión para guardar productos');
       return;
     }
 
-    if (user.tipo_usuario !== 'comprador') {
-      showError('Error', 'Solo los compradores pueden guardar productos');
+    if (user.tipo_usuario !== 'comprador' && user.tipo_usuario !== 'vendedor') {
+      showError('Error', 'Solo los compradores y vendedores pueden guardar productos');
       return;
     }
 
@@ -171,7 +175,7 @@ export const ProductsPage: React.FC = () => {
   };
 
   const handleUnsaveProduct = async (productId: number) => {
-    if (!user || user.tipo_usuario !== 'comprador') return;
+    if (!user || (user.tipo_usuario !== 'comprador' && user.tipo_usuario !== 'vendedor')) return;
 
     setSavingProduct(productId);
     try {
@@ -195,6 +199,26 @@ export const ProductsPage: React.FC = () => {
     } finally {
       setSavingProduct(null);
     }
+  };
+
+  const handleReportProduct = (product: Product) => {
+    setSelectedProductForReport({
+      id: product.id,
+      nombre: product.nombre
+    });
+    setReportModalOpen(true);
+  };
+
+  const handleReportSuccess = () => {
+    showSuccess(
+      '¡Reporte enviado!', 
+      user?.tipo_usuario === 'moderador' || user?.tipo_usuario === 'administrador'
+        ? 'Tu reporte será revisado por otro moderador o administrador.'
+        : 'Tu reporte será revisado por un moderador.'
+    );
+    setReportModalOpen(false);
+    setSelectedProductForReport(null);
+    loadProducts(); // Recargar productos
   };
 
 
@@ -326,8 +350,8 @@ export const ProductsPage: React.FC = () => {
                 </Link>
               )}
               
-              {/* Solo mostrar "Mis Favoritos" si es comprador (NO admin o moderador) */}
-              {user?.tipo_usuario === 'comprador' && (
+              {/* Solo mostrar "Mis Favoritos" si es comprador o vendedor (NO admin o moderador) */}
+              {(user?.tipo_usuario === 'comprador' || user?.tipo_usuario === 'vendedor') && (
                 <Link to="/products/saved">
                   <Button size="lg" variant="outline" className="bg-white/20 text-white border-white hover:bg-white hover:text-blue-600 shadow-lg hover:shadow-xl transition-all duration-300">
                     <Heart className="h-5 w-5 mr-2" />
@@ -451,46 +475,6 @@ export const ProductsPage: React.FC = () => {
                     />
                   </div>
                 </div>
-
-                {/* Segunda fila - Estado y Disponibilidad (solo vendedores/moderadores/admins) */}
-                {user && (user.tipo_usuario === 'vendedor' || user.tipo_usuario === 'moderador' || user.tipo_usuario === 'administrador') && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Estado - Solo visible para vendedores, moderadores y administradores */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700 flex items-center">
-                        <CheckCircle className="h-4 w-4 mr-2 text-orange-500" />
-                        Estado
-                      </label>
-                      <select 
-                        value={filters.estado} 
-                        onChange={(e) => handleFilterChange('estado', e.target.value)}
-                        className="h-12 w-full rounded-xl border border-gray-200 bg-white/80 backdrop-blur-sm px-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all duration-200 hover:shadow-md"
-                      >
-                        <option value="activo">Solo Activos</option>
-                        <option value="pendiente_revision">Pendientes</option>
-                        <option value="rechazado">Rechazados</option>
-                        <option value="">Todos los estados</option>
-                      </select>
-                    </div>
-
-                    {/* Disponibilidad - Solo visible para vendedores, moderadores y administradores */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700 flex items-center">
-                        <ToggleRight className="h-4 w-4 mr-2 text-green-500" />
-                        Disponibilidad
-                      </label>
-                      <select 
-                        value={filters.disponibilidad} 
-                        onChange={(e) => handleFilterChange('disponibilidad', e.target.value)}
-                        className="h-12 w-full rounded-xl border border-gray-200 bg-white/80 backdrop-blur-sm px-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all duration-200 hover:shadow-md"
-                      >
-                        <option value="true">Solo Disponibles</option>
-                        <option value="false">No Disponibles</option>
-                        <option value="">Toda disponibilidad</option>
-                      </select>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
             
@@ -710,8 +694,8 @@ export const ProductsPage: React.FC = () => {
                             </Button>
                           </Link>
                           
-                          {/* Botones de favoritos y carrito - Solo para compradores (NO admin o moderador) */}
-                          {user?.tipo_usuario === 'comprador' && (
+                          {/* Botones de favoritos y carrito - Solo para compradores y vendedores (NO admin o moderador) */}
+                          {(user?.tipo_usuario === 'comprador' || user?.tipo_usuario === 'vendedor') && (
                             <>
                               <Button 
                                 onClick={() => 
@@ -738,6 +722,17 @@ export const ProductsPage: React.FC = () => {
                                 </Button>
                               </Link>
                             </>
+                          )}
+                          
+                          {/* Botón de Reportar - Solo para moderadores y administradores */}
+                          {(user?.tipo_usuario === 'moderador' || user?.tipo_usuario === 'administrador') && (
+                            <Button 
+                              onClick={() => handleReportProduct(product)}
+                              className="w-11 h-11 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
+                              title="Reportar producto"
+                            >
+                              <Flag className="h-4 w-4" />
+                            </Button>
                           )}
                         </div>
                 </CardContent>
@@ -788,6 +783,20 @@ export const ProductsPage: React.FC = () => {
           </div>
         )}
       </main>
+
+      {/* Modal de Reportes */}
+      {selectedProductForReport && (
+        <ReportProductDialog
+          isOpen={reportModalOpen}
+          onClose={() => {
+            setReportModalOpen(false);
+            setSelectedProductForReport(null);
+          }}
+          productId={selectedProductForReport.id}
+          productName={selectedProductForReport.nombre}
+          onSuccess={handleReportSuccess}
+        />
+      )}
     </div>
   );
 };

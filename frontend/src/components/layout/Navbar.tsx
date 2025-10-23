@@ -94,8 +94,8 @@ export const Navbar: React.FC = () => {
               >
                 Dashboard
               </Link>
-              {/* Solo mostrar "Productos" si NO es admin o moderador */}
-              {user.tipo_usuario !== 'administrador' && user.tipo_usuario !== 'moderador' && (
+              {/* Solo mostrar "Productos" si es comprador, vendedor o moderador (NO admin) */}
+              {(user.tipo_usuario === 'comprador' || user.tipo_usuario === 'vendedor' || user.tipo_usuario === 'moderador') && (
                 <Link
                   to="/products"
                   className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
@@ -133,50 +133,52 @@ export const Navbar: React.FC = () => {
               </Link>
               {user.tipo_usuario === 'moderador' && (
                 <>
+                  <div className="h-6 w-px bg-gray-300 mx-2"></div>
                   <Link
                     to="/products/moderation"
-                    className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                    className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-3 py-2 rounded-md text-sm font-medium flex items-center"
                   >
-                    <Shield className="h-4 w-4 mr-1" />
-                    Moderador
+                    <Shield className="h-4 w-4 mr-1.5" />
+                    Moderación
                   </Link>
                   <Link
                     to="/moderation/reports"
                     className="text-orange-600 hover:text-orange-800 hover:bg-orange-50 px-3 py-2 rounded-md text-sm font-medium flex items-center"
                   >
-                    <Flag className="h-4 w-4 mr-1" />
+                    <Flag className="h-4 w-4 mr-1.5" />
                     Reportes
                   </Link>
                   <Link
                     to="/moderation/appeals"
                     className="text-purple-600 hover:text-purple-800 hover:bg-purple-50 px-3 py-2 rounded-md text-sm font-medium flex items-center"
                   >
-                    <FileText className="h-4 w-4 mr-1" />
+                    <FileText className="h-4 w-4 mr-1.5" />
                     Apelaciones
                   </Link>
                 </>
               )}
               {user.tipo_usuario === 'administrador' && (
                 <>
+                  <div className="h-6 w-px bg-gray-300 mx-2"></div>
                   <Link
                     to="/products/moderation"
-                    className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                    className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-3 py-2 rounded-md text-sm font-medium flex items-center"
                   >
-                    <Shield className="h-4 w-4 mr-1" />
+                    <Shield className="h-4 w-4 mr-1.5" />
                     Administración
                   </Link>
                   <Link
                     to="/moderation/reports"
                     className="text-orange-600 hover:text-orange-800 hover:bg-orange-50 px-3 py-2 rounded-md text-sm font-medium flex items-center"
                   >
-                    <Flag className="h-4 w-4 mr-1" />
+                    <Flag className="h-4 w-4 mr-1.5" />
                     Reportes
                   </Link>
                   <Link
                     to="/moderation/appeals"
                     className="text-purple-600 hover:text-purple-800 hover:bg-purple-50 px-3 py-2 rounded-md text-sm font-medium flex items-center"
                   >
-                    <FileText className="h-4 w-4 mr-1" />
+                    <FileText className="h-4 w-4 mr-1.5" />
                     Apelaciones
                   </Link>
                 </>
@@ -184,8 +186,8 @@ export const Navbar: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center space-x-4">
-            <div className="hidden md:block text-right">
+          <div className="flex items-center space-x-6">
+            <div className="hidden md:block text-right mr-3">
               <p className="text-sm font-medium text-gray-900">
                 {user.nombre || ''} {user.apellido || ''}
               </p>
@@ -194,7 +196,7 @@ export const Navbar: React.FC = () => {
               </p>
             </div>
             
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-3">
               <Link to="/profile">
                 <Button variant="ghost" size="icon">
                   <User className="h-4 w-4" />

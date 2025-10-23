@@ -183,10 +183,16 @@ class AppealsController {
           u_apelante.apellido as apelante_apellido,
           u_apelante.correo as apelante_correo,
           u_apelante.telefono as apelante_telefono,
-          cat.nombre as categoria_nombre
+          u_vendedor.nombre as vendedor_nombre,
+          u_vendedor.apellido as vendedor_apellido,
+          u_vendedor.correo as vendedor_correo,
+          cat.nombre as categoria_nombre,
+          (SELECT url_imagen FROM item_imagenes WHERE item_id = i.id ORDER BY es_principal DESC, orden ASC LIMIT 1) as primera_imagen,
+          (SELECT COUNT(*) FROM item_imagenes WHERE item_id = i.id) as total_imagenes
         FROM apelaciones a
         INNER JOIN items i ON a.item_id = i.id
         INNER JOIN usuarios u_apelante ON a.usuario_apelante_id = u_apelante.id
+        INNER JOIN usuarios u_vendedor ON i.vendedor_id = u_vendedor.id
         LEFT JOIN categorias cat ON i.categoria_id = cat.id
         WHERE a.estado IN ('en_apelacion', 'pendiente')
         ORDER BY a.fecha_apelacion ASC`
