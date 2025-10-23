@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../ui/Button';
 import { LogoutConfirmModal } from '../ui/LogoutConfirmModal';
-import { LogOut, User, Settings, Shield, AlertTriangle } from 'lucide-react';
+import { LogOut, User, Settings, Shield, AlertTriangle, Flag, FileText } from 'lucide-react';
 import { apiService } from '../../services/api';
 
 export const Navbar: React.FC = () => {
@@ -132,22 +132,54 @@ export const Navbar: React.FC = () => {
                 Chat
               </Link>
               {user.tipo_usuario === 'moderador' && (
-                <Link
-                  to="/products/moderation"
-                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium flex items-center"
-                >
-                  <Shield className="h-4 w-4 mr-1" />
-                  Moderador
-                </Link>
+                <>
+                  <Link
+                    to="/products/moderation"
+                    className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                  >
+                    <Shield className="h-4 w-4 mr-1" />
+                    Moderador
+                  </Link>
+                  <Link
+                    to="/moderation/reports"
+                    className="text-orange-600 hover:text-orange-800 hover:bg-orange-50 px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                  >
+                    <Flag className="h-4 w-4 mr-1" />
+                    Reportes
+                  </Link>
+                  <Link
+                    to="/moderation/appeals"
+                    className="text-purple-600 hover:text-purple-800 hover:bg-purple-50 px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                  >
+                    <FileText className="h-4 w-4 mr-1" />
+                    Apelaciones
+                  </Link>
+                </>
               )}
               {user.tipo_usuario === 'administrador' && (
-                <Link
-                  to="/products/moderation"
-                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium flex items-center"
-                >
-                  <Shield className="h-4 w-4 mr-1" />
-                  Administración
-                </Link>
+                <>
+                  <Link
+                    to="/products/moderation"
+                    className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                  >
+                    <Shield className="h-4 w-4 mr-1" />
+                    Administración
+                  </Link>
+                  <Link
+                    to="/moderation/reports"
+                    className="text-orange-600 hover:text-orange-800 hover:bg-orange-50 px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                  >
+                    <Flag className="h-4 w-4 mr-1" />
+                    Reportes
+                  </Link>
+                  <Link
+                    to="/moderation/appeals"
+                    className="text-purple-600 hover:text-purple-800 hover:bg-purple-50 px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                  >
+                    <FileText className="h-4 w-4 mr-1" />
+                    Apelaciones
+                  </Link>
+                </>
               )}
             </div>
           </div>
