@@ -3,6 +3,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { Navbar } from './components/layout/Navbar';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { GlobalSessionAlertContainer } from './components/ui/GlobalSessionAlertContainer';
+import { GlobalSuspendedAlertContainer } from './components/ui/GlobalSuspendedAlertContainer';
 
 // Páginas
 import { HomePage } from './pages/HomePage';
@@ -36,6 +37,7 @@ function App() {
     <AuthProvider>
       <Router>
         <GlobalSessionAlertContainer />
+        <GlobalSuspendedAlertContainer />
         <div className="min-h-screen bg-gray-50">
           <Navbar />
           <main>

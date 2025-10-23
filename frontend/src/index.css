@@ -73,3 +73,67 @@
     transform: rotate(3deg);
   }
 }
+
+/* Animaciones para alertas mejoradas */
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Animación de salida suave para alertas */
+@keyframes fadeOutUp {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+}
+
+/* Clases de utilidad para animaciones */
+.animate-in {
+  animation-duration: 0.5s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: both;
+}
+
+.animate-out {
+  animation-duration: 0.6s;
+  animation-timing-function: ease-in;
+  animation-fill-mode: forwards;
+}
+
+.fade-in {
+  animation-name: fadeIn;
+}
+
+.slide-in-from-top-5 {
+  animation-name: slideInFromTop;
+}
+
+.scale-in {
+  animation-name: scaleIn;
+}
+
+.fade-out-up {
+  animation-name: fadeOutUp;
+}

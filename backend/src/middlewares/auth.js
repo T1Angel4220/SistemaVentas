@@ -42,6 +42,16 @@ const authenticate = async (req, res, next) => {
     
     // Verificar que el usuario está activo
     if (user.estado !== 'activo') {
+      // Mensaje específico si el usuario está suspendido
+      if (user.estado === 'suspendido') {
+        console.log(`⚠️ Usuario suspendido ${user.correo} intentó acceder al sistema`);
+        return res.status(401).json({
+          success: false,
+          message: 'Tu cuenta ha sido suspendida por incumplimiento de las políticas de uso',
+          code: 'ACCOUNT_SUSPENDED'
+        });
+      }
+      
       return res.status(401).json({
         success: false,
         message: 'Cuenta inactiva o suspendida'

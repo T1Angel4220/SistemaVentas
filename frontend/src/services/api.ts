@@ -1,4 +1,5 @@
 import { sessionAlertManager } from '../utils/sessionAlert';
+import { suspendedAccountAlertManager } from '../utils/suspendedAccountAlert';
 
 // Configuración de la API
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
@@ -107,7 +108,7 @@ class ApiService {
       const data = await response.json();
 
       if (!response.ok) {
-        // ✅ NUEVO: Detectar cuando la sesión ha sido cerrada por admin/moderador
+        // ✅ Detectar cuando la sesión ha sido cerrada por admin/moderador
         if (data.code === 'SESSION_CLOSED' && response.status === 401) {
           console.warn('⚠️ Sesión cerrada por administrador/moderador');
           // Limpiar datos de autenticación
@@ -120,6 +121,21 @@ class ApiService {
           
           // La alerta misma manejará la redirección al login
           throw new Error('Sesión cerrada por administrador');
+        }
+        
+        // ✅ Detectar cuando la cuenta ha sido suspendida
+        if (data.code === 'ACCOUNT_SUSPENDED' && response.status === 401) {
+          console.warn('⚠️ Cuenta suspendida por administrador/moderador');
+          // Limpiar datos de autenticación
+          this.setToken(null);
+          localStorage.removeItem('user');
+          localStorage.removeItem('refreshToken');
+          
+          // Mostrar alerta profesional al usuario
+          suspendedAccountAlertManager.show();
+          
+          // La alerta misma manejará la redirección al login
+          throw new Error('Cuenta suspendida');
         }
         
         throw new Error(data.message || 'Error en la petición');

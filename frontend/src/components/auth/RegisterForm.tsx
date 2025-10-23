@@ -1,11 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
-import { Alert, AlertDescription } from '../ui/Alert';
 import { Link } from 'react-router-dom';
-import { Eye, EyeOff, User, Mail, Phone, MapPin, Hash } from 'lucide-react';
+import { Eye, EyeOff, User, Mail, Phone, MapPin, Hash, CheckCircle } from 'lucide-react';
 
 // Icono de candado simple
 const LockIcon = ({ className }: { className?: string }) => (
@@ -14,11 +10,7 @@ const LockIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-interface RegisterFormProps {
-  onSuccess?: () => void;
-}
-
-export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
+export const RegisterForm: React.FC = () => {
   const { register, isLoading, error, clearError } = useAuth();
   const [formData, setFormData] = useState({
     cedula: '',
@@ -41,7 +33,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
   // Limpiar error del contexto cuando se monta el componente
   React.useEffect(() => {
     clearError();
-  }, []);
+  }, [clearError]);
 
   // Función para capitalizar la primera letra de cada palabra
   const capitalizeFirstLetter = (text: string): string => {
@@ -186,8 +178,16 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
     }
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { confirmPassword, ...userData } = formData;
-      await register(userData);
+      
+      // Asegurar que el género tenga el tipo correcto
+      const dataToSend = {
+        ...userData,
+        genero: userData.genero as 'masculino' | 'femenino' | 'otro'
+      };
+      
+      await register(dataToSend);
       setSuccessMessage('¡Registro exitoso! Revisa tu email para obtener el código de verificación.');
       setShowSuccessAnimation(true);
       // Scroll hacia arriba para mostrar el mensaje de éxito
@@ -387,8 +387,17 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
           </div>
 
           <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-700">
-              Cédula
+            <label className="block text-sm font-semibold text-gray-700 flex items-center justify-between">
+              <span>Cédula</span>
+              <span className={`text-xs font-bold transition-colors duration-200 ${
+                formData.cedula.length === 10 
+                  ? 'text-emerald-600' 
+                  : formData.cedula.length > 0 
+                    ? 'text-indigo-600' 
+                    : 'text-gray-400'
+              }`}>
+                {formData.cedula.length}/10 dígitos
+              </span>
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -406,17 +415,45 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
                 autoComplete="off"
                 className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors ${
                   validationErrors.cedula 
-                    ? 'border-red-300 bg-red-50' 
-                    : 'border-gray-300 hover:border-gray-400'
+                    ? 'border-red-300 bg-red-50 border-2' 
+                    : formData.cedula.length === 10
+                      ? 'border-emerald-500 border-2'
+                      : 'border-gray-300 hover:border-gray-400'
                 } ${isLoading ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'}`}
               />
             </div>
             {validationErrors.cedula && (
-              <p className="text-sm text-red-600 mt-1">{validationErrors.cedula}</p>
+              <p className="text-sm text-red-600 mt-1 flex items-center">
+                <span className="inline-block w-1 h-1 bg-red-600 rounded-full mr-1.5"></span>
+                {validationErrors.cedula}
+              </p>
             )}
-            <p className="text-xs text-gray-500">
-              {formData.cedula.length}/10 dígitos
-            </p>
+            
+            {/* Barra de progreso y mensaje de cédula completa */}
+            {formData.cedula.length > 0 && !validationErrors.cedula && (
+              <div className="mt-2">
+                <div className="flex items-center space-x-1">
+                  {[...Array(10)].map((_, index) => (
+                    <div
+                      key={index}
+                      className={`h-1.5 flex-1 rounded-full transition-all duration-200 ${
+                        index < formData.cedula.length
+                          ? formData.cedula.length === 10
+                            ? 'bg-emerald-500'
+                            : 'bg-indigo-500'
+                          : 'bg-gray-200'
+                      }`}
+                    ></div>
+                  ))}
+                </div>
+                {formData.cedula.length === 10 && (
+                  <p className="text-emerald-600 text-xs mt-2 font-medium flex items-center">
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Cédula completa
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -600,6 +637,54 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
               {validationErrors.password && (
                 <p className="text-sm text-red-600 mt-1">{validationErrors.password}</p>
               )}
+              
+              {/* Indicador de fortaleza de contraseña */}
+              {formData.password && !validationErrors.password && (
+                <div className="mt-2">
+                  <div className="flex items-center space-x-2">
+                    <div className={`h-2 flex-1 rounded-full transition-all duration-300 ${
+                      formData.password.length >= 6 
+                        ? formData.password.length >= 10 
+                          ? 'bg-emerald-500' 
+                          : formData.password.length >= 8 
+                            ? 'bg-amber-500' 
+                            : 'bg-red-500' 
+                        : 'bg-gray-200'
+                    }`}></div>
+                    <div className={`h-2 flex-1 rounded-full transition-all duration-300 ${
+                      formData.password.length >= 8 
+                        ? formData.password.length >= 10 
+                          ? 'bg-emerald-500' 
+                          : 'bg-amber-500' 
+                        : 'bg-gray-200'
+                    }`}></div>
+                    <div className={`h-2 flex-1 rounded-full transition-all duration-300 ${
+                      formData.password.length >= 10 ? 'bg-emerald-500' : 'bg-gray-200'
+                    }`}></div>
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <p className={`text-xs font-bold flex items-center transition-colors duration-300 ${
+                      formData.password.length >= 10 
+                        ? 'text-emerald-700' 
+                        : formData.password.length >= 8 
+                          ? 'text-amber-700' 
+                          : 'text-red-700'
+                    }`}>
+                      <span className={`inline-block w-2 h-2 rounded-full mr-2 ${
+                        formData.password.length >= 10 
+                          ? 'bg-emerald-500' 
+                          : formData.password.length >= 8 
+                            ? 'bg-amber-500' 
+                            : 'bg-red-500'
+                      }`}></span>
+                      Fortaleza: {formData.password.length >= 10 ? '🛡️ Fuerte' : formData.password.length >= 8 ? '⚡ Media' : '⚠️ Débil'}
+                    </p>
+                    <span className="text-xs text-gray-600 font-medium">
+                      {formData.password.length} caracteres
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
             
             <div className="space-y-2">
@@ -634,6 +719,16 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
               </div>
               {validationErrors.confirmPassword && (
                 <p className="text-sm text-red-600 mt-1">{validationErrors.confirmPassword}</p>
+              )}
+              
+              {/* Mensaje de confirmación cuando las contraseñas coinciden */}
+              {formData.confirmPassword && formData.password === formData.confirmPassword && !validationErrors.confirmPassword && (
+                <div className="mt-2">
+                  <p className="text-emerald-600 text-xs font-medium flex items-center">
+                    <CheckCircle className="h-4 w-4 mr-1" />
+                    Las contraseñas coinciden
+                  </p>
+                </div>
               )}
             </div>
           </div>

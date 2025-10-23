@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
@@ -52,12 +52,66 @@ export const SessionManagementPage: React.FC = () => {
   const [closeAllModal, setCloseAllModal] = useState(false);
   const [motivo, setMotivo] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  
+  // Estados para animaciones de salida
+  const [isErrorFadingOut, setIsErrorFadingOut] = useState(false);
+  const [isSuccessFadingOut, setIsSuccessFadingOut] = useState(false);
+  
+  // Ref para scroll automático a las alertas
+  const alertRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (userId) {
       loadUserSessions();
     }
   }, [userId]);
+
+  // Scroll automático hacia las alertas cuando aparecen
+  useEffect(() => {
+    if ((error || success) && alertRef.current) {
+      alertRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      });
+    }
+  }, [error, success]);
+
+  // Auto-ocultar alertas después de 5 segundos con animación
+  useEffect(() => {
+    if (error && !isErrorFadingOut) {
+      const fadeTimer = setTimeout(() => {
+        setIsErrorFadingOut(true);
+      }, 4400); // Empezar fade-out 600ms antes
+      
+      const removeTimer = setTimeout(() => {
+        setError('');
+        setIsErrorFadingOut(false);
+      }, 5000);
+      
+      return () => {
+        clearTimeout(fadeTimer);
+        clearTimeout(removeTimer);
+      };
+    }
+  }, [error, isErrorFadingOut]);
+
+  useEffect(() => {
+    if (success && !isSuccessFadingOut) {
+      const fadeTimer = setTimeout(() => {
+        setIsSuccessFadingOut(true);
+      }, 4400); // Empezar fade-out 600ms antes
+      
+      const removeTimer = setTimeout(() => {
+        setSuccess('');
+        setIsSuccessFadingOut(false);
+      }, 5000);
+      
+      return () => {
+        clearTimeout(fadeTimer);
+        clearTimeout(removeTimer);
+      };
+    }
+  }, [success, isSuccessFadingOut]);
 
   const loadUserSessions = async () => {
     try {
@@ -222,74 +276,174 @@ export const SessionManagementPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
+      {/* Header mejorado */}
+      <div className="bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 text-white shadow-2xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center space-x-4">
+          <div className="flex justify-between items-center py-10">
+            <div className="flex items-center space-x-6">
               <Button
                 variant="outline"
                 onClick={() => navigate('/admin/users')}
-                className="flex items-center space-x-2 bg-white/10 hover:bg-white/20 border-white/20 text-white hover:text-white"
+                className="flex items-center space-x-2 bg-white/20 hover:bg-white/30 border-white/30 text-white hover:text-white backdrop-blur-sm px-4 py-2 h-auto font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
               >
-                <ArrowLeft className="h-4 w-4" />
+                <ArrowLeft className="h-5 w-5" />
                 <span>Volver</span>
               </Button>
-              <div>
-                <h1 className="text-2xl font-bold text-white">Gestión de Sesiones</h1>
-                <p className="text-blue-100">
-                  {user ? `${user.nombre} ${user.apellido}` : 'Cargando...'}
+              <div className="space-y-2">
+                <div className="flex items-center space-x-3">
+                  <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+                    <Monitor className="h-7 w-7 text-white" />
+                  </div>
+                  <h1 className="text-4xl font-extrabold text-white tracking-tight">
+                    Gestión de Sesiones
+                  </h1>
+                </div>
+                <p className="text-blue-50 text-lg ml-16">
+                  {user ? `${user.nombre} ${user.apellido}` : 'Cargando usuario...'}
                 </p>
               </div>
             </div>
-            <div className="flex items-center space-x-2 text-sm text-blue-100">
-              <Shield className="h-4 w-4" />
-              <span>Solo Moderadores/Admin</span>
+            <div className="flex items-center space-x-2 px-4 py-2 bg-white/20 rounded-xl backdrop-blur-sm">
+              <Shield className="h-5 w-5 text-white" />
+              <span className="text-sm font-semibold text-white">Solo Moderadores/Admin</span>
             </div>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {error && <Alert variant="destructive" className="mb-6">{error}</Alert>}
-        {success && <Alert variant="success" className="mb-6">{success}</Alert>}
+        {/* Alertas mejoradas con scroll automático */}
+        <div ref={alertRef}>
+          {error && (
+            <div className={`mb-6 ${isErrorFadingOut ? 'animate-out fade-out-up' : 'animate-in fade-in slide-in-from-top-5'}`}>
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-500 via-red-600 to-rose-600 text-white shadow-2xl border-2 border-red-400">
+                <div className="absolute inset-0 bg-black/10"></div>
+                <div className="relative p-6">
+                  <div className="flex items-start space-x-4">
+                    <div className="flex-shrink-0">
+                      <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-sm shadow-xl">
+                        <XCircle className="h-8 w-8 text-white" />
+                      </div>
+                    </div>
+                    <div className="flex-1 pt-1">
+                      <h3 className="text-xl font-bold text-white mb-1 flex items-center">
+                        <AlertTriangle className="h-5 w-5 mr-2" />
+                        Error
+                      </h3>
+                      <p className="text-red-50 font-medium leading-relaxed">{error}</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setError('');
+                        setIsErrorFadingOut(false);
+                      }}
+                      className="flex-shrink-0 p-2 hover:bg-white/20 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50"
+                    >
+                      <X className="h-5 w-5 text-white" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {success && (
+            <div className={`mb-6 ${isSuccessFadingOut ? 'animate-out fade-out-up' : 'animate-in fade-in slide-in-from-top-5'}`}>
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-500 via-green-600 to-teal-600 text-white shadow-2xl border-2 border-emerald-400">
+                <div className="absolute inset-0 bg-black/10"></div>
+                <div className="relative p-6">
+                  <div className="flex items-start space-x-4">
+                    <div className="flex-shrink-0">
+                      <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-sm shadow-xl">
+                        <CheckCircle className="h-8 w-8 text-white" />
+                      </div>
+                    </div>
+                    <div className="flex-1 pt-1">
+                      <h3 className="text-xl font-bold text-white mb-1 flex items-center">
+                        <CheckCircle className="h-5 w-5 mr-2" />
+                        Éxito
+                      </h3>
+                      <p className="text-emerald-50 font-medium leading-relaxed">{success}</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setSuccess('');
+                        setIsSuccessFadingOut(false);
+                      }}
+                      className="flex-shrink-0 p-2 hover:bg-white/20 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50"
+                    >
+                      <X className="h-5 w-5 text-white" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
 
         {user && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Información del Usuario */}
-            <div className="lg:col-span-1">
-              <Card className="p-6">
-                <div className="text-center mb-6">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-xl font-bold mx-auto mb-4">
-                    {user.nombre.charAt(0)}{user.apellido.charAt(0)}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Información del Usuario mejorada */}
+            <div className="lg:col-span-1 space-y-6">
+              {/* Card de perfil del usuario */}
+              <Card className="overflow-hidden shadow-2xl border-0">
+                <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-6 text-white">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm shadow-xl">
+                      <span className="text-3xl font-bold text-white">
+                        {user.nombre.charAt(0)}{user.apellido.charAt(0)}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold">{user.nombre} {user.apellido}</h3>
+                      <p className="text-blue-100 text-sm mt-1">{user.correo}</p>
+                    </div>
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900">{user.nombre} {user.apellido}</h3>
-                  <p className="text-gray-600">{user.correo}</p>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                    <div className="flex items-center space-x-2">
-                      <Wifi className="h-5 w-5 text-blue-600" />
-                      <span className="font-medium text-blue-900">Sesiones Activas</span>
+                <div className="p-6 space-y-4">
+                  {/* Sesiones activas card */}
+                  <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 shadow-xl transform hover:scale-105 transition-all duration-300">
+                    <div className="p-5">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="flex items-center space-x-2 mb-1">
+                            <Wifi className="h-5 w-5 text-green-100" />
+                            <span className="font-semibold text-green-100 text-sm">Sesiones Activas</span>
+                          </div>
+                          <span className="text-4xl font-extrabold text-white">{activeSessions.length}</span>
+                        </div>
+                        <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm">
+                          <CheckCircle className="h-8 w-8 text-white" />
+                        </div>
+                      </div>
                     </div>
-                    <span className="text-2xl font-bold text-blue-600">{activeSessions.length}</span>
                   </div>
 
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center space-x-2">
-                      <WifiOff className="h-5 w-5 text-gray-600" />
-                      <span className="font-medium text-gray-900">Sesiones Cerradas</span>
+                  {/* Sesiones cerradas card */}
+                  <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-gray-500 to-gray-600 shadow-xl transform hover:scale-105 transition-all duration-300">
+                    <div className="p-5">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="flex items-center space-x-2 mb-1">
+                            <WifiOff className="h-5 w-5 text-gray-100" />
+                            <span className="font-semibold text-gray-100 text-sm">Sesiones Cerradas</span>
+                          </div>
+                          <span className="text-4xl font-extrabold text-white">{inactiveSessions.length}</span>
+                        </div>
+                        <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm">
+                          <XCircle className="h-8 w-8 text-white" />
+                        </div>
+                      </div>
                     </div>
-                    <span className="text-2xl font-bold text-gray-600">{inactiveSessions.length}</span>
                   </div>
 
                   {activeSessions.length > 0 && (
                     <Button
                       onClick={() => setCloseAllModal(true)}
-                      className="w-full bg-red-600 hover:bg-red-700 text-white"
+                      className="w-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-semibold py-3 h-auto shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
                     >
-                      <X className="h-4 w-4 mr-2" />
+                      <X className="h-5 w-5 mr-2" />
                       Cerrar Todas las Sesiones
                     </Button>
                   )}
@@ -297,95 +451,116 @@ export const SessionManagementPage: React.FC = () => {
               </Card>
             </div>
 
-            {/* Lista de Sesiones */}
+            {/* Lista de Sesiones mejorada */}
             <div className="lg:col-span-2">
-              <Card className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-bold text-gray-900">Sesiones del Usuario</h2>
-                  <Button
-                    onClick={loadUserSessions}
-                    variant="outline"
-                    size="sm"
-                  >
-                    <Clock className="h-4 w-4 mr-2" />
-                    Actualizar
-                  </Button>
+              <Card className="overflow-hidden shadow-2xl border-0">
+                <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-8 py-5 border-b border-gray-200">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-900 flex items-center">
+                        <Monitor className="h-6 w-6 mr-2 text-blue-600" />
+                        Sesiones del Usuario
+                      </h2>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {sessions.length} {sessions.length === 1 ? 'sesión registrada' : 'sesiones registradas'}
+                      </p>
+                    </div>
+                    <Button
+                      onClick={loadUserSessions}
+                      variant="outline"
+                      className="shadow-md hover:shadow-lg transition-all duration-300"
+                    >
+                      <Clock className="h-4 w-4 mr-2" />
+                      Actualizar
+                    </Button>
+                  </div>
                 </div>
 
-                {sessions.length === 0 ? (
-                  <div className="text-center py-8">
-                    <WifiOff className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600">No hay sesiones registradas</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {sessions.map((session) => (
-                      <div
-                        key={session.id}
-                        className={`p-4 rounded-lg border ${
-                          session.activa 
-                            ? 'bg-green-50 border-green-200' 
-                            : 'bg-gray-50 border-gray-200'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-start space-x-3">
-                            <div className={`p-2 rounded-lg ${
-                              session.activa ? 'bg-green-100' : 'bg-gray-100'
-                            }`}>
-                              {getDeviceIcon(session.user_agent)}
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2 mb-2">
-                                <h4 className="font-semibold text-gray-900">
-                                  {getBrowserInfo(session.user_agent)}
-                                </h4>
-                                {session.activa ? (
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    <CheckCircle className="h-3 w-3 mr-1" />
-                                    Activa
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                    <XCircle className="h-3 w-3 mr-1" />
-                                    Cerrada
-                                  </span>
-                                )}
+                <div className="p-8">
+                  {sessions.length === 0 ? (
+                    <div className="text-center py-16">
+                      <div className="flex flex-col items-center justify-center">
+                        <div className="p-6 bg-gray-100 rounded-full mb-6">
+                          <WifiOff className="h-16 w-16 text-gray-400" />
+                        </div>
+                        <p className="text-gray-600 font-semibold text-lg">No hay sesiones registradas</p>
+                        <p className="text-gray-500 text-sm mt-2">El usuario no ha iniciado sesión en el sistema</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {sessions.map((session) => (
+                        <div
+                          key={session.id}
+                          className={`relative overflow-hidden rounded-2xl border-2 shadow-xl hover:shadow-2xl transform hover:scale-[1.02] transition-all duration-300 ${
+                            session.activa 
+                              ? 'bg-gradient-to-r from-emerald-50 to-green-50 border-emerald-300' 
+                              : 'bg-gradient-to-r from-gray-50 to-slate-50 border-gray-300'
+                          }`}
+                        >
+                          <div className="p-6">
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-start space-x-4 flex-1">
+                                <div className={`p-4 rounded-2xl shadow-lg ${
+                                  session.activa 
+                                    ? 'bg-gradient-to-br from-emerald-500 to-green-600' 
+                                    : 'bg-gradient-to-br from-gray-500 to-gray-600'
+                                }`}>
+                                  {getDeviceIcon(session.user_agent)}
+                                </div>
+                                <div className="flex-1">
+                                  <div className="flex items-center space-x-3 mb-3">
+                                    <h4 className="font-bold text-lg text-gray-900">
+                                      {getBrowserInfo(session.user_agent)}
+                                    </h4>
+                                    {session.activa ? (
+                                      <span className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-100 text-emerald-800 shadow-sm">
+                                        <CheckCircle className="h-4 w-4 mr-1.5" />
+                                        Activa
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold bg-gray-200 text-gray-700 shadow-sm">
+                                        <XCircle className="h-4 w-4 mr-1.5" />
+                                        Cerrada
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="space-y-2.5">
+                                    <div className="flex items-center space-x-3 text-sm text-gray-700">
+                                      <Globe className="h-5 w-5 text-blue-600" />
+                                      <span className="font-medium">{formatIpAddress(session.ip_address)}</span>
+                                    </div>
+                                    <div className="flex items-center space-x-3 text-sm text-gray-700">
+                                      <Clock className="h-5 w-5 text-indigo-600" />
+                                      <span><span className="font-semibold">Iniciada:</span> {formatDate(session.fecha_inicio)}</span>
+                                    </div>
+                                    <div className="flex items-center space-x-3 text-sm text-gray-700">
+                                      <Clock className="h-5 w-5 text-purple-600" />
+                                      <span><span className="font-semibold">Expira:</span> {formatDate(session.fecha_expiracion)}</span>
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
-                              <div className="space-y-1 text-sm text-gray-600">
-                                <div className="flex items-center space-x-2">
-                                  <Globe className="h-4 w-4" />
-                                  <span>{formatIpAddress(session.ip_address)}</span>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  <Clock className="h-4 w-4" />
-                                  <span>Iniciada: {formatDate(session.fecha_inicio)}</span>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  <Clock className="h-4 w-4" />
-                                  <span>Expira: {formatDate(session.fecha_expiracion)}</span>
-                                </div>
-                              </div>
+                              {session.activa && (
+                                <Button
+                                  onClick={() => {
+                                    setSelectedSession(session);
+                                    setShowCloseModal(true);
+                                  }}
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-red-600 hover:text-white hover:bg-red-600 border-red-300 hover:border-red-600 font-semibold shadow-md hover:shadow-lg transition-all duration-300"
+                                >
+                                  <X className="h-5 w-5" />
+                                </Button>
+                              )}
                             </div>
                           </div>
-                          {session.activa && (
-                            <Button
-                              onClick={() => {
-                                setSelectedSession(session);
-                                setShowCloseModal(true);
-                              }}
-                              variant="outline"
-                              size="sm"
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          )}
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
+                </div>
               </Card>
             </div>
           </div>
