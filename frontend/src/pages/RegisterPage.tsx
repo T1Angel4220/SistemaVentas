@@ -84,19 +84,6 @@ export const RegisterPage: React.FC = () => {
           </div>
 
           <RegisterForm />
-
-          <div className="mt-8 text-center">
-            <p className="text-sm text-gray-500">
-              Al registrarte, aceptas nuestros{' '}
-              <a href="/terms" className="text-indigo-600 hover:text-indigo-800 font-medium">
-                Términos de Servicio
-              </a>{' '}
-              y{' '}
-              <a href="/privacy" className="text-indigo-600 hover:text-indigo-800 font-medium">
-                Política de Privacidad
-              </a>
-            </p>
-          </div>
         </div>
       </div>
     </div>

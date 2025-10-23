@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import { Eye, EyeOff, User, Mail, Phone, MapPin, Hash, CheckCircle } from 'lucide-react';
+import { TermsOfServiceModal } from '../modals/TermsOfServiceModal';
+import { PrivacyPolicyModal } from '../modals/PrivacyPolicyModal';
 
 // Icono de candado simple
 const LockIcon = ({ className }: { className?: string }) => (
@@ -29,6 +31,8 @@ export const RegisterForm: React.FC = () => {
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [successMessage, setSuccessMessage] = useState('');
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
   // Limpiar error del contexto cuando se monta el componente
   React.useEffect(() => {
@@ -764,6 +768,38 @@ export const RegisterForm: React.FC = () => {
           </div>
         </form>
       </div>
+
+      {/* Términos y Condiciones - Fuera de la tarjeta */}
+      <div className="text-center mt-6 px-4">
+        <p className="text-sm text-gray-600">
+          Al registrarte, aceptas nuestros{' '}
+          <button
+            type="button"
+            onClick={() => setShowTermsModal(true)}
+            className="text-indigo-600 hover:text-indigo-800 hover:underline font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 rounded"
+          >
+            Términos de Servicio
+          </button>
+          {' '}y{' '}
+          <button
+            type="button"
+            onClick={() => setShowPrivacyModal(true)}
+            className="text-indigo-600 hover:text-indigo-800 hover:underline font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 rounded"
+          >
+            Política de Privacidad
+          </button>
+        </p>
+      </div>
+
+      {/* Modales de Términos y Política de Privacidad */}
+      <TermsOfServiceModal 
+        isOpen={showTermsModal} 
+        onClose={() => setShowTermsModal(false)} 
+      />
+      <PrivacyPolicyModal 
+        isOpen={showPrivacyModal} 
+        onClose={() => setShowPrivacyModal(false)} 
+      />
     </div>
   );
 };
