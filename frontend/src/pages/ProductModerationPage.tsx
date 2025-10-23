@@ -19,9 +19,11 @@ import {
   XCircle,
   AlertTriangle,
   Clock,
-  Filter
+  Filter,
+  FileText
 } from 'lucide-react';
 import type { Product, ProductsResponse } from '../types/product.types';
+import { ModerationReasonModal } from '../components/ui/ModerationReasonModal';
 
 export const ProductModerationPage: React.FC = () => {
   const navigate = useNavigate();
@@ -41,11 +43,29 @@ export const ProductModerationPage: React.FC = () => {
     has_prev: false
   });
 
+  const [estadisticas, setEstadisticas] = useState({
+    total: 0,
+    pendientes: 0,
+    aprobados: 0,
+    rechazados: 0,
+    suspendidos: 0,
+    peligrosos: 0,
+    en_apelacion: 0
+  });
+
   const [filters, setFilters] = useState({
     estado: '',
     page: 1,
     limit: 12
   });
+
+  // Estado para modal de motivo de moderación
+  const [moderationModal, setModerationModal] = useState<{
+    isOpen: boolean;
+    action: 'rechazar' | 'suspender' | 'marcar_peligroso';
+    productId: number;
+    productName: string;
+  } | null>(null);
 
   const loadProducts = useCallback(async () => {
     try {
@@ -68,6 +88,9 @@ export const ProductModerationPage: React.FC = () => {
       if (data.success) {
         setProducts(data.data);
         setPagination(data.pagination);
+        if (data.estadisticas) {
+          setEstadisticas(data.estadisticas);
+        }
       } else {
         setError('Error al cargar productos');
       }
@@ -95,7 +118,8 @@ export const ProductModerationPage: React.FC = () => {
 
     // Solo cargar si tiene permisos
     loadProducts();
-  }, [user, filters, loadProducts]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, filters]);
 
   const handleModerationAction = async (productId: number, action: string, productName: string, motivo?: string) => {
     try {
@@ -117,13 +141,43 @@ export const ProductModerationPage: React.FC = () => {
       const data = await response.json();
       
       if (data.success) {
-        // Mostrar mensaje de éxito
-        const actionText = action === 'aprobar' ? 'aprobado' : action === 'rechazar' ? 'rechazado' : action;
-        showSuccess(
-          'Acción completada',
-          `El producto "${productName}" ha sido ${actionText} exitosamente.`,
-          () => loadProducts()
-        );
+        // Mensajes de éxito personalizados según la acción
+        let titulo = 'Acción completada';
+        let mensaje = '';
+
+        switch (action) {
+          case 'aprobar':
+            titulo = '✅ Producto Aprobado';
+            mensaje = `"${productName}" ha sido APROBADO exitosamente.\n\n` +
+                     `El producto ahora es visible para todos los compradores.`;
+            break;
+          
+          case 'rechazar':
+            titulo = '🔴 Producto Rechazado';
+            mensaje = `"${productName}" ha sido RECHAZADO.\n\n` +
+                     `El vendedor podrá verlo, editarlo, eliminarlo o apelar esta decisión.`;
+            break;
+          
+          case 'suspender':
+            titulo = '🟡 Producto Suspendido';
+            mensaje = `"${productName}" ha sido SUSPENDIDO temporalmente.\n\n` +
+                     `El vendedor podrá verlo y apelar, pero no editarlo ni eliminarlo hasta que se resuelva.`;
+            break;
+          
+          case 'marcar_peligroso':
+            titulo = '🚫 Producto Marcado como Peligroso';
+            mensaje = `"${productName}" ha sido marcado como PELIGROSO.\n\n` +
+                     `El producto está ahora OCULTO para vendedor y compradores.\n` +
+                     `Solo moderadores y administradores pueden verlo.\n\n` +
+                     `El vendedor podrá apelar esta decisión.`;
+            break;
+          
+          default:
+            titulo = 'Acción completada';
+            mensaje = `El producto "${productName}" ha sido procesado exitosamente.`;
+        }
+
+        showSuccess(titulo, mensaje, () => loadProducts());
         
         // Limpiar errores
         setError(null);
@@ -141,19 +195,49 @@ export const ProductModerationPage: React.FC = () => {
   const handleApproveProduct = (productId: number, productName: string) => {
     showWarning(
       '¿Aprobar producto?',
-      `¿Estás seguro de que quieres aprobar el producto "${productName}"? Este producto será visible para todos los compradores.`,
+      `¿Estás seguro de que quieres aprobar "${productName}"?\n\nEste producto será APROBADO y visible para todos los compradores en la plataforma.`,
       () => handleModerationAction(productId, 'aprobar', productName),
       undefined // onCancel - no necesita hacer nada especial
     );
   };
 
   const handleRejectProduct = (productId: number, productName: string) => {
-    showWarning(
-      '¿Rechazar producto?',
-      `¿Estás seguro de que quieres rechazar el producto "${productName}"? Este producto será suspendido y no será visible para los compradores.`,
-      () => handleModerationAction(productId, 'rechazar', productName),
-      undefined // onCancel - no necesita hacer nada especial
-    );
+    setModerationModal({
+      isOpen: true,
+      action: 'rechazar',
+      productId,
+      productName
+    });
+  };
+
+  const handleSuspendProduct = (productId: number, productName: string) => {
+    setModerationModal({
+      isOpen: true,
+      action: 'suspender',
+      productId,
+      productName
+    });
+  };
+
+  const handleMarkAsDangerous = (productId: number, productName: string) => {
+    setModerationModal({
+      isOpen: true,
+      action: 'marcar_peligroso',
+      productId,
+      productName
+    });
+  };
+
+  const handleModerationConfirm = (motivo: string) => {
+    if (moderationModal) {
+      handleModerationAction(
+        moderationModal.productId,
+        moderationModal.action,
+        moderationModal.productName,
+        motivo
+      );
+      setModerationModal(null);
+    }
   };
 
   const handleFilterChange = (key: string, value: string) => {
@@ -265,67 +349,101 @@ export const ProductModerationPage: React.FC = () => {
 
       <main className="max-w-7xl mx-auto px-6 py-8 -mt-8 relative z-10">
         {/* Estadísticas rápidas */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4 mb-8">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardContent className="p-4">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg mb-2">
+                  <Package className="h-5 w-5 text-white" />
+                </div>
+                <p className="text-xs font-medium text-blue-700 mb-1">Total</p>
+                <p className="text-2xl font-bold text-blue-900">
+                  {estadisticas.total}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200 shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-yellow-700">Pendientes</p>
-                  <p className="text-3xl font-bold text-yellow-900 mt-1">
-                    {products.filter(p => p.estado === 'pendiente_revision').length}
-                  </p>
+            <CardContent className="p-4">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-10 h-10 bg-yellow-500 rounded-xl flex items-center justify-center shadow-lg mb-2">
+                  <Clock className="h-5 w-5 text-white" />
                 </div>
-                <div className="w-12 h-12 bg-yellow-500 rounded-xl flex items-center justify-center shadow-lg">
-                  <Clock className="h-6 w-6 text-white" />
-                </div>
+                <p className="text-xs font-medium text-yellow-700 mb-1">Pendientes</p>
+                <p className="text-2xl font-bold text-yellow-900">
+                  {estadisticas.pendientes}
+                </p>
               </div>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-green-700">Aprobados</p>
-                  <p className="text-3xl font-bold text-green-900 mt-1">
-                    {products.filter(p => p.estado === 'activo').length}
-                  </p>
+            <CardContent className="p-4">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center shadow-lg mb-2">
+                  <CheckCircle className="h-5 w-5 text-white" />
                 </div>
-                <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center shadow-lg">
-                  <CheckCircle className="h-6 w-6 text-white" />
+                <p className="text-xs font-medium text-green-700 mb-1">Aprobados</p>
+                <p className="text-2xl font-bold text-green-900">
+                  {estadisticas.aprobados}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardContent className="p-4">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center shadow-lg mb-2">
+                  <XCircle className="h-5 w-5 text-white" />
                 </div>
+                <p className="text-xs font-medium text-orange-700 mb-1">Rechazados</p>
+                <p className="text-2xl font-bold text-orange-900">
+                  {estadisticas.rechazados}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardContent className="p-4">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-10 h-10 bg-gray-500 rounded-xl flex items-center justify-center shadow-lg mb-2">
+                  <AlertTriangle className="h-5 w-5 text-white" />
+                </div>
+                <p className="text-xs font-medium text-gray-700 mb-1">Suspendidos</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {estadisticas.suspendidos}
+                </p>
               </div>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200 shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-red-700">Rechazados</p>
-                  <p className="text-3xl font-bold text-red-900 mt-1">
-                    {products.filter(p => p.estado === 'suspendido').length}
-                  </p>
+            <CardContent className="p-4">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center shadow-lg mb-2">
+                  <AlertTriangle className="h-5 w-5 text-white" />
                 </div>
-                <div className="w-12 h-12 bg-red-500 rounded-xl flex items-center justify-center shadow-lg">
-                  <XCircle className="h-6 w-6 text-white" />
-                </div>
+                <p className="text-xs font-medium text-red-700 mb-1">Peligrosos</p>
+                <p className="text-2xl font-bold text-red-900">
+                  {estadisticas.peligrosos}
+                </p>
               </div>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-purple-700">Total</p>
-                  <p className="text-3xl font-bold text-purple-900 mt-1">
-                    {pagination.total_items}
-                  </p>
+            <CardContent className="p-4">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center shadow-lg mb-2">
+                  <FileText className="h-5 w-5 text-white" />
                 </div>
-                <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center shadow-lg">
-                  <Package className="h-6 w-6 text-white" />
-                </div>
+                <p className="text-xs font-medium text-purple-700 mb-1">Apelaciones</p>
+                <p className="text-2xl font-bold text-purple-900">
+                  {estadisticas.en_apelacion}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -353,13 +471,15 @@ export const ProductModerationPage: React.FC = () => {
                 <select
                   value={filters.estado}
                   onChange={(e) => handleFilterChange('estado', e.target.value)}
-          className="w-full sm:w-64 flex h-12 items-center justify-between rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm hover:border-gray-300 transition-colors"
+          className="w-full sm:w-80 flex h-12 items-center justify-between rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm hover:border-gray-300 transition-colors font-medium"
                 >
-          <option value="">Todos</option>
-                  <option value="pendiente_revision">Pendiente de Revisión</option>
-                  <option value="activo">Activos</option>
-          <option value="suspendido">Rechazados/Suspendidos</option>
-                  <option value="peligroso">Peligrosos</option>
+          <option value="">📦 Todos ({estadisticas.total})</option>
+                  <option value="pendiente_revision">🕐 Pendientes de Revisión ({estadisticas.pendientes})</option>
+                  <option value="activo">✅ Aprobados ({estadisticas.aprobados})</option>
+          <option value="rechazado">❌ Rechazados ({estadisticas.rechazados})</option>
+          <option value="suspendido">⚠️ Suspendidos ({estadisticas.suspendidos})</option>
+                  <option value="peligroso">🚫 Peligrosos ({estadisticas.peligrosos})</option>
+                  <option value="en_apelacion">📋 En Apelación ({estadisticas.en_apelacion})</option>
                 </select>
               </div>
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 rounded-xl border border-blue-200">
@@ -479,49 +599,97 @@ export const ProductModerationPage: React.FC = () => {
                   </div>
                   
                   {product.estado === 'pendiente_revision' && (
-                    <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-100">
-                      <Button 
-                        size="sm"
-                        onClick={() => handleApproveProduct(product.id, product.nombre)}
-                        disabled={actionLoading === product.id || !product.fecha_revision}
-                        className={`h-10 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 ${
-                          !product.fecha_revision 
-                            ? 'bg-gray-400 cursor-not-allowed opacity-50' 
-                            : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800'
-                        } text-white`}
-                      >
-                        {actionLoading === product.id ? (
-                          <Clock className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <CheckCircle className="h-4 w-4" />
-                        )}
-                        <span className="ml-2">{!product.fecha_revision ? 'Revisar primero' : 'Aprobar'}</span>
-                      </Button>
-                      <Button 
-                        size="sm"
-                        onClick={() => handleRejectProduct(product.id, product.nombre)}
-                        disabled={actionLoading === product.id || !product.fecha_revision}
-                        className={`h-10 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 ${
-                          !product.fecha_revision 
-                            ? 'bg-gray-400 cursor-not-allowed opacity-50' 
-                            : 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800'
-                        } text-white`}
-                      >
-                        {actionLoading === product.id ? (
-                          <Clock className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <XCircle className="h-4 w-4" />
-                        )}
-                        <span className="ml-2">{!product.fecha_revision ? 'Revisar primero' : 'Rechazar'}</span>
-                      </Button>
-                    </div>
+                    <>
+                      {/* Acciones principales: Aprobar, Rechazar, Suspender */}
+                      <div className="grid grid-cols-3 gap-2 pt-3 border-t border-gray-100">
+                        <Button 
+                          size="sm"
+                          onClick={() => handleApproveProduct(product.id, product.nombre)}
+                          disabled={actionLoading === product.id || !product.fecha_revision}
+                          className={`h-10 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 ${
+                            !product.fecha_revision 
+                              ? 'bg-gray-400 cursor-not-allowed opacity-50' 
+                              : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800'
+                          } text-white`}
+                          title="Aprobar producto"
+                        >
+                          {actionLoading === product.id ? (
+                            <Clock className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <CheckCircle className="h-4 w-4" />
+                          )}
+                          <span className="ml-1 hidden sm:inline">{!product.fecha_revision ? 'Revisar' : 'Aprobar'}</span>
+                          <span className="ml-1 sm:hidden">✓</span>
+                        </Button>
+                        
+                        <Button 
+                          size="sm"
+                          onClick={() => handleRejectProduct(product.id, product.nombre)}
+                          disabled={actionLoading === product.id || !product.fecha_revision}
+                          className={`h-10 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 ${
+                            !product.fecha_revision 
+                              ? 'bg-gray-400 cursor-not-allowed opacity-50' 
+                              : 'bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800'
+                          } text-white`}
+                          title="Rechazar por errores corregibles (vendedor puede editar)"
+                        >
+                          {actionLoading === product.id ? (
+                            <Clock className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <XCircle className="h-4 w-4" />
+                          )}
+                          <span className="ml-1 hidden sm:inline">{!product.fecha_revision ? 'Revisar' : 'Rechazar'}</span>
+                          <span className="ml-1 sm:hidden">✗</span>
+                        </Button>
+                        
+                        <Button 
+                          size="sm"
+                          onClick={() => handleSuspendProduct(product.id, product.nombre)}
+                          disabled={actionLoading === product.id || !product.fecha_revision}
+                          className={`h-10 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 ${
+                            !product.fecha_revision 
+                              ? 'bg-gray-400 cursor-not-allowed opacity-50' 
+                              : 'bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800'
+                          } text-white`}
+                          title="Suspender por violación grave (vendedor NO puede editar)"
+                        >
+                          {actionLoading === product.id ? (
+                            <Clock className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <AlertTriangle className="h-4 w-4" />
+                          )}
+                          <span className="ml-1 hidden sm:inline">{!product.fecha_revision ? 'Revisar' : 'Suspender'}</span>
+                          <span className="ml-1 sm:hidden">⚠</span>
+                        </Button>
+                      </div>
+                      
+                      {/* Acción crítica: Marcar como Peligroso */}
+                      {product.fecha_revision && (
+                        <div className="pt-3 border-t border-gray-100">
+                          <Button 
+                            size="sm"
+                            onClick={() => handleMarkAsDangerous(product.id, product.nombre)}
+                            disabled={actionLoading === product.id}
+                            className="w-full h-10 bg-gradient-to-r from-red-700 to-red-900 hover:from-red-800 hover:to-red-950 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
+                            title="Contenido prohibido - Producto OCULTO completamente"
+                          >
+                            {actionLoading === product.id ? (
+                              <Clock className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <AlertTriangle className="h-4 w-4" />
+                            )}
+                            <span className="ml-2">🚫 Marcar como Peligroso</span>
+                          </Button>
+                        </div>
+                      )}
+                    </>
                   )}
                   
                   {product.estado === 'activo' && (
                     <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-100">
                       <Button 
                         size="sm"
-                        onClick={() => handleModerationAction(product.id, 'suspender', product.nombre)}
+                        onClick={() => handleSuspendProduct(product.id, product.nombre)}
                         disabled={actionLoading === product.id}
                         className="h-10 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
                       >
@@ -534,7 +702,7 @@ export const ProductModerationPage: React.FC = () => {
                       </Button>
                       <Button 
                         size="sm"
-                        onClick={() => handleModerationAction(product.id, 'marcar_peligroso', product.nombre)}
+                        onClick={() => handleMarkAsDangerous(product.id, product.nombre)}
                         disabled={actionLoading === product.id}
                         className="h-10 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
                       >
@@ -662,24 +830,42 @@ export const ProductModerationPage: React.FC = () => {
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 Resumen de Moderación
               </h3>
-              <div className="flex justify-center space-x-8 mt-4">
+              <div className="flex flex-wrap justify-center gap-6 mt-4">
                 <div className="text-center">
                   <p className="text-2xl font-bold text-yellow-600">
-                    {products.filter(p => p.estado === 'pendiente_revision').length}
+                    {estadisticas.pendientes}
                   </p>
                   <p className="text-sm text-gray-600">Pendientes</p>
                 </div>
                 <div className="text-center">
                   <p className="text-2xl font-bold text-green-600">
-                    {products.filter(p => p.estado === 'activo').length}
+                    {estadisticas.aprobados}
                   </p>
                   <p className="text-sm text-gray-600">Aprobados</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-red-600">
-                    {products.filter(p => p.estado === 'suspendido').length}
+                  <p className="text-2xl font-bold text-orange-600">
+                    {estadisticas.rechazados}
                   </p>
                   <p className="text-sm text-gray-600">Rechazados</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-gray-600">
+                    {estadisticas.suspendidos}
+                  </p>
+                  <p className="text-sm text-gray-600">Suspendidos</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-red-600">
+                    {estadisticas.peligrosos}
+                  </p>
+                  <p className="text-sm text-gray-600">Peligrosos</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-purple-600">
+                    {estadisticas.en_apelacion}
+                  </p>
+                  <p className="text-sm text-gray-600">En Apelación</p>
                 </div>
               </div>
               <p className="text-sm text-gray-500 mt-4">
@@ -702,6 +888,17 @@ export const ProductModerationPage: React.FC = () => {
         onConfirm={alert.onConfirm}
         onCancel={alert.onCancel}
       />
+
+      {/* Modal de Motivo de Moderación */}
+      {moderationModal && (
+        <ModerationReasonModal
+          isOpen={moderationModal.isOpen}
+          onClose={() => setModerationModal(null)}
+          onConfirm={handleModerationConfirm}
+          action={moderationModal.action}
+          productName={moderationModal.productName}
+        />
+      )}
     </div>
   );
 };

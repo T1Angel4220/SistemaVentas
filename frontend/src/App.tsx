@@ -28,6 +28,9 @@ import { CreateProductPage } from './pages/CreateProductPage';
 import { MyProductsPage } from './pages/MyProductsPage';
 import { ProductModerationPage } from './pages/ProductModerationPage';
 import { SavedProductsPage } from './pages/SavedProductsPage';
+import { ReportsManagementPage } from './pages/ReportsManagementPage';
+import { AppealsManagementPage } from './pages/AppealsManagementPage';
+import { DangerousProductsHistoryPage } from './pages/DangerousProductsHistoryPage';
 
 // Componentes de error
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -121,7 +124,7 @@ function App() {
               <Route 
                 path="/products/saved" 
                 element={
-                  <ProtectedRoute allowedRoles={['comprador']}>
+                  <ProtectedRoute allowedRoles={['comprador', 'vendedor']}>
                     <SavedProductsPage />
                   </ProtectedRoute>
                 } 
@@ -157,10 +160,34 @@ function App() {
                 } 
               />
               <Route 
+                path="/my-products/dangerous" 
+                element={
+                  <ProtectedRoute allowedRoles={['vendedor', 'administrador']}>
+                    <DangerousProductsHistoryPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
                 path="/products/moderation" 
                 element={
                   <ProtectedRoute allowedRoles={['moderador', 'administrador']}>
                     <ProductModerationPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/moderation/reports" 
+                element={
+                  <ProtectedRoute allowedRoles={['moderador', 'administrador']}>
+                    <ReportsManagementPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/moderation/appeals" 
+                element={
+                  <ProtectedRoute allowedRoles={['moderador', 'administrador']}>
+                    <AppealsManagementPage />
                   </ProtectedRoute>
                 } 
               />

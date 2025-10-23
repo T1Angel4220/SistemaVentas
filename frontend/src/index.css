@@ -109,6 +109,17 @@
   }
 }
 
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 /* Clases de utilidad para animaciones */
 .animate-in {
   animation-duration: 0.5s;
@@ -136,4 +147,12 @@
 
 .fade-out-up {
   animation-name: fadeOutUp;
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-slideIn {
+  animation: slideIn 0.3s ease-out;
 }

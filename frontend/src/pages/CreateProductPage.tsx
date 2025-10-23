@@ -47,6 +47,9 @@ export const CreateProductPage: React.FC = () => {
   // Estado para detectar cambios en modo edición
   const [initialFormData, setInitialFormData] = useState<ProductForm | null>(null);
   const [initialImages, setInitialImages] = useState<string[]>([]);
+  
+  // Estado para respuesta del vendedor al rechazo
+  const [respuestaRechazo, setRespuestaRechazo] = useState('');
 
   // Usar hooks optimizados para evitar múltiples requests
   const { data: categories, loading: categoriesLoading, error: categoriesError } = useCategories();
@@ -137,6 +140,7 @@ export const CreateProductPage: React.FC = () => {
           ubicacion_direccion: product.ubicacion_nombre || '',
           disponibilidad: product.disponibilidad === true, // Solo true si explícitamente es true
           estado: product.estado || 'pendiente_revision',
+          motivo_rechazo: product.motivo_rechazo || '',
           horario_atencion: product.servicio?.horario_atencion || '',
           horario_inicio: horarioInicio,
           horario_fin: horarioFin,
@@ -163,6 +167,36 @@ export const CreateProductPage: React.FC = () => {
         
         // Limpiar estado de imágenes eliminadas
         setDeletedExistingImages([]);
+        
+        // ⚠️ Verificar si el producto está en revisión (solo admin puede editarlo)
+        if (product.estado === 'pendiente_revision' && user?.tipo_usuario !== 'administrador') {
+          showError(
+            '⏳ Producto en Revisión',
+            'No puedes editar este producto mientras esté pendiente de revisión. Espera a que los moderadores lo revisen.',
+            () => navigate('/my-products')
+          );
+          return;
+        }
+        
+        // ⚠️ Verificar si el producto está suspendido
+        if (product.estado === 'suspendido' && user?.tipo_usuario !== 'administrador') {
+          showError(
+            '🚫 Producto Suspendido',
+            'Este producto ha sido suspendido por los moderadores. No puedes editarlo. Contacta con los moderadores para más información.',
+            () => navigate('/my-products')
+          );
+          return;
+        }
+        
+        // ⚠️ Verificar si el producto es peligroso
+        if (product.es_peligroso && user?.tipo_usuario !== 'administrador') {
+          showError(
+            '🚫 Producto Peligroso',
+            'Este producto ha sido marcado como peligroso y no puede ser editado.',
+            () => navigate('/my-products')
+          );
+          return;
+        }
       } else {
         showError('Error', 'No se pudo cargar el producto para editar');
         navigate('/my-products');
@@ -174,7 +208,7 @@ export const CreateProductPage: React.FC = () => {
     } finally {
       setLoadingData(false);
     }
-  }, [showError, navigate]);
+  }, [showError, navigate, user]);
 
   useEffect(() => {
     // Verificar permisos
@@ -712,25 +746,78 @@ export const CreateProductPage: React.FC = () => {
         setSuccess(true);
         const actionText = isEditMode ? 'actualizado' : 'creado';
         
+        // Si el producto estaba rechazado y el vendedor escribió una respuesta, crear apelación
+        if (isEditMode && form.estado === 'rechazado' && respuestaRechazo.trim()) {
+          try {
+            const appealResponse = await fetch(`http://localhost:3001/api/products/${id}/appeal`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiService.getToken()}`
+              },
+              body: JSON.stringify({
+                motivo_apelacion: respuestaRechazo,
+                informacion_adicional: 'Producto corregido y actualizado según las observaciones del moderador.'
+              })
+            });
+            
+            const appealData = await appealResponse.json();
+            
+            if (!appealData.success) {
+              console.error('Error al crear apelación:', appealData.message);
+            }
+          } catch (error) {
+            console.error('Error al crear apelación automática:', error);
+          }
+        }
+        
         // Construir mensaje basado en información adicional
         let mensajeExito = `El producto ha sido ${actionText} correctamente.`;
+        
+        // Si se envió una respuesta al moderador, agregar al mensaje
+        if (isEditMode && form.estado === 'rechazado' && respuestaRechazo.trim()) {
+          mensajeExito += `\n\n✅ Tu respuesta al moderador ha sido enviada. El producto será revisado nuevamente.`;
+        }
+        
         let tipoAlerta = 'success';
+        let esPeligroso = false;
         
         if (data.informacion) {
-          if (data.informacion.estado === 'peligroso') {
-            tipoAlerta = 'warning';
-            mensajeExito = `⚠️ Producto ${actionText} pero marcado como peligroso automáticamente. Motivo: ${data.informacion.motivo}`;
+          if (data.informacion.estado_nuevo === 'peligroso' || data.informacion.no_eliminable === true) {
+            tipoAlerta = 'error';
+            esPeligroso = true;
+            mensajeExito = `⚠️ ATENCIÓN: El contenido de este producto ha sido detectado como peligroso o inapropiado.\n\n` +
+                          `Motivo: ${data.informacion.motivo}\n\n` +
+                          `El producto ha sido ocultado automáticamente y NO podrás verlo, editarlo ni eliminarlo. ` +
+                          `Solo los moderadores tienen acceso para revisión.\n\n` +
+                          `Si consideras que esto es un error, puedes apelar esta decisión.`;
           } else if (data.informacion.requiere_revision) {
             tipoAlerta = 'info';
             mensajeExito = `ℹ️ Producto ${actionText} y enviado para revisión. ${data.informacion.motivo || ''}`;
           }
         }
         
-        if (tipoAlerta === 'warning') {
-          showWarning(
-            'Producto Marcado como Peligroso', 
+        // Determinar si se envió una apelación desde producto rechazado
+        const seEnvioApelacion = isEditMode && form.estado === 'rechazado' && respuestaRechazo.trim();
+        
+        // Limpiar campo de respuesta después de enviar
+        if (respuestaRechazo.trim()) {
+          setRespuestaRechazo('');
+        }
+        
+        if (esPeligroso) {
+          // Redirigir a /my-products si el producto fue marcado como peligroso
+          showError(
+            '🚫 Contenido Prohibido Detectado', 
             mensajeExito,
-            () => navigate(`/products/${data.data.id || id}`)
+            () => navigate('/my-products')
+          );
+        } else if (seEnvioApelacion) {
+          // Si se envió una apelación desde producto rechazado, redirigir a Mis Productos
+          showSuccess(
+            '✅ Producto Actualizado y Apelación Enviada', 
+            mensajeExito,
+            () => navigate('/my-products')
           );
         } else if (tipoAlerta === 'info') {
           showSuccess(
@@ -826,6 +913,65 @@ export const CreateProductPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Banner de Motivo de Rechazo - SOLO cuando el producto está rechazado */}
+      {isEditMode && form.estado === 'rechazado' && form.motivo_rechazo && (
+        <div className="bg-red-50 border-t-4 border-red-500 shadow-lg">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0">
+                <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center">
+                  <AlertCircle className="h-6 w-6 text-white" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg sm:text-xl font-bold text-red-900 mb-3">
+                  🚫 Tu {form.tipo} fue rechazado
+                </h3>
+                
+                {/* Comentario del Moderador */}
+                <div className="bg-white border border-red-200 rounded-lg p-4 mb-4">
+                  <p className="text-sm font-semibold text-red-800 mb-2 flex items-center">
+                    <AlertCircle className="h-4 w-4 mr-1.5" />
+                    Comentario del Moderador:
+                  </p>
+                  <p className="text-sm text-red-700 whitespace-pre-wrap">{form.motivo_rechazo}</p>
+                </div>
+
+                {/* Campo para responder al moderador */}
+                <div className="bg-white border border-orange-200 rounded-lg p-4 mb-3">
+                  <Label htmlFor="respuesta-rechazo" className="text-sm font-semibold text-orange-800 mb-2 flex items-center">
+                    <Info className="h-4 w-4 mr-1.5" />
+                    Tu respuesta al moderador (Opcional)
+                  </Label>
+                  <Textarea
+                    id="respuesta-rechazo"
+                    value={respuestaRechazo}
+                    onChange={(e) => setRespuestaRechazo(e.target.value)}
+                    placeholder="Explica qué cambios realizaste para corregir el problema... (Ej: 'He actualizado la descripción eliminando contenido inapropiado y agregado información más clara sobre el producto')"
+                    className="mt-2 min-h-[100px] text-sm"
+                  />
+                  <p className="text-xs text-gray-600 mt-2">
+                    💡 Este comentario será enviado junto con tus correcciones para facilitar la revisión del moderador.
+                  </p>
+                </div>
+
+                {/* Instrucciones */}
+                <div className="flex flex-col sm:flex-row gap-2 text-sm text-red-800">
+                  <div className="flex items-center">
+                    <CheckCircle2 className="h-4 w-4 mr-1.5 text-red-600" />
+                    <span>Corrige los errores mencionados</span>
+                  </div>
+                  <div className="flex items-center">
+                    <CheckCircle2 className="h-4 w-4 mr-1.5 text-red-600" />
+                    <span>Guarda los cambios para volver a enviar a revisión</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <main className="max-w-7xl mx-auto px-6 py-12 -mt-12 relative z-10">
         {/* Alertas */}

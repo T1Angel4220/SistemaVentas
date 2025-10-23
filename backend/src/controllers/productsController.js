@@ -222,7 +222,9 @@ class ProductsController {
         search
       } = req.query;
 
-      let whereConditions = ['i.estado = $1', 'i.disponibilidad = $2'];
+      // Ocultar productos peligrosos para todos los usuarios públicos (compradores)
+      // Los productos peligrosos solo son visibles para moderadores en su panel de moderación
+      let whereConditions = ['i.estado = $1', 'i.disponibilidad = $2', 'i.es_peligroso = false'];
       let queryParams = [estado, disponibilidad];
       let paramCount = 2;
 
@@ -563,6 +565,22 @@ class ProductsController {
         });
       }
 
+      // Verificar que no esté en revisión (solo admins pueden editar productos en revisión)
+      if (producto.estado === 'pendiente_revision' && req.user.tipo_usuario !== 'administrador') {
+        return res.status(400).json({
+          success: false,
+          message: 'No se puede editar un producto que está pendiente de revisión. Espera a que los moderadores lo revisen.'
+        });
+      }
+
+      // Verificar que no esté suspendido (solo admins pueden editar productos suspendidos)
+      if (producto.estado === 'suspendido' && req.user.tipo_usuario !== 'administrador') {
+        return res.status(400).json({
+          success: false,
+          message: 'No se puede editar un producto que ha sido suspendido. Contacta con los moderadores para más información.'
+        });
+      }
+
       // Detectar contenido inadecuado en los campos actualizados
       const nombreParaDetectar = nombre || producto.nombre;
       const descripcionParaDetectar = descripcion || producto.descripcion;
@@ -805,11 +823,27 @@ class ProductsController {
         });
       }
 
-      // Verificar que no esté marcado como peligroso
-      if (producto.es_peligroso) {
+      // Verificar que no esté marcado como peligroso (solo admins pueden eliminar)
+      if (producto.es_peligroso && req.user.tipo_usuario !== 'administrador') {
         return res.status(400).json({
           success: false,
-          message: 'No se puede eliminar un producto marcado como peligroso'
+          message: 'No se puede eliminar un producto marcado como peligroso. Solo los administradores pueden hacerlo.'
+        });
+      }
+
+      // Verificar que no esté en revisión (solo admins pueden eliminar productos en revisión)
+      if (producto.estado === 'pendiente_revision' && req.user.tipo_usuario !== 'administrador') {
+        return res.status(400).json({
+          success: false,
+          message: 'No se puede eliminar un producto que está pendiente de revisión. Espera a que los moderadores lo revisen.'
+        });
+      }
+
+      // Verificar que no esté suspendido (solo admins pueden eliminar productos suspendidos)
+      if (producto.estado === 'suspendido' && req.user.tipo_usuario !== 'administrador') {
+        return res.status(400).json({
+          success: false,
+          message: 'No se puede eliminar un producto que ha sido suspendido. Contacta con los moderadores para más información.'
         });
       }
 
@@ -892,12 +926,21 @@ class ProductsController {
       const vendedor_id = req.user.id;
       const { page = 1, limit = 10, estado } = req.query;
 
+      // Verificar si es moderador o administrador
+      const isModerator = ['moderador', 'administrador'].includes(req.user.tipo_usuario);
+
       let whereClause = 'i.vendedor_id = $1';
       let queryParams = [vendedor_id];
 
+      // Ocultar productos peligrosos para vendedores normales
+      // Moderadores y administradores SÍ pueden ver productos peligrosos para revisión
+      if (!isModerator) {
+        whereClause += ' AND i.es_peligroso = false';
+      }
+
       if (estado) {
-        whereClause += ' AND i.estado = $2';
         queryParams.push(estado);
+        whereClause += ` AND i.estado = $${queryParams.length}`;
       }
 
       // Calcular offset para paginación
@@ -907,7 +950,7 @@ class ProductsController {
       const productos = await query(
         `SELECT 
           i.id, i.codigo, i.nombre, i.descripcion, i.precio, 
-          i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion, i.es_peligroso,
+          i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion, i.es_peligroso, i.motivo_rechazo,
           c.nombre as categoria_nombre,
           COUNT(ii.id) as total_imagenes,
           (SELECT ii2.url_imagen FROM item_imagenes ii2 WHERE ii2.item_id = i.id ORDER BY ii2.orden LIMIT 1) as primera_imagen
@@ -916,7 +959,7 @@ class ProductsController {
         LEFT JOIN item_imagenes ii ON i.id = ii.item_id
         WHERE ${whereClause}
         GROUP BY i.id, i.codigo, i.nombre, i.descripcion, i.precio, 
-                 i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion, i.es_peligroso, c.nombre
+                 i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion, i.es_peligroso, i.motivo_rechazo, c.nombre
         ORDER BY i.fecha_publicacion DESC
         LIMIT $${queryParams.length - 1} OFFSET $${queryParams.length}`,
         queryParams
@@ -993,15 +1036,16 @@ class ProductsController {
       switch (accion) {
         case 'aprobar':
           nuevoEstado = 'activo';
+          esPeligroso = false; // Al aprobar, quitar flag de peligroso si lo tenía
           break;
         case 'rechazar':
-          nuevoEstado = 'suspendido';
+          nuevoEstado = 'rechazado'; // ✅ CORREGIDO: Rechazar → estado 'rechazado' (vendedor puede editar/corregir)
           break;
         case 'suspender':
-          nuevoEstado = 'suspendido';
+          nuevoEstado = 'suspendido'; // Suspensión temporal (no puede editar hasta resolución)
           break;
         case 'marcar_peligroso':
-          nuevoEstado = 'peligroso';
+          nuevoEstado = 'peligroso'; // Producto oculto (no puede editar/ver, solo admin)
           esPeligroso = true;
           fechaDeteccionPeligroso = new Date();
           break;
@@ -1125,6 +1169,19 @@ class ProductsController {
       const total = parseInt(totalCount.rows[0].total);
       const totalPages = Math.ceil(total / parseInt(limit));
 
+      // Obtener estadísticas globales (independiente de paginación y filtros)
+      const estadisticas = await query(`
+        SELECT 
+          COUNT(*) as total,
+          COUNT(*) FILTER (WHERE estado = 'pendiente_revision') as pendientes,
+          COUNT(*) FILTER (WHERE estado = 'activo') as aprobados,
+          COUNT(*) FILTER (WHERE estado = 'rechazado') as rechazados,
+          COUNT(*) FILTER (WHERE estado = 'suspendido') as suspendidos,
+          COUNT(*) FILTER (WHERE estado = 'peligroso') as peligrosos,
+          COUNT(*) FILTER (WHERE estado = 'en_apelacion') as en_apelacion
+        FROM items
+      `);
+
       res.json({
         success: true,
         data: productos.rows,
@@ -1135,6 +1192,15 @@ class ProductsController {
           items_per_page: parseInt(limit),
           has_next: parseInt(page) < totalPages,
           has_prev: parseInt(page) > 1
+        },
+        estadisticas: {
+          total: parseInt(estadisticas.rows[0].total),
+          pendientes: parseInt(estadisticas.rows[0].pendientes),
+          aprobados: parseInt(estadisticas.rows[0].aprobados),
+          rechazados: parseInt(estadisticas.rows[0].rechazados),
+          suspendidos: parseInt(estadisticas.rows[0].suspendidos),
+          peligrosos: parseInt(estadisticas.rows[0].peligrosos),
+          en_apelacion: parseInt(estadisticas.rows[0].en_apelacion)
         }
       });
 
@@ -1157,11 +1223,11 @@ class ProductsController {
       // console.log('🔍 DEBUG - req.user:', req.user);
       const userId = req.user.id;
 
-      // Verificar que el usuario sea comprador
-      if (req.user.tipo_usuario !== 'comprador') {
+      // Verificar que el usuario sea comprador o vendedor
+      if (req.user.tipo_usuario !== 'comprador' && req.user.tipo_usuario !== 'vendedor') {
         return res.status(403).json({
           success: false,
-          message: 'Solo los compradores pueden ver productos guardados'
+          message: 'Solo los compradores y vendedores pueden ver productos guardados'
         });
       }
 
@@ -1226,11 +1292,11 @@ class ProductsController {
       const { id: productoId } = req.params;
       const userId = req.user.id;
 
-      // Verificar que el usuario sea comprador
-      if (req.user.tipo_usuario !== 'comprador') {
+      // Verificar que el usuario sea comprador o vendedor
+      if (req.user.tipo_usuario !== 'comprador' && req.user.tipo_usuario !== 'vendedor') {
         return res.status(403).json({
           success: false,
-          message: 'Solo los compradores pueden guardar productos'
+          message: 'Solo los compradores y vendedores pueden guardar productos'
         });
       }
 
@@ -1293,11 +1359,11 @@ class ProductsController {
       const { id: productoId } = req.params;
       const userId = req.user.id;
 
-      // Verificar que el usuario sea comprador
-      if (req.user.tipo_usuario !== 'comprador') {
+      // Verificar que el usuario sea comprador o vendedor
+      if (req.user.tipo_usuario !== 'comprador' && req.user.tipo_usuario !== 'vendedor') {
         return res.status(403).json({
           success: false,
-          message: 'Solo los compradores pueden eliminar productos guardados'
+          message: 'Solo los compradores y vendedores pueden eliminar productos guardados'
         });
       }
 
@@ -1340,11 +1406,11 @@ class ProductsController {
       const { id: productoId } = req.params;
       const userId = req.user.id;
 
-      // Verificar que el usuario sea comprador
-      if (req.user.tipo_usuario !== 'comprador') {
+      // Verificar que el usuario sea comprador o vendedor
+      if (req.user.tipo_usuario !== 'comprador' && req.user.tipo_usuario !== 'vendedor') {
         return res.status(403).json({
           success: false,
-          message: 'Solo los compradores pueden verificar productos guardados'
+          message: 'Solo los compradores y vendedores pueden verificar productos guardados'
         });
       }
 
@@ -1364,6 +1430,50 @@ class ProductsController {
       return res.status(500).json({
         success: false,
         message: 'Error interno del servidor al verificar el estado'
+      });
+    }
+  }
+
+  // Obtener historial de productos peligrosos del vendedor
+  static async getMyDangerousProducts(req, res) {
+    try {
+      const vendedor_id = req.user.id;
+
+      // Obtener productos peligrosos del vendedor
+      const result = await query(
+        `SELECT 
+          i.id,
+          i.codigo,
+          i.nombre,
+          i.descripcion,
+          i.tipo,
+          i.fecha_deteccion_peligroso,
+          i.motivo_rechazo,
+          i.moderador_revision_id,
+          c.nombre as categoria_nombre,
+          u.nombre as moderador_nombre,
+          u.apellido as moderador_apellido,
+          (SELECT url_imagen FROM item_imagenes WHERE item_id = i.id ORDER BY orden LIMIT 1) as primera_imagen
+        FROM items i
+        LEFT JOIN categorias c ON i.categoria_id = c.id
+        LEFT JOIN usuarios u ON i.moderador_revision_id = u.id
+        WHERE i.vendedor_id = $1 
+        AND i.es_peligroso = true
+        ORDER BY i.fecha_deteccion_peligroso DESC`,
+        [vendedor_id]
+      );
+
+      res.json({
+        success: true,
+        data: result.rows
+      });
+
+    } catch (error) {
+      console.error('Error al obtener productos peligrosos:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error al obtener productos peligrosos',
+        error: error.message
       });
     }
   }

@@ -13,7 +13,10 @@ import {
   Users,
   BarChart3,
   UserPlus,
-  Shield
+  Shield,
+  Flag,
+  FileText,
+  AlertTriangle
 } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
@@ -224,6 +227,22 @@ export const DashboardPage: React.FC = () => {
               </div>
             )}
 
+            {/* Solo mostrar "Productos Peligrosos" si es vendedor o admin */}
+            {(user.tipo_usuario === 'vendedor' || user.tipo_usuario === 'administrador') && (
+              <div 
+                onClick={() => navigate('/my-products/dangerous')}
+                className="bg-white rounded-2xl shadow-lg border border-red-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1"
+              >
+                <div className="p-6">
+                  <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <AlertTriangle className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Productos Peligrosos</h3>
+                  <p className="text-sm text-gray-600">Ver historial de productos marcados</p>
+                </div>
+              </div>
+            )}
+
             <div 
               onClick={() => navigate('/chat')}
               className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1"
@@ -271,7 +290,7 @@ export const DashboardPage: React.FC = () => {
         {(user.tipo_usuario === 'administrador' || user.tipo_usuario === 'moderador') && (
           <div className="mt-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Panel de Administración</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               <div className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1">
                 <div className="p-6">
                   <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
@@ -284,6 +303,40 @@ export const DashboardPage: React.FC = () => {
                     className="w-full bg-blue-600 hover:bg-blue-700"
                   >
                     Gestionar Usuarios
+                  </Button>
+                </div>
+              </div>
+
+              {/* NUEVO: Gestión de Reportes */}
+              <div className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1">
+                <div className="p-6">
+                  <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-orange-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <Flag className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Gestión de Reportes</h3>
+                  <p className="text-sm text-gray-600 mb-4">Revisa reportes de productos y usuarios</p>
+                  <Button
+                    onClick={() => navigate('/moderation/reports')}
+                    className="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700"
+                  >
+                    Ver Reportes
+                  </Button>
+                </div>
+              </div>
+
+              {/* NUEVO: Gestión de Apelaciones */}
+              <div className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1">
+                <div className="p-6">
+                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <FileText className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Gestión de Apelaciones</h3>
+                  <p className="text-sm text-gray-600 mb-4">Revisa apelaciones de vendedores</p>
+                  <Button
+                    onClick={() => navigate('/moderation/appeals')}
+                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                  >
+                    Ver Apelaciones
                   </Button>
                 </div>
               </div>
@@ -308,7 +361,7 @@ export const DashboardPage: React.FC = () => {
               {user.tipo_usuario === 'administrador' && (
                 <div className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1">
                   <div className="p-6">
-                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                       <UserPlus className="h-6 w-6 text-white" />
                     </div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">Registrar Moderador</h3>

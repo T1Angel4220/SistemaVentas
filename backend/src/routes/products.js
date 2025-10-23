@@ -17,6 +17,9 @@ router.get('/', validateProductFilters, ProductsController.getProducts);        
 
 // Rutas específicas que deben ir ANTES de /:id para evitar conflictos
 router.get('/saved', authenticate, ProductsController.getSavedProducts);                     // GET /api/products/saved - Productos guardados
+router.get('/my-dangerous', authenticate, ProductsController.getMyDangerousProducts);        // GET /api/products/my-dangerous - Historial de productos peligrosos
+router.get('/my/products', authenticate, validateProductFilters, ProductsController.getMyProducts);  // GET /api/products/my/products - Mis productos
+router.get('/moderation/pending', authenticate, requireProductModerate, ProductsController.getPendingModeration); // GET /api/products/moderation/pending - Productos pendientes de moderación
 router.get('/view/:id', optionalAuth, ProductsController.getProductForView);                // GET /api/products/view/:id - Obtener producto para vista de comprador (auth opcional)
 router.post('/:id/save', authenticate, ProductsController.saveProduct);                      // POST /api/products/:id/save - Guardar producto
 router.delete('/:id/unsave', authenticate, ProductsController.unsaveProduct);                // DELETE /api/products/:id/unsave - Eliminar de guardados
@@ -42,11 +45,7 @@ router.put('/:id', authenticate, requireProductUpdate, upload.array('images', 5)
 router.delete('/:id', authenticate, requireProductDelete, ProductsController.deleteProduct);       // DELETE /api/products/:id - Eliminar producto
 router.patch('/:id/availability', authenticate, requireProductUpdate, validateProductAvailability, ProductsController.toggleAvailability); // PATCH /api/products/:id/availability - Cambiar disponibilidad
 
-// Rutas específicas del vendedor (requieren autenticación)
-router.get('/my/products', authenticate, validateProductFilters, ProductsController.getMyProducts);  // GET /api/products/my/products - Mis productos
-
 // Rutas de moderación (solo moderadores y administradores)
 router.patch('/:id/moderate', authenticate, requireProductModerate, ProductsController.moderateProduct); // PATCH /api/products/:id/moderate - Moderar producto
-router.get('/moderation/pending', authenticate, requireProductModerate, ProductsController.getPendingModeration); // GET /api/products/moderation/pending - Productos pendientes de moderación
 
 module.exports = router;

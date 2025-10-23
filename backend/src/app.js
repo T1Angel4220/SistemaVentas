@@ -13,6 +13,8 @@ const categoriesRoutes = require('./routes/categories');
 const savedProductsRoutes = require('./routes/savedProducts');
 const imagesRoutes = require('./routes/images');
 const locationsRoutes = require('./routes/locations');
+const appealsRoutes = require('./routes/appeals');
+const reportsRoutes = require('./routes/reports');
 
 // Crear aplicación Express
 const app = express();
@@ -125,6 +127,10 @@ app.get('/', (req, res) => {
 // Rutas de la API
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productsRoutes);
+app.use('/api/products', appealsRoutes);  // Rutas de apelaciones (incluyen /api/products/:id/appeal)
+app.use('/api/products', reportsRoutes);  // Rutas de reportes (incluyen /api/products/:id/report)
+app.use('/api/appeals', appealsRoutes);   // Rutas adicionales de apelaciones
+app.use('/api/reports', reportsRoutes);   // Rutas adicionales de reportes
 app.use('/api/categories', categoriesRoutes);
 app.use('/api/saved-products', savedProductsRoutes);
 app.use('/api/images', imagesRoutes);

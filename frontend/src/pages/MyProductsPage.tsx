@@ -7,6 +7,7 @@ import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { AlertDialog } from '../components/ui/AlertDialog';
+import { Alert, AlertDescription } from '../components/ui/Alert';
 import { 
   Package, 
   Plus, 
@@ -16,9 +17,15 @@ import {
   Calendar,
   AlertCircle,
   ArrowLeft,
-  Camera
+  Camera,
+  AlertTriangle,
+  Shield,
+  MessageSquare,
+  CheckCircle,
+  ToggleRight
 } from 'lucide-react';
 import type { Product, ProductsResponse } from '../types/product.types';
+import { AppealProductDialog } from '../components/ui/AppealProductDialog';
 
 export const MyProductsPage: React.FC = () => {
   const { user } = useAuth();
@@ -26,6 +33,7 @@ export const MyProductsPage: React.FC = () => {
   const { alert, showSuccess, showError, showWarning, hideAlert } = useAlert();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dangerousProductsCount, setDangerousProductsCount] = useState(0);
   const [pagination, setPagination] = useState({
     current_page: 1,
     total_pages: 1,
@@ -37,9 +45,18 @@ export const MyProductsPage: React.FC = () => {
 
   const [filters, setFilters] = useState({
     estado: '',
+    disponibilidad: '',
     page: 1,
     limit: 12
   });
+
+  // Estado para modal de apelación
+  const [appealModalOpen, setAppealModalOpen] = useState(false);
+  const [selectedProductForAppeal, setSelectedProductForAppeal] = useState<{
+    id: number;
+    nombre: string;
+    motivo_rechazo?: string;
+  } | null>(null);
 
   const loadProducts = useCallback(async () => {
     try {
@@ -68,11 +85,30 @@ export const MyProductsPage: React.FC = () => {
     }
   }, [filters]);
 
+  const loadDangerousProductsCount = useCallback(async () => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/products/my-dangerous`, {
+        headers: {
+          'Authorization': `Bearer ${apiService.getToken()}`
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setDangerousProductsCount(data.data.length);
+      }
+    } catch (error) {
+      console.error('Error al cargar productos peligrosos:', error);
+    }
+  }, []);
+
   useEffect(() => {
     if (user && (user.tipo_usuario === 'vendedor' || user.tipo_usuario === 'administrador')) {
       loadProducts();
+      loadDangerousProductsCount();
     }
-  }, [user, filters, loadProducts]);
+  }, [user, filters, loadProducts, loadDangerousProductsCount]);
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({
@@ -91,7 +127,25 @@ export const MyProductsPage: React.FC = () => {
     navigate(`/products/${productId}/edit`);
   };
 
-  const handleDeleteProduct = async (productId: number, productName: string) => {
+  const handleDeleteProduct = async (productId: number, productName: string, productEstado: string) => {
+    // Verificar si el producto está en revisión
+    if (productEstado === 'pendiente_revision' && user?.tipo_usuario !== 'administrador') {
+      showError(
+        '⏳ Producto en Revisión',
+        'No puedes eliminar este producto mientras esté pendiente de revisión. Espera a que los moderadores lo revisen.'
+      );
+      return;
+    }
+
+    // Verificar si el producto está suspendido
+    if (productEstado === 'suspendido' && user?.tipo_usuario !== 'administrador') {
+      showError(
+        '🚫 Producto Suspendido',
+        'No puedes eliminar este producto porque ha sido suspendido por los moderadores. Contacta con ellos para más información.'
+      );
+      return;
+    }
+
     showWarning(
       '¿Eliminar producto?',
       `¿Estás seguro de que quieres eliminar "${productName}"? Esta acción no se puede deshacer.`,
@@ -121,6 +175,25 @@ export const MyProductsPage: React.FC = () => {
       },
       undefined // onCancel - no necesita hacer nada especial
     );
+  };
+
+  const handleAppealProduct = (product: Product) => {
+    setSelectedProductForAppeal({
+      id: product.id,
+      nombre: product.nombre,
+      motivo_rechazo: product.motivo_rechazo || undefined
+    });
+    setAppealModalOpen(true);
+  };
+
+  const handleAppealSuccess = () => {
+    showSuccess(
+      '¡Apelación enviada!',
+      'Tu apelación ha sido enviada correctamente. Será revisada por un moderador.',
+      () => loadProducts()
+    );
+    setAppealModalOpen(false);
+    setSelectedProductForAppeal(null);
   };
 
   const formatPrice = (price: number) => {
@@ -176,6 +249,10 @@ export const MyProductsPage: React.FC = () => {
       suspendido: {
         color: 'bg-gray-100 text-gray-800 border-gray-200',
         text: 'Suspendido'
+      },
+      en_apelacion: {
+        color: 'bg-blue-100 text-blue-800 border-blue-200',
+        text: 'En Apelación'
       }
     };
     
@@ -199,9 +276,10 @@ export const MyProductsPage: React.FC = () => {
     const messages = {
       activo: 'Tu producto está activo y visible para los compradores.',
       pendiente_revision: 'Tu producto está siendo revisado por los moderadores.',
-      rechazado: 'Tu producto fue rechazado. Revisa los comentarios y haz las correcciones necesarias.',
-      suspendido: 'Tu producto ha sido suspendido temporalmente.',
-      peligroso: 'Tu producto fue marcado como peligroso y no puede ser editado.'
+      rechazado: 'Tu producto fue rechazado. Haz clic en "Corregir" para ver el motivo y hacer los cambios necesarios.',
+      suspendido: 'Tu producto ha sido suspendido por una violación grave. Puedes apelar esta decisión para solicitar una revisión.',
+      peligroso: 'Tu producto fue marcado como peligroso. No se puede editar ni apelar. Contacta al equipo de moderación si crees que es un error.',
+      en_apelacion: 'Tu apelación está siendo revisada por los moderadores. Recibirás una respuesta pronto.'
     };
     return messages[estado as keyof typeof messages] || 'Estado desconocido';
   };
@@ -275,6 +353,34 @@ export const MyProductsPage: React.FC = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8">
+        {/* Alerta de productos peligrosos */}
+        {dangerousProductsCount > 0 && (
+          <div className="mb-6">
+            <Alert className="border-l-4 border-red-500 bg-red-50">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              <AlertDescription className="ml-3">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div>
+                    <p className="font-bold text-red-900 mb-1">
+                      ⚠️ Tienes {dangerousProductsCount} producto{dangerousProductsCount > 1 ? 's' : ''} marcado{dangerousProductsCount > 1 ? 's' : ''} como peligroso{dangerousProductsCount > 1 ? 's' : ''}
+                    </p>
+                    <p className="text-sm text-red-800">
+                      Solo podras ver el informe por el cual fue marcado como peligroso, no podras ni apelar ni editar el producto y peor eliminar.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => navigate('/my-products/dangerous')}
+                    className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg hover:shadow-xl transition-all whitespace-nowrap"
+                  >
+                    <Shield className="h-4 w-4 mr-2" />
+                    Ver Historial
+                  </Button>
+                </div>
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+        
         {/* Estadísticas mejoradas - RESPONSIVE */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300">
@@ -344,20 +450,43 @@ export const MyProductsPage: React.FC = () => {
         <Card className="mb-6 sm:mb-8 bg-white/80 backdrop-blur-sm shadow-lg border-gray-200">
           <CardContent className="p-4 sm:p-5 md:p-6">
             <div className="flex flex-col space-y-4">
-              <div className="w-full">
-                <label className="text-xs sm:text-sm font-semibold text-gray-700 mb-2 block">Filtrar por estado</label>
-                <select 
-                  value={filters.estado} 
-                  onChange={(e) => handleFilterChange('estado', e.target.value)}
-                  className="w-full flex h-10 sm:h-12 items-center justify-between rounded-lg sm:rounded-xl border-2 border-gray-200 bg-white px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm hover:border-gray-300 transition-colors"
-                >
-                  <option value="">Todos los estados</option>
-                  <option value="activo">Activos</option>
-                  <option value="pendiente_revision">Pendientes de revisión</option>
-                  <option value="rechazado">Rechazados</option>
-                  <option value="suspendido">Suspendidos</option>
-                </select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                {/* Filtro de Estado */}
+                <div className="space-y-2">
+                  <label className="text-xs sm:text-sm font-semibold text-gray-700 flex items-center">
+                    <CheckCircle className="h-4 w-4 mr-2 text-orange-500" />
+                    Estado
+                  </label>
+                  <select 
+                    value={filters.estado} 
+                    onChange={(e) => handleFilterChange('estado', e.target.value)}
+                    className="w-full flex h-10 sm:h-12 items-center justify-between rounded-lg sm:rounded-xl border-2 border-gray-200 bg-white px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm hover:border-gray-300 transition-colors"
+                  >
+                    <option value="">Todos los estados</option>
+                    <option value="activo">Solo Activos</option>
+                    <option value="pendiente_revision">Pendientes de revisión</option>
+                    <option value="rechazado">Rechazados</option>
+                  </select>
+                </div>
+
+                {/* Filtro de Disponibilidad */}
+                <div className="space-y-2">
+                  <label className="text-xs sm:text-sm font-semibold text-gray-700 flex items-center">
+                    <ToggleRight className="h-4 w-4 mr-2 text-green-500" />
+                    Disponibilidad
+                  </label>
+                  <select 
+                    value={filters.disponibilidad} 
+                    onChange={(e) => handleFilterChange('disponibilidad', e.target.value)}
+                    className="w-full flex h-10 sm:h-12 items-center justify-between rounded-lg sm:rounded-xl border-2 border-gray-200 bg-white px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm hover:border-gray-300 transition-colors"
+                  >
+                    <option value="">Toda disponibilidad</option>
+                    <option value="true">Solo Disponibles</option>
+                    <option value="false">No Disponibles</option>
+                  </select>
+                </div>
               </div>
+
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-3 sm:px-4 py-2 sm:py-3 rounded-lg sm:rounded-xl border border-blue-200">
                 <div className="text-xs sm:text-sm font-medium text-blue-700 text-center sm:text-left">
                   Mostrando <span className="font-bold text-blue-900">{products.length}</span> de <span className="font-bold text-blue-900">{pagination.total_items}</span> productos
@@ -494,18 +623,41 @@ export const MyProductsPage: React.FC = () => {
                   </div>
                   
                   {/* Botones de acción - UNIFORMES CON ProductsPage.tsx */}
-                  <div className="flex space-x-2 sm:space-x-3 mt-6">
-                    <Link to={`/products/${product.id}`} className="flex-1">
+                  <div className="flex flex-wrap gap-2 sm:gap-3 mt-6">
+                    <Link to={`/products/${product.id}`} className="flex-1 min-w-[120px]">
                       <Button className="w-full h-10 sm:h-11 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl text-xs sm:text-sm font-semibold">
                         <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
                         <span>Ver detalles</span>
                       </Button>
                     </Link>
                     
-                    {product.estado !== 'rechazado' && !product.es_peligroso && (
+                    {/* Botón para productos rechazados - Redirige a EDITAR */}
+                    {product.estado === 'rechazado' && (
+                      <Button 
+                        onClick={() => handleEditProduct(product.id)}
+                        className="flex-1 min-w-[120px] h-10 sm:h-11 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl text-xs sm:text-sm font-semibold"
+                      >
+                        <Edit className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                        <span>Corregir</span>
+                      </Button>
+                    )}
+                    
+                    {/* Botón para productos suspendidos - Abre modal de apelación formal */}
+                    {product.estado === 'suspendido' && (
+                      <Button 
+                        onClick={() => handleAppealProduct(product)}
+                        className="flex-1 min-w-[120px] h-10 sm:h-11 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl text-xs sm:text-sm font-semibold"
+                      >
+                        <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                        <span>Apelar</span>
+                      </Button>
+                    )}
+                    
+                    {product.estado !== 'rechazado' && !product.es_peligroso && product.estado !== 'pendiente_revision' && product.estado !== 'suspendido' && (
                       <Button 
                         onClick={() => handleEditProduct(product.id)}
                         className="h-10 w-10 sm:h-11 sm:w-11 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl flex-shrink-0"
+                        title="Editar producto"
                       >
                         <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                       </Button>
@@ -513,13 +665,18 @@ export const MyProductsPage: React.FC = () => {
                     
                     {/* Botón de eliminar - Uniformado con estilo de ProductsPage */}
                     <Button
-                      onClick={() => handleDeleteProduct(product.id, product.nombre)}
-                      disabled={product.es_peligroso || product.estado === 'peligroso'}
+                      onClick={() => handleDeleteProduct(product.id, product.nombre, product.estado)}
+                      disabled={product.es_peligroso || product.estado === 'peligroso' || product.estado === 'pendiente_revision' || product.estado === 'suspendido'}
                       className={`h-10 w-10 sm:h-11 sm:w-11 border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl flex-shrink-0 ${
-                        product.es_peligroso || product.estado === 'peligroso'
+                        product.es_peligroso || product.estado === 'peligroso' || product.estado === 'pendiente_revision' || product.estado === 'suspendido'
                           ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-50'
                           : 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white'
                       }`}
+                      title={
+                        product.estado === 'pendiente_revision' ? 'No puedes eliminar un producto en revisión' :
+                        product.estado === 'suspendido' ? 'No puedes eliminar un producto suspendido' :
+                        'Eliminar producto'
+                      }
                     >
                       <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
@@ -589,6 +746,21 @@ export const MyProductsPage: React.FC = () => {
         onConfirm={alert.onConfirm}
         onCancel={alert.onCancel}
       />
+
+      {/* Modal de Apelación */}
+      {selectedProductForAppeal && (
+        <AppealProductDialog
+          isOpen={appealModalOpen}
+          onClose={() => {
+            setAppealModalOpen(false);
+            setSelectedProductForAppeal(null);
+          }}
+          productId={selectedProductForAppeal.id}
+          productName={selectedProductForAppeal.nombre}
+          motivoRechazo={selectedProductForAppeal.motivo_rechazo}
+          onSuccess={handleAppealSuccess}
+        />
+      )}
     </div>
   );
 };

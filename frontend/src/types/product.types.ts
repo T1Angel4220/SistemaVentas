@@ -4,7 +4,7 @@
 
 // Tipos básicos
 export type ProductType = 'producto' | 'servicio';
-export type ProductStatus = 'activo' | 'inactivo' | 'pendiente_revision' | 'rechazado' | 'peligroso' | 'suspendido';
+export type ProductStatus = 'activo' | 'inactivo' | 'pendiente_revision' | 'rechazado' | 'peligroso' | 'suspendido' | 'en_apelacion';
 
 // Interface básica de producto (para listados)
 export interface Product {
@@ -25,6 +25,7 @@ export interface Product {
   primera_imagen?: string;
   es_peligroso?: boolean;
   fecha_revision?: string;
+  motivo_rechazo?: string;
 }
 
 // Interface detallada de producto (para vista individual)
@@ -52,6 +53,7 @@ export interface ProductDetail {
   servicio?: ServiceDetails;
   es_peligroso?: boolean;
   fecha_revision?: string;
+  motivo_rechazo?: string;
 }
 
 // Imágenes de producto
@@ -84,6 +86,7 @@ export interface ProductForm {
   ubicacion_direccion: string;
   disponibilidad: boolean;
   estado: string;
+  motivo_rechazo?: string;
   // Campos específicos para servicios
   horario_atencion: string;
   horario_inicio: string;
@@ -109,11 +112,23 @@ export interface ProductPagination {
   has_prev: boolean;
 }
 
+// Estadísticas de moderación
+export interface ModerationStatistics {
+  total: number;
+  pendientes: number;
+  aprobados: number;
+  rechazados: number;
+  suspendidos: number;
+  peligrosos: number;
+  en_apelacion: number;
+}
+
 // Respuesta de API para productos
 export interface ProductsResponse {
   success: boolean;
   data: Product[];
   pagination: ProductPagination;
+  estadisticas?: ModerationStatistics;
 }
 
 // Respuesta de API para un producto individual
