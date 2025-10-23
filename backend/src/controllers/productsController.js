@@ -29,6 +29,7 @@ class ProductsController {
         ubicacion_canton,
         ubicacion_distrito,
         ubicacion_direccion,
+        coordenadas,
         tipo, 
         categoria_id,
         horario_atencion, 
@@ -127,12 +128,12 @@ class ProductsController {
       const nuevoProducto = await query(
         `INSERT INTO items (
           codigo, nombre, descripcion, precio, ubicacion_id, 
-          ubicacion_provincia, ubicacion_canton, ubicacion_distrito, ubicacion_direccion,
+          ubicacion_provincia, ubicacion_canton, ubicacion_distrito, ubicacion_direccion, coordenadas,
           tipo, categoria_id, vendedor_id, estado, disponibilidad, es_peligroso, motivo_rechazo
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
         RETURNING *`,
         [codigo, nombre, descripcion, precio, ubicacionIdFinal, 
-         ubicacion_provincia, ubicacion_canton, ubicacion_distrito, ubicacion_direccion,
+         ubicacion_provincia, ubicacion_canton, ubicacion_distrito, ubicacion_direccion, coordenadas,
          tipo, categoria_id, vendedor_id, estadoInicial, disponibilidad, esPeligroso, motivoRechazo]
       );
 
@@ -558,6 +559,7 @@ class ProductsController {
       console.log('🔍 DEBUG UPDATE PRODUCT:', {
         body: req.body,
         bodyKeys: Object.keys(req.body),
+        coordenadas: req.body.coordenadas, // Log específico de coordenadas
         files: req.files ? req.files.length : 0,
         deleted_images: req.body.deleted_images,
         contentType: req.get('Content-Type')
@@ -572,6 +574,7 @@ class ProductsController {
         ubicacion_canton,
         ubicacion_distrito,
         ubicacion_direccion,
+        coordenadas,
         categoria_id,
         horario_atencion, 
         dias_disponibles, 
@@ -702,16 +705,17 @@ class ProductsController {
           ubicacion_canton = COALESCE($6, ubicacion_canton),
           ubicacion_distrito = COALESCE($7, ubicacion_distrito),
           ubicacion_direccion = COALESCE($8, ubicacion_direccion),
-          categoria_id = COALESCE($9, categoria_id),
-          disponibilidad = COALESCE($10, disponibilidad),
-          estado = COALESCE($11, estado),
-          es_peligroso = COALESCE($12, es_peligroso),
-          motivo_rechazo = COALESCE($13, motivo_rechazo),
+          coordenadas = COALESCE(NULLIF($9, ''), coordenadas),
+          categoria_id = COALESCE($10, categoria_id),
+          disponibilidad = COALESCE($11, disponibilidad),
+          estado = COALESCE($12, estado),
+          es_peligroso = COALESCE($13, es_peligroso),
+          motivo_rechazo = COALESCE($14, motivo_rechazo),
           fecha_actualizacion = CURRENT_TIMESTAMP
-        WHERE id = $14
+        WHERE id = $15
         RETURNING *`,
         [nombre, descripcion, precio, ubicacionIdFinal, 
-         ubicacion_provincia, ubicacion_canton, ubicacion_distrito, ubicacion_direccion,
+         ubicacion_provincia, ubicacion_canton, ubicacion_distrito, ubicacion_direccion, coordenadas || null,
          categoria_id, disponibilidadFinal, nuevoEstado, esPeligroso, motivoRechazo, id]
       );
 

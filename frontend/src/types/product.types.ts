@@ -56,6 +56,7 @@ export interface ProductDetail {
   ubicacion_canton?: string;
   ubicacion_distrito?: string;
   ubicacion_direccion?: string;
+  coordenadas?: string; // Formato: "lat,lng"
   // Imágenes
   imagenes: ProductImage[];
   // Detalles de servicio
@@ -94,6 +95,7 @@ export interface ProductForm {
   ubicacion_canton: string;
   ubicacion_distrito: string;
   ubicacion_direccion: string;
+  coordenadas?: string; // Formato: "lat,lng"
   disponibilidad: boolean;
   estado: string;
   motivo_rechazo?: string;

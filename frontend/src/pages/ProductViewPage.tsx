@@ -516,7 +516,7 @@ export const ProductViewPage: React.FC = () => {
             </div>
 
             {/* Ubicación */}
-            {(product.ubicacion_provincia || product.ubicacion_canton || product.ubicacion_distrito || product.ubicacion_direccion) && (
+            {(product.ubicacion_provincia || product.ubicacion_canton || product.ubicacion_distrito || product.ubicacion_direccion || product.coordenadas) && (
               <div className="border border-gray-200 rounded-lg p-4 bg-gradient-to-br from-blue-50 to-indigo-50">
                 <h3 className="font-medium text-gray-900 mb-3 flex items-center">
                   <MapPin className="h-4 w-4 mr-2 text-blue-600" />
@@ -545,6 +545,25 @@ export const ProductViewPage: React.FC = () => {
                     <div className="flex items-center space-x-2">
                       <span className="text-sm text-gray-600 w-20 font-medium">Dirección:</span>
                       <span className="text-gray-900">{product.ubicacion_direccion}</span>
+                    </div>
+                  )}
+                  {product.coordenadas && (
+                    <div className="mt-3 pt-3 border-t border-blue-200">
+                      <div className="flex items-start space-x-2">
+                        <span className="text-sm text-gray-600 w-20 font-medium">📌 GPS:</span>
+                        <a 
+                          href={`https://www.google.com/maps?q=${product.coordenadas}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 font-mono text-xs underline hover:no-underline transition-colors"
+                          title="Ver en Google Maps"
+                        >
+                          {product.coordenadas}
+                        </a>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1 ml-20">
+                        Haz clic para ver en el mapa
+                      </p>
                     </div>
                   )}
                 </div>

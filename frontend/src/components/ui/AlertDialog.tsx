@@ -27,13 +27,23 @@ export const AlertDialog: React.FC<AlertDialogProps> = ({
   if (!isOpen) return null;
 
   const handleConfirm = () => {
-    onConfirm?.();
+    if (onConfirm) {
+      onConfirm();
+    }
     onClose();
   };
 
   const handleCancel = () => {
     if (onCancel) {
       onCancel();
+    }
+    onClose();
+  };
+
+  const handleClose = () => {
+    // Para alertas de éxito o info, ejecutar onConfirm al cerrar (para navegación)
+    if ((type === 'success' || type === 'info' || type === 'error') && onConfirm) {
+      onConfirm();
     }
     onClose();
   };
@@ -99,7 +109,7 @@ export const AlertDialog: React.FC<AlertDialogProps> = ({
       {/* Overlay */}
       <div 
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
+        onClick={handleClose}
       />
       
       {/* Dialog */}
@@ -114,7 +124,7 @@ export const AlertDialog: React.FC<AlertDialogProps> = ({
               </h3>
             </div>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="text-gray-400 hover:text-gray-600 transition-colors"
             >
               <X className="h-5 w-5" />
@@ -139,7 +149,7 @@ export const AlertDialog: React.FC<AlertDialogProps> = ({
               {cancelText}
             </button>
           )}
-          {onConfirm && (
+          {(onConfirm || type === 'success' || type === 'info' || type === 'error') && (
             <button
               onClick={handleConfirm}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${colors.confirm}`}

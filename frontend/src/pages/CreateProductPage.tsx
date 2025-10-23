@@ -14,6 +14,7 @@ import { AlertDialog } from '../components/ui/AlertDialog';
 import HierarchicalCategorySearch from '../components/ui/HierarchicalCategorySearch';
 import HierarchicalLocationSearch from '../components/ui/HierarchicalLocationSearch';
 import type { Location } from '../components/ui/HierarchicalLocationSearch';
+import MapSelector from '../components/ui/MapSelector';
 import { ServiceDetailsForm } from '../components/ui/ServiceDetailsForm';
 import { VisibilityToggle } from '../components/ui/VisibilityToggle';
 import { 
@@ -69,6 +70,7 @@ export const CreateProductPage: React.FC = () => {
     ubicacion_canton: '',
     ubicacion_distrito: '',
     ubicacion_direccion: '',
+    coordenadas: '', // Coordenadas en formato "lat,lng"
     disponibilidad: false, // Por defecto no visible hasta aprobación
     estado: 'pendiente_revision', // Por defecto pendiente de revisión
     horario_atencion: '',
@@ -141,6 +143,7 @@ export const CreateProductPage: React.FC = () => {
           ubicacion_canton: product.ubicacion_canton || '',
           ubicacion_distrito: product.ubicacion_distrito || '',
           ubicacion_direccion: product.ubicacion_direccion || '',
+          coordenadas: product.coordenadas || '', // Cargar coordenadas del producto
           disponibilidad: product.disponibilidad === true, // Solo true si explícitamente es true
           estado: product.estado || 'pendiente_revision',
           motivo_rechazo: product.motivo_rechazo || '',
@@ -616,6 +619,17 @@ export const CreateProductPage: React.FC = () => {
         return sortedCurrent.some((val, idx) => val !== sortedInitial[idx]);
       }
       
+      // Log especial para coordenadas
+      if (key === 'coordenadas') {
+        const changed = currentValue !== initialValue;
+        console.log('📍 Verificando cambios en coordenadas:', {
+          inicial: initialValue,
+          actual: currentValue,
+          cambió: changed
+        });
+        return changed;
+      }
+      
       // Comparar valores simples
       return currentValue !== initialValue;
     });
@@ -625,6 +639,12 @@ export const CreateProductPage: React.FC = () => {
       images.length > 0 || // Hay nuevas imágenes
       deletedExistingImages.length > 0 || // Se eliminaron imágenes
       existingImages.length !== initialImages.length; // Cambió el número de imágenes
+
+    console.log('🔍 hasChanges() resultado:', {
+      formChanged,
+      imagesChanged,
+      total: formChanged || imagesChanged
+    });
 
     return formChanged || imagesChanged;
   };
@@ -641,7 +661,7 @@ export const CreateProductPage: React.FC = () => {
       showSuccess(
         'Sin cambios', 
         'No se han realizado cambios en el formulario. Todo está actualizado.',
-        () => navigate(`/products/${id}`) // Redirigir a la vista del producto
+        () => window.location.href = `/products/${id}` // Redirigir a la vista del producto con recarga
       );
       return;
     }
@@ -670,6 +690,13 @@ export const CreateProductPage: React.FC = () => {
         // Excluir campos de servicio que se procesarán después
         if (key === 'horario_inicio' || key === 'horario_fin' || key === 'dias_disponibles' || key === 'duracion_estimada' || key === 'horario_atencion') {
           return; // Estos se procesarán por separado en la sección de servicio
+        }
+        
+        // Para coordenadas, siempre agregar (incluso si está vacío) para que el backend pueda manejarlo con COALESCE
+        if (key === 'coordenadas') {
+          formData.append(key, value?.toString() || '');
+          console.log('📍 Agregando coordenadas al FormData:', value);
+          return;
         }
         
         if (value !== undefined && value !== null && value !== '') {
@@ -826,33 +853,52 @@ export const CreateProductPage: React.FC = () => {
           setRespuestaRechazo('');
         }
         
-        if (esPeligroso) {
-          // Redirigir a /my-products si el producto fue marcado como peligroso
-          showError(
-            '🚫 Contenido Prohibido Detectado', 
-            mensajeExito,
-            () => navigate('/my-products')
-          );
-        } else if (seEnvioApelacion) {
-          // Si se envió una apelación desde producto rechazado, redirigir a Mis Productos
-          showSuccess(
-            '✅ Producto Actualizado y Apelación Enviada', 
-            mensajeExito,
-            () => navigate('/my-products')
-          );
-        } else if (tipoAlerta === 'info') {
-          showSuccess(
-            'Producto Enviado para Revisión', 
-            mensajeExito,
-            () => navigate(`/products/${data.data.id || id}`)
-          );
-        } else {
-          showSuccess(
-            '¡Éxito!', 
-            mensajeExito,
-            () => navigate(`/products/${data.data.id || id}`)
-          );
-        }
+        // Pequeño delay para mostrar el AlertDialog después de actualizar el botón
+        setTimeout(() => {
+          if (esPeligroso) {
+            // Redirigir a /my-products si el producto fue marcado como peligroso
+            showError(
+              '🚫 Contenido Prohibido Detectado', 
+              mensajeExito,
+              () => {
+                setSuccess(false);
+                // Forzar recarga completa de la página
+                window.location.href = '/my-products';
+              }
+            );
+          } else if (seEnvioApelacion) {
+            // Si se envió una apelación desde producto rechazado, redirigir a Mis Productos
+            showSuccess(
+              '✅ Producto Actualizado y Apelación Enviada', 
+              mensajeExito,
+              () => {
+                setSuccess(false);
+                // Forzar recarga completa de la página
+                window.location.href = '/my-products';
+              }
+            );
+          } else if (tipoAlerta === 'info') {
+            showSuccess(
+              'Producto Enviado para Revisión', 
+              mensajeExito,
+              () => {
+                setSuccess(false);
+                // Forzar recarga completa de la página para mostrar los cambios
+                window.location.href = `/products/${data.data.id || id}`;
+              }
+            );
+          } else {
+            showSuccess(
+              '¡Éxito!', 
+              mensajeExito,
+              () => {
+                setSuccess(false);
+                // Forzar recarga completa de la página para mostrar los cambios
+                window.location.href = `/products/${data.data.id || id}`;
+              }
+            );
+          }
+        }, 100);
       } else {
         // Manejar errores específicos del servidor
         if (data.errors) {
@@ -1470,6 +1516,21 @@ export const CreateProductPage: React.FC = () => {
                     initialDistrito={form.ubicacion_distrito}
                     initialDireccion={form.ubicacion_direccion}
                   />
+                  
+                  {/* Mapa interactivo para seleccionar coordenadas */}
+                  <div className="mt-6">
+                    <MapSelector
+                      onLocationSelect={(lat, lng) => {
+                        setForm(prev => ({
+                          ...prev,
+                          coordenadas: `${lat},${lng}`
+                        }));
+                      }}
+                      initialLat={form.coordenadas ? parseFloat(form.coordenadas.split(',')[0]) : undefined}
+                      initialLng={form.coordenadas ? parseFloat(form.coordenadas.split(',')[1]) : undefined}
+                      provincia={form.ubicacion_provincia}
+                    />
+                  </div>
                 </div>
 
                 {/* Información de ayuda mejorada */}
@@ -1481,6 +1542,7 @@ export const CreateProductPage: React.FC = () => {
                       <ul className="space-y-0.5">
                         <li>• Selecciona la provincia y cantón de Ecuador donde se encuentra tu {form.tipo}</li>
                         <li>• El distrito y dirección específica son opcionales pero recomendados</li>
+                        <li>• Usa el mapa para marcar la ubicación exacta de tu {form.tipo}</li>
                         <li>• Los compradores verán esta información para contactarte</li>
                         <li>• Campos con * son obligatorios</li>
                       </ul>

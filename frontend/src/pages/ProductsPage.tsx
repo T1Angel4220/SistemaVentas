@@ -528,7 +528,7 @@ export const ProductsPage: React.FC = () => {
                       <div className="flex items-center space-x-2 mb-2">
                         <MapPin className="h-5 w-5 text-purple-600" />
                         <h3 className="font-semibold text-purple-900">Filtrar por Ubicación</h3>
-                      </div>
+                    </div>
                       <HierarchicalLocationSearch
                         locations={locations}
                         onLocationSelect={(locationData) => {
@@ -547,8 +547,8 @@ export const ProductsPage: React.FC = () => {
                         initialDistrito={filters.distrito}
                         initialDireccion={filters.direccion}
                       />
-                    </div>
-                  )}
+                  </div>
+                )}
                 </div>
               </div>
             </div>

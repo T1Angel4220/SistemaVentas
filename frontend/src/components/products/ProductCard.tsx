@@ -129,10 +129,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <div className="flex items-center space-x-2 text-sm text-gray-500">
             <span>{product.categoria_nombre}</span>
           </div>
-          {product.ubicacion_nombre && (
+          {(product.ubicacion_provincia || product.ubicacion_canton) && (
             <div className="flex items-center space-x-1 text-sm text-gray-500">
               <MapPin className="h-3 w-3" />
-              <span>{product.ubicacion_nombre}</span>
+              <span>
+                {product.ubicacion_provincia && product.ubicacion_canton 
+                  ? `${product.ubicacion_provincia}, ${product.ubicacion_canton}`
+                  : product.ubicacion_provincia || product.ubicacion_canton}
+              </span>
             </div>
           )}
           <div className="flex items-center justify-between text-sm text-gray-500">

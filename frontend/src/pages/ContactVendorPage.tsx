@@ -293,7 +293,7 @@ export const ContactVendorPage: React.FC = () => {
                   
                   <div className="border-t border-gray-100 pt-4 space-y-2">
                     {/* Ubicación del producto */}
-                    {(product.ubicacion_provincia || product.ubicacion_canton || product.ubicacion_distrito || product.ubicacion_direccion) ? (
+                    {(product.ubicacion_provincia || product.ubicacion_canton || product.ubicacion_distrito || product.ubicacion_direccion || product.coordenadas) ? (
                       <div className="space-y-1">
                         <div className="flex items-center text-sm font-semibold text-gray-700 mb-1">
                           <MapPin className="h-4 w-4 mr-2 text-blue-600" />
@@ -317,6 +317,20 @@ export const ContactVendorPage: React.FC = () => {
                         {product.ubicacion_direccion && (
                           <div className="text-xs text-gray-600 ml-6">
                             <span className="font-medium">Dirección:</span> {product.ubicacion_direccion}
+                          </div>
+                        )}
+                        {product.coordenadas && (
+                          <div className="text-xs ml-6 mt-2 pt-2 border-t border-gray-100">
+                            <span className="font-medium text-gray-700">📌 GPS:</span>{' '}
+                            <a 
+                              href={`https://www.google.com/maps?q=${product.coordenadas}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 font-mono underline hover:no-underline"
+                              title="Ver en Google Maps"
+                            >
+                              {product.coordenadas}
+                            </a>
                           </div>
                         )}
                       </div>
