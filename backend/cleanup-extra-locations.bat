@@ -12,7 +12,7 @@ REM Configurar codificación UTF-8
 chcp 65001 > nul
 
 REM Ejecutar el script SQL
-psql -U postgres -d sistema_ventas_multiempresa --set client_encoding=UTF8 -f backend/cleanup-extra-locations.sql
+psql -U postgres -d sistema_ventas_multiempresa --set client_encoding=UTF8 -f cleanup-extra-locations.sql
 
 echo.
 echo ========================================

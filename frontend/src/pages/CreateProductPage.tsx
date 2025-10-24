@@ -510,8 +510,16 @@ export const CreateProductPage: React.FC = () => {
       newErrors.ubicacion_canton = 'El cantón debe tener al menos 3 caracteres';
     }
 
+    // Validación de distrito/parroquia (OBLIGATORIO)
+    if (!form.ubicacion_distrito.trim()) {
+      newErrors.ubicacion_distrito = 'El distrito/parroquia es requerido';
+    } else if (form.ubicacion_distrito.trim().length < 3) {
+      newErrors.ubicacion_distrito = 'El distrito/parroquia debe tener al menos 3 caracteres';
+    }
+
+    // Validación de dirección específica (OBLIGATORIO)
     if (!form.ubicacion_direccion.trim()) {
-      newErrors.ubicacion_direccion = 'La dirección es requerida';
+      newErrors.ubicacion_direccion = 'La dirección específica es requerida';
     } else if (form.ubicacion_direccion.trim().length < 10) {
       newErrors.ubicacion_direccion = 'La dirección debe ser más específica (mínimo 10 caracteres)';
     }
@@ -594,6 +602,33 @@ export const CreateProductPage: React.FC = () => {
           newErrors.duracion_estimada = `⚠️ Inconsistencia lógica: La duración del servicio (${form.duracion_estimada}) excede tu horario de atención disponible (${tiempoDisponibleTexto}). Ajusta el horario o reduce la duración.`;
         }
       }
+    }
+
+    // Validación de coordenadas del mapa (OBLIGATORIO)
+    if (!form.coordenadas || !form.coordenadas.trim()) {
+      newErrors.coordenadas = 'Debes seleccionar la ubicación en el mapa';
+    } else {
+      // Validar formato de coordenadas (lat,lng)
+      const coordsArray = form.coordenadas.split(',');
+      if (coordsArray.length !== 2) {
+        newErrors.coordenadas = 'Formato de coordenadas inválido';
+      } else {
+        const [lat, lng] = coordsArray.map(c => parseFloat(c.trim()));
+        if (isNaN(lat) || isNaN(lng)) {
+          newErrors.coordenadas = 'Las coordenadas deben ser números válidos';
+        } else if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+          newErrors.coordenadas = 'Las coordenadas están fuera de rango válido';
+        }
+      }
+    }
+
+    // Validación de imágenes (AL MENOS UNA OBLIGATORIA)
+    const totalImages = isEditMode 
+      ? (existingImages.length - deletedExistingImages.length) + images.length
+      : images.length;
+    
+    if (totalImages === 0) {
+      newErrors.imagenes = 'Debes agregar al menos una imagen de tu producto';
     }
 
     setErrors(newErrors);
@@ -1515,21 +1550,38 @@ export const CreateProductPage: React.FC = () => {
                     initialCanton={form.ubicacion_canton}
                     initialDistrito={form.ubicacion_distrito}
                     initialDireccion={form.ubicacion_direccion}
+                    errors={{
+                      provincia: errors.ubicacion_provincia,
+                      canton: errors.ubicacion_canton,
+                      distrito: errors.ubicacion_distrito,
+                      direccion: errors.ubicacion_direccion
+                    }}
                   />
                   
-                  {/* Mapa interactivo para seleccionar coordenadas */}
+                  {/* Mapa interactivo para seleccionar coordenadas (OBLIGATORIO) */}
                   <div className="mt-6">
-                    <MapSelector
-                      onLocationSelect={(lat, lng) => {
-                        setForm(prev => ({
-                          ...prev,
-                          coordenadas: `${lat},${lng}`
-                        }));
-                      }}
-                      initialLat={form.coordenadas ? parseFloat(form.coordenadas.split(',')[0]) : undefined}
-                      initialLng={form.coordenadas ? parseFloat(form.coordenadas.split(',')[1]) : undefined}
-                      provincia={form.ubicacion_provincia}
-                    />
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Ubicación en el Mapa *
+                    </label>
+                    <div className={`${errors.coordenadas ? 'border-2 border-red-500 rounded-lg p-2' : ''}`}>
+                      <MapSelector
+                        onLocationSelect={(lat, lng) => {
+                          setForm(prev => ({
+                            ...prev,
+                            coordenadas: `${lat},${lng}`
+                          }));
+                        }}
+                        initialLat={form.coordenadas ? parseFloat(form.coordenadas.split(',')[0]) : undefined}
+                        initialLng={form.coordenadas ? parseFloat(form.coordenadas.split(',')[1]) : undefined}
+                        provincia={form.ubicacion_provincia}
+                      />
+                    </div>
+                    {errors.coordenadas && (
+                      <p className="text-red-500 text-xs font-medium flex items-center mt-2">
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                        {errors.coordenadas}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -1541,10 +1593,10 @@ export const CreateProductPage: React.FC = () => {
                       <p className="font-semibold mb-1">Consejos para ubicación:</p>
                       <ul className="space-y-0.5">
                         <li>• Selecciona la provincia y cantón de Ecuador donde se encuentra tu {form.tipo}</li>
-                        <li>• El distrito y dirección específica son opcionales pero recomendados</li>
-                        <li>• Usa el mapa para marcar la ubicación exacta de tu {form.tipo}</li>
+                        <li>• El distrito/parroquia y dirección específica son <strong>obligatorios</strong></li>
+                        <li>• <strong>Debes marcar la ubicación en el mapa</strong> (obligatorio)</li>
                         <li>• Los compradores verán esta información para contactarte</li>
-                        <li>• Campos con * son obligatorios</li>
+                        <li>• Todos los campos con * son obligatorios</li>
                       </ul>
                     </div>
                   </div>
@@ -1611,9 +1663,11 @@ export const CreateProductPage: React.FC = () => {
                   </div>
                   <div>
                     <h2 className="text-xl font-bold text-gray-900">
-                      {isEditMode ? 'Gestionar Imágenes' : 'Imágenes del Producto'}
+                      {isEditMode ? 'Gestionar Imágenes' : 'Imágenes del Producto *'}
                 </h2>
-                    <p className="text-xs text-gray-600">Máximo 5 imágenes por producto</p>
+                    <p className="text-xs text-gray-600">
+                      {isEditMode ? 'Máximo 5 imágenes por producto' : 'Al menos 1 imagen es obligatoria. Máximo 5 imágenes.'}
+                    </p>
               </div>
                 </div>
                 {(() => {
@@ -1850,6 +1904,16 @@ export const CreateProductPage: React.FC = () => {
                     </div>
                   ))}
                   </div>
+                </div>
+              )}
+
+              {/* Mensaje de error si no hay imágenes */}
+              {errors.imagenes && (
+                <div className="mt-4">
+                  <p className="text-red-500 text-sm font-medium flex items-center">
+                    <AlertCircle className="h-4 w-4 mr-2" />
+                    {errors.imagenes}
+                  </p>
                 </div>
               )}
             </CardContent>

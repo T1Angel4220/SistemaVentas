@@ -15,3 +15,5 @@ ORDER BY enumlabel;
 
 \echo '\n✅ Si ves "en_apelacion" en la lista, el estado se agregó correctamente.\n'
 
+
+

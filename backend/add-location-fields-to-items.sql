@@ -25,4 +25,5 @@ CREATE INDEX IF NOT EXISTS idx_items_provincia ON items(ubicacion_provincia);
 CREATE INDEX IF NOT EXISTS idx_items_canton ON items(ubicacion_canton);
 
 -- Verificar las columnas agregadas
-\ d items
+-- Para verificar manualmente, ejecuta en psql: \d items
+SELECT 'Columnas de ubicación agregadas exitosamente a la tabla items' as resultado;

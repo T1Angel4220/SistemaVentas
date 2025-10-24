@@ -276,16 +276,31 @@ class AppealsController {
       );
 
       // Actualizar el estado del producto
-      await query(
-        'UPDATE items SET estado = $1, moderador_revision_id = $2, fecha_revision = CURRENT_TIMESTAMP WHERE id = $3',
-        [nuevoEstadoProducto, moderador_revisor_id, apelacion.item_id]
-      );
-
-      // Si se aprueba, limpiar el motivo de rechazo
+      // Si se aprueba, también activar la disponibilidad
+      const disponibilidad = decision === 'aprobar' ? true : null;
+      
       if (decision === 'aprobar') {
+        // Al aprobar: cambiar estado, limpiar errores, y activar disponibilidad
         await query(
-          'UPDATE items SET motivo_rechazo = NULL, es_peligroso = FALSE WHERE id = $1',
-          [apelacion.item_id]
+          `UPDATE items 
+          SET estado = $1, 
+              moderador_revision_id = $2, 
+              fecha_revision = CURRENT_TIMESTAMP,
+              motivo_rechazo = NULL,
+              es_peligroso = FALSE,
+              disponibilidad = TRUE
+          WHERE id = $3`,
+          [nuevoEstadoProducto, moderador_revisor_id, apelacion.item_id]
+        );
+      } else {
+        // Al rechazar: solo cambiar estado
+        await query(
+          `UPDATE items 
+          SET estado = $1, 
+              moderador_revision_id = $2, 
+              fecha_revision = CURRENT_TIMESTAMP
+          WHERE id = $3`,
+          [nuevoEstadoProducto, moderador_revisor_id, apelacion.item_id]
         );
       }
 

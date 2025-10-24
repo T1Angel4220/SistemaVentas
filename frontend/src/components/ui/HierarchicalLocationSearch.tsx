@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, ChevronDown } from 'lucide-react';
+import { MapPin, ChevronDown, AlertCircle } from 'lucide-react';
 
 export interface Location {
   id: number;
@@ -25,6 +25,13 @@ interface HierarchicalLocationSearchProps {
   initialCanton?: string;
   initialDistrito?: string;
   initialDireccion?: string;
+  // Errores de validación
+  errors?: {
+    provincia?: string;
+    canton?: string;
+    distrito?: string;
+    direccion?: string;
+  };
 }
 
 const HierarchicalLocationSearch: React.FC<HierarchicalLocationSearchProps> = ({
@@ -35,7 +42,8 @@ const HierarchicalLocationSearch: React.FC<HierarchicalLocationSearchProps> = ({
   initialProvincia = '',
   initialCanton = '',
   initialDistrito = '',
-  initialDireccion = ''
+  initialDireccion = '',
+  errors = {}
 }) => {
   const [selectedProvincia, setSelectedProvincia] = useState(initialProvincia);
   const [selectedCanton, setSelectedCanton] = useState(initialCanton);
@@ -226,35 +234,56 @@ const HierarchicalLocationSearch: React.FC<HierarchicalLocationSearchProps> = ({
         )}
       </div>
 
-      {/* Distrito (opcional, texto libre) */}
+      {/* Distrito (OBLIGATORIO) */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Distrito / Parroquia (opcional)
+          Distrito / Parroquia *
         </label>
         <input
           type="text"
           value={distrito}
           onChange={(e) => handleDistritoChange(e.target.value)}
           placeholder="Ej: Centro, Norte, Sur..."
-          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+          className={`w-full px-4 py-2.5 border rounded-lg transition-colors ${
+            errors.distrito 
+              ? 'border-red-500 focus:ring-red-500 focus:border-red-500 bg-red-50' 
+              : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+          }`}
         />
+        {errors.distrito && (
+          <p className="text-red-500 text-xs font-medium flex items-center mt-1">
+            <AlertCircle className="h-3 w-3 mr-1" />
+            {errors.distrito}
+          </p>
+        )}
       </div>
 
-      {/* Dirección específica (opcional, texto libre) */}
+      {/* Dirección específica (OBLIGATORIO) */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Dirección Específica (opcional)
+          Dirección Específica *
         </label>
         <input
           type="text"
           value={direccion}
           onChange={(e) => handleDireccionChange(e.target.value)}
           placeholder="Ej: Av. Principal y Calle Secundaria"
-          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+          className={`w-full px-4 py-2.5 border rounded-lg transition-colors ${
+            errors.direccion 
+              ? 'border-red-500 focus:ring-red-500 focus:border-red-500 bg-red-50' 
+              : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+          }`}
         />
-        <p className="mt-1 text-xs text-gray-500">
-          Puedes incluir calles, referencias, número de casa, etc.
-        </p>
+        {errors.direccion ? (
+          <p className="text-red-500 text-xs font-medium flex items-center mt-1">
+            <AlertCircle className="h-3 w-3 mr-1" />
+            {errors.direccion}
+          </p>
+        ) : (
+          <p className="mt-1 text-xs text-gray-500">
+            Puedes incluir calles, referencias, número de casa, etc.
+          </p>
+        )}
       </div>
 
       {/* Resumen de ubicación seleccionada */}

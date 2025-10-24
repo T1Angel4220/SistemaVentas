@@ -12,7 +12,7 @@ REM Configurar codificación UTF-8 para la consola
 chcp 65001 > nul
 
 REM Ejecutar el script SQL con codificación UTF-8
-psql -U postgres -d sistema_ventas_multiempresa --set client_encoding=UTF8 -f backend/add-location-fields-to-items.sql
+psql -U postgres -d sistema_ventas_multiempresa --set client_encoding=UTF8 -f add-location-fields-to-items.sql
 
 echo.
 echo ========================================
