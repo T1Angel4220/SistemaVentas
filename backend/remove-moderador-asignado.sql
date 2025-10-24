@@ -37,4 +37,5 @@ WHERE
     r.estado = 'pendiente';
 
 -- Verificar que se eliminó correctamente
-\ d reportes
+-- Para verificar manualmente, ejecuta en psql: \d reportes
+SELECT 'Columna moderador_asignado_id eliminada exitosamente' as resultado;

@@ -37,7 +37,8 @@ export const RegisterForm: React.FC = () => {
   // Limpiar error del contexto cuando se monta el componente
   React.useEffect(() => {
     clearError();
-  }, [clearError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Solo ejecutar una vez al montar
 
   // Función para capitalizar la primera letra de cada palabra
   const capitalizeFirstLetter = (text: string): string => {

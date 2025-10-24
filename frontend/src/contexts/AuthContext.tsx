@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback, ReactNode } from 'react';
 import { apiService, User, LoginRequest, RegisterRequest, ApiResponse } from '../services/api';
 
 // Tipos para el contexto
@@ -135,7 +135,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   // Función de login
-  const login = async (credentials: LoginRequest): Promise<void> => {
+  const login = useCallback(async (credentials: LoginRequest): Promise<void> => {
     try {
       dispatch({ type: 'AUTH_START' });
       const response = await apiService.login(credentials);
@@ -151,10 +151,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       dispatch({ type: 'AUTH_FAILURE', payload: errorMessage });
       throw error;
     }
-  };
+  }, []);
 
   // Función de registro
-  const register = async (userData: RegisterRequest): Promise<void> => {
+  const register = useCallback(async (userData: RegisterRequest): Promise<void> => {
     try {
       dispatch({ type: 'AUTH_START' });
       const response = await apiService.register(userData);
@@ -170,10 +170,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       dispatch({ type: 'AUTH_FAILURE', payload: errorMessage });
       throw error;
     }
-  };
+  }, []);
 
   // Función de logout
-  const logout = async (): Promise<void> => {
+  const logout = useCallback(async (): Promise<void> => {
     try {
       // Intentar notificar al servidor PRIMERO (con el token aún válido)
       try {
@@ -192,10 +192,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       apiService.setToken(null);
       dispatch({ type: 'AUTH_LOGOUT' });
     }
-  };
+  }, []);
 
   // Función de verificación de email
-  const verifyEmail = async (token: string): Promise<void> => {
+  const verifyEmail = useCallback(async (token: string): Promise<void> => {
     try {
       dispatch({ type: 'AUTH_START' });
       const response = await apiService.verifyEmail(token);
@@ -210,10 +210,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       dispatch({ type: 'AUTH_FAILURE', payload: errorMessage });
       throw error;
     }
-  };
+  }, []);
 
   // Función de solicitud de recuperación de contraseña
-  const requestPasswordReset = async (correo: string): Promise<void> => {
+  const requestPasswordReset = useCallback(async (correo: string): Promise<void> => {
     try {
       dispatch({ type: 'AUTH_START' });
       const response = await apiService.requestPasswordReset(correo);
@@ -228,10 +228,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       dispatch({ type: 'AUTH_FAILURE', payload: errorMessage });
       throw error;
     }
-  };
+  }, []);
 
   // Función de reset de contraseña
-  const resetPassword = async (token: string, newPassword: string): Promise<void> => {
+  const resetPassword = useCallback(async (token: string, newPassword: string): Promise<void> => {
     try {
       dispatch({ type: 'AUTH_START' });
       const response = await apiService.resetPassword(token, newPassword);
@@ -246,15 +246,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       dispatch({ type: 'AUTH_FAILURE', payload: errorMessage });
       throw error;
     }
-  };
+  }, []);
 
   // Función para limpiar errores
-  const clearError = (): void => {
+  const clearError = useCallback((): void => {
     dispatch({ type: 'CLEAR_ERROR' });
-  };
+  }, []);
 
   // Función para refrescar datos del usuario
-  const refreshUser = async (): Promise<void> => {
+  const refreshUser = useCallback(async (): Promise<void> => {
     try {
       const response = await apiService.getProfile();
       if (response.success && response.data) {
@@ -263,7 +263,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       console.error('Error refrescando usuario:', error);
     }
-  };
+  }, []);
 
   // Valor del contexto
   const contextValue: AuthContextType = {
