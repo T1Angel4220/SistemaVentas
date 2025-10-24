@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useAlert } from '../hooks/useAlert';
-import { apiService } from '../services/api';
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -50,19 +49,19 @@ export const ContactVendorPage: React.FC = () => {
   const loadProduct = React.useCallback(async () => {
     try {
       setLoading(true);
-      const data = await apiService.request(`/products/view/${id}`, {
-        method: 'GET'
-      });
+      const response = await fetch(`http://localhost:3001/api/products/${id}`);
+      const data = await response.json();
       
       if (data.success) {
-        setProduct(data.data);
+        const productData = data.data as ProductDetail;
+        setProduct(productData);
         // Extraer información del vendedor
         setVendorInfo({
-          nombre: data.data.vendedor_nombre || '',
-          apellido: data.data.vendedor_apellido || '',
-          correo: data.data.vendedor_correo || '',
-          telefono: data.data.vendedor_telefono || '',
-          direccion: data.data.vendedor_direccion || ''
+          nombre: productData.vendedor_nombre || '',
+          apellido: '', // Este campo no existe en ProductDetail
+          correo: productData.vendedor_email || '',
+          telefono: '', // Este campo no existe en ProductDetail
+          direccion: '' // Este campo no existe en ProductDetail
         });
         
         // Pre-llenar datos del usuario si está logueado
@@ -292,12 +291,58 @@ export const ContactVendorPage: React.FC = () => {
                     </div>
                   </div>
                   
-                  <div className="border-t border-gray-100 pt-4">
-                    <div className="flex items-center text-sm text-gray-600 mb-2">
-                      <MapPin className="h-4 w-4 mr-2" />
-                      {product.ubicacion_nombre || 'Ubicación no especificada'}
-                    </div>
-                    <div className="flex items-center text-sm text-gray-600">
+                  <div className="border-t border-gray-100 pt-4 space-y-2">
+                    {/* Ubicación del producto */}
+                    {(product.ubicacion_provincia || product.ubicacion_canton || product.ubicacion_distrito || product.ubicacion_direccion || product.coordenadas) ? (
+                      <div className="space-y-1">
+                        <div className="flex items-center text-sm font-semibold text-gray-700 mb-1">
+                          <MapPin className="h-4 w-4 mr-2 text-blue-600" />
+                          📍 Ubicación del producto
+                        </div>
+                        {product.ubicacion_provincia && (
+                          <div className="text-xs text-gray-600 ml-6">
+                            <span className="font-medium">Provincia:</span> {product.ubicacion_provincia}
+                          </div>
+                        )}
+                        {product.ubicacion_canton && (
+                          <div className="text-xs text-gray-600 ml-6">
+                            <span className="font-medium">Cantón:</span> {product.ubicacion_canton}
+                          </div>
+                        )}
+                        {product.ubicacion_distrito && (
+                          <div className="text-xs text-gray-600 ml-6">
+                            <span className="font-medium">Distrito:</span> {product.ubicacion_distrito}
+                          </div>
+                        )}
+                        {product.ubicacion_direccion && (
+                          <div className="text-xs text-gray-600 ml-6">
+                            <span className="font-medium">Dirección:</span> {product.ubicacion_direccion}
+                          </div>
+                        )}
+                        {product.coordenadas && (
+                          <div className="text-xs ml-6 mt-2 pt-2 border-t border-gray-100">
+                            <span className="font-medium text-gray-700">📌 GPS:</span>{' '}
+                            <a 
+                              href={`https://www.google.com/maps?q=${product.coordenadas}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 font-mono underline hover:no-underline"
+                              title="Ver en Google Maps"
+                            >
+                              {product.coordenadas}
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-center text-sm text-gray-500">
+                        <MapPin className="h-4 w-4 mr-2" />
+                        Ubicación no especificada
+                      </div>
+                    )}
+                    
+                    {/* Fecha de publicación */}
+                    <div className="flex items-center text-sm text-gray-600 pt-2">
                       <Calendar className="h-4 w-4 mr-2" />
                       Publicado: {new Date(product.fecha_publicacion).toLocaleDateString()}
                     </div>

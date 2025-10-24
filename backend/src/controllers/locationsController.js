@@ -10,7 +10,6 @@ class LocationsController {
       const { 
         provincia, 
         canton, 
-        distrito, 
         activa = true,
         page = 1,
         limit = 20,
@@ -34,15 +33,9 @@ class LocationsController {
         queryParams.push(`%${canton}%`);
       }
 
-      if (distrito) {
-        paramCount++;
-        whereConditions.push(`distrito ILIKE $${paramCount}`);
-        queryParams.push(`%${distrito}%`);
-      }
-
       if (search) {
         paramCount++;
-        whereConditions.push(`(nombre ILIKE $${paramCount} OR provincia ILIKE $${paramCount} OR canton ILIKE $${paramCount} OR distrito ILIKE $${paramCount})`);
+        whereConditions.push(`(nombre ILIKE $${paramCount} OR provincia ILIKE $${paramCount} OR canton ILIKE $${paramCount})`);
         queryParams.push(`%${search}%`);
       }
 
@@ -56,10 +49,10 @@ class LocationsController {
       queryParams.push(offset);
 
       const ubicaciones = await query(
-        `SELECT id, nombre, provincia, canton, distrito, activa, fecha_creacion
+        `SELECT id, nombre, provincia, canton, activa, fecha_creacion
          FROM ubicaciones 
          WHERE ${whereClause}
-         ORDER BY provincia, canton, distrito, nombre
+         ORDER BY provincia, canton, nombre
          LIMIT $${paramCount - 1} OFFSET $${paramCount}`,
         queryParams
       );
@@ -133,7 +126,7 @@ class LocationsController {
   // Crear nueva ubicación (solo administradores)
   static async createLocation(req, res) {
     try {
-      const { nombre, provincia, canton, distrito } = req.body;
+      const { nombre, provincia, canton } = req.body;
 
       // Validar datos requeridos
       if (!nombre || !provincia) {
@@ -147,9 +140,8 @@ class LocationsController {
       const ubicacionExistente = await query(
         `SELECT id FROM ubicaciones 
          WHERE nombre = $1 AND provincia = $2 
-         AND (canton = $3 OR canton IS NULL) 
-         AND (distrito = $4 OR distrito IS NULL)`,
-        [nombre, provincia, canton, distrito]
+         AND (canton = $3 OR canton IS NULL)`,
+        [nombre, provincia, canton]
       );
 
       if (ubicacionExistente.rows.length > 0) {
@@ -161,10 +153,10 @@ class LocationsController {
 
       // Crear ubicación
       const nuevaUbicacion = await query(
-        `INSERT INTO ubicaciones (nombre, provincia, canton, distrito, activa)
-         VALUES ($1, $2, $3, $4, true)
+        `INSERT INTO ubicaciones (nombre, provincia, canton, activa)
+         VALUES ($1, $2, $3, true)
          RETURNING *`,
-        [nombre, provincia, canton, distrito]
+        [nombre, provincia, canton]
       );
 
       res.status(201).json({
@@ -187,7 +179,7 @@ class LocationsController {
   static async updateLocation(req, res) {
     try {
       const { id } = req.params;
-      const { nombre, provincia, canton, distrito, activa } = req.body;
+      const { nombre, provincia, canton, activa } = req.body;
 
       // Verificar que la ubicación existe
       const ubicacionExistente = await query(
@@ -203,17 +195,15 @@ class LocationsController {
       }
 
       // Si se están cambiando datos, verificar que no exista otra similar
-      if (nombre || provincia || canton || distrito) {
+      if (nombre || provincia || canton) {
         const ubicacionSimilar = await query(
           `SELECT id FROM ubicaciones 
            WHERE nombre = $1 AND provincia = $2 
-           AND (canton = $3 OR canton IS NULL) 
-           AND (distrito = $4 OR distrito IS NULL)
-           AND id != $5`,
+           AND (canton = $3 OR canton IS NULL)
+           AND id != $4`,
           [nombre || ubicacionExistente.rows[0].nombre, 
            provincia || ubicacionExistente.rows[0].provincia,
            canton || ubicacionExistente.rows[0].canton,
-           distrito || ubicacionExistente.rows[0].distrito,
            id]
         );
 
@@ -231,11 +221,10 @@ class LocationsController {
           nombre = COALESCE($1, nombre),
           provincia = COALESCE($2, provincia),
           canton = COALESCE($3, canton),
-          distrito = COALESCE($4, distrito),
-          activa = COALESCE($5, activa)
-        WHERE id = $6
+          activa = COALESCE($4, activa)
+        WHERE id = $5
         RETURNING *`,
-        [nombre, provincia, canton, distrito, activa, id]
+        [nombre, provincia, canton, activa, id]
       );
 
       res.json({
@@ -311,8 +300,7 @@ class LocationsController {
           provincia,
           COUNT(*) as total_ubicaciones,
           COUNT(CASE WHEN activa = true THEN 1 END) as ubicaciones_activas,
-          COUNT(DISTINCT canton) as cantones_distintos,
-          COUNT(DISTINCT distrito) as distritos_distintos
+          COUNT(DISTINCT canton) as cantones_distintos
         FROM ubicaciones
         GROUP BY provincia
         ORDER BY total_ubicaciones DESC`
@@ -386,33 +374,24 @@ class LocationsController {
     }
   }
 
-  // Obtener distritos por cantón
-  static async getDistrictsByCanton(req, res) {
-    try {
-      const { provincia, canton } = req.params;
-
-      const distritos = await query(
-        `SELECT DISTINCT distrito 
-         FROM ubicaciones 
-         WHERE provincia = $1 AND canton = $2 AND distrito IS NOT NULL AND activa = true
-         ORDER BY distrito`,
-        [provincia, canton]
-      );
-
-      res.json({
-        success: true,
-        data: distritos.rows.map(row => row.distrito)
-      });
-
-    } catch (error) {
-      console.error('Error al obtener distritos:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Error interno del servidor',
-        error: config.server.nodeEnv === 'development' ? error.message : {}
-      });
-    }
-  }
+  // MÉTODO DESACTIVADO: La columna 'distrito' fue eliminada de la tabla ubicaciones
+  // Los distritos ahora se guardan directamente en la tabla items
+  // static async getDistrictsByCanton(req, res) {
+  //   try {
+  //     const { provincia, canton } = req.params;
+  //     res.status(410).json({
+  //       success: false,
+  //       message: 'Este endpoint ya no está disponible. Los distritos ahora se guardan en la tabla items.'
+  //     });
+  //   } catch (error) {
+  //     console.error('Error:', error);
+  //     res.status(500).json({
+  //       success: false,
+  //       message: 'Error interno del servidor',
+  //       error: config.server.nodeEnv === 'development' ? error.message : {}
+  //     });
+  //   }
+  // }
 }
 
 module.exports = LocationsController;

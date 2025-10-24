@@ -50,6 +50,7 @@ export const ProductDetailPage: React.FC = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
   const [reviewLoading, setReviewLoading] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false); // Estado para detectar scroll
   
   // Estado para modal de reporte
   const [reportModalOpen, setReportModalOpen] = useState(false);
@@ -267,6 +268,18 @@ export const ProductDetailPage: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [product]);
+
+  // 🆕 Detectar scroll para hacer los botones sticky
+  useEffect(() => {
+    const handleScroll = () => {
+      // Los botones se vuelven sticky después de hacer scroll más de 200px
+      const scrollThreshold = 200;
+      setIsScrolled(window.scrollY > scrollThreshold);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
 
   const handleDeleteProduct = async () => {
@@ -599,6 +612,38 @@ export const ProductDetailPage: React.FC = () => {
               </div>
             )}
 
+            {/* Información del producto - Solo para PRODUCTOS en columna izquierda */}
+            {product.tipo === 'producto' && (
+              <div className="border-l-4 border-green-500 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <h3 className="font-semibold text-gray-900 mb-3 flex items-center text-base">
+                  <Tag className="h-5 w-5 mr-2 text-green-600" />
+                  Información del producto
+                </h3>
+                <div className="space-y-3">
+                  <div className="py-1.5">
+                    <span className="text-gray-600 text-xs font-medium uppercase tracking-wide block mb-1">Categoría</span>
+                    <span className="text-gray-900 font-bold text-base">{product.categoria_nombre}</span>
+                  </div>
+                  {product.categoria_descripcion && (
+                    <div className="py-1.5 pl-3 border-l-2 border-green-300 bg-white/40 rounded-r-lg">
+                      <div className="flex items-start space-x-2">
+                        <FileText className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                        <span className="text-gray-700 text-xs leading-relaxed">{product.categoria_descripcion}</span>
+                      </div>
+                    </div>
+                  )}
+                  <div className="py-1.5">
+                    <span className="text-gray-600 text-xs font-medium uppercase tracking-wide block mb-1">Publicado</span>
+                    <span className="text-gray-900 font-semibold text-base">{formatDate(product.fecha_publicacion)}</span>
+                  </div>
+                  <div className="py-1.5">
+                    <span className="text-gray-600 text-xs font-medium uppercase tracking-wide block mb-1">Tipo</span>
+                    <span className="font-bold text-lg text-green-700">📦 Producto</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
           </div>
 
           {/* Columna derecha - Información del producto */}
@@ -642,10 +687,10 @@ export const ProductDetailPage: React.FC = () => {
                   
             {/* NUEVO: Botón de acción principal para COMPRADORES Y VENDEDORES + RESPONSIVE */}
             {(user?.tipo_usuario === 'comprador' || user?.tipo_usuario === 'vendedor') && product.estado === 'activo' && product.disponibilidad && (
-              <div className="sticky top-4 z-10 space-y-3">
+              <div className={`space-y-3 transition-all duration-300 ${isScrolled ? 'sticky top-4 z-10' : ''}`}>
                 <Button 
                   onClick={() => navigate(`/products/contact/${product.id}`)}
-                  className="w-full h-12 sm:h-14 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-base sm:text-lg font-bold shadow-2xl hover:shadow-3xl transition-all duration-300 rounded-xl"
+                  className={`w-full h-12 sm:h-14 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-base sm:text-lg font-bold shadow-2xl hover:shadow-3xl transition-all duration-300 rounded-xl ${isScrolled ? 'ring-2 ring-orange-300' : ''}`}
                 >
                   <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" />
                   <span>Contactar Vendedor</span>
@@ -832,73 +877,92 @@ export const ProductDetailPage: React.FC = () => {
               </div>
             )}
 
-            {/* Ubicación - MEJORADO: Con sombras y mejor profundidad + RESPONSIVE */}
-            {(product.ubicacion_nombre || product.provincia || product.canton) && (
+            {/* Ubicación - PARA TODOS (productos y servicios) */}
+            {(product.ubicacion_provincia || product.ubicacion_canton || product.ubicacion_distrito || product.ubicacion_direccion || product.coordenadas) && (
               <div className="border-l-4 border-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 shadow-lg hover:shadow-xl transition-shadow duration-300">
                 <h3 className="font-semibold text-gray-900 mb-3 flex items-center text-base">
                   <MapPin className="h-5 w-5 mr-2 text-blue-600" />
-                  Ubicación
+                  📍 Ubicación del {product.tipo === 'servicio' ? 'servicio' : 'producto'}
                 </h3>
                 <div className="space-y-2 text-sm">
-            {product.ubicacion_nombre && (
+                  {product.ubicacion_provincia && (
                     <div className="flex items-start space-x-2">
-                      <span className="text-gray-600 w-20 flex-shrink-0">Dirección:</span>
-                      <span className="text-gray-900 font-medium">{product.ubicacion_nombre}</span>
+                      <span className="text-gray-600 w-24 flex-shrink-0 font-medium">Provincia:</span>
+                      <span className="text-gray-900 font-semibold">{product.ubicacion_provincia}</span>
                     </div>
                   )}
-                      {product.provincia && (
+                  {product.ubicacion_canton && (
                     <div className="flex items-start space-x-2">
-                      <span className="text-gray-600 w-20 flex-shrink-0">Provincia:</span>
-                      <span className="text-gray-900">{product.provincia}</span>
+                      <span className="text-gray-600 w-24 flex-shrink-0 font-medium">Cantón:</span>
+                      <span className="text-gray-900 font-semibold">{product.ubicacion_canton}</span>
                     </div>
                   )}
-                  {product.canton && (
+                  {product.ubicacion_distrito && (
                     <div className="flex items-start space-x-2">
-                      <span className="text-gray-600 w-20 flex-shrink-0">Cantón:</span>
-                      <span className="text-gray-900">{product.canton}</span>
+                      <span className="text-gray-600 w-24 flex-shrink-0 font-medium">Distrito:</span>
+                      <span className="text-gray-900">{product.ubicacion_distrito}</span>
                     </div>
                   )}
-                  {product.distrito && (
+                  {product.ubicacion_direccion && (
                     <div className="flex items-start space-x-2">
-                      <span className="text-gray-600 w-20 flex-shrink-0">Distrito:</span>
-                      <span className="text-gray-900">{product.distrito}</span>
+                      <span className="text-gray-600 w-24 flex-shrink-0 font-medium">Dirección:</span>
+                      <span className="text-gray-900">{product.ubicacion_direccion}</span>
                     </div>
                   )}
-                </div>
+                  {product.coordenadas && (
+                    <div className="mt-3 pt-3 border-t border-blue-200">
+                      <div className="flex items-start space-x-2">
+                        <span className="text-gray-600 w-24 flex-shrink-0 font-medium">📌 GPS:</span>
+                        <a 
+                          href={`https://www.google.com/maps?q=${product.coordenadas}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 font-mono text-xs underline hover:no-underline transition-colors"
+                          title="Ver en Google Maps"
+                        >
+                          {product.coordenadas}
+                        </a>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1 ml-24">
+                        Haz clic para ver en Google Maps
+                      </p>
                     </div>
-            )}
-
-            {/* Información adicional - MEJORADO: Con sombras y profundidad + RESPONSIVE */}
-            <div className="border-l-4 border-purple-500 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-4 shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <h3 className="font-semibold text-gray-900 mb-3 flex items-center text-base">
-                <Tag className="h-5 w-5 mr-2 text-purple-600" />
-                Información del {product.tipo === 'servicio' ? 'servicio' : 'producto'}
-              </h3>
-              <div className="space-y-3">
-                <div className="py-1.5">
-                  <span className="text-gray-600 text-xs font-medium uppercase tracking-wide block mb-1">Categoría</span>
-                  <span className="text-gray-900 font-bold text-base">{product.categoria_nombre}</span>
-                </div>
-                {product.categoria_descripcion && (
-                  <div className="py-1.5 pl-3 border-l-2 border-purple-300 bg-white/40 rounded-r-lg">
-                    <div className="flex items-start space-x-2">
-                      <FileText className="h-4 w-4 text-purple-500 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700 text-xs leading-relaxed">{product.categoria_descripcion}</span>
-                    </div>
-                </div>
-                )}
-                <div className="py-1.5">
-                  <span className="text-gray-600 text-xs font-medium uppercase tracking-wide block mb-1">Publicado</span>
-                  <span className="text-gray-900 font-semibold text-base">{formatDate(product.fecha_publicacion)}</span>
-                </div>
-                <div className="py-1.5">
-                  <span className="text-gray-600 text-xs font-medium uppercase tracking-wide block mb-1">Tipo</span>
-                  <span className={`font-bold text-lg ${product.tipo === 'servicio' ? 'text-purple-700' : 'text-blue-700'}`}>
-                    {product.tipo === 'servicio' ? '🔧 Servicio' : '📦 Producto'}
-                  </span>
+                  )}
                 </div>
               </div>
-            </div>
+            )}
+
+            {/* Información adicional - Solo para SERVICIOS en columna derecha */}
+            {product.tipo === 'servicio' && (
+              <div className="border-l-4 border-green-500 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <h3 className="font-semibold text-gray-900 mb-3 flex items-center text-base">
+                  <Tag className="h-5 w-5 mr-2 text-green-600" />
+                  Información del servicio
+                </h3>
+                <div className="space-y-3">
+                  <div className="py-1.5">
+                    <span className="text-gray-600 text-xs font-medium uppercase tracking-wide block mb-1">Categoría</span>
+                    <span className="text-gray-900 font-bold text-base">{product.categoria_nombre}</span>
+                  </div>
+                  {product.categoria_descripcion && (
+                    <div className="py-1.5 pl-3 border-l-2 border-green-300 bg-white/40 rounded-r-lg">
+                      <div className="flex items-start space-x-2">
+                        <FileText className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                        <span className="text-gray-700 text-xs leading-relaxed">{product.categoria_descripcion}</span>
+                      </div>
+                  </div>
+                  )}
+                  <div className="py-1.5">
+                    <span className="text-gray-600 text-xs font-medium uppercase tracking-wide block mb-1">Publicado</span>
+                    <span className="text-gray-900 font-semibold text-base">{formatDate(product.fecha_publicacion)}</span>
+                  </div>
+                  <div className="py-1.5">
+                    <span className="text-gray-600 text-xs font-medium uppercase tracking-wide block mb-1">Tipo</span>
+                    <span className="font-bold text-lg text-green-700">🔧 Servicio</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
           </div>
         </div>

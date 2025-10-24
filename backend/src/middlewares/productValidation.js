@@ -46,6 +46,9 @@ const productSchemas = {
        'string.max': 'La dirección no puede tener más de 200 caracteres',
        'any.required': 'La dirección es requerida'
      }),
+     coordenadas: Joi.string().max(50).optional().allow('').messages({
+       'string.max': 'Las coordenadas no pueden tener más de 50 caracteres'
+     }),
      disponibilidad: Joi.boolean().optional().default(true).messages({
        'boolean.base': 'La disponibilidad debe ser verdadero o falso'
      }),
@@ -107,6 +110,9 @@ const productSchemas = {
      ubicacion_direccion: Joi.string().min(5).max(200).optional().messages({
        'string.min': 'La dirección debe tener al menos 5 caracteres',
        'string.max': 'La dirección no puede tener más de 200 caracteres'
+     }),
+     coordenadas: Joi.string().max(50).optional().allow('').messages({
+       'string.max': 'Las coordenadas no pueden tener más de 50 caracteres'
      }),
      disponibilidad: Joi.boolean().optional().messages({
        'boolean.base': 'La disponibilidad debe ser verdadero o falso'

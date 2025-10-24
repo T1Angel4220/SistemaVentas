@@ -12,6 +12,9 @@ import { Label } from '../components/ui/Label';
 import { Alert, AlertDescription } from '../components/ui/Alert';
 import { AlertDialog } from '../components/ui/AlertDialog';
 import HierarchicalCategorySearch from '../components/ui/HierarchicalCategorySearch';
+import HierarchicalLocationSearch from '../components/ui/HierarchicalLocationSearch';
+import type { Location } from '../components/ui/HierarchicalLocationSearch';
+import MapSelector from '../components/ui/MapSelector';
 import { ServiceDetailsForm } from '../components/ui/ServiceDetailsForm';
 import { VisibilityToggle } from '../components/ui/VisibilityToggle';
 import { 
@@ -53,6 +56,7 @@ export const CreateProductPage: React.FC = () => {
 
   // Usar hooks optimizados para evitar múltiples requests
   const { data: categories, loading: categoriesLoading, error: categoriesError } = useCategories();
+  const [locations, setLocations] = useState<Location[]>([]);
 
   const [form, setForm] = useState<ProductForm>({
     codigo: '',
@@ -66,6 +70,7 @@ export const CreateProductPage: React.FC = () => {
     ubicacion_canton: '',
     ubicacion_distrito: '',
     ubicacion_direccion: '',
+    coordenadas: '', // Coordenadas en formato "lat,lng"
     disponibilidad: false, // Por defecto no visible hasta aprobación
     estado: 'pendiente_revision', // Por defecto pendiente de revisión
     horario_atencion: '',
@@ -134,10 +139,11 @@ export const CreateProductPage: React.FC = () => {
           tipo: product.tipo || 'producto',
           categoria_id: product.categoria_id?.toString() || '',
           ubicacion_id: product.ubicacion_id?.toString() || '',
-          ubicacion_provincia: product.provincia || '',
-          ubicacion_canton: product.canton || '',
-          ubicacion_distrito: product.distrito || '',
-          ubicacion_direccion: product.ubicacion_nombre || '',
+          ubicacion_provincia: product.ubicacion_provincia || '',
+          ubicacion_canton: product.ubicacion_canton || '',
+          ubicacion_distrito: product.ubicacion_distrito || '',
+          ubicacion_direccion: product.ubicacion_direccion || '',
+          coordenadas: product.coordenadas || '', // Cargar coordenadas del producto
           disponibilidad: product.disponibilidad === true, // Solo true si explícitamente es true
           estado: product.estado || 'pendiente_revision',
           motivo_rechazo: product.motivo_rechazo || '',
@@ -222,6 +228,24 @@ export const CreateProductPage: React.FC = () => {
       loadProductData(id);
     }
   }, [user, navigate, id, loadProductData]);
+
+  // Cargar ubicaciones al montar el componente
+  useEffect(() => {
+    const loadLocations = async () => {
+      try {
+        // Pedir todas las ubicaciones (sin paginación)
+        const response = await fetch('http://localhost:3001/api/locations?limit=1000');
+        const data = await response.json();
+        if (data.success) {
+          setLocations(data.data);
+        }
+      } catch (error) {
+        console.error('Error al cargar ubicaciones:', error);
+      }
+    };
+
+    loadLocations();
+  }, []);
 
   const handleInputChange = (field: keyof ProductForm, value: string | string[]) => {
     let processedValue = value;
@@ -595,6 +619,17 @@ export const CreateProductPage: React.FC = () => {
         return sortedCurrent.some((val, idx) => val !== sortedInitial[idx]);
       }
       
+      // Log especial para coordenadas
+      if (key === 'coordenadas') {
+        const changed = currentValue !== initialValue;
+        console.log('📍 Verificando cambios en coordenadas:', {
+          inicial: initialValue,
+          actual: currentValue,
+          cambió: changed
+        });
+        return changed;
+      }
+      
       // Comparar valores simples
       return currentValue !== initialValue;
     });
@@ -604,6 +639,12 @@ export const CreateProductPage: React.FC = () => {
       images.length > 0 || // Hay nuevas imágenes
       deletedExistingImages.length > 0 || // Se eliminaron imágenes
       existingImages.length !== initialImages.length; // Cambió el número de imágenes
+
+    console.log('🔍 hasChanges() resultado:', {
+      formChanged,
+      imagesChanged,
+      total: formChanged || imagesChanged
+    });
 
     return formChanged || imagesChanged;
   };
@@ -620,7 +661,7 @@ export const CreateProductPage: React.FC = () => {
       showSuccess(
         'Sin cambios', 
         'No se han realizado cambios en el formulario. Todo está actualizado.',
-        () => navigate(`/products/${id}`) // Redirigir a la vista del producto
+        () => window.location.href = `/products/${id}` // Redirigir a la vista del producto con recarga
       );
       return;
     }
@@ -649,6 +690,13 @@ export const CreateProductPage: React.FC = () => {
         // Excluir campos de servicio que se procesarán después
         if (key === 'horario_inicio' || key === 'horario_fin' || key === 'dias_disponibles' || key === 'duracion_estimada' || key === 'horario_atencion') {
           return; // Estos se procesarán por separado en la sección de servicio
+        }
+        
+        // Para coordenadas, siempre agregar (incluso si está vacío) para que el backend pueda manejarlo con COALESCE
+        if (key === 'coordenadas') {
+          formData.append(key, value?.toString() || '');
+          console.log('📍 Agregando coordenadas al FormData:', value);
+          return;
         }
         
         if (value !== undefined && value !== null && value !== '') {
@@ -805,33 +853,52 @@ export const CreateProductPage: React.FC = () => {
           setRespuestaRechazo('');
         }
         
-        if (esPeligroso) {
-          // Redirigir a /my-products si el producto fue marcado como peligroso
-          showError(
-            '🚫 Contenido Prohibido Detectado', 
-            mensajeExito,
-            () => navigate('/my-products')
-          );
-        } else if (seEnvioApelacion) {
-          // Si se envió una apelación desde producto rechazado, redirigir a Mis Productos
-          showSuccess(
-            '✅ Producto Actualizado y Apelación Enviada', 
-            mensajeExito,
-            () => navigate('/my-products')
-          );
-        } else if (tipoAlerta === 'info') {
-          showSuccess(
-            'Producto Enviado para Revisión', 
-            mensajeExito,
-            () => navigate(`/products/${data.data.id || id}`)
-          );
-        } else {
-          showSuccess(
-            '¡Éxito!', 
-            mensajeExito,
-            () => navigate(`/products/${data.data.id || id}`)
-          );
-        }
+        // Pequeño delay para mostrar el AlertDialog después de actualizar el botón
+        setTimeout(() => {
+          if (esPeligroso) {
+            // Redirigir a /my-products si el producto fue marcado como peligroso
+            showError(
+              '🚫 Contenido Prohibido Detectado', 
+              mensajeExito,
+              () => {
+                setSuccess(false);
+                // Forzar recarga completa de la página
+                window.location.href = '/my-products';
+              }
+            );
+          } else if (seEnvioApelacion) {
+            // Si se envió una apelación desde producto rechazado, redirigir a Mis Productos
+            showSuccess(
+              '✅ Producto Actualizado y Apelación Enviada', 
+              mensajeExito,
+              () => {
+                setSuccess(false);
+                // Forzar recarga completa de la página
+                window.location.href = '/my-products';
+              }
+            );
+          } else if (tipoAlerta === 'info') {
+            showSuccess(
+              'Producto Enviado para Revisión', 
+              mensajeExito,
+              () => {
+                setSuccess(false);
+                // Forzar recarga completa de la página para mostrar los cambios
+                window.location.href = `/products/${data.data.id || id}`;
+              }
+            );
+          } else {
+            showSuccess(
+              '¡Éxito!', 
+              mensajeExito,
+              () => {
+                setSuccess(false);
+                // Forzar recarga completa de la página para mostrar los cambios
+                window.location.href = `/products/${data.data.id || id}`;
+              }
+            );
+          }
+        }, 100);
       } else {
         // Manejar errores específicos del servidor
         if (data.errors) {
@@ -1432,85 +1499,38 @@ export const CreateProductPage: React.FC = () => {
                 </div>
                 
                 <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Provincia - CON TOOLTIP */}
-                    <div className="space-y-2">
-                      <Label htmlFor="ubicacion_provincia" className="text-sm font-semibold text-gray-700 flex items-center">
-                        <MapPin className="h-3 w-3 mr-1 text-green-600" />
-                      Provincia *
-                    </Label>
-                    <Input
-                      id="ubicacion_provincia"
-                      type="text"
-                        placeholder="Ej: San José, Alajuela..."
-                      value={form.ubicacion_provincia}
-                      onChange={(e) => handleInputChange('ubicacion_provincia', e.target.value)}
-                        className="h-11 rounded-xl border-2 border-gray-200 focus:border-green-500 focus:ring-green-500 shadow-sm hover:shadow-md transition-all"
-                      required
-                    />
-                      <p className="text-xs text-gray-500 flex items-center">
-                        <Info className="h-3 w-3 mr-1" />
-                        Escribe la provincia de Costa Rica
-                      </p>
-                  </div>
-
-                    {/* Cantón - CON TOOLTIP */}
-                    <div className="space-y-2">
-                      <Label htmlFor="ubicacion_canton" className="text-sm font-semibold text-gray-700 flex items-center">
-                        <MapPin className="h-3 w-3 mr-1 text-green-600" />
-                      Cantón *
-                    </Label>
-                    <Input
-                      id="ubicacion_canton"
-                      type="text"
-                        placeholder="Ej: Santa Ana, Escazú..."
-                      value={form.ubicacion_canton}
-                      onChange={(e) => handleInputChange('ubicacion_canton', e.target.value)}
-                        className="h-11 rounded-xl border-2 border-gray-200 focus:border-green-500 focus:ring-green-500 shadow-sm hover:shadow-md transition-all"
-                      required
-                    />
-                      <p className="text-xs text-gray-500 flex items-center">
-                        <Info className="h-3 w-3 mr-1" />
-                        Escribe el cantón correspondiente
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Distrito */}
-                    <div className="space-y-2">
-                      <Label htmlFor="ubicacion_distrito" className="text-sm font-semibold text-gray-700 flex items-center">
-                        <MapPin className="h-3 w-3 mr-1 text-gray-500" />
-                      Distrito
-                        <span className="ml-1 text-xs text-gray-500">(opcional)</span>
-                    </Label>
-                    <Input
-                      id="ubicacion_distrito"
-                      type="text"
-                        placeholder="Ej: Pozos, Uruca..."
-                      value={form.ubicacion_distrito}
-                      onChange={(e) => handleInputChange('ubicacion_distrito', e.target.value)}
-                        className="h-11 rounded-xl border-2 border-gray-200 focus:border-green-500 focus:ring-green-500 shadow-sm hover:shadow-md transition-all"
+                  <HierarchicalLocationSearch
+                    locations={locations}
+                    onLocationSelect={(locationData) => {
+                      setForm(prev => ({
+                        ...prev,
+                        ubicacion_id: locationData.locationId,
+                        ubicacion_provincia: locationData.provincia,
+                        ubicacion_canton: locationData.canton,
+                        ubicacion_distrito: locationData.distrito,
+                        ubicacion_direccion: locationData.direccion
+                      }));
+                    }}
+                    initialProvincia={form.ubicacion_provincia}
+                    initialCanton={form.ubicacion_canton}
+                    initialDistrito={form.ubicacion_distrito}
+                    initialDireccion={form.ubicacion_direccion}
+                  />
+                  
+                  {/* Mapa interactivo para seleccionar coordenadas */}
+                  <div className="mt-6">
+                    <MapSelector
+                      onLocationSelect={(lat, lng) => {
+                        setForm(prev => ({
+                          ...prev,
+                          coordenadas: `${lat},${lng}`
+                        }));
+                      }}
+                      initialLat={form.coordenadas ? parseFloat(form.coordenadas.split(',')[0]) : undefined}
+                      initialLng={form.coordenadas ? parseFloat(form.coordenadas.split(',')[1]) : undefined}
+                      provincia={form.ubicacion_provincia}
                     />
                   </div>
-
-                  {/* Dirección */}
-                    <div className="space-y-2">
-                      <Label htmlFor="ubicacion_direccion" className="text-sm font-semibold text-gray-700 flex items-center">
-                        <MapPin className="h-3 w-3 mr-1 text-green-600" />
-                      Dirección específica *
-                    </Label>
-                <Input
-                      id="ubicacion_direccion"
-                      type="text"
-                      placeholder="Ej: 100m norte del supermercado"
-                      value={form.ubicacion_direccion}
-                      onChange={(e) => handleInputChange('ubicacion_direccion', e.target.value)}
-                        className="h-11 rounded-xl border-2 border-gray-200 focus:border-green-500 focus:ring-green-500 shadow-sm hover:shadow-md transition-all"
-                      required
-                    />
-                    </div>
-                </div>
                 </div>
 
                 {/* Información de ayuda mejorada */}
@@ -1520,7 +1540,9 @@ export const CreateProductPage: React.FC = () => {
                     <div className="text-xs text-green-700">
                       <p className="font-semibold mb-1">Consejos para ubicación:</p>
                       <ul className="space-y-0.5">
-                        <li>• Escribe la información lo más precisa posible</li>
+                        <li>• Selecciona la provincia y cantón de Ecuador donde se encuentra tu {form.tipo}</li>
+                        <li>• El distrito y dirección específica son opcionales pero recomendados</li>
+                        <li>• Usa el mapa para marcar la ubicación exacta de tu {form.tipo}</li>
                         <li>• Los compradores verán esta información para contactarte</li>
                         <li>• Campos con * son obligatorios</li>
                       </ul>

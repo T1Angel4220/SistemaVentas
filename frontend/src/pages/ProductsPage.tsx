@@ -21,11 +21,14 @@ import {
   DollarSign,
   Shield,
   Camera,
-  Flag
+  Flag,
+  X
 } from 'lucide-react';
 import type { Product, ProductsResponse, ProductFilters } from '../types/product.types';
 import type { Category } from '../types/category.types';
 import HierarchicalCategorySearch from '../components/ui/HierarchicalCategorySearch';
+import HierarchicalLocationSearch from '../components/ui/HierarchicalLocationSearch';
+import type { Location } from '../components/ui/HierarchicalLocationSearch';
 import { ReportProductDialog } from '../components/ui/ReportProductDialog';
 
 export const ProductsPage: React.FC = () => {
@@ -34,6 +37,7 @@ export const ProductsPage: React.FC = () => {
   const { showSuccess, showError } = useAlert();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({
     current_page: 1,
@@ -53,6 +57,10 @@ export const ProductsPage: React.FC = () => {
     precio_max: '',
     estado: 'activo', // Por defecto solo activos
     disponibilidad: 'true', // Por defecto solo disponibles
+    provincia: '',
+    canton: '',
+    distrito: '',
+    direccion: '',
     page: 1,
     limit: 12
   });
@@ -64,6 +72,9 @@ export const ProductsPage: React.FC = () => {
   // Estado para modal de reportes
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [selectedProductForReport, setSelectedProductForReport] = useState<{id: number; nombre: string} | null>(null);
+  
+  // Estado para mostrar/ocultar filtros de ubicación
+  const [showLocationFilter, setShowLocationFilter] = useState(false);
 
   const loadProducts = useCallback(async () => {
     try {
@@ -104,6 +115,23 @@ export const ProductsPage: React.FC = () => {
     }
   };
 
+  const loadLocations = async () => {
+    try {
+      // Pedir todas las ubicaciones (sin paginación)
+      const response = await fetch('http://localhost:3001/api/locations?limit=1000');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      if (data.success) {
+        setLocations(data.data);
+      }
+    } catch (error) {
+      console.error('Error al cargar ubicaciones:', error);
+      // No mostrar error al usuario, solo log
+    }
+  };
+
   const loadSavedProducts = useCallback(async () => {
     if (!user || (user.tipo_usuario !== 'comprador' && user.tipo_usuario !== 'vendedor')) return;
     
@@ -130,7 +158,11 @@ export const ProductsPage: React.FC = () => {
     if (categories.length === 0) {
       loadCategories();
     }
-  }, [loadProducts, categories.length]);
+    // Solo cargar ubicaciones si no están cargadas
+    if (locations.length === 0) {
+      loadLocations();
+    }
+  }, [loadProducts, categories.length, locations.length]);
 
   useEffect(() => {
     if (user) {
@@ -475,6 +507,49 @@ export const ProductsPage: React.FC = () => {
                     />
                   </div>
                 </div>
+
+                {/* Segunda fila - Botón de Ubicación */}
+                <div className="space-y-4">
+                  {/* Botón para mostrar/ocultar filtros de ubicación */}
+                  <Button
+                    onClick={() => setShowLocationFilter(!showLocationFilter)}
+                    variant="outline"
+                    className="w-full md:w-auto border-purple-300 text-purple-700 hover:bg-purple-50 rounded-xl flex items-center justify-center space-x-2 h-12"
+                  >
+                    <MapPin className="h-5 w-5" />
+                    <span>
+                      {showLocationFilter ? 'Ocultar filtros de ubicación' : 'Filtrar por ubicación'}
+                    </span>
+                  </Button>
+
+                  {/* Filtros de ubicación - Solo visible cuando showLocationFilter es true */}
+                  {showLocationFilter && (
+                    <div className="bg-purple-50/50 border-2 border-purple-200 rounded-xl p-6 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <MapPin className="h-5 w-5 text-purple-600" />
+                        <h3 className="font-semibold text-purple-900">Filtrar por Ubicación</h3>
+                    </div>
+                      <HierarchicalLocationSearch
+                        locations={locations}
+                        onLocationSelect={(locationData) => {
+                          setFilters(prev => ({
+                            ...prev,
+                            provincia: locationData.provincia,
+                            canton: locationData.canton,
+                            distrito: locationData.distrito,
+                            direccion: locationData.direccion,
+                            page: 1
+                          }));
+                        }}
+                        loading={locations.length === 0}
+                        initialProvincia={filters.provincia}
+                        initialCanton={filters.canton}
+                        initialDistrito={filters.distrito}
+                        initialDireccion={filters.direccion}
+                      />
+                  </div>
+                )}
+                </div>
               </div>
             </div>
             
@@ -491,14 +566,19 @@ export const ProductsPage: React.FC = () => {
                       precio_max: '',
                       estado: 'activo',
                       disponibilidad: 'true',
+                      provincia: '',
+                      canton: '',
+                      distrito: '',
+                      direccion: '',
                       page: 1,
                       limit: 12
                     });
                   }}
                   variant="outline"
-                  className="border-gray-300 text-gray-600 hover:bg-gray-50 rounded-xl"
+                  className="border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 rounded-xl font-semibold transition-all duration-200 shadow-sm hover:shadow-md"
                 >
-                  Limpiar filtros
+                  <X className="h-4 w-4 mr-2" />
+                  🧹 Limpiar todos los filtros
                 </Button>
                 <span className="text-sm text-gray-500">
                   {pagination.total_items} producto{pagination.total_items !== 1 ? 's' : ''} encontrado{pagination.total_items !== 1 ? 's' : ''}
@@ -575,13 +655,18 @@ export const ProductsPage: React.FC = () => {
                     precio_max: '',
                     estado: 'activo',
                     disponibilidad: 'true',
+                    provincia: '',
+                    canton: '',
+                    distrito: '',
+                    direccion: '',
                     page: 1,
                     limit: 12
                   });
                 }}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl px-8 py-3"
+                className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl px-8 py-3 font-semibold"
               >
-                Limpiar filtros
+                <X className="h-5 w-5 mr-2" />
+                🧹 Limpiar todos los filtros
               </Button>
             </CardContent>
           </Card>
@@ -671,12 +756,16 @@ export const ProductsPage: React.FC = () => {
                           </div>
                           
                           <div className="space-y-2.5 pt-3 border-t border-gray-100">
-                            {product.ubicacion_nombre && (
+                            {(product.ubicacion_provincia || product.ubicacion_canton) && (
                               <div className="flex items-center space-x-2 text-sm text-gray-500">
                                 <div className="w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
                                   <MapPin className="h-3 w-3 text-blue-500" />
                                 </div>
-                                <span className="truncate">{product.ubicacion_nombre}</span>
+                                <span className="truncate">
+                                  {product.ubicacion_provincia && product.ubicacion_canton 
+                                    ? `${product.ubicacion_provincia}, ${product.ubicacion_canton}`
+                                    : product.ubicacion_provincia || product.ubicacion_canton}
+                                </span>
                               </div>
                             )}
                             <div className="flex items-center justify-between text-xs text-gray-500">
