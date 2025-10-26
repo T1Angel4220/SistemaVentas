@@ -386,15 +386,24 @@ class ProductsController {
         console.log('=================================\n');
       }
 
+      // Si se aplicó filtro de proximidad, recalcular la paginación
+      let totalFinal = total;
+      let totalPagesFinal = totalPages;
+      
+      if (user_lat && user_lng) {
+        totalFinal = productosFinales.length;
+        totalPagesFinal = Math.ceil(totalFinal / limit);
+      }
+
       res.json({
         success: true,
         data: productosFinales,
         pagination: {
           current_page: parseInt(page),
-          total_pages: totalPages,
-          total_items: total,
+          total_pages: totalPagesFinal,
+          total_items: totalFinal,
           items_per_page: parseInt(limit),
-          has_next: page < totalPages,
+          has_next: page < totalPagesFinal,
           has_prev: page > 1
         },
         // Información adicional si se usó filtro de proximidad
