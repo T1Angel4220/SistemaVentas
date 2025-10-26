@@ -24,10 +24,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "tsx src/tests/testDb.ts && tsx src/tests/testMail.ts",
+    "test": "cross-env NODE_ENV=test mocha 'test/**/*.test.js' --timeout 10000 --exit",
+    "test:integration": "cross-env NODE_ENV=test mocha 'test/integration/**/*.test.js' --timeout 10000 --exit",
+    "test:unit": "cross-env NODE_ENV=test mocha 'test/unit/**/*.test.js' --timeout 5000 --exit",
+    "test:watch": "cross-env NODE_ENV=test mocha 'test/**/*.test.js' --watch --timeout 10000",
+    "test:coverage": "cross-env NODE_ENV=test nyc --reporter=html --reporter=text mocha 'test/**/*.test.js' --timeout 10000 --exit",
     "test:db": "tsx src/tests/testDb.ts",
     "test:mail": "tsx src/tests/testMail.ts",
-    "test:full": "node src/tests/database.test.js",
+    "test:old": "node src/tests/database.test.js",
     "start": "tsx index.ts",
     "dev": "tsx index.ts"
   },
@@ -36,8 +40,16 @@
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
+    "@types/chai": "^5.2.3",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/mocha": "^10.0.10",
     "@types/nodemailer": "^7.0.1",
-    "@types/pg": "^8.15.5"
+    "@types/pg": "^8.15.5",
+    "@types/supertest": "^6.0.3",
+    "chai": "^6.2.0",
+    "cross-env": "^10.1.0",
+    "mocha": "^11.7.4",
+    "nyc": "^17.1.0",
+    "supertest": "^7.1.4"
   }
 }

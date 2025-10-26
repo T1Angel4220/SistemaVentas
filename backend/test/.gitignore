@@ -1,0 +1,20 @@
+# Archivos de cobertura
+coverage/
+.nyc_output/
+*.lcov
+
+# Reportes de pruebas
+test-results/
+mochawesome-report/
+
+# Archivos temporales de pruebas
+*.test.log
+.test-*
+
+# Base de datos de pruebas temporal
+test.db
+test.sqlite
+
+# Archivos de caché
+.cache/
+

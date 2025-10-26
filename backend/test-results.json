@@ -1,0 +1,356 @@
+
+> backend@1.0.0 test
+> cross-env NODE_ENV=test mocha 'test/**/*.test.js' --timeout 10000 --exit --reporter json
+
+[dotenv@17.2.2] injecting env (19) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+🧪 Configuración de pruebas cargada
+📊 Modo: test
+🗄️  Base de datos: sistema_ventas_multiempresa
+⏱️  Timeout: 10000ms
+
+[dotenv@17.2.2] injecting env (0) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+📊 Query ejecutada {
+  text: 'DELETE FROM acciones_moderacion WHERE id > 0;...',
+  duration: '111ms'
+}
+📊 Query ejecutada {
+  text: 'DELETE FROM sesiones_usuario WHERE id > 0;...',
+  duration: '6ms'
+}
+❌ Error en query: update o delete en «usuarios» viola la llave foránea «reportes_usuario_reportador_id_fkey» en la tabla «reportes»
+❌ Error limpiando tablas de autenticación: update o delete en «usuarios» viola la llave foránea «reportes_usuario_reportador_id_fkey» en la tabla «reportes»
+📊 Query ejecutada {
+  text: 'DELETE FROM acciones_moderacion WHERE id > 0;...',
+  duration: '136ms'
+}
+📊 Query ejecutada {
+  text: 'DELETE FROM sesiones_usuario WHERE id > 0;...',
+  duration: '7ms'
+}
+❌ Error en query: update o delete en «usuarios» viola la llave foránea «reportes_usuario_reportador_id_fkey» en la tabla «reportes»
+❌ Error limpiando tablas de autenticación: update o delete en «usuarios» viola la llave foránea «reportes_usuario_reportador_id_fkey» en la tabla «reportes»
+📊 Query ejecutada {
+  text: 'DELETE FROM acciones_moderacion WHERE id > 0;...',
+  duration: '100ms'
+}
+📊 Query ejecutada {
+  text: 'DELETE FROM sesiones_usuario WHERE id > 0;...',
+  duration: '3ms'
+}
+❌ Error en query: update o delete en «usuarios» viola la llave foránea «reportes_usuario_reportador_id_fkey» en la tabla «reportes»
+❌ Error limpiando tablas de autenticación: update o delete en «usuarios» viola la llave foránea «reportes_usuario_reportador_id_fkey» en la tabla «reportes»
+📊 Query ejecutada {
+  text: 'DELETE FROM acciones_moderacion WHERE id > 0;...',
+  duration: '93ms'
+}
+📊 Query ejecutada {
+  text: 'DELETE FROM sesiones_usuario WHERE id > 0;...',
+  duration: '3ms'
+}
+¿Desea terminar el trabajo por lotes (S/N)? ❌ Error en query: update o delete en «usuarios» viola la llave foránea «reportes_usuario_reportador_id_fkey» en la tabla «reportes»
+❌ Error limpiando tablas de autenticación: update o delete en «usuarios» viola la llave foránea «reportes_usuario_reportador_id_fkey» en la tabla «reportes»
+❌ Error en query: Cannot use a pool after calling end on the pool
+❌ Error verificando conexión: Cannot use a pool after calling end on the pool
+📝 2025-10-26T01:28:21.463Z - GET / - IP: ::ffff:127.0.0.1
+📝 2025-10-26T01:28:21.477Z - GET /api/docs - IP: ::ffff:127.0.0.1
+📝 2025-10-26T01:28:21.486Z - GET /ruta-inexistente - IP: ::ffff:127.0.0.1
+{
+  "stats": {
+    "suites": 12,
+    "tests": 10,
+    "passes": 9,
+    "pending": 0,
+    "failures": 5,
+    "start": "2025-10-26T01:28:20.666Z",
+    "end": "2025-10-26T01:28:21.491Z",
+    "duration": 825
+  },
+  "tests": [
+    {
+      "title": "debe conectarse exitosamente a la base de datos",
+      "fullTitle": "🔥 Smoke Tests - Verificación de Configuración Verificación de Base de Datos debe conectarse exitosamente a la base de datos",
+      "file": "E:\\Gestion de Pruebas e Implantación de Software\\SistemaVentas\\backend\\test\\integration\\smoke.test.js",
+      "duration": 4,
+      "currentRetry": 0,
+      "err": {
+        "stack": "AssertionError: expected false to be true\n    at Context.<anonymous> (test\\integration\\smoke.test.js:15:32)",
+        "message": "expected false to be true",
+        "actual": "false",
+        "expected": "true",
+        "showDiff": true,
+        "operator": "strictEqual"
+      }
+    },
+    {
+      "title": "debe responder en la ruta raíz",
+      "fullTitle": "🔥 Smoke Tests - Verificación de Configuración Verificación del Servidor debe responder en la ruta raíz",
+      "file": "E:\\Gestion de Pruebas e Implantación de Software\\SistemaVentas\\backend\\test\\integration\\smoke.test.js",
+      "duration": 33,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "debe responder en /api/docs",
+      "fullTitle": "🔥 Smoke Tests - Verificación de Configuración Verificación del Servidor debe responder en /api/docs",
+      "file": "E:\\Gestion de Pruebas e Implantación de Software\\SistemaVentas\\backend\\test\\integration\\smoke.test.js",
+      "duration": 4,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "debe retornar 404 para rutas no existentes",
+      "fullTitle": "🔥 Smoke Tests - Verificación de Configuración Verificación del Servidor debe retornar 404 para rutas no existentes",
+      "file": "E:\\Gestion de Pruebas e Implantación de Software\\SistemaVentas\\backend\\test\\integration\\smoke.test.js",
+      "duration": 8,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "los helpers de base de datos deben estar disponibles",
+      "fullTitle": "🔥 Smoke Tests - Verificación de Configuración Verificación de Helpers los helpers de base de datos deben estar disponibles",
+      "file": "E:\\Gestion de Pruebas e Implantación de Software\\SistemaVentas\\backend\\test\\integration\\smoke.test.js",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "los helpers de autenticación deben estar disponibles",
+      "fullTitle": "🔥 Smoke Tests - Verificación de Configuración Verificación de Helpers los helpers de autenticación deben estar disponibles",
+      "file": "E:\\Gestion de Pruebas e Implantación de Software\\SistemaVentas\\backend\\test\\integration\\smoke.test.js",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "los fixtures deben estar disponibles",
+      "fullTitle": "🔥 Smoke Tests - Verificación de Configuración Verificación de Helpers los fixtures deben estar disponibles",
+      "file": "E:\\Gestion de Pruebas e Implantación de Software\\SistemaVentas\\backend\\test\\integration\\smoke.test.js",
+      "duration": 1,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "debe tener configurada la variable NODE_ENV",
+      "fullTitle": "🔥 Smoke Tests - Verificación de Configuración Verificación de Variables de Entorno debe tener configurada la variable NODE_ENV",
+      "file": "E:\\Gestion de Pruebas e Implantación de Software\\SistemaVentas\\backend\\test\\integration\\smoke.test.js",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "debe tener configuradas las variables de base de datos",
+      "fullTitle": "🔥 Smoke Tests - Verificación de Configuración Verificación de Variables de Entorno debe tener configuradas las variables de base de datos",
+      "file": "E:\\Gestion de Pruebas e Implantación de Software\\SistemaVentas\\backend\\test\\integration\\smoke.test.js",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "debe tener configurada la variable JWT_SECRET",
+      "fullTitle": "🔥 Smoke Tests - Verificación de Configuración Verificación de Variables de Entorno debe tener configurada la variable JWT_SECRET",
+      "file": "E:\\Gestion de Pruebas e Implantación de Software\\SistemaVentas\\backend\\test\\integration\\smoke.test.js",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    }
+  ],
+  "pending": [],
+  "failures": [
+    {
+      "title": "\"before each\" hook for \"debe permitir login con usuario activo y verificado\"",
+      "fullTitle": "B. Login y Sesiones \"before each\" hook for \"debe permitir login con usuario activo y verificado\"",
+      "file": "E:\\Gestion de Pruebas e Implantación de Software\\SistemaVentas\\backend\\test\\integration\\auth\\login.test.js",
+      "duration": 187,
+      "currentRetry": 0,
+      "err": {
+        "stack": "error: update o delete en «usuarios» viola la llave foránea «reportes_usuario_reportador_id_fkey» en la tabla «reportes»\n    at E:\\Gestion de Pruebas e Implantación de Software\\SistemaVentas\\backend\\node_modules\\pg-pool\\index.js:45:11\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async query (src\\config\\database.js:44:17)\n    at async cleanAuthTables (test\\helpers\\db.helpers.js:56:5)\n    at async Context.<anonymous> (test\\integration\\auth\\login.test.js:26:5)",
+        "message": "update o delete en «usuarios» viola la llave foránea «reportes_usuario_reportador_id_fkey» en la tabla «reportes»",
+        "length": 315,
+        "name": "error",
+        "severity": "ERROR",
+        "code": "23503",
+        "detail": "La llave (id)=(268) todavía es referida desde la tabla «reportes».",
+        "schema": "public",
+        "table": "reportes",
+        "constraint": "reportes_usuario_reportador_id_fkey",
+        "file": "ri_triggers.c",
+        "line": "2624",
+        "routine": "ri_ReportViolation"
+      }
+    },
+    {
+      "title": "\"before each\" hook for \"debe aceptar solicitud con correo existente\"",
+      "fullTitle": "C. Recuperación de Contraseña \"before each\" hook for \"debe aceptar solicitud con correo existente\"",
+      "file": "E:\\Gestion de Pruebas e Implantación de Software\\SistemaVentas\\backend\\test\\integration\\auth\\password-reset.test.js",
+      "duration": 229,
+      "currentRetry": 0,
+      "err": {
+        "stack": "error: update o delete en «usuarios» viola la llave foránea «reportes_usuario_reportador_id_fkey» en la tabla «reportes»\n    at E:\\Gestion de Pruebas e Implantación de Software\\SistemaVentas\\backend\\node_modules\\pg-pool\\index.js:45:11\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async query (src\\config\\database.js:44:17)\n    at async cleanAuthTables (test\\helpers\\db.helpers.js:56:5)\n    at async Context.<anonymous> (test\\integration\\auth\\password-reset.test.js:16:5)",
+        "message": "update o delete en «usuarios» viola la llave foránea «reportes_usuario_reportador_id_fkey» en la tabla «reportes»",
+        "length": 315,
+        "name": "error",
+        "severity": "ERROR",
+        "code": "23503",
+        "detail": "La llave (id)=(268) todavía es referida desde la tabla «reportes».",
+        "schema": "public",
+        "table": "reportes",
+        "constraint": "reportes_usuario_reportador_id_fkey",
+        "file": "ri_triggers.c",
+        "line": "2624",
+        "routine": "ri_ReportViolation"
+      }
+    },
+    {
+      "title": "\"before all\" hook in \"A. Registro y Verificación de Email\"",
+      "fullTitle": "A. Registro y Verificación de Email \"before all\" hook in \"A. Registro y Verificación de Email\"",
+      "file": "E:\\Gestion de Pruebas e Implantación de Software\\SistemaVentas\\backend\\test\\integration\\auth\\register.test.js",
+      "duration": 167,
+      "currentRetry": 0,
+      "err": {
+        "stack": "error: update o delete en «usuarios» viola la llave foránea «reportes_usuario_reportador_id_fkey» en la tabla «reportes»\n    at E:\\Gestion de Pruebas e Implantación de Software\\SistemaVentas\\backend\\node_modules\\pg-pool\\index.js:45:11\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async query (src\\config\\database.js:44:17)\n    at async cleanAuthTables (test\\helpers\\db.helpers.js:56:5)\n    at async Context.<anonymous> (test\\integration\\auth\\register.test.js:16:5)",
+        "message": "update o delete en «usuarios» viola la llave foránea «reportes_usuario_reportador_id_fkey» en la tabla «reportes»",
+        "length": 315,
+        "name": "error",
+        "severity": "ERROR",
+        "code": "23503",
+        "detail": "La llave (id)=(268) todavía es referida desde la tabla «reportes».",
+        "schema": "public",
+        "table": "reportes",
+        "constraint": "reportes_usuario_reportador_id_fkey",
+        "file": "ri_triggers.c",
+        "line": "2624",
+        "routine": "ri_ReportViolation"
+      }
+    },
+    {
+      "title": "\"before each\" hook for \"debe permitir al admin crear un moderador\"",
+      "fullTitle": "D. Gestión de Usuarios (Moderadores y Admin) \"before each\" hook for \"debe permitir al admin crear un moderador\"",
+      "file": "E:\\Gestion de Pruebas e Implantación de Software\\SistemaVentas\\backend\\test\\integration\\moderation\\user-management.test.js",
+      "duration": 175,
+      "currentRetry": 0,
+      "err": {
+        "stack": "error: update o delete en «usuarios» viola la llave foránea «reportes_usuario_reportador_id_fkey» en la tabla «reportes»\n    at E:\\Gestion de Pruebas e Implantación de Software\\SistemaVentas\\backend\\node_modules\\pg-pool\\index.js:45:11\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async query (src\\config\\database.js:44:17)\n    at async cleanAuthTables (test\\helpers\\db.helpers.js:56:5)\n    at async Context.<anonymous> (test\\integration\\moderation\\user-management.test.js:31:5)",
+        "message": "update o delete en «usuarios» viola la llave foránea «reportes_usuario_reportador_id_fkey» en la tabla «reportes»",
+        "length": 315,
+        "name": "error",
+        "severity": "ERROR",
+        "code": "23503",
+        "detail": "La llave (id)=(268) todavía es referida desde la tabla «reportes».",
+        "schema": "public",
+        "table": "reportes",
+        "constraint": "reportes_usuario_reportador_id_fkey",
+        "file": "ri_triggers.c",
+        "line": "2624",
+        "routine": "ri_ReportViolation"
+      }
+    },
+    {
+      "title": "debe conectarse exitosamente a la base de datos",
+      "fullTitle": "🔥 Smoke Tests - Verificación de Configuración Verificación de Base de Datos debe conectarse exitosamente a la base de datos",
+      "file": "E:\\Gestion de Pruebas e Implantación de Software\\SistemaVentas\\backend\\test\\integration\\smoke.test.js",
+      "duration": 4,
+      "currentRetry": 0,
+      "err": {
+        "stack": "AssertionError: expected false to be true\n    at Context.<anonymous> (test\\integration\\smoke.test.js:15:32)",
+        "message": "expected false to be true",
+        "actual": "false",
+        "expected": "true",
+        "showDiff": true,
+        "operator": "strictEqual"
+      }
+    }
+  ],
+  "passes": [
+    {
+      "title": "debe responder en la ruta raíz",
+      "fullTitle": "🔥 Smoke Tests - Verificación de Configuración Verificación del Servidor debe responder en la ruta raíz",
+      "file": "E:\\Gestion de Pruebas e Implantación de Software\\SistemaVentas\\backend\\test\\integration\\smoke.test.js",
+      "duration": 33,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "debe responder en /api/docs",
+      "fullTitle": "🔥 Smoke Tests - Verificación de Configuración Verificación del Servidor debe responder en /api/docs",
+      "file": "E:\\Gestion de Pruebas e Implantación de Software\\SistemaVentas\\backend\\test\\integration\\smoke.test.js",
+      "duration": 4,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "debe retornar 404 para rutas no existentes",
+      "fullTitle": "🔥 Smoke Tests - Verificación de Configuración Verificación del Servidor debe retornar 404 para rutas no existentes",
+      "file": "E:\\Gestion de Pruebas e Implantación de Software\\SistemaVentas\\backend\\test\\integration\\smoke.test.js",
+      "duration": 8,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "los helpers de base de datos deben estar disponibles",
+      "fullTitle": "🔥 Smoke Tests - Verificación de Configuración Verificación de Helpers los helpers de base de datos deben estar disponibles",
+      "file": "E:\\Gestion de Pruebas e Implantación de Software\\SistemaVentas\\backend\\test\\integration\\smoke.test.js",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "los helpers de autenticación deben estar disponibles",
+      "fullTitle": "🔥 Smoke Tests - Verificación de Configuración Verificación de Helpers los helpers de autenticación deben estar disponibles",
+      "file": "E:\\Gestion de Pruebas e Implantación de Software\\SistemaVentas\\backend\\test\\integration\\smoke.test.js",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "los fixtures deben estar disponibles",
+      "fullTitle": "🔥 Smoke Tests - Verificación de Configuración Verificación de Helpers los fixtures deben estar disponibles",
+      "file": "E:\\Gestion de Pruebas e Implantación de Software\\SistemaVentas\\backend\\test\\integration\\smoke.test.js",
+      "duration": 1,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "debe tener configurada la variable NODE_ENV",
+      "fullTitle": "🔥 Smoke Tests - Verificación de Configuración Verificación de Variables de Entorno debe tener configurada la variable NODE_ENV",
+      "file": "E:\\Gestion de Pruebas e Implantación de Software\\SistemaVentas\\backend\\test\\integration\\smoke.test.js",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "debe tener configuradas las variables de base de datos",
+      "fullTitle": "🔥 Smoke Tests - Verificación de Configuración Verificación de Variables de Entorno debe tener configuradas las variables de base de datos",
+      "file": "E:\\Gestion de Pruebas e Implantación de Software\\SistemaVentas\\backend\\test\\integration\\smoke.test.js",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "debe tener configurada la variable JWT_SECRET",
+      "fullTitle": "🔥 Smoke Tests - Verificación de Configuración Verificación de Variables de Entorno debe tener configurada la variable JWT_SECRET",
+      "file": "E:\\Gestion de Pruebas e Implantación de Software\\SistemaVentas\\backend\\test\\integration\\smoke.test.js",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    }
+  ]
+}¿Desea terminar el trabajo por lotes (S/N)? 
+^C
