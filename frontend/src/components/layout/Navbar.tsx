@@ -57,7 +57,7 @@ export const Navbar: React.FC = () => {
 
   if (!isAuthenticated || !user) {
     return (
-      <nav className="bg-white shadow-sm border-b">
+      <nav className="sticky top-0 z-50 bg-white shadow-md border-b backdrop-blur-sm bg-white/95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
@@ -80,7 +80,7 @@ export const Navbar: React.FC = () => {
   }
 
   return (
-    <nav className="bg-white shadow-sm border-b">
+    <nav className="sticky top-0 z-50 bg-white shadow-md border-b backdrop-blur-sm bg-white/95">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center h-16 gap-8">
           <div className="flex items-center space-x-8 flex-1">
