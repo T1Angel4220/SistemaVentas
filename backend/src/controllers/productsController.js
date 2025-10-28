@@ -130,12 +130,13 @@ class ProductsController {
         `INSERT INTO items (
           codigo, nombre, descripcion, precio, ubicacion_id, 
           ubicacion_provincia, ubicacion_canton, ubicacion_distrito, ubicacion_direccion, coordenadas,
-          tipo, categoria_id, vendedor_id, estado, disponibilidad, es_peligroso, motivo_rechazo
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+          tipo, categoria_id, vendedor_id, estado, disponibilidad, es_peligroso, motivo_rechazo, fecha_deteccion_peligroso
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
         RETURNING *`,
         [codigo, nombre, descripcion, precio, ubicacionIdFinal, 
          ubicacion_provincia, ubicacion_canton, ubicacion_distrito, ubicacion_direccion, coordenadas,
-         tipo, categoria_id, vendedor_id, estadoInicial, disponibilidad, esPeligroso, motivoRechazo]
+         tipo, categoria_id, vendedor_id, estadoInicial, disponibilidad, esPeligroso, motivoRechazo, 
+         esPeligroso ? new Date() : null]
       );
 
       const producto = nuevoProducto.rows[0];
@@ -767,6 +768,11 @@ class ProductsController {
           estado = COALESCE($12, estado),
           es_peligroso = COALESCE($13, es_peligroso),
           motivo_rechazo = COALESCE($14, motivo_rechazo),
+          fecha_deteccion_peligroso = CASE 
+            WHEN $13 = TRUE AND es_peligroso = FALSE THEN CURRENT_TIMESTAMP 
+            WHEN $13 = FALSE THEN NULL 
+            ELSE fecha_deteccion_peligroso 
+          END,
           fecha_actualizacion = CURRENT_TIMESTAMP
         WHERE id = $15
         RETURNING *`,
