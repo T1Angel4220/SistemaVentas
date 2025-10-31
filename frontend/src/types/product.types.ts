@@ -25,6 +25,8 @@ export interface Product {
   ubicacion_canton?: string;
   ubicacion_distrito?: string;
   ubicacion_direccion?: string;
+  coordenadas?: string; // Formato: "lat,lng"
+  distancia?: number; // Distancia en kilómetros (solo cuando se usa filtro de proximidad)
   // Imágenes
   total_imagenes: number;
   primera_imagen?: string;

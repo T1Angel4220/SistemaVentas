@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { LogOut, X, AlertTriangle } from 'lucide-react';
 
 interface LogoutConfirmModalProps {
@@ -16,16 +17,16 @@ export const LogoutConfirmModal: React.FC<LogoutConfirmModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  return (
+  const modalContent = (
     <>
       {/* Overlay con backdrop blur */}
       <div 
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 animate-[fadeIn_0.2s_ease-out]"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] animate-[fadeIn_0.2s_ease-out]"
         onClick={onCancel}
       />
       
       {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pointer-events-none">
         <div 
           className="bg-white rounded-2xl shadow-2xl w-full max-w-md pointer-events-auto animate-[slideInDown_0.3s_ease-out]"
           onClick={(e) => e.stopPropagation()}
@@ -109,5 +110,8 @@ export const LogoutConfirmModal: React.FC<LogoutConfirmModalProps> = ({
       </div>
     </>
   );
+
+  // Renderizar el modal usando un portal en el body del documento
+  return createPortal(modalContent, document.body);
 };
 

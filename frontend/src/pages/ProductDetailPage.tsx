@@ -272,8 +272,8 @@ export const ProductDetailPage: React.FC = () => {
   // 🆕 Detectar scroll para hacer los botones sticky
   useEffect(() => {
     const handleScroll = () => {
-      // Los botones se vuelven sticky después de hacer scroll más de 200px
-      const scrollThreshold = 200;
+      // Los botones se vuelven sticky después de hacer scroll más de 100px (umbral reducido para mejor UX)
+      const scrollThreshold = 100;
       setIsScrolled(window.scrollY > scrollThreshold);
     };
 
@@ -685,12 +685,12 @@ export const ProductDetailPage: React.FC = () => {
               )}
                   </div>
                   
-            {/* NUEVO: Botón de acción principal para COMPRADORES Y VENDEDORES + RESPONSIVE */}
+            {/* NUEVO: Botón de acción principal para COMPRADORES Y VENDEDORES + RESPONSIVE + STICKY */}
             {(user?.tipo_usuario === 'comprador' || user?.tipo_usuario === 'vendedor') && product.estado === 'activo' && product.disponibilidad && (
-              <div className={`space-y-3 transition-all duration-300 ${isScrolled ? 'sticky top-4 z-10' : ''}`}>
+              <div className={`space-y-3 transition-all duration-300 ${isScrolled ? 'sticky top-20 z-40 bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-lg' : ''}`}>
                 <Button 
                   onClick={() => navigate(`/products/contact/${product.id}`)}
-                  className={`w-full h-12 sm:h-14 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-base sm:text-lg font-bold shadow-2xl hover:shadow-3xl transition-all duration-300 rounded-xl ${isScrolled ? 'ring-2 ring-orange-300' : ''}`}
+                  className="w-full h-12 sm:h-14 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-base sm:text-lg font-bold shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
                 >
                   <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" />
                   <span>Contactar Vendedor</span>
@@ -698,7 +698,7 @@ export const ProductDetailPage: React.FC = () => {
                 <Button 
                   onClick={handleReportProduct}
                   variant="outline"
-                  className="w-full h-10 sm:h-11 border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 text-sm sm:text-base font-semibold shadow-sm hover:shadow-md transition-all duration-300 rounded-xl"
+                  className="w-full h-10 sm:h-11 border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 bg-white text-sm sm:text-base font-semibold shadow-sm hover:shadow-md transition-all duration-300 rounded-xl"
                 >
                   <Flag className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                   <span>Reportar producto</span>

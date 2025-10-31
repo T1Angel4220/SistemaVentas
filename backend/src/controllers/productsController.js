@@ -1,6 +1,7 @@
 const { query } = require('../config/database');
 const { config } = require('../config/config');
 const { detectarContenidoInadecuado, obtenerMensajeRechazo } = require('../services/contentDetection');
+const { filtrarPorProximidad } = require('../utils/geoLocation');
 
 // Función helper para construir URLs completas de imágenes
 const buildImageUrl = (filename) => {
@@ -129,12 +130,13 @@ class ProductsController {
         `INSERT INTO items (
           codigo, nombre, descripcion, precio, ubicacion_id, 
           ubicacion_provincia, ubicacion_canton, ubicacion_distrito, ubicacion_direccion, coordenadas,
-          tipo, categoria_id, vendedor_id, estado, disponibilidad, es_peligroso, motivo_rechazo
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+          tipo, categoria_id, vendedor_id, estado, disponibilidad, es_peligroso, motivo_rechazo, fecha_deteccion_peligroso
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
         RETURNING *`,
         [codigo, nombre, descripcion, precio, ubicacionIdFinal, 
          ubicacion_provincia, ubicacion_canton, ubicacion_distrito, ubicacion_direccion, coordenadas,
-         tipo, categoria_id, vendedor_id, estadoInicial, disponibilidad, esPeligroso, motivoRechazo]
+         tipo, categoria_id, vendedor_id, estadoInicial, disponibilidad, esPeligroso, motivoRechazo, 
+         esPeligroso ? new Date() : null]
       );
 
       const producto = nuevoProducto.rows[0];
@@ -228,7 +230,11 @@ class ProductsController {
         disponibilidad = true,
         page = 1,
         limit = 10,
-        search
+        search,
+        // Filtros de proximidad
+        user_lat,    // Latitud del usuario
+        user_lng,    // Longitud del usuario
+        radio_km     // Radio de búsqueda en kilómetros (default: 50km)
       } = req.query;
 
       // Ocultar productos peligrosos para todos los usuarios públicos (compradores)
@@ -317,6 +323,7 @@ class ProductsController {
           i.id, i.codigo, i.nombre, i.descripcion, i.precio, 
           i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion, i.es_peligroso,
           i.ubicacion_provincia, i.ubicacion_canton, i.ubicacion_distrito, i.ubicacion_direccion,
+          i.coordenadas,
           c.nombre as categoria_nombre,
           u.nombre || ' ' || u.apellido as vendedor_nombre,
           ub.nombre as ubicacion_nombre,
@@ -331,6 +338,7 @@ class ProductsController {
         GROUP BY i.id, i.codigo, i.nombre, i.descripcion, i.precio, 
                  i.tipo, i.estado, i.disponibilidad, i.fecha_publicacion, i.es_peligroso,
                  i.ubicacion_provincia, i.ubicacion_canton, i.ubicacion_distrito, i.ubicacion_direccion,
+                 i.coordenadas,
                  c.nombre, u.nombre, u.apellido, ub.nombre
         ORDER BY i.fecha_publicacion DESC
         LIMIT $${paramCount - 1} OFFSET $${paramCount}`,
@@ -348,17 +356,66 @@ class ProductsController {
       const total = parseInt(totalCount.rows[0].total);
       const totalPages = Math.ceil(total / limit);
 
+      // Aplicar filtro de proximidad si se proporcionan coordenadas del usuario
+      let productosFinales = productos.rows;
+      if (user_lat && user_lng) {
+        const lat = parseFloat(user_lat);
+        const lng = parseFloat(user_lng);
+        const radio = parseFloat(radio_km) || 50; // Default 50km
+        
+        console.log('\n🌍 === FILTRO DE PROXIMIDAD ===');
+        console.log('Usuario ubicado en:', { lat, lng });
+        console.log('Radio de búsqueda:', radio, 'km');
+        console.log('Total de productos antes del filtro:', productos.rows.length);
+        
+        // Mostrar coordenadas de cada producto
+        productos.rows.forEach((prod, index) => {
+          console.log(`\nProducto ${index + 1}: ${prod.nombre}`);
+          console.log('  → Coordenadas en DB:', prod.coordenadas);
+          console.log('  → Tipo:', typeof prod.coordenadas);
+        });
+        
+        if (!isNaN(lat) && !isNaN(lng) && !isNaN(radio)) {
+          productosFinales = filtrarPorProximidad(productos.rows, lat, lng, radio);
+          console.log(`\n✅ Resultado: ${productosFinales.length} productos dentro de ${radio}km`);
+          
+          // Mostrar los productos filtrados con sus distancias
+          productosFinales.forEach((prod, index) => {
+            console.log(`  ${index + 1}. ${prod.nombre} - ${prod.distancia} km`);
+          });
+        }
+        console.log('=================================\n');
+      }
+
+      // Si se aplicó filtro de proximidad, recalcular la paginación
+      let totalFinal = total;
+      let totalPagesFinal = totalPages;
+      
+      if (user_lat && user_lng) {
+        totalFinal = productosFinales.length;
+        totalPagesFinal = Math.ceil(totalFinal / limit);
+      }
+
       res.json({
         success: true,
-        data: productos.rows,
+        data: productosFinales,
         pagination: {
           current_page: parseInt(page),
-          total_pages: totalPages,
-          total_items: total,
+          total_pages: totalPagesFinal,
+          total_items: totalFinal,
           items_per_page: parseInt(limit),
-          has_next: page < totalPages,
+          has_next: page < totalPagesFinal,
           has_prev: page > 1
-        }
+        },
+        // Información adicional si se usó filtro de proximidad
+        ...(user_lat && user_lng && {
+          proximity_filter: {
+            enabled: true,
+            user_location: { lat: parseFloat(user_lat), lng: parseFloat(user_lng) },
+            radius_km: parseFloat(radio_km) || 50,
+            results_count: productosFinales.length
+          }
+        })
       });
 
     } catch (error) {
@@ -711,6 +768,11 @@ class ProductsController {
           estado = COALESCE($12, estado),
           es_peligroso = COALESCE($13, es_peligroso),
           motivo_rechazo = COALESCE($14, motivo_rechazo),
+          fecha_deteccion_peligroso = CASE 
+            WHEN $13 = TRUE AND es_peligroso = FALSE THEN CURRENT_TIMESTAMP 
+            WHEN $13 = FALSE THEN NULL 
+            ELSE fecha_deteccion_peligroso 
+          END,
           fecha_actualizacion = CURRENT_TIMESTAMP
         WHERE id = $15
         RETURNING *`,

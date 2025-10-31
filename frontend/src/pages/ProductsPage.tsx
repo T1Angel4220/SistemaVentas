@@ -65,6 +65,17 @@ export const ProductsPage: React.FC = () => {
     limit: 12
   });
 
+  // Filtros de proximidad
+  const [proximityFilters, setProximityFilters] = useState({
+    user_lat: '',
+    user_lng: '',
+    radio_km: '50' // Default 50km
+  });
+  
+  // Estado para filtro de proximidad
+  const [proximityEnabled, setProximityEnabled] = useState(false);
+  const [gettingLocation, setGettingLocation] = useState(false);
+
   // Estado para productos guardados
   const [savedProducts, setSavedProducts] = useState<number[]>([]);
   const [savingProduct, setSavingProduct] = useState<number | null>(null);
@@ -81,9 +92,24 @@ export const ProductsPage: React.FC = () => {
       setLoading(true);
       const queryParams = new URLSearchParams();
       
+      // Agregar filtros normales
       Object.entries(filters).forEach(([key, value]) => {
         if (value) queryParams.append(key, value.toString());
       });
+
+      // Agregar filtros de proximidad si están habilitados
+      if (proximityEnabled && proximityFilters.user_lat && proximityFilters.user_lng) {
+        queryParams.append('user_lat', proximityFilters.user_lat);
+        queryParams.append('user_lng', proximityFilters.user_lng);
+        queryParams.append('radio_km', proximityFilters.radio_km);
+        
+        console.log('🌍 Cargando productos con filtro de proximidad:');
+        console.log('   → Latitud usuario:', proximityFilters.user_lat);
+        console.log('   → Longitud usuario:', proximityFilters.user_lng);
+        console.log('   → Radio de búsqueda:', proximityFilters.radio_km, 'km');
+      } else {
+        console.log('📦 Cargando productos sin filtro de proximidad');
+      }
 
       const response = await fetch(`http://localhost:3001/api/products?${queryParams}`);
       const data: ProductsResponse = await response.json();
@@ -91,13 +117,27 @@ export const ProductsPage: React.FC = () => {
       if (data.success) {
         setProducts(data.data);
         setPagination(data.pagination);
+        
+        // Log cuando se usa filtro de proximidad
+        if (proximityEnabled) {
+          const productosConDistancia = data.data.filter(p => p.distancia !== undefined && p.distancia !== null);
+          console.log('✅ Productos recibidos con filtro de proximidad:');
+          console.log('   → Total de productos:', data.data.length);
+          console.log('   → Productos con distancia calculada:', productosConDistancia.length);
+          if (productosConDistancia.length > 0) {
+            console.log('   → Producto más cercano:', {
+              nombre: productosConDistancia[0].nombre,
+              distancia: productosConDistancia[0].distancia?.toFixed(2) + ' km'
+            });
+          }
+        }
       }
     } catch (error) {
       console.error('Error al cargar productos:', error);
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters, proximityEnabled, proximityFilters]);
 
   const loadCategories = async () => {
     try {
@@ -264,6 +304,71 @@ export const ProductsPage: React.FC = () => {
 
   const handlePageChange = (page: number) => {
     setFilters(prev => ({ ...prev, page }));
+  };
+
+  const handleEnableProximity = () => {
+    if ('geolocation' in navigator) {
+      setGettingLocation(true);
+      console.log('📍 Solicitando ubicación del usuario...');
+      
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude.toString();
+          const lng = position.coords.longitude.toString();
+          const accuracy = position.coords.accuracy;
+          
+          console.log('✅ Ubicación obtenida exitosamente:');
+          console.log('   → Latitud:', lat);
+          console.log('   → Longitud:', lng);
+          console.log('   → Precisión:', accuracy, 'metros');
+          console.log('   → Radio de búsqueda: 50 km (por defecto)');
+          console.log('   → Coordenadas completas:', position.coords);
+          
+          setProximityFilters({
+            user_lat: lat,
+            user_lng: lng,
+            radio_km: '50'
+          });
+          setProximityEnabled(true);
+          setGettingLocation(false);
+          showSuccess('📍 Ubicación obtenida', 'Mostrando productos cerca de ti');
+        },
+        (error) => {
+          console.error('❌ Error obteniendo ubicación:', error);
+          console.error('   → Código de error:', error.code);
+          console.error('   → Mensaje:', error.message);
+          setGettingLocation(false);
+          showError('Error', 'No se pudo obtener tu ubicación. Verifica los permisos del navegador.');
+        }
+      );
+    } else {
+      console.error('❌ Tu navegador no soporta geolocalización');
+      showError('Error', 'Tu navegador no soporta geolocalización');
+    }
+  };
+
+  const handleDisableProximity = () => {
+    setProximityFilters({
+      user_lat: '',
+      user_lng: '',
+      radio_km: '50'
+    });
+    setProximityEnabled(false);
+    showSuccess('Filtro desactivado', 'Mostrando todos los productos');
+  };
+
+  const handleRadiusChange = (newRadius: string) => {
+    console.log('📏 Radio de búsqueda actualizado:', newRadius, 'km');
+    console.log('   → Ubicación actual:', {
+      lat: proximityFilters.user_lat,
+      lng: proximityFilters.user_lng,
+      nuevo_radio: newRadius
+    });
+    
+    setProximityFilters(prev => ({
+      ...prev,
+      radio_km: newRadius
+    }));
   };
 
   const formatPrice = (price: number) => {
@@ -508,27 +613,94 @@ export const ProductsPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Segunda fila - Botón de Ubicación */}
+                {/* Segunda fila - Botones de Ubicación */}
                 <div className="space-y-4">
-                  {/* Botón para mostrar/ocultar filtros de ubicación */}
-                  <Button
-                    onClick={() => setShowLocationFilter(!showLocationFilter)}
-                    variant="outline"
-                    className="w-full md:w-auto border-purple-300 text-purple-700 hover:bg-purple-50 rounded-xl flex items-center justify-center space-x-2 h-12"
-                  >
-                    <MapPin className="h-5 w-5" />
-                    <span>
-                      {showLocationFilter ? 'Ocultar filtros de ubicación' : 'Filtrar por ubicación'}
-                    </span>
-                  </Button>
+                  {/* Fila de botones */}
+                  <div className="flex flex-col md:flex-row gap-3">
+                    {/* Botón para mostrar/ocultar filtros de ubicación manual */}
+                    <Button
+                      onClick={() => setShowLocationFilter(!showLocationFilter)}
+                      variant="outline"
+                      className="w-full md:w-auto border-purple-300 text-purple-700 hover:bg-purple-50 rounded-xl flex items-center justify-center space-x-2 h-12"
+                    >
+                      <MapPin className="h-5 w-5" />
+                      <span>
+                        {showLocationFilter ? 'Ocultar filtros de ubicación' : 'Filtrar por ubicación'}
+                      </span>
+                    </Button>
 
-                  {/* Filtros de ubicación - Solo visible cuando showLocationFilter es true */}
-                  {showLocationFilter && (
-                    <div className="bg-purple-50/50 border-2 border-purple-200 rounded-xl p-6 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <MapPin className="h-5 w-5 text-purple-600" />
-                        <h3 className="font-semibold text-purple-900">Filtrar por Ubicación</h3>
+                    {/* Botón de Proximidad */}
+                    <Button
+                      onClick={proximityEnabled ? handleDisableProximity : handleEnableProximity}
+                      disabled={gettingLocation}
+                      variant="outline"
+                      className={`w-full md:w-auto rounded-xl flex items-center justify-center space-x-2 h-12 ${
+                        proximityEnabled 
+                          ? 'border-red-300 text-red-700 hover:bg-red-50' 
+                          : 'border-green-300 text-green-700 hover:bg-green-50'
+                      }`}
+                    >
+                      {gettingLocation ? (
+                        <>
+                          <div className="animate-spin h-4 w-4 border-2 border-green-700 border-t-transparent rounded-full"></div>
+                          <span>Obteniendo ubicación...</span>
+                        </>
+                      ) : proximityEnabled ? (
+                        <>
+                          <X className="h-5 w-5" />
+                          <span>Desactivar proximidad ({proximityFilters.radio_km} km)</span>
+                        </>
+                      ) : (
+                        <>
+                          <MapPin className="h-5 w-5" />
+                          <span>Filtrar por mi ubicación actual</span>
+                        </>
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* Panel de configuración de proximidad cuando está activo */}
+                  {proximityEnabled && (
+                    <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="bg-green-100 rounded-full p-2">
+                            <MapPin className="h-5 w-5 text-green-600" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-green-900">Filtro de proximidad activo</p>
+                            <p className="text-xs text-green-700">Mostrando productos dentro de {proximityFilters.radio_km} km</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center space-x-3">
+                          <label className="text-sm font-medium text-green-900 whitespace-nowrap">
+                            Radio:
+                          </label>
+                          <select
+                            value={proximityFilters.radio_km}
+                            onChange={(e) => handleRadiusChange(e.target.value)}
+                            className="h-9 rounded-lg border-green-300 shadow-sm focus:border-green-500 focus:ring-green-500 bg-white"
+                          >
+                            <option value="5">5 km</option>
+                            <option value="10">10 km</option>
+                            <option value="25">25 km</option>
+                            <option value="50">50 km</option>
+                            <option value="100">100 km</option>
+                            <option value="200">200 km</option>
+                          </select>
+                        </div>
+                      </div>
                     </div>
+                  )}
+
+                  {/* Filtros de ubicación manual - Solo visible cuando showLocationFilter es true */}
+                  {showLocationFilter && (
+                    <div className="bg-purple-50/50 border-2 border-purple-200 rounded-xl p-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="flex items-center space-x-2 mb-3">
+                        <MapPin className="h-5 w-5 text-purple-600" />
+                        <h3 className="font-semibold text-purple-900">Filtrar por Provincia/Cantón</h3>
+                      </div>
                       <HierarchicalLocationSearch
                         locations={locations}
                         onLocationSelect={(locationData) => {
@@ -547,8 +719,8 @@ export const ProductsPage: React.FC = () => {
                         initialDistrito={filters.distrito}
                         initialDireccion={filters.direccion}
                       />
-                  </div>
-                )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -573,6 +745,13 @@ export const ProductsPage: React.FC = () => {
                       page: 1,
                       limit: 12
                     });
+                    // Limpiar filtros de proximidad
+                    setProximityFilters({
+                      user_lat: '',
+                      user_lng: '',
+                      radio_km: '50'
+                    });
+                    setProximityEnabled(false);
                   }}
                   variant="outline"
                   className="border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 rounded-xl font-semibold transition-all duration-200 shadow-sm hover:shadow-md"
@@ -662,6 +841,13 @@ export const ProductsPage: React.FC = () => {
                     page: 1,
                     limit: 12
                   });
+                  // Limpiar filtros de proximidad
+                  setProximityFilters({
+                    user_lat: '',
+                    user_lng: '',
+                    radio_km: '50'
+                  });
+                  setProximityEnabled(false);
                 }}
                 className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl px-8 py-3 font-semibold"
               >
@@ -766,6 +952,13 @@ export const ProductsPage: React.FC = () => {
                                     ? `${product.ubicacion_provincia}, ${product.ubicacion_canton}`
                                     : product.ubicacion_provincia || product.ubicacion_canton}
                                 </span>
+                              </div>
+                            )}
+                            {/* Mostrar distancia si el filtro de proximidad está activo */}
+                            {proximityEnabled && product.distancia !== undefined && product.distancia !== null && (
+                              <div className="flex items-center space-x-2 text-sm font-semibold text-green-700 bg-green-50 rounded-lg px-3 py-1.5">
+                                <MapPin className="h-4 w-4" />
+                                <span>A {product.distancia.toFixed(1)} km de ti</span>
                               </div>
                             )}
                             <div className="flex items-center justify-between text-xs text-gray-500">

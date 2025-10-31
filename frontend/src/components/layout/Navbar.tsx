@@ -57,7 +57,7 @@ export const Navbar: React.FC = () => {
 
   if (!isAuthenticated || !user) {
     return (
-      <nav className="bg-white shadow-sm border-b">
+      <nav className="sticky top-0 z-50 bg-white shadow-md border-b backdrop-blur-sm bg-white/95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
@@ -80,7 +80,7 @@ export const Navbar: React.FC = () => {
   }
 
   return (
-    <nav className="bg-white shadow-sm border-b">
+    <nav className="sticky top-0 z-50 bg-white shadow-md border-b backdrop-blur-sm bg-white/95">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center h-16 gap-8">
           <div className="flex items-center space-x-8 flex-1">
@@ -90,7 +90,7 @@ export const Navbar: React.FC = () => {
             <div className="hidden md:flex items-center space-x-6 flex-1">
               <Link
                 to="/dashboard"
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 hover:scale-105 hover:shadow-sm"
               >
                 Dashboard
               </Link>
@@ -98,7 +98,7 @@ export const Navbar: React.FC = () => {
               {(user.tipo_usuario === 'comprador' || user.tipo_usuario === 'vendedor' || user.tipo_usuario === 'moderador') && (
                 <Link
                   to="/products"
-                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 hover:scale-105 hover:shadow-sm"
                 >
                   Productos
                 </Link>
@@ -107,7 +107,7 @@ export const Navbar: React.FC = () => {
               {user.tipo_usuario === 'vendedor' && (
                 <Link
                   to="/my-products"
-                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 hover:scale-105 hover:shadow-sm"
                 >
                   Mis Productos
                 </Link>
@@ -116,18 +116,18 @@ export const Navbar: React.FC = () => {
               {user.tipo_usuario === 'vendedor' && dangerousProductsCount > 0 && (
                 <Link
                   to="/my-products/dangerous"
-                  className="text-red-600 hover:text-red-800 hover:bg-red-50 px-3 py-2 rounded-md text-sm font-medium flex items-center relative"
+                  className="text-red-600 hover:text-red-800 hover:bg-red-50 px-3 py-2 rounded-md text-sm font-medium flex items-center relative transition-all duration-300 hover:scale-105 hover:shadow-md hover:shadow-red-200/50 group"
                 >
-                  <AlertTriangle className="h-4 w-4 mr-1" />
+                  <AlertTriangle className="h-4 w-4 mr-1 transition-transform duration-300 group-hover:rotate-12" />
                   Peligrosos
-                  <span className="ml-1.5 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  <span className="ml-1.5 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
                     {dangerousProductsCount}
                   </span>
                 </Link>
               )}
               <Link
                 to="/chat"
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 hover:scale-105 hover:shadow-sm"
               >
                 Chat
               </Link>
@@ -136,23 +136,23 @@ export const Navbar: React.FC = () => {
                   <div className="h-6 w-px bg-gray-300 mx-2"></div>
                   <Link
                     to="/products/moderation"
-                    className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                    className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-3 py-2 rounded-md text-sm font-medium flex items-center transition-all duration-300 hover:scale-105 hover:shadow-md hover:shadow-blue-200/50 group"
                   >
-                    <Shield className="h-4 w-4 mr-1.5" />
+                    <Shield className="h-4 w-4 mr-1.5 transition-transform duration-300 group-hover:scale-110" />
                     Moderación
                   </Link>
                   <Link
                     to="/moderation/reports"
-                    className="text-orange-600 hover:text-orange-800 hover:bg-orange-50 px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                    className="text-orange-600 hover:text-orange-800 hover:bg-orange-50 px-3 py-2 rounded-md text-sm font-medium flex items-center transition-all duration-300 hover:scale-105 hover:shadow-md hover:shadow-orange-200/50 group"
                   >
-                    <Flag className="h-4 w-4 mr-1.5" />
+                    <Flag className="h-4 w-4 mr-1.5 transition-transform duration-300 group-hover:rotate-12" />
                     Reportes
                   </Link>
                   <Link
                     to="/moderation/appeals"
-                    className="text-purple-600 hover:text-purple-800 hover:bg-purple-50 px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                    className="text-purple-600 hover:text-purple-800 hover:bg-purple-50 px-3 py-2 rounded-md text-sm font-medium flex items-center transition-all duration-300 hover:scale-105 hover:shadow-md hover:shadow-purple-200/50 group"
                   >
-                    <FileText className="h-4 w-4 mr-1.5" />
+                    <FileText className="h-4 w-4 mr-1.5 transition-transform duration-300 group-hover:scale-110" />
                     Apelaciones
                   </Link>
                 </>
@@ -162,23 +162,23 @@ export const Navbar: React.FC = () => {
                   <div className="h-6 w-px bg-gray-300 mx-2"></div>
                   <Link
                     to="/products/moderation"
-                    className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                    className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-3 py-2 rounded-md text-sm font-medium flex items-center transition-all duration-300 hover:scale-105 hover:shadow-md hover:shadow-blue-200/50 group"
                   >
-                    <Shield className="h-4 w-4 mr-1.5" />
+                    <Shield className="h-4 w-4 mr-1.5 transition-transform duration-300 group-hover:scale-110" />
                     Administración
                   </Link>
                   <Link
                     to="/moderation/reports"
-                    className="text-orange-600 hover:text-orange-800 hover:bg-orange-50 px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                    className="text-orange-600 hover:text-orange-800 hover:bg-orange-50 px-3 py-2 rounded-md text-sm font-medium flex items-center transition-all duration-300 hover:scale-105 hover:shadow-md hover:shadow-orange-200/50 group"
                   >
-                    <Flag className="h-4 w-4 mr-1.5" />
+                    <Flag className="h-4 w-4 mr-1.5 transition-transform duration-300 group-hover:rotate-12" />
                     Reportes
                   </Link>
                   <Link
                     to="/moderation/appeals"
-                    className="text-purple-600 hover:text-purple-800 hover:bg-purple-50 px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                    className="text-purple-600 hover:text-purple-800 hover:bg-purple-50 px-3 py-2 rounded-md text-sm font-medium flex items-center transition-all duration-300 hover:scale-105 hover:shadow-md hover:shadow-purple-200/50 group"
                   >
-                    <FileText className="h-4 w-4 mr-1.5" />
+                    <FileText className="h-4 w-4 mr-1.5 transition-transform duration-300 group-hover:scale-110" />
                     Apelaciones
                   </Link>
                 </>
@@ -196,22 +196,39 @@ export const Navbar: React.FC = () => {
               </p>
             </div>
             
-            <Link to="/profile">
-              <Button variant="ghost" size="icon">
-                <User className="h-4 w-4" />
+            <Link to="/profile" className="group relative">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="hover:bg-blue-50 hover:text-blue-600 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-blue-200/50"
+              >
+                <User className="h-5 w-5 transition-transform duration-300 group-hover:rotate-12" />
               </Button>
+              {/* Tooltip */}
+              <span className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-50">
+                Mi Perfil
+              </span>
             </Link>
-            <Link to="/settings">
-              <Button variant="ghost" size="icon">
-                <Settings className="h-4 w-4" />
+            
+            <Link to="/settings" className="group relative">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="hover:bg-purple-50 hover:text-purple-600 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-purple-200/50"
+              >
+                <Settings className="h-5 w-5 transition-transform duration-500 group-hover:rotate-90" />
               </Button>
+              {/* Tooltip */}
+              <span className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-50">
+                Configuración
+              </span>
             </Link>
             <Button
               variant="ghost"
               onClick={handleLogoutClick}
-              className="text-gray-600 hover:text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
+              className="text-gray-600 hover:text-red-600 hover:bg-red-50 hover:scale-105 hover:shadow-md hover:shadow-red-200/50 transition-all duration-300 flex items-center gap-2 group"
             >
-              <LogOut className="h-4 w-4" />
+              <LogOut className="h-4 w-4 transition-transform duration-300 group-hover:-rotate-12" />
               <span className="text-sm font-medium">Salir</span>
             </Button>
           </div>

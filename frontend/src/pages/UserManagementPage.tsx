@@ -576,6 +576,7 @@ export const UserManagementPage: React.FC = () => {
                       </td>
                       <td className="px-6 py-5 whitespace-nowrap text-center">
                         <div className="flex items-center justify-center space-x-2">
+                          {/* Ver detalles - Todos pueden ver */}
                           <Button
                             variant="outline"
                             size="sm"
@@ -586,42 +587,104 @@ export const UserManagementPage: React.FC = () => {
                             <Eye className="h-4 w-4" />
                           </Button>
                           
+                          {/* Gestionar sesiones */}
                           {user.tipo_usuario !== 'administrador' && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => navigate(`/admin/sessions/${user.id}`)}
-                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 hover:border-blue-300 hover:shadow-md transition-all duration-200"
-                              title="Gestionar sesiones"
-                            >
-                              <Monitor className="h-4 w-4" />
-                            </Button>
-                          )}
-                          
-                          {user.id !== currentUser?.id && (
                             <>
-                              {(user.estado === 'inactivo' || user.estado === 'suspendido') && (
+                              {/* Admin puede gestionar sesiones de cualquiera (excepto admins) */}
+                              {currentUser?.tipo_usuario === 'administrador' && (
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => openModal(user, 'activate')}
-                                  className="text-green-600 hover:text-green-700 hover:bg-green-50 hover:border-green-300 hover:shadow-md transition-all duration-200"
-                                  title="Reactivar usuario"
+                                  onClick={() => navigate(`/admin/sessions/${user.id}`)}
+                                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 hover:border-blue-300 hover:shadow-md transition-all duration-200"
+                                  title="Gestionar sesiones"
                                 >
-                                  <UserCheck className="h-4 w-4" />
+                                  <Monitor className="h-4 w-4" />
                                 </Button>
                               )}
                               
-                              {user.estado === 'activo' && user.tipo_usuario !== 'administrador' && (
+                              {/* Moderador solo puede gestionar sesiones de vendedores y compradores */}
+                              {currentUser?.tipo_usuario === 'moderador' && 
+                               (user.tipo_usuario === 'vendedor' || user.tipo_usuario === 'comprador') && (
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => openModal(user, 'suspend')}
-                                  className="text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-300 hover:shadow-md transition-all duration-200"
-                                  title="Suspender usuario"
+                                  onClick={() => navigate(`/admin/sessions/${user.id}`)}
+                                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 hover:border-blue-300 hover:shadow-md transition-all duration-200"
+                                  title="Gestionar sesiones"
                                 >
-                                  <UserMinus className="h-4 w-4" />
+                                  <Monitor className="h-4 w-4" />
                                 </Button>
+                              )}
+                            </>
+                          )}
+                          
+                          {/* Acciones de suspensión/reactivación */}
+                          {user.id !== currentUser?.id && (
+                            <>
+                              {/* Reactivar usuario */}
+                              {(user.estado === 'inactivo' || user.estado === 'suspendido') && (
+                                <>
+                                  {/* Admin puede reactivar a cualquiera */}
+                                  {currentUser?.tipo_usuario === 'administrador' && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => openModal(user, 'activate')}
+                                      className="text-green-600 hover:text-green-700 hover:bg-green-50 hover:border-green-300 hover:shadow-md transition-all duration-200"
+                                      title="Reactivar usuario"
+                                    >
+                                      <UserCheck className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                  
+                                  {/* Moderador solo puede reactivar vendedores y compradores */}
+                                  {currentUser?.tipo_usuario === 'moderador' && 
+                                   (user.tipo_usuario === 'vendedor' || user.tipo_usuario === 'comprador') && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => openModal(user, 'activate')}
+                                      className="text-green-600 hover:text-green-700 hover:bg-green-50 hover:border-green-300 hover:shadow-md transition-all duration-200"
+                                      title="Reactivar usuario"
+                                    >
+                                      <UserCheck className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                </>
+                              )}
+                              
+                              {/* Suspender usuario */}
+                              {user.estado === 'activo' && (
+                                <>
+                                  {/* Admin puede suspender a cualquiera excepto otros admins */}
+                                  {currentUser?.tipo_usuario === 'administrador' && 
+                                   user.tipo_usuario !== 'administrador' && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => openModal(user, 'suspend')}
+                                      className="text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-300 hover:shadow-md transition-all duration-200"
+                                      title="Suspender usuario"
+                                    >
+                                      <UserMinus className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                  
+                                  {/* Moderador SOLO puede suspender vendedores y compradores */}
+                                  {currentUser?.tipo_usuario === 'moderador' && 
+                                   (user.tipo_usuario === 'vendedor' || user.tipo_usuario === 'comprador') && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => openModal(user, 'suspend')}
+                                      className="text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-300 hover:shadow-md transition-all duration-200"
+                                      title="Suspender usuario"
+                                    >
+                                      <UserMinus className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                </>
                               )}
                             </>
                           )}
