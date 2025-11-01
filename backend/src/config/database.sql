@@ -109,9 +109,6 @@ CREATE TABLE ubicaciones (
     nombre VARCHAR(100) NOT NULL,
     provincia VARCHAR(100),
     canton VARCHAR(100),
-    distrito VARCHAR(100),
-    coordenadas POINT,
-    -- Para geolocalización
     activa BOOLEAN DEFAULT TRUE,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -135,7 +132,12 @@ CREATE TABLE items (
     moderador_revision_id INTEGER REFERENCES usuarios(id),
     motivo_rechazo TEXT,
     es_peligroso BOOLEAN DEFAULT FALSE,
-    fecha_deteccion_peligroso TIMESTAMP
+    fecha_deteccion_peligroso TIMESTAMP,
+    ubicacion_provincia VARCHAR(100),
+    ubicacion_canton VARCHAR(100),
+    ubicacion_distrito VARCHAR(100),
+    ubicacion_direccion VARCHAR(255),
+    coordenadas VARCHAR(50)
 );
 
 -- Tabla de imágenes de productos/servicios
@@ -180,7 +182,6 @@ CREATE TABLE reportes (
     estado estado_reporte NOT NULL DEFAULT 'pendiente',
     fecha_reporte TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     fecha_revision TIMESTAMP,
-    moderador_asignado_id INTEGER REFERENCES usuarios(id),
     moderador_resolutor_id INTEGER REFERENCES usuarios(id),
     decision_final TEXT,
     fecha_resolucion TIMESTAMP
@@ -295,6 +296,12 @@ CREATE INDEX idx_items_ubicacion ON items(ubicacion_id);
 
 CREATE INDEX idx_items_peligroso ON items(es_peligroso);
 
+CREATE INDEX idx_items_provincia ON items(ubicacion_provincia);
+
+CREATE INDEX idx_items_canton ON items(ubicacion_canton);
+
+CREATE INDEX idx_items_coordenadas ON items(coordenadas);
+
 -- Índices para reportes
 CREATE INDEX idx_reportes_item ON reportes(item_id);
 
@@ -303,8 +310,6 @@ CREATE INDEX idx_reportes_usuario_reportador ON reportes(usuario_reportador_id);
 CREATE INDEX idx_reportes_estado ON reportes(estado);
 
 CREATE INDEX idx_reportes_fecha ON reportes(fecha_reporte);
-
-CREATE INDEX idx_reportes_moderador ON reportes(moderador_asignado_id);
 
 -- Índices para chat
 CREATE INDEX idx_chats_comprador ON chats(comprador_id);
@@ -350,51 +355,6 @@ UPDATE
 CREATE TRIGGER trigger_items_actualizacion BEFORE
 UPDATE
     ON items FOR EACH ROW EXECUTE FUNCTION actualizar_fecha_modificacion();
-
--- Función para registrar acciones de moderación
-CREATE
-OR REPLACE FUNCTION registrar_accion_moderacion() RETURNS TRIGGER AS $ $ BEGIN -- Solo registrar si el usuario es moderador o administrador
-IF (
-    SELECT
-        tipo_usuario
-    FROM
-        usuarios
-    WHERE
-        id = NEW.moderador_asignado_id
-) IN ('moderador', 'administrador') THEN
-INSERT INTO
-    acciones_moderacion (
-        moderador_id,
-        accion,
-        tabla_afectada,
-        registro_id,
-        detalles
-    )
-VALUES
-    (
-        NEW.moderador_asignado_id,
-        'asignacion_reporte',
-        'reportes',
-        NEW.id,
-        'Reporte asignado para revisión'
-    );
-
-END IF;
-
-RETURN NEW;
-
-END;
-
-$ $ LANGUAGE plpgsql;
-
-CREATE TRIGGER trigger_registrar_asignacion_reporte
-AFTER
-UPDATE
-    OF moderador_asignado_id ON reportes FOR EACH ROW
-    WHEN (
-        NEW.moderador_asignado_id IS NOT NULL
-        AND OLD.moderador_asignado_id IS NULL
-    ) EXECUTE FUNCTION registrar_accion_moderacion();
 
 -- =====================================================
 -- VISTAS ÚTILES PARA REPORTES Y ANÁLISIS
@@ -445,13 +405,11 @@ SELECT
     r.descripcion,
     r.fecha_reporte,
     i.nombre as producto_reportado,
-    u.nombre || ' ' || u.apellido as usuario_reportador,
-    m.nombre || ' ' || m.apellido as moderador_asignado
+    u.nombre || ' ' || u.apellido as usuario_reportador
 FROM
     reportes r
     JOIN items i ON r.item_id = i.id
     JOIN usuarios u ON r.usuario_reportador_id = u.id
-    LEFT JOIN usuarios m ON r.moderador_asignado_id = m.id
 WHERE
     r.estado = 'pendiente';
 
