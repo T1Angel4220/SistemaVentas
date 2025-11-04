@@ -1,0 +1,18 @@
+{
+  "name": "sistema-ventas-multiempresa",
+  "version": "1.0.0",
+  "description": "Sistema completo de gestión de productos y marketplace",
+  "main": "setup-aplicacion.js",
+  "scripts": {
+    "setup": "node setup-aplicacion.js",
+    "setup-app": "node setup-aplicacion.js"
+  },
+  "keywords": [
+    "sistema-ventas",
+    "marketplace",
+    "ecommerce"
+  ],
+  "author": "",
+  "license": "ISC"
+}
+
