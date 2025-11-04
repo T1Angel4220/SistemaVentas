@@ -2,6 +2,8 @@ import app from './src/app';
 import dotenv from 'dotenv';
 import { testConnection, initializeDatabase } from './src/config/database';
 import { config, validateConfig, getConfigSummary } from './src/config/config';
+import cron from 'node-cron';
+const ProductsController = require('./src/controllers/productsController');
 
 // Cargar variables de entorno
 dotenv.config();
@@ -43,6 +45,23 @@ const startServer = async () => {
     // Inicializar base de datos
     console.log('🔧 Inicializando base de datos...');
     await initializeDatabase();
+    
+    // Configurar tarea programada para suspensión automática de productos
+    // Se ejecuta todos los días a las 02:00 AM
+    // Formato cron: 'minuto hora día mes día-semana'
+    cron.schedule('0 2 * * *', async () => {
+      console.log('\n⏰ Ejecutando tarea programada: Suspensión automática de productos expirados');
+      try {
+        await ProductsController.suspenderProductosExpirados();
+      } catch (error) {
+        console.error('❌ Error en tarea programada de suspensión automática:', error);
+      }
+    }, {
+      scheduled: true,
+      timezone: "America/Costa_Rica" // Ajusta según tu zona horaria
+    });
+    
+    console.log('✅ Tarea programada configurada: Suspensión automática de productos (diaria a las 02:00 AM)');
     
     // Iniciar servidor
     app.listen(PORT, () => {

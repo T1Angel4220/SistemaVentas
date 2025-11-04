@@ -1751,6 +1751,104 @@ class ProductsController {
       return { bloqueado: false, cantidadPeligrosos: 0, error: error.message };
     }
   }
+
+  /**
+   * Suspende automáticamente productos en estado 'pendiente_revision' que tienen más de 1 día sin revisar
+   * Esta función se ejecuta mediante un cron job programado
+   * @returns {Promise<{suspendidos: number, productos: Array}>} Resultado de la suspensión automática
+   */
+  static async suspenderProductosExpirados() {
+    try {
+      console.log('\n🔄 === INICIANDO SUSPENSIÓN AUTOMÁTICA DE PRODUCTOS ===');
+      console.log('⏰ Fecha/Hora:', new Date().toISOString());
+
+      // Buscar productos en pendiente_revision con más de 1 día desde su fecha_publicacion
+      // Usamos fecha_publicacion porque es cuando se creó el producto
+      const productosExpirados = await query(
+        `SELECT 
+          id, 
+          codigo, 
+          nombre, 
+          vendedor_id,
+          fecha_publicacion,
+          EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - fecha_publicacion)) / 86400 as dias_pendiente
+        FROM items 
+        WHERE estado = 'pendiente_revision'
+        AND fecha_publicacion < CURRENT_TIMESTAMP - INTERVAL '1 day'
+        AND es_peligroso = false
+        ORDER BY fecha_publicacion ASC`
+      );
+
+      if (productosExpirados.rows.length === 0) {
+        console.log('✅ No hay productos pendientes de revisión por más de 1 día');
+        console.log('===========================================================\n');
+        return { suspendidos: 0, productos: [] };
+      }
+
+      console.log(`📋 Encontrados ${productosExpirados.rows.length} producto(s) pendiente(s) por más de 1 día`);
+
+      const productosSuspendidos = [];
+      const motivoSuspension = 'Producto suspendido automáticamente por exceder el tiempo límite de revisión (1 día). El producto estaba pendiente de moderación sin revisar.';
+
+      // Obtener ID del sistema (usuario del sistema) o usar null si no existe
+      // En este caso usaremos null para moderador_revision_id ya que es automático
+      
+      for (const producto of productosExpirados.rows) {
+        try {
+          // Actualizar el producto a estado 'suspendido'
+          await query(
+            `UPDATE items 
+             SET estado = 'suspendido',
+                 motivo_rechazo = $1,
+                 fecha_revision = CURRENT_TIMESTAMP,
+                 fecha_actualizacion = CURRENT_TIMESTAMP
+             WHERE id = $2`,
+            [motivoSuspension, producto.id]
+          );
+
+          // Registrar acción de moderación automática
+          // Usamos moderador_id = null para indicar que fue automático
+          await query(
+            `INSERT INTO acciones_moderacion (moderador_id, accion, tabla_afectada, registro_id, detalles)
+             VALUES (NULL, 'suspension_automatica_tiempo_expirado', 'items', $1, $2)`,
+            [producto.id, `Producto suspendido automáticamente después de ${Math.round(producto.dias_pendiente)} días sin revisar`]
+          );
+
+          productosSuspendidos.push({
+            id: producto.id,
+            codigo: producto.codigo,
+            nombre: producto.nombre,
+            dias_pendiente: Math.round(producto.dias_pendiente)
+          });
+
+          console.log(`  ✓ Producto #${producto.id} "${producto.nombre}" suspendido (${Math.round(producto.dias_pendiente)} días pendiente)`);
+
+        } catch (error) {
+          console.error(`  ❌ Error al suspender producto #${producto.id}:`, error.message);
+          // Continuar con el siguiente producto aunque uno falle
+        }
+      }
+
+      console.log(`\n✅ Suspensión automática completada: ${productosSuspendidos.length} producto(s) suspendido(s)`);
+      console.log('===========================================================\n');
+
+      return {
+        suspendidos: productosSuspendidos.length,
+        productos: productosSuspendidos,
+        fecha_ejecucion: new Date().toISOString()
+      };
+
+    } catch (error) {
+      console.error('❌ Error en suspensión automática de productos:', error);
+      // No lanzar error, solo registrar para que el cron job no se detenga
+      return { 
+        suspendidos: 0, 
+        productos: [], 
+        error: error.message,
+        fecha_ejecucion: new Date().toISOString()
+      };
+    }
+  }
 }
 
 module.exports = ProductsController;
