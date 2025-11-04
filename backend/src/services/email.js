@@ -518,6 +518,161 @@ const sendAccountReactivatedEmail = async (to, name, motivo = '') => {
 };
 
 /**
+ * Envía un email específico cuando una cuenta se bloquea automáticamente por tener 3 o más productos peligrosos
+ * @param {string} to - Email del destinatario
+ * @param {string} name - Nombre del usuario
+ * @param {number} cantidadPeligrosos - Cantidad de productos peligrosos
+ * @returns {Promise<boolean>} True si se envió correctamente
+ */
+const sendAccountBlockedByDangerousProductsEmail = async (to, name, cantidadPeligrosos) => {
+  try {
+    const mailOptions = {
+      from: config.email.from,
+      to: to,
+      subject: '🚫 Cuenta Bloqueada - Productos Peligrosos Detectados',
+      html: `
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Cuenta Bloqueada</title>
+        </head>
+        <body style="margin: 0; padding: 0; background: linear-gradient(135deg, #fef3c7 0%, #fecaca 100%); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+          <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.15);">
+            
+            <!-- Header con gradiente rojo -->
+            <div style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); padding: 50px 30px; text-align: center; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+              
+              <!-- Icono de advertencia -->
+              <div style="font-size: 64px; line-height: 1; margin: 0 auto 20px auto; text-shadow: 0 4px 10px rgba(0,0,0,0.3);">🚫</div>
+              
+              <h1 style="color: white; font-size: 30px; font-weight: 700; margin: 0 0 10px 0; text-shadow: 0 2px 4px rgba(0,0,0,0.2); line-height: 1.2;">
+                Cuenta Bloqueada Automáticamente
+              </h1>
+              <p style="color: rgba(255,255,255,0.95); font-size: 16px; margin: 0; font-weight: 400; line-height: 1.4;">
+                Bloqueo por múltiples productos peligrosos
+              </p>
+            </div>
+            
+            <!-- Contenido principal -->
+            <div style="padding: 40px 30px;">
+              <!-- Saludo personalizado -->
+              <div style="margin-bottom: 30px;">
+                <h2 style="color: #1f2937; font-size: 22px; font-weight: 600; margin: 0 0 15px 0;">
+                  Hola ${name},
+                </h2>
+                <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin: 0;">
+                  Lamentamos informarte que tu cuenta en el <strong>Sistema de Ventas</strong> ha sido <strong>bloqueada automáticamente</strong> debido a que tienes <strong>${cantidadPeligrosos} productos marcados como peligrosos</strong>.
+                </p>
+              </div>
+              
+              <!-- Banner de alerta -->
+              <div style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border: 2px solid #fca5a5; border-radius: 16px; padding: 25px; margin: 30px 0; box-shadow: 0 4px 15px rgba(220, 38, 38, 0.1);">
+                <div style="display: flex; align-items: flex-start;">
+                  <div style="font-size: 32px; margin-right: 15px; flex-shrink: 0;">⚠️</div>
+                  <div>
+                    <h3 style="color: #991b1b; font-size: 18px; font-weight: 700; margin: 0 0 12px 0;">
+                      Política de Bloqueo Automático
+                    </h3>
+                    <p style="color: #7f1d1d; font-size: 15px; line-height: 1.6; margin: 0 0 12px 0;">
+                      De acuerdo con nuestras políticas de uso, cuando un vendedor tiene <strong>3 o más productos marcados como peligrosos</strong>, su cuenta se bloquea automáticamente para proteger la integridad de la plataforma y sus usuarios.
+                    </p>
+                    <p style="color: #7f1d1d; font-size: 15px; line-height: 1.6; margin: 0;">
+                      Actualmente tienes <strong style="font-size: 18px; color: #dc2626;">${cantidadPeligrosos} productos peligrosos</strong> en tu cuenta.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Qué significa esto -->
+              <div style="background: #fffbeb; border: 2px solid #fbbf24; border-radius: 12px; padding: 25px; margin: 30px 0;">
+                <h4 style="color: #92400e; font-size: 18px; font-weight: 700; margin: 0 0 20px 0; display: flex; align-items: center;">
+                  <span style="margin-right: 12px; font-size: 24px;">ℹ️</span>
+                  ¿Qué significa esto?
+                </h4>
+                <ul style="color: #92400e; font-size: 15px; line-height: 1.8; margin: 0; padding-left: 20px;">
+                  <li style="margin-bottom: 10px;">Tu cuenta está <strong>suspendida</strong> y no puedes iniciar sesión</li>
+                  <li style="margin-bottom: 10px;">No podrás crear, editar o eliminar productos</li>
+                  <li style="margin-bottom: 10px;">No podrás acceder a ninguna funcionalidad del sistema</li>
+                  <li>Tu cuenta permanecerá bloqueada hasta que un administrador revise tu caso</li>
+                </ul>
+              </div>
+              
+              <!-- Qué puedes hacer -->
+              <div style="background: #f0f9ff; border: 2px solid #0ea5e9; border-radius: 16px; padding: 25px; margin: 30px 0;">
+                <h4 style="color: #0c4a6e; font-size: 18px; font-weight: 700; margin: 0 0 20px 0; text-align: left;">
+                  <span style="margin-right: 12px; font-size: 24px;">💡</span>¿Qué puedes hacer?
+                </h4>
+                <div style="color: #0c4a6e; font-size: 15px; line-height: 1.6;">
+                  <div style="display: table; width: 100%; margin-bottom: 15px;">
+                    <div style="display: table-cell; vertical-align: top; width: 32px; padding-right: 12px;">
+                      <div style="background: #0ea5e9; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;">1</div>
+                    </div>
+                    <div style="display: table-cell; vertical-align: top;"><strong>Contacta al administrador</strong> del sistema para conocer más detalles sobre tu situación</div>
+                  </div>
+                  <div style="display: table; width: 100%; margin-bottom: 15px;">
+                    <div style="display: table-cell; vertical-align: top; width: 32px; padding-right: 12px;">
+                      <div style="background: #0ea5e9; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;">2</div>
+                    </div>
+                    <div style="display: table-cell; vertical-align: top;">Revisa las <strong>políticas de uso</strong> de la plataforma para entender qué contenidos no están permitidos</div>
+                  </div>
+                  <div style="display: table; width: 100%; margin-bottom: 15px;">
+                    <div style="display: table-cell; vertical-align: top; width: 32px; padding-right: 12px;">
+                      <div style="background: #0ea5e9; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;">3</div>
+                    </div>
+                    <div style="display: table-cell; vertical-align: top;">Si crees que es un error, <strong>solicita una apelación</strong> explicando tu situación</div>
+                  </div>
+                  <div style="display: table; width: 100%;">
+                    <div style="display: table-cell; vertical-align: top; width: 32px; padding-right: 12px;">
+                      <div style="background: #0ea5e9; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;">4</div>
+                    </div>
+                    <div style="display: table-cell; vertical-align: top;">Espera la respuesta del equipo de moderación</div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Información importante -->
+              <div style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 12px; padding: 20px; margin: 25px 0;">
+                <p style="color: #92400e; font-size: 14px; margin: 0; display: flex; align-items: flex-start;">
+                  <span style="margin-right: 10px; margin-top: 2px; flex-shrink: 0; font-size: 18px;">⚠️</span>
+                  <span><strong>Importante:</strong> Mientras tu cuenta esté bloqueada, no podrás iniciar sesión ni recuperar tu contraseña. Debes resolver esta situación con el administrador primero.</span>
+                </p>
+              </div>
+            </div>
+            
+            <!-- Footer -->
+            <div style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 50%, #fca5a5 100%); padding: 30px; border-top: 2px solid #f87171;">
+              <div style="text-align: center;">
+                <div style="margin-bottom: 20px;">
+                  <div style="display: inline-block; background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: white; padding: 10px 20px; border-radius: 25px; font-size: 15px; font-weight: 600; box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);">
+                    🚫 Sistema de Ventas
+                  </div>
+                </div>
+                <p style="color: #7f1d1d; font-size: 13px; margin: 0 0 8px 0; line-height: 1.6; font-weight: 500;">
+                  Este es un email automático del sistema.
+                </p>
+                <p style="color: #991b1b; font-size: 12px; margin: 0;">
+                  © 2024 Sistema de Ventas. Todos los derechos reservados.
+                </p>
+              </div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `
+    };
+    
+    const result = await transporter.sendMail(mailOptions);
+    console.log('✅ Email de bloqueo automático por productos peligrosos enviado a:', to);
+    return true;
+  } catch (error) {
+    console.error('❌ Error al enviar email de bloqueo automático:', error.message);
+    throw error;
+  }
+};
+
+/**
  * Envía un email de notificación de cambio de estado de cuenta (LEGACY - mantiene compatibilidad)
  * @param {string} to - Email del destinatario
  * @param {string} name - Nombre del usuario
@@ -869,5 +1024,6 @@ module.exports = {
   sendAccountStatusEmail,
   sendAccountSuspendedEmail,
   sendAccountReactivatedEmail,
+  sendAccountBlockedByDangerousProductsEmail,
   sendNewSessionEmail
 };

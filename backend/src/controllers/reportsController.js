@@ -331,6 +331,21 @@ class ReportsController {
         [nuevoEstadoProducto, esPeligroso, moderador_resolutor_id, accion !== 'aprobar' ? decision_final : null, reporte.item_id]
       );
 
+      // Obtener información del producto para obtener el vendedor_id
+      const productoResult = await query(
+        'SELECT vendedor_id FROM items WHERE id = $1',
+        [reporte.item_id]
+      );
+
+      // Si se marcó como peligroso, verificar si se debe bloquear la cuenta del vendedor
+      if (esPeligroso && productoResult.rows.length > 0 && productoResult.rows[0].vendedor_id) {
+        const ProductsController = require('./productsController');
+        const bloqueoResult = await ProductsController.verificarYBloquearCuentaPorProductosPeligrosos(productoResult.rows[0].vendedor_id);
+        if (bloqueoResult.bloqueado) {
+          console.log(`⚠️ Cuenta del vendedor ${productoResult.rows[0].vendedor_id} bloqueada automáticamente por tener ${bloqueoResult.cantidadPeligrosos} productos peligrosos`);
+        }
+      }
+
       // Obtener información actualizada
       const reporteActualizado = await query(
         `SELECT 

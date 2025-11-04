@@ -2,6 +2,7 @@ const { query } = require('../config/database');
 const { config } = require('../config/config');
 const { detectarContenidoInadecuado, obtenerMensajeRechazo } = require('../services/contentDetection');
 const { filtrarPorProximidad } = require('../utils/geoLocation');
+const { sendAccountBlockedByDangerousProductsEmail } = require('../services/email');
 
 // Función helper para construir URLs completas de imágenes
 const buildImageUrl = (filename) => {
@@ -166,6 +167,14 @@ class ProductsController {
         }
         
         console.log('✅ Imágenes guardadas exitosamente');
+      }
+
+      // Si se creó un producto peligroso, verificar si se debe bloquear la cuenta del vendedor
+      if (esPeligroso && vendedor_id) {
+        const bloqueoResult = await ProductsController.verificarYBloquearCuentaPorProductosPeligrosos(vendedor_id);
+        if (bloqueoResult.bloqueado) {
+          console.log(`⚠️ Cuenta del vendedor ${vendedor_id} bloqueada automáticamente por tener ${bloqueoResult.cantidadPeligrosos} productos peligrosos`);
+        }
       }
 
       // Determinar mensaje de respuesta basado en el estado
@@ -870,6 +879,14 @@ class ProductsController {
         }
       }
 
+      // Si se marcó como peligroso, verificar si se debe bloquear la cuenta del vendedor
+      if (esPeligroso && producto.vendedor_id) {
+        const bloqueoResult = await ProductsController.verificarYBloquearCuentaPorProductosPeligrosos(producto.vendedor_id);
+        if (bloqueoResult.bloqueado) {
+          console.log(`⚠️ Cuenta del vendedor ${producto.vendedor_id} bloqueada automáticamente por tener ${bloqueoResult.cantidadPeligrosos} productos peligrosos`);
+        }
+      }
+
       // Determinar mensaje de respuesta basado en cambios de estado
       let mensajeRespuesta = 'Producto actualizado exitosamente';
       let informacionAdicional = null;
@@ -1041,13 +1058,14 @@ class ProductsController {
   static async getMyProducts(req, res) {
     try {
       const vendedor_id = req.user.id;
-      const { page = 1, limit = 10, estado } = req.query;
+      const { page = 1, limit = 10, estado, search_product_name } = req.query;
 
       // Verificar si es moderador o administrador
       const isModerator = ['moderador', 'administrador'].includes(req.user.tipo_usuario);
 
       let whereClause = 'i.vendedor_id = $1';
       let queryParams = [vendedor_id];
+      let paramIndex = 2;
 
       // Ocultar productos peligrosos para vendedores normales
       // Moderadores y administradores SÍ pueden ver productos peligrosos para revisión
@@ -1057,12 +1075,23 @@ class ProductsController {
 
       if (estado) {
         queryParams.push(estado);
-        whereClause += ` AND i.estado = $${queryParams.length}`;
+        whereClause += ` AND i.estado = $${paramIndex}`;
+        paramIndex++;
+      }
+
+      if (search_product_name && search_product_name.trim() !== '') {
+        queryParams.push(`%${search_product_name.trim()}%`);
+        whereClause += ` AND i.nombre ILIKE $${paramIndex}`;
+        paramIndex++;
       }
 
       // Calcular offset para paginación
       const offset = (page - 1) * limit;
-      queryParams.push(limit, offset);
+      const limitPlaceholder = `$${paramIndex}`;
+      queryParams.push(parseInt(limit));
+      paramIndex++;
+      const offsetPlaceholder = `$${paramIndex}`;
+      queryParams.push(offset);
 
       const productos = await query(
         `SELECT 
@@ -1081,16 +1110,17 @@ class ProductsController {
                  i.ubicacion_provincia, i.ubicacion_canton, i.ubicacion_distrito, i.ubicacion_direccion,
                  c.nombre
         ORDER BY i.fecha_publicacion DESC
-        LIMIT $${queryParams.length - 1} OFFSET $${queryParams.length}`,
+        LIMIT ${limitPlaceholder} OFFSET ${offsetPlaceholder}`,
         queryParams
       );
 
-      // Contar total
+      // Contar total (sin limit y offset)
+      const countParams = queryParams.slice(0, -2);
       const totalCount = await query(
         `SELECT COUNT(*) as total
          FROM items i
          WHERE ${whereClause}`,
-        queryParams.slice(0, -2)
+        countParams
       );
 
       const total = parseInt(totalCount.rows[0].total);
@@ -1209,6 +1239,14 @@ class ProductsController {
         [moderador_id, `moderar_producto_${accion}`, id, decision_final || motivo]
       );
 
+      // Si se marcó como peligroso, verificar si se debe bloquear la cuenta del vendedor
+      if (esPeligroso && producto.vendedor_id) {
+        const bloqueoResult = await ProductsController.verificarYBloquearCuentaPorProductosPeligrosos(producto.vendedor_id);
+        if (bloqueoResult.bloqueado) {
+          console.log(`⚠️ Cuenta del vendedor ${producto.vendedor_id} bloqueada automáticamente por tener ${bloqueoResult.cantidadPeligrosos} productos peligrosos`);
+        }
+      }
+
       res.json({
         success: true,
         message: `Producto ${accion} exitosamente`,
@@ -1228,27 +1266,42 @@ class ProductsController {
   // Obtener productos pendientes de moderación
   static async getPendingModeration(req, res) {
     try {
-      const { page = 1, limit = 12, estado } = req.query;
+      const { page = 1, limit = 12, estado, search_product_name, search_vendedor_name } = req.query;
 
       // Calcular offset para paginación
       const offset = (parseInt(page) - 1) * parseInt(limit);
 
-      // Construir la consulta dinámicamente según si hay filtro de estado
-      let whereClause = '';
+      // Construir la consulta dinámicamente según los filtros
+      let whereConditions = [];
       let queryParams = [];
-      let limitPlaceholder = '';
-      let offsetPlaceholder = '';
+      let paramIndex = 1;
       
       if (estado && estado.trim() !== '') {
-        whereClause = 'WHERE i.estado = $1';
-        limitPlaceholder = '$2';
-        offsetPlaceholder = '$3';
-        queryParams = [estado, parseInt(limit), offset];
-      } else {
-        limitPlaceholder = '$1';
-        offsetPlaceholder = '$2';
-        queryParams = [parseInt(limit), offset];
+        whereConditions.push(`i.estado = $${paramIndex}`);
+        queryParams.push(estado);
+        paramIndex++;
       }
+      
+      if (search_product_name && search_product_name.trim() !== '') {
+        whereConditions.push(`i.nombre ILIKE $${paramIndex}`);
+        queryParams.push(`%${search_product_name.trim()}%`);
+        paramIndex++;
+      }
+      
+      if (search_vendedor_name && search_vendedor_name.trim() !== '') {
+        whereConditions.push(`(u.nombre ILIKE $${paramIndex} OR u.apellido ILIKE $${paramIndex} OR u.nombre || ' ' || u.apellido ILIKE $${paramIndex})`);
+        queryParams.push(`%${search_vendedor_name.trim()}%`);
+        paramIndex++;
+      }
+      
+      const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+      
+      // Construir placeholders para LIMIT y OFFSET
+      const limitPlaceholder = `$${paramIndex}`;
+      queryParams.push(parseInt(limit));
+      paramIndex++;
+      const offsetPlaceholder = `$${paramIndex}`;
+      queryParams.push(offset);
 
       const productos = await query(
         `SELECT 
@@ -1277,14 +1330,32 @@ class ProductsController {
         queryParams
       );
 
-      // Contar total
-      let countQuery = `SELECT COUNT(*) as total FROM items i`;
+      // Contar total (usando los mismos filtros)
+      let countWhereConditions = [];
       let countParams = [];
+      let countParamIndex = 1;
       
       if (estado && estado.trim() !== '') {
-        countQuery += ` WHERE i.estado = $1`;
-        countParams = [estado];
+        countWhereConditions.push(`i.estado = $${countParamIndex}`);
+        countParams.push(estado);
+        countParamIndex++;
       }
+      
+      if (search_product_name && search_product_name.trim() !== '') {
+        countWhereConditions.push(`i.nombre ILIKE $${countParamIndex}`);
+        countParams.push(`%${search_product_name.trim()}%`);
+        countParamIndex++;
+      }
+      
+      if (search_vendedor_name && search_vendedor_name.trim() !== '') {
+        // Necesitamos hacer JOIN con usuarios para la búsqueda por nombre del vendedor
+        countWhereConditions.push(`i.vendedor_id IN (SELECT id FROM usuarios WHERE nombre ILIKE $${countParamIndex} OR apellido ILIKE $${countParamIndex} OR nombre || ' ' || apellido ILIKE $${countParamIndex})`);
+        countParams.push(`%${search_vendedor_name.trim()}%`);
+        countParamIndex++;
+      }
+      
+      const countWhereClause = countWhereConditions.length > 0 ? `WHERE ${countWhereConditions.join(' AND ')}` : '';
+      const countQuery = `SELECT COUNT(*) as total FROM items i ${countWhereClause}`;
       
       const totalCount = await query(countQuery, countParams);
 
@@ -1597,6 +1668,87 @@ class ProductsController {
         message: 'Error al obtener productos peligrosos',
         error: error.message
       });
+    }
+  }
+
+  /**
+   * Verifica si un vendedor tiene 3 o más productos peligrosos y bloquea su cuenta automáticamente
+   * @param {number} vendedor_id - ID del vendedor
+   * @returns {Promise<{bloqueado: boolean, cantidadPeligrosos: number}>} Resultado de la verificación
+   */
+  static async verificarYBloquearCuentaPorProductosPeligrosos(vendedor_id) {
+    try {
+      // Contar productos peligrosos del vendedor
+      const countResult = await query(
+        `SELECT COUNT(*) as cantidad 
+         FROM items 
+         WHERE vendedor_id = $1 
+         AND es_peligroso = true`,
+        [vendedor_id]
+      );
+
+      const cantidadPeligrosos = parseInt(countResult.rows[0].cantidad);
+
+      // Si tiene 3 o más productos peligrosos, bloquear la cuenta
+      if (cantidadPeligrosos >= 3) {
+        // Verificar que el usuario existe y es vendedor
+        const userResult = await query(
+          `SELECT id, correo, nombre, apellido, tipo_usuario, estado 
+           FROM usuarios 
+           WHERE id = $1`,
+          [vendedor_id]
+        );
+
+        if (userResult.rows.length === 0) {
+          console.error(`❌ Usuario ${vendedor_id} no encontrado`);
+          return { bloqueado: false, cantidadPeligrosos };
+        }
+
+        const user = userResult.rows[0];
+
+        // Solo bloquear si es vendedor y no está ya suspendido
+        if (user.tipo_usuario === 'vendedor' && user.estado !== 'suspendido') {
+          console.log(`⚠️ Bloqueando cuenta automáticamente: Vendedor ${vendedor_id} tiene ${cantidadPeligrosos} productos peligrosos`);
+
+          // Suspender la cuenta
+          await query(
+            `UPDATE usuarios 
+             SET estado = 'suspendido' 
+             WHERE id = $1`,
+            [vendedor_id]
+          );
+
+          // Invalidar todas las sesiones activas
+          await query(
+            `UPDATE sesiones_usuario 
+             SET activa = false 
+             WHERE usuario_id = $1`,
+            [vendedor_id]
+          );
+
+          // Enviar email de notificación
+          try {
+            const nombreCompleto = `${user.nombre || ''} ${user.apellido || ''}`.trim() || user.correo;
+            await sendAccountBlockedByDangerousProductsEmail(
+              user.correo,
+              nombreCompleto,
+              cantidadPeligrosos
+            );
+            console.log(`✅ Email de bloqueo automático enviado a: ${user.correo}`);
+          } catch (emailError) {
+            console.error(`❌ Error enviando email de bloqueo automático a ${user.correo}:`, emailError.message);
+            // No fallar si el email falla
+          }
+
+          return { bloqueado: true, cantidadPeligrosos };
+        }
+      }
+
+      return { bloqueado: false, cantidadPeligrosos };
+    } catch (error) {
+      console.error('❌ Error al verificar y bloquear cuenta por productos peligrosos:', error);
+      // No lanzar error, solo registrar
+      return { bloqueado: false, cantidadPeligrosos: 0, error: error.message };
     }
   }
 }

@@ -22,7 +22,8 @@ import {
   Shield,
   MessageSquare,
   CheckCircle,
-  ToggleRight
+  ToggleRight,
+  Search
 } from 'lucide-react';
 import type { Product, ProductsResponse } from '../types/product.types';
 import { AppealProductDialog } from '../components/ui/AppealProductDialog';
@@ -47,8 +48,12 @@ export const MyProductsPage: React.FC = () => {
     estado: '',
     disponibilidad: '',
     page: 1,
-    limit: 12
+    limit: 12,
+    search_product_name: ''
   });
+
+  // Estado local para el campo de búsqueda (antes de hacer click en buscar)
+  const [searchInput, setSearchInput] = useState('');
 
   // Estado para modal de apelación
   const [appealModalOpen, setAppealModalOpen] = useState(false);
@@ -114,6 +119,18 @@ export const MyProductsPage: React.FC = () => {
     setFilters(prev => ({
       ...prev,
       [key]: value,
+      page: 1
+    }));
+  };
+
+  const handleSearchInputChange = (value: string) => {
+    setSearchInput(value);
+  };
+
+  const handleSearch = () => {
+    setFilters(prev => ({
+      ...prev,
+      search_product_name: searchInput,
       page: 1
     }));
   };
@@ -382,7 +399,7 @@ export const MyProductsPage: React.FC = () => {
         )}
         
         {/* Estadísticas mejoradas - RESPONSIVE */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300">
             <CardContent className="p-4 sm:p-5 md:p-6">
               <div className="flex items-center justify-between">
@@ -444,6 +461,22 @@ export const MyProductsPage: React.FC = () => {
               </div>
             </CardContent>
           </Card>
+
+          <Card className="bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardContent className="p-4 sm:p-5 md:p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs sm:text-sm font-medium text-gray-700">Suspendidos</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 mt-1">
+                    {products.filter(p => p.estado === 'suspendido').length}
+                  </p>
+                </div>
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-500 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+                  <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Filtros mejorados - RESPONSIVE */}
@@ -466,6 +499,7 @@ export const MyProductsPage: React.FC = () => {
                     <option value="activo">Solo Activos</option>
                     <option value="pendiente_revision">Pendientes de revisión</option>
                     <option value="rechazado">Rechazados</option>
+                    <option value="suspendido">Suspendidos</option>
                   </select>
                 </div>
 
@@ -484,6 +518,38 @@ export const MyProductsPage: React.FC = () => {
                     <option value="true">Solo Disponibles</option>
                     <option value="false">No Disponibles</option>
                   </select>
+                </div>
+              </div>
+
+              {/* Campo de búsqueda por nombre */}
+              <div className="space-y-2">
+                <label className="text-xs sm:text-sm font-semibold text-gray-700 flex items-center">
+                  <Search className="h-4 w-4 mr-2 text-blue-500" />
+                  Buscar por Nombre de Producto
+                </label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      value={searchInput}
+                      onChange={(e) => handleSearchInputChange(e.target.value)}
+                      placeholder="Ej: Laptop, Mueble, Servicio..."
+                      className="w-full h-10 sm:h-12 rounded-lg sm:rounded-xl border-2 border-gray-200 bg-white px-3 sm:px-4 py-2 sm:py-3 pr-12 text-xs sm:text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm hover:border-gray-300 transition-colors"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          handleSearch();
+                        }
+                      }}
+                    />
+                    <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  </div>
+                  <Button
+                    onClick={handleSearch}
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-2.5 sm:px-6 sm:py-3 rounded-lg sm:rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 flex items-center space-x-2"
+                  >
+                    <Search className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <span className="hidden sm:inline">Buscar</span>
+                  </Button>
                 </div>
               </div>
 

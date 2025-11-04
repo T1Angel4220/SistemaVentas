@@ -71,9 +71,7 @@ export const ModerationReasonModal: React.FC<ModerationReasonModalProps> = ({
           borderColor: 'border-red-200',
           textColor: 'text-red-800',
           message: '⚠️ ATENCIÓN: Esta es una acción crítica.',
-          canDo: [
-            'Apelar esta decisión'
-          ],
+          canDo: [],
           cantDo: [
             'Verlo en su lista',
             'Editarlo',

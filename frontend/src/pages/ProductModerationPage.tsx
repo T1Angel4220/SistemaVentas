@@ -20,7 +20,8 @@ import {
   AlertTriangle,
   Clock,
   Filter,
-  FileText
+  FileText,
+  Search
 } from 'lucide-react';
 import type { Product, ProductsResponse } from '../types/product.types';
 import { ModerationReasonModal } from '../components/ui/ModerationReasonModal';
@@ -56,7 +57,15 @@ export const ProductModerationPage: React.FC = () => {
   const [filters, setFilters] = useState({
     estado: '',
     page: 1,
-    limit: 12
+    limit: 12,
+    search_product_name: '',
+    search_vendedor_name: ''
+  });
+
+  // Estados locales para los campos de búsqueda (antes de hacer click en buscar)
+  const [searchInputs, setSearchInputs] = useState({
+    productName: '',
+    sellerName: ''
   });
 
   // Estado para modal de motivo de moderación
@@ -244,6 +253,22 @@ export const ProductModerationPage: React.FC = () => {
     setFilters(prev => ({
       ...prev,
       [key]: value,
+      page: 1
+    }));
+  };
+
+  const handleSearchInputChange = (key: string, value: string) => {
+    setSearchInputs(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
+  const handleSearch = () => {
+    setFilters(prev => ({
+      ...prev,
+      search_product_name: searchInputs.productName,
+      search_vendedor_name: searchInputs.sellerName,
       page: 1
     }));
   };
@@ -463,29 +488,87 @@ export const ProductModerationPage: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0 sm:space-x-6">
-              <div className="flex-1">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Estado del Producto
-                </label>
-                <select
-                  value={filters.estado}
-                  onChange={(e) => handleFilterChange('estado', e.target.value)}
-          className="w-full sm:w-80 flex h-12 items-center justify-between rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm hover:border-gray-300 transition-colors font-medium"
-                >
-          <option value="">📦 Todos ({estadisticas.total})</option>
-                  <option value="pendiente_revision">🕐 Pendientes de Revisión ({estadisticas.pendientes})</option>
-                  <option value="activo">✅ Aprobados ({estadisticas.aprobados})</option>
-          <option value="rechazado">❌ Rechazados ({estadisticas.rechazados})</option>
-          <option value="suspendido">⚠️ Suspendidos ({estadisticas.suspendidos})</option>
-                  <option value="peligroso">🚫 Peligrosos ({estadisticas.peligrosos})</option>
-                  <option value="en_apelacion">📋 En Apelación ({estadisticas.en_apelacion})</option>
-                </select>
-              </div>
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 rounded-xl border border-blue-200">
-                <div className="text-sm font-medium text-blue-700">
-                  Mostrando <span className="font-bold text-blue-900">{products.length}</span> de <span className="font-bold text-blue-900">{pagination.total_items}</span> productos
+            <div className="space-y-6">
+              {/* Fila 1: Filtro de estado y contador */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0 sm:space-x-6">
+                <div className="flex-1">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Estado del Producto
+                  </label>
+                  <select
+                    value={filters.estado}
+                    onChange={(e) => handleFilterChange('estado', e.target.value)}
+                    className="w-full sm:w-80 flex h-12 items-center justify-between rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm hover:border-gray-300 transition-colors font-medium"
+                  >
+                    <option value="">📦 Todos ({estadisticas.total})</option>
+                    <option value="pendiente_revision">🕐 Pendientes de Revisión ({estadisticas.pendientes})</option>
+                    <option value="activo">✅ Aprobados ({estadisticas.aprobados})</option>
+                    <option value="rechazado">❌ Rechazados ({estadisticas.rechazados})</option>
+                    <option value="suspendido">⚠️ Suspendidos ({estadisticas.suspendidos})</option>
+                    <option value="peligroso">🚫 Peligrosos ({estadisticas.peligrosos})</option>
+                    <option value="en_apelacion">📋 En Apelación ({estadisticas.en_apelacion})</option>
+                  </select>
                 </div>
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 rounded-xl border border-blue-200">
+                  <div className="text-sm font-medium text-blue-700">
+                    Mostrando <span className="font-bold text-blue-900">{products.length}</span> de <span className="font-bold text-blue-900">{pagination.total_items}</span> productos
+                  </div>
+                </div>
+              </div>
+
+              {/* Fila 2: Campos de búsqueda */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Buscar por Nombre de Producto
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={searchInputs.productName}
+                      onChange={(e) => handleSearchInputChange('productName', e.target.value)}
+                      placeholder="Ej: Laptop, Mueble, Servicio..."
+                      className="w-full h-12 rounded-xl border-2 border-gray-200 bg-white px-4 py-3 pr-12 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm hover:border-gray-300 transition-colors font-medium"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          handleSearch();
+                        }
+                      }}
+                    />
+                    <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Buscar por Nombre del Vendedor
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={searchInputs.sellerName}
+                      onChange={(e) => handleSearchInputChange('sellerName', e.target.value)}
+                      placeholder="Ej: Juan, Pérez, María..."
+                      className="w-full h-12 rounded-xl border-2 border-gray-200 bg-white px-4 py-3 pr-12 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm hover:border-gray-300 transition-colors font-medium"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          handleSearch();
+                        }
+                      }}
+                    />
+                    <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Botón de búsqueda */}
+              <div className="flex justify-end">
+                <Button
+                  onClick={handleSearch}
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 flex items-center space-x-2"
+                >
+                  <Search className="h-5 w-5" />
+                  <span>Buscar</span>
+                </Button>
               </div>
             </div>
           </CardContent>
