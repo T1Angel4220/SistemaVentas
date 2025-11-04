@@ -10,8 +10,9 @@
  * 4. Crea el esquema completo
  * 5. Crea categorías jerárquicas
  * 6. Actualiza ubicaciones de Ecuador
- * 7. Instala dependencias
- * 8. Levanta backend y frontend
+ * 7. Inserta datos iniciales (usuarios, productos, servicios, etc.)
+ * 8. Instala dependencias
+ * 9. Levanta backend y frontend
  */
 
 const readline = require('readline');
@@ -480,8 +481,70 @@ VITE_PWA_BACKGROUND_COLOR=#ffffff
       }
     }
 
-    // 10. Instalar dependencias del frontend
-    logStep(9, 'Instalando dependencias del frontend');
+    // 10. Insertar datos iniciales
+    logStep(9, 'Insertando datos iniciales');
+    const initialDataSQLPath = path.join(backendPath, 'src', 'config', 'initial_data.sql');
+    
+    if (!fs.existsSync(initialDataSQLPath)) {
+      logWarning('No se encontró initial_data.sql, saltando este paso...');
+    } else {
+      log('Leyendo initial_data.sql...');
+      let initialDataContent = fs.readFileSync(initialDataSQLPath, 'utf8');
+      
+      // Remover el comando \c (cambiar de base de datos) ya que lo especificamos en el comando
+      initialDataContent = initialDataContent.replace(/\\c\s+sistema_ventas_multiempresa;?/gi, '');
+      
+      // Guardar temporalmente el SQL procesado
+      const tempInitialDataPath = path.join(backendPath, 'temp_initial_data.sql');
+      fs.writeFileSync(tempInitialDataPath, initialDataContent, 'utf8');
+      
+      try {
+        log('Ejecutando datos iniciales...');
+        const initialDataResult = await runSQLFile(tempInitialDataPath, dbPassword, 'sistema_ventas_multiempresa');
+        
+        if (!initialDataResult.success) {
+          logWarning('Error ejecutando initial_data.sql, pero continuando...');
+          logWarning(initialDataResult.stderr || initialDataResult.error);
+        } else {
+          logSuccess('Datos iniciales insertados exitosamente');
+        }
+      } finally {
+        // Eliminar archivo temporal
+        if (fs.existsSync(tempInitialDataPath)) {
+          fs.unlinkSync(tempInitialDataPath);
+        }
+      }
+    }
+
+    // 10.1. Crear usuarios de prueba con contraseñas correctas
+    logStep(9.5, 'Creando/actualizando usuarios de prueba con contraseñas correctas');
+    const createTestUsersScriptPath = path.join(backendPath, 'create-test-users.js');
+    
+    if (!fs.existsSync(createTestUsersScriptPath)) {
+      logWarning('No se encontró create-test-users.js, saltando este paso...');
+    } else {
+      // Cambiar al directorio del backend para ejecutar el script
+      const originalCwd = process.cwd();
+      process.chdir(backendPath);
+      
+      try {
+        log('Ejecutando create-test-users.js...');
+        const testUsersResult = await runCommand(`node create-test-users.js`);
+        
+        if (!testUsersResult.success) {
+          logWarning('Error ejecutando create-test-users.js, pero continuando...');
+          logWarning(testUsersResult.stderr || testUsersResult.error);
+        } else {
+          logSuccess('Usuarios de prueba creados/actualizados con contraseñas correctas');
+        }
+      } finally {
+        // Volver al directorio original
+        process.chdir(originalCwd);
+      }
+    }
+
+    // 11. Instalar dependencias del frontend
+    logStep(10, 'Instalando dependencias del frontend');
     process.chdir(frontendPath);
     
     if (!fs.existsSync(path.join(frontendPath, 'package.json'))) {
@@ -499,7 +562,7 @@ VITE_PWA_BACKGROUND_COLOR=#ffffff
     
     logSuccess('Dependencias del frontend instaladas');
 
-    // 11. Resumen final
+    // 12. Resumen final
     log('\n═══════════════════════════════════════════════════════════', 'bright');
     log('   ✅ CONFIGURACIÓN COMPLETADA EXITOSAMENTE', 'green');
     log('═══════════════════════════════════════════════════════════', 'bright');
@@ -508,6 +571,7 @@ VITE_PWA_BACKGROUND_COLOR=#ffffff
     log('   ✅ Base de datos creada y configurada');
     log('   ✅ Categorías jerárquicas creadas');
     log('   ✅ Ubicaciones de Ecuador actualizadas');
+    log('   ✅ Datos iniciales insertados');
     log('   ✅ Dependencias instaladas');
     log('   ✅ Archivos .env configurados');
     log('');

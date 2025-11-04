@@ -6,7 +6,7 @@ echo ║     AGREGAR ESTADO 'en_apelacion' A LA BASE DE DATOS          ║
 echo ╚════════════════════════════════════════════════════════════════╝
 echo.
 
-set PGPASSWORD=S1805787841
+set PGPASSWORD=7dejunio
 
 echo 📊 Agregando estado 'en_apelacion' al enum estado_item...
 echo.
