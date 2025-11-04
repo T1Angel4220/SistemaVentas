@@ -8,14 +8,13 @@
  * 2. Configura el archivo .env
  * 3. Elimina y recrea la base de datos
  * 4. Crea el esquema completo
- * 5. Crea categorías jerárquicas
- * 6. Inserta categorías estilo Amazon (amazon-categories.sql)
- * 7. Actualiza ubicaciones de Ecuador
- * 8. Inserta datos iniciales (usuarios, productos, servicios, etc.)
- * 9. Crea usuarios de prueba
- * 10. Inserta productos de prueba (insert-test-products.js)
- * 11. Instala dependencias
- * 12. Levanta backend y frontend
+ * 5. Crea categorías jerárquicas (create-hierarchical-categories.js)
+ * 6. Actualiza ubicaciones de Ecuador
+ * 7. Inserta datos iniciales (usuarios, productos, servicios, etc.)
+ * 8. Crea usuarios de prueba
+ * 9. Inserta productos de prueba (insert-test-products.js)
+ * 10. Instala dependencias
+ * 11. Levanta backend y frontend
  */
 
 const readline = require('readline');
@@ -445,51 +444,41 @@ VITE_PWA_BACKGROUND_COLOR=#ffffff
     
     logSuccess('Dependencias del backend instaladas');
 
-    // 8. Crear categorías jerárquicas (ahora que las dependencias están instaladas)
+    // 7. Crear categorías jerárquicas
     logStep(7, 'Creando categorías jerárquicas');
-    const categoriesScriptPath = path.join(backendPath, 'create-hierarchical-categories.js');
+    const categoriesScriptPath = path.join(backendPath, 'create-hierarchical-categories-corregido.js');
     
     if (!fs.existsSync(categoriesScriptPath)) {
       logError(`No se encontró el archivo: ${categoriesScriptPath}`);
       process.exit(1);
     }
 
-    const categoriesResult = await runCommand(`node ${categoriesScriptPath}`);
+    // Cambiar al directorio del backend para ejecutar el script
+    const originalCwd = process.cwd();
+    process.chdir(backendPath);
     
-    if (!categoriesResult.success) {
-      logError('Error creando categorías jerárquicas');
-      logError(categoriesResult.error);
-      if (categoriesResult.stderr) {
-        logError(categoriesResult.stderr);
-      }
-      process.exit(1);
-    }
-    
-    logSuccess('Categorías jerárquicas creadas');
-
-    // 7.5. Insertar categorías de Amazon
-    logStep(7.5, 'Insertando categorías estilo Amazon');
-    const amazonCategoriesSQLPath = path.join(backendPath, 'src', 'config', 'amazon-categories.sql');
-    
-    if (!fs.existsSync(amazonCategoriesSQLPath)) {
-      logWarning('No se encontró amazon-categories.sql, saltando este paso...');
-    } else {
-      const amazonCategoriesResult = await runSQLFile(amazonCategoriesSQLPath, dbPassword, 'sistema_ventas_multiempresa');
+    try {
+      log('Ejecutando create-hierarchical-categories-corregido.js...');
+      const categoriesResult = await runCommand(`node create-hierarchical-categories-corregido.js`);
       
-      if (!amazonCategoriesResult.success) {
-        logWarning('Error insertando categorías de Amazon, pero continuando...');
-        logWarning(amazonCategoriesResult.stderr || amazonCategoriesResult.error);
-      } else {
-        logSuccess('Categorías estilo Amazon insertadas exitosamente');
+      if (!categoriesResult.success) {
+        logError('Error creando categorías jerárquicas');
+        logError(categoriesResult.stderr || categoriesResult.error);
+        process.exit(1);
       }
+      
+      logSuccess('Categorías jerárquicas creadas exitosamente');
+    } finally {
+      // Volver al directorio original
+      process.chdir(originalCwd);
     }
 
     // 9. Actualizar ubicaciones de Ecuador
     logStep(8, 'Actualizando ubicaciones de Ecuador');
-    const locationsSQLPath = path.join(backendPath, 'update-ecuador-locations.sql');
+    const locationsSQLPath = path.join(backendPath, 'update-ecuador-locations-corregido.sql');
     
     if (!fs.existsSync(locationsSQLPath)) {
-      logWarning('No se encontró update-ecuador-locations.sql, saltando este paso...');
+      logWarning('No se encontró update-ecuador-locations-corregido.sql, saltando este paso...');
     } else {
       const locationsResult = await runSQLFile(locationsSQLPath, dbPassword, 'sistema_ventas_multiempresa');
       
@@ -582,21 +571,21 @@ VITE_PWA_BACKGROUND_COLOR=#ffffff
 
     // 9.6. Insertar productos de prueba
     logStep(9.6, 'Insertando productos de prueba');
-    const insertTestProductsScriptPath = path.join(backendPath, 'insert-test-products.js');
+    const insertTestProductsScriptPath = path.join(backendPath, 'insert-test-products-corregido.js');
     
     if (!fs.existsSync(insertTestProductsScriptPath)) {
-      logWarning('No se encontró insert-test-products.js, saltando este paso...');
+      logWarning('No se encontró insert-test-products-corregido.js, saltando este paso...');
     } else {
       // Cambiar al directorio del backend para ejecutar el script
       const originalCwd = process.cwd();
       process.chdir(backendPath);
       
       try {
-        log('Ejecutando insert-test-products.js...');
-        const testProductsResult = await runCommand(`node insert-test-products.js`);
+        log('Ejecutando insert-test-products-corregido.js...');
+        const testProductsResult = await runCommand(`node insert-test-products-corregido.js`);
         
         if (!testProductsResult.success) {
-          logWarning('Error ejecutando insert-test-products.js, pero continuando...');
+          logWarning('Error ejecutando insert-test-products-corregido.js, pero continuando...');
           logWarning(testProductsResult.stderr || testProductsResult.error);
         } else {
           logSuccess('Productos de prueba insertados exitosamente');
@@ -634,7 +623,6 @@ VITE_PWA_BACKGROUND_COLOR=#ffffff
     log('📋 Resumen de la configuración:', 'cyan');
     log('   ✅ Base de datos creada y configurada');
     log('   ✅ Categorías jerárquicas creadas');
-    log('   ✅ Categorías estilo Amazon insertadas');
     log('   ✅ Ubicaciones de Ecuador actualizadas');
     log('   ✅ Datos iniciales insertados');
     log('   ✅ Usuarios de prueba creados');
