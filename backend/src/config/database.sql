@@ -259,7 +259,7 @@ CREATE TABLE acciones_moderacion (
 CREATE TABLE sesiones_usuario (
     id SERIAL PRIMARY KEY,
     usuario_id INTEGER REFERENCES usuarios(id) ON DELETE CASCADE,
-    token_sesion VARCHAR(255) UNIQUE NOT NULL,
+    token_sesion TEXT UNIQUE NOT NULL,
     fecha_inicio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     fecha_expiracion TIMESTAMP NOT NULL,
     ip_address INET,
