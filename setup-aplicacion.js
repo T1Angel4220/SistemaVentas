@@ -481,6 +481,23 @@ VITE_PWA_BACKGROUND_COLOR=#ffffff
       }
     }
 
+    // 9.1. Agregar estado 'en_apelacion' al enum estado_item
+    logStep(8.5, 'Agregando estado de apelación al enum estado_item');
+    const apelacionSQLPath = path.join(backendPath, 'add-apelacion-estado.sql');
+    
+    if (!fs.existsSync(apelacionSQLPath)) {
+      logWarning('No se encontró add-apelacion-estado.sql, saltando este paso...');
+    } else {
+      const apelacionResult = await runSQLFile(apelacionSQLPath, dbPassword, 'sistema_ventas_multiempresa');
+      
+      if (!apelacionResult.success) {
+        logWarning('Error agregando estado de apelación, pero continuando...');
+        logWarning(apelacionResult.stderr || apelacionResult.error);
+      } else {
+        logSuccess('Estado de apelación agregado al enum estado_item');
+      }
+    }
+
     // 10. Insertar datos iniciales
     logStep(9, 'Insertando datos iniciales');
     const initialDataSQLPath = path.join(backendPath, 'src', 'config', 'initial_data.sql');
