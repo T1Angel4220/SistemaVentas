@@ -9,10 +9,13 @@
  * 3. Elimina y recrea la base de datos
  * 4. Crea el esquema completo
  * 5. Crea categorías jerárquicas
- * 6. Actualiza ubicaciones de Ecuador
- * 7. Inserta datos iniciales (usuarios, productos, servicios, etc.)
- * 8. Instala dependencias
- * 9. Levanta backend y frontend
+ * 6. Inserta categorías estilo Amazon (amazon-categories.sql)
+ * 7. Actualiza ubicaciones de Ecuador
+ * 8. Inserta datos iniciales (usuarios, productos, servicios, etc.)
+ * 9. Crea usuarios de prueba
+ * 10. Inserta productos de prueba (insert-test-products.js)
+ * 11. Instala dependencias
+ * 12. Levanta backend y frontend
  */
 
 const readline = require('readline');
@@ -464,6 +467,23 @@ VITE_PWA_BACKGROUND_COLOR=#ffffff
     
     logSuccess('Categorías jerárquicas creadas');
 
+    // 7.5. Insertar categorías de Amazon
+    logStep(7.5, 'Insertando categorías estilo Amazon');
+    const amazonCategoriesSQLPath = path.join(backendPath, 'src', 'config', 'amazon-categories.sql');
+    
+    if (!fs.existsSync(amazonCategoriesSQLPath)) {
+      logWarning('No se encontró amazon-categories.sql, saltando este paso...');
+    } else {
+      const amazonCategoriesResult = await runSQLFile(amazonCategoriesSQLPath, dbPassword, 'sistema_ventas_multiempresa');
+      
+      if (!amazonCategoriesResult.success) {
+        logWarning('Error insertando categorías de Amazon, pero continuando...');
+        logWarning(amazonCategoriesResult.stderr || amazonCategoriesResult.error);
+      } else {
+        logSuccess('Categorías estilo Amazon insertadas exitosamente');
+      }
+    }
+
     // 9. Actualizar ubicaciones de Ecuador
     logStep(8, 'Actualizando ubicaciones de Ecuador');
     const locationsSQLPath = path.join(backendPath, 'update-ecuador-locations.sql');
@@ -560,6 +580,33 @@ VITE_PWA_BACKGROUND_COLOR=#ffffff
       }
     }
 
+    // 9.6. Insertar productos de prueba
+    logStep(9.6, 'Insertando productos de prueba');
+    const insertTestProductsScriptPath = path.join(backendPath, 'insert-test-products.js');
+    
+    if (!fs.existsSync(insertTestProductsScriptPath)) {
+      logWarning('No se encontró insert-test-products.js, saltando este paso...');
+    } else {
+      // Cambiar al directorio del backend para ejecutar el script
+      const originalCwd = process.cwd();
+      process.chdir(backendPath);
+      
+      try {
+        log('Ejecutando insert-test-products.js...');
+        const testProductsResult = await runCommand(`node insert-test-products.js`);
+        
+        if (!testProductsResult.success) {
+          logWarning('Error ejecutando insert-test-products.js, pero continuando...');
+          logWarning(testProductsResult.stderr || testProductsResult.error);
+        } else {
+          logSuccess('Productos de prueba insertados exitosamente');
+        }
+      } finally {
+        // Volver al directorio original
+        process.chdir(originalCwd);
+      }
+    }
+
     // 11. Instalar dependencias del frontend
     logStep(10, 'Instalando dependencias del frontend');
     process.chdir(frontendPath);
@@ -587,8 +634,11 @@ VITE_PWA_BACKGROUND_COLOR=#ffffff
     log('📋 Resumen de la configuración:', 'cyan');
     log('   ✅ Base de datos creada y configurada');
     log('   ✅ Categorías jerárquicas creadas');
+    log('   ✅ Categorías estilo Amazon insertadas');
     log('   ✅ Ubicaciones de Ecuador actualizadas');
     log('   ✅ Datos iniciales insertados');
+    log('   ✅ Usuarios de prueba creados');
+    log('   ✅ Productos de prueba insertados');
     log('   ✅ Dependencias instaladas');
     log('   ✅ Archivos .env configurados');
     log('');

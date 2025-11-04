@@ -228,7 +228,7 @@ async function insertProducts() {
     
     // Obtener ubicaciones disponibles
     const ubicacionesResult = await client.query(
-      'SELECT id, provincia, canton, distrito FROM ubicaciones ORDER BY RANDOM() LIMIT 10'
+      'SELECT id, provincia, canton FROM ubicaciones ORDER BY RANDOM() LIMIT 10'
     );
     
     if (ubicacionesResult.rows.length === 0) {
@@ -278,7 +278,7 @@ async function insertProducts() {
       console.log(`✅ Producto insertado: ${itemNombre} (ID: ${itemId})`);
       console.log(`   Vendedor: ${vendedor.nombre} ${vendedor.apellido}`);
       console.log(`   Categoría: ${categoria.nombre}`);
-      console.log(`   Ubicación: ${ubicacion.distrito}, ${ubicacion.canton}, ${ubicacion.provincia}`);
+      console.log(`   Ubicación: ${ubicacion.canton}, ${ubicacion.provincia}`);
       console.log(`   Precio: $${producto.precio}`);
       
       productosInsertados++;
