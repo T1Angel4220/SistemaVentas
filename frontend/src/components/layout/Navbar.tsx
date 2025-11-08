@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../ui/Button';
 import { LogoutConfirmModal } from '../ui/LogoutConfirmModal';
-import { LogOut, User, Settings, Shield, AlertTriangle, Flag, FileText } from 'lucide-react';
+import { LogOut, User, Shield, AlertTriangle, Flag, FileText } from 'lucide-react';
 import { apiService } from '../../services/api';
 
 export const Navbar: React.FC = () => {
@@ -210,19 +210,7 @@ export const Navbar: React.FC = () => {
               </span>
             </Link>
             
-            <Link to="/settings" className="group relative">
-              <Button 
-                variant="ghost" 
-                size="icon"
-                className="hover:bg-purple-50 hover:text-purple-600 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-purple-200/50"
-              >
-                <Settings className="h-5 w-5 transition-transform duration-500 group-hover:rotate-90" />
-              </Button>
-              {/* Tooltip */}
-              <span className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-50">
-                Configuración
-              </span>
-            </Link>
+
             <Button
               variant="ghost"
               onClick={handleLogoutClick}

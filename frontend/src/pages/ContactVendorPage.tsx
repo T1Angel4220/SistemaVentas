@@ -191,13 +191,13 @@ export const ContactVendorPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center px-4">
         <div className="text-center">
-          <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg animate-pulse">
-            <User className="h-10 w-10 text-blue-600" />
+          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-3xl flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-lg animate-pulse">
+            <User className="h-8 w-8 sm:h-10 sm:w-10 text-blue-600" />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Cargando información...</h2>
-          <p className="text-gray-600 text-lg">Obteniendo datos del vendedor</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 sm:mb-4">Cargando información...</h2>
+          <p className="text-gray-600 text-sm sm:text-lg">Obteniendo datos del vendedor</p>
         </div>
       </div>
     );
@@ -205,16 +205,16 @@ export const ContactVendorPage: React.FC = () => {
 
   if (!product || !vendorInfo) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center px-4">
         <Card className="max-w-md w-full shadow-2xl border-0 bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden">
-          <CardContent className="text-center py-12">
-            <div className="w-24 h-24 bg-gradient-to-br from-red-100 to-pink-100 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-              <Package className="h-12 w-12 text-red-500" />
+          <CardContent className="text-center py-8 sm:py-12">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-red-100 to-pink-100 rounded-3xl flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-lg">
+              <Package className="h-10 w-10 sm:h-12 sm:w-12 text-red-500" />
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Producto no encontrado</h2>
-            <p className="text-gray-600 text-lg mb-8">El producto que buscas no está disponible</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 sm:mb-4">Producto no encontrado</h2>
+            <p className="text-gray-600 text-sm sm:text-lg mb-6 sm:mb-8">El producto que buscas no está disponible</p>
             <Link to="/products">
-              <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl px-8 py-3">
+              <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl px-6 sm:px-8 py-3 w-full sm:w-auto">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Volver a productos
               </Button>
@@ -227,28 +227,28 @@ export const ContactVendorPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
+       {/* Header */}
       <div className="relative bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white overflow-hidden shadow-lg">
         <div className="absolute inset-0 bg-black/10">
           <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-transparent"></div>
         </div>
         
-        <div className="relative max-w-7xl mx-auto px-6 py-8">
-          <div className="flex items-center space-x-8">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-8 space-y-4 sm:space-y-0">
             <Link to={
               user?.tipo_usuario === 'moderador' || user?.tipo_usuario === 'administrador'
                 ? "/products/moderation" 
                 : "/products"
             }>
-              <Button variant="outline" size="sm" className="bg-white/20 text-white border-white/30 hover:bg-white hover:text-blue-600 backdrop-blur-sm rounded-xl px-6 py-3 font-medium transition-all duration-300 shadow-lg hover:shadow-xl">
-                <ArrowLeft className="h-5 w-5 mr-2" />
+              <Button variant="outline" size="sm" className="bg-white/20 text-white border-white/30 hover:bg-white hover:text-blue-600 backdrop-blur-sm rounded-xl px-4 sm:px-6 py-2 sm:py-3 font-medium transition-all duration-300 shadow-lg hover:shadow-xl w-full sm:w-auto">
+                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                 Regresar
               </Button>
             </Link>
             
-            <div>
-              <h1 className="text-4xl font-bold mb-2">Contactar Vendedor</h1>
-              <p className="text-blue-100 text-lg">
+            <div className="text-center sm:text-left">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-1 sm:mb-2">Contactar Vendedor</h1>
+              <p className="text-blue-100 text-sm sm:text-base sm:text-lg">
                 Conecta directamente con {vendorInfo.nombre} {vendorInfo.apellido}
               </p>
             </div>
@@ -256,120 +256,120 @@ export const ContactVendorPage: React.FC = () => {
         </div>
       </div>
 
-      <main className="max-w-6xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Información del producto */}
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+           {/* Información del producto */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-8 shadow-xl border-0 bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                  <Package className="h-5 w-5 mr-2 text-blue-600" />
+            <Card className="sticky top-4 lg:top-8 shadow-xl border-0 bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden">
+              <CardContent className="p-4 sm:p-6">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center">
+                  <Package className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
                   Producto de interés
                 </h3>
                 
-                <div className="space-y-4">
-                  <div className="flex items-start space-x-3">
-                    {product.imagenes.length > 0 ? (
-                      <img
-                        src={product.imagenes[0].url_imagen}
-                        alt={product.nombre}
-                        className="w-16 h-16 object-cover rounded-lg"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <Package className="h-6 w-6 text-gray-400" />
-                      </div>
-                    )}
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900 text-sm line-clamp-2">
-                        {product.nombre}
-                      </h4>
-                      <p className="text-xs text-gray-500">{product.categoria_nombre}</p>
-                      <p className="text-lg font-bold text-blue-600 mt-1">
-                        {formatPrice(product.precio)}
-                      </p>
-                    </div>
-                  </div>
+                 <div className="space-y-3 sm:space-y-4">
+                   <div className="flex items-start space-x-3">
+                     {product.imagenes.length > 0 ? (
+                       <img
+                         src={product.imagenes[0].url_imagen}
+                         alt={product.nombre}
+                         className="w-14 h-14 sm:w-16 sm:h-16 object-cover rounded-lg"
+                       />
+                     ) : (
+                       <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gray-100 rounded-lg flex items-center justify-center">
+                         <Package className="h-5 w-5 sm:h-6 sm:w-6 text-gray-400" />
+                       </div>
+                     )}
+                     <div className="flex-1 min-w-0">
+                       <h4 className="font-semibold text-gray-900 text-sm line-clamp-2">
+                         {product.nombre}
+                       </h4>
+                       <p className="text-xs text-gray-500">{product.categoria_nombre}</p>
+                       <p className="text-base sm:text-lg font-bold text-blue-600 mt-1">
+                         {formatPrice(product.precio)}
+                       </p>
+                     </div>
+                   </div>
                   
-                  <div className="border-t border-gray-100 pt-4 space-y-2">
-                    {/* Ubicación del producto */}
-                    {(product.ubicacion_provincia || product.ubicacion_canton || product.ubicacion_distrito || product.ubicacion_direccion || product.coordenadas) ? (
-                      <div className="space-y-1">
-                        <div className="flex items-center text-sm font-semibold text-gray-700 mb-1">
-                          <MapPin className="h-4 w-4 mr-2 text-blue-600" />
-                          📍 Ubicación del producto
-                        </div>
-                        {product.ubicacion_provincia && (
-                          <div className="text-xs text-gray-600 ml-6">
-                            <span className="font-medium">Provincia:</span> {product.ubicacion_provincia}
-                          </div>
-                        )}
-                        {product.ubicacion_canton && (
-                          <div className="text-xs text-gray-600 ml-6">
-                            <span className="font-medium">Cantón:</span> {product.ubicacion_canton}
-                          </div>
-                        )}
-                        {product.ubicacion_distrito && (
-                          <div className="text-xs text-gray-600 ml-6">
-                            <span className="font-medium">Distrito:</span> {product.ubicacion_distrito}
-                          </div>
-                        )}
-                        {product.ubicacion_direccion && (
-                          <div className="text-xs text-gray-600 ml-6">
-                            <span className="font-medium">Dirección:</span> {product.ubicacion_direccion}
-                          </div>
-                        )}
-                        {product.coordenadas && (
-                          <div className="text-xs ml-6 mt-2 pt-2 border-t border-gray-100">
-                            <span className="font-medium text-gray-700">📌 GPS:</span>{' '}
-                            <a 
-                              href={`https://www.google.com/maps?q=${product.coordenadas}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:text-blue-800 font-mono underline hover:no-underline"
-                              title="Ver en Google Maps"
-                            >
-                              {product.coordenadas}
-                            </a>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="flex items-center text-sm text-gray-500">
-                        <MapPin className="h-4 w-4 mr-2" />
-                        Ubicación no especificada
-                      </div>
-                    )}
-                    
-                    {/* Fecha de publicación */}
-                    <div className="flex items-center text-sm text-gray-600 pt-2">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      Publicado: {new Date(product.fecha_publicacion).toLocaleDateString()}
-                    </div>
-                  </div>
+                   <div className="border-t border-gray-100 pt-3 sm:pt-4 space-y-2">
+                     {/* Ubicación del producto */}
+                     {(product.ubicacion_provincia || product.ubicacion_canton || product.ubicacion_distrito || product.ubicacion_direccion || product.coordenadas) ? (
+                       <div className="space-y-1">
+                         <div className="flex items-center text-xs sm:text-sm font-semibold text-gray-700 mb-1">
+                           <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-2 text-blue-600" />
+                           📍 Ubicación del producto
+                         </div>
+                         {product.ubicacion_provincia && (
+                           <div className="text-xs text-gray-600 ml-5 sm:ml-6">
+                             <span className="font-medium">Provincia:</span> {product.ubicacion_provincia}
+                           </div>
+                         )}
+                         {product.ubicacion_canton && (
+                           <div className="text-xs text-gray-600 ml-5 sm:ml-6">
+                             <span className="font-medium">Cantón:</span> {product.ubicacion_canton}
+                           </div>
+                         )}
+                         {product.ubicacion_distrito && (
+                           <div className="text-xs text-gray-600 ml-5 sm:ml-6">
+                             <span className="font-medium">Distrito:</span> {product.ubicacion_distrito}
+                           </div>
+                         )}
+                         {product.ubicacion_direccion && (
+                           <div className="text-xs text-gray-600 ml-5 sm:ml-6">
+                             <span className="font-medium">Dirección:</span> {product.ubicacion_direccion}
+                           </div>
+                         )}
+                         {product.coordenadas && (
+                           <div className="text-xs ml-5 sm:ml-6 mt-2 pt-2 border-t border-gray-100">
+                             <span className="font-medium text-gray-700">📌 GPS:</span>{' '}
+                             <a 
+                               href={`https://www.google.com/maps?q=${product.coordenadas}`}
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               className="text-blue-600 hover:text-blue-800 font-mono underline hover:no-underline break-all"
+                               title="Ver en Google Maps"
+                             >
+                               {product.coordenadas}
+                             </a>
+                           </div>
+                         )}
+                       </div>
+                     ) : (
+                       <div className="flex items-center text-xs sm:text-sm text-gray-500">
+                         <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                         Ubicación no especificada
+                       </div>
+                     )}
+                     
+                     {/* Fecha de publicación */}
+                     <div className="flex items-center text-xs sm:text-sm text-gray-600 pt-2">
+                       <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                       Publicado: {new Date(product.fecha_publicacion).toLocaleDateString()}
+                     </div>
+                   </div>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Información del vendedor y opciones de contacto */}
-          <div className="lg:col-span-2 space-y-6">
+             {/* Información del vendedor y opciones de contacto */}
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             {/* Información del vendedor */}
             <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden">
-              <CardContent className="p-8">
-                <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                  <User className="h-6 w-6 mr-3 text-blue-600" />
+              <CardContent className="p-4 sm:p-6 lg:p-8">
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 flex items-center">
+                  <User className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3 text-blue-600" />
                   Información del Vendedor
                 </h3>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                  <div className="space-y-3 sm:space-y-4">
                     <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center">
-                        <User className="h-6 w-6 text-blue-600" />
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center">
+                        <User className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
                       </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-900">
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-semibold text-gray-900 truncate">
                           {vendorInfo.nombre} {vendorInfo.apellido}
                         </h4>
                         <p className="text-sm text-gray-500">Vendedor</p>
@@ -378,22 +378,22 @@ export const ContactVendorPage: React.FC = () => {
                     
                     {vendorInfo.telefono && (
                       <div className="flex items-center space-x-3 text-gray-600">
-                        <Phone className="h-4 w-4 text-green-600" />
-                        <span>{vendorInfo.telefono}</span>
+                        <Phone className="h-4 w-4 text-green-600 flex-shrink-0" />
+                        <span className="text-sm break-all">{vendorInfo.telefono}</span>
                       </div>
                     )}
                     
                     {vendorInfo.correo && (
                       <div className="flex items-center space-x-3 text-gray-600">
-                        <Mail className="h-4 w-4 text-blue-600" />
-                        <span>{vendorInfo.correo}</span>
+                        <Mail className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                        <span className="text-sm break-all">{vendorInfo.correo}</span>
                       </div>
                     )}
                     
                     {vendorInfo.direccion && (
                       <div className="flex items-center space-x-3 text-gray-600">
-                        <MapPin className="h-4 w-4 text-red-600" />
-                        <span>{vendorInfo.direccion}</span>
+                        <MapPin className="h-4 w-4 text-red-600 flex-shrink-0" />
+                        <span className="text-sm break-all">{vendorInfo.direccion}</span>
                       </div>
                     )}
                   </div>
@@ -404,7 +404,7 @@ export const ContactVendorPage: React.FC = () => {
                     {vendorInfo.telefono && (
                       <Button
                         onClick={handleWhatsAppContact}
-                        className="w-full bg-green-600 hover:bg-green-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
+                        className="w-full bg-green-600 hover:bg-green-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl text-sm sm:text-base"
                       >
                         <MessageCircle className="h-4 w-4 mr-2" />
                         WhatsApp
@@ -415,7 +415,7 @@ export const ContactVendorPage: React.FC = () => {
                       <Button
                         onClick={handlePhoneContact}
                         variant="outline"
-                        className="w-full border-green-600 text-green-600 hover:bg-green-50 transition-all duration-300 rounded-xl"
+                        className="w-full border-green-600 text-green-600 hover:bg-green-50 transition-all duration-300 rounded-xl text-sm sm:text-base"
                       >
                         <Phone className="h-4 w-4 mr-2" />
                         Llamar
@@ -426,7 +426,7 @@ export const ContactVendorPage: React.FC = () => {
                       <Button
                         onClick={handleEmailContact}
                         variant="outline"
-                        className="w-full border-blue-600 text-blue-600 hover:bg-blue-50 transition-all duration-300 rounded-xl"
+                        className="w-full border-blue-600 text-blue-600 hover:bg-blue-50 transition-all duration-300 rounded-xl text-sm sm:text-base"
                       >
                         <Mail className="h-4 w-4 mr-2" />
                         Email
@@ -439,13 +439,13 @@ export const ContactVendorPage: React.FC = () => {
 
             {/* Formulario de contacto */}
             <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden">
-              <CardContent className="p-8">
-                <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                  <MessageCircle className="h-6 w-6 mr-3 text-blue-600" />
+              <CardContent className="p-4 sm:p-6 lg:p-8">
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 flex items-center">
+                  <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3 text-blue-600" />
                   Enviar mensaje
                 </h3>
                 
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -459,6 +459,7 @@ export const ContactVendorPage: React.FC = () => {
                         value={formData.nombre}
                         onChange={handleInputChange}
                         required
+                        className="text-sm sm:text-base"
                       />
                     </div>
                     
@@ -474,6 +475,7 @@ export const ContactVendorPage: React.FC = () => {
                         value={formData.telefono}
                         onChange={handleInputChange}
                         required
+                        className="text-sm sm:text-base"
                       />
                     </div>
                   </div>
@@ -489,9 +491,10 @@ export const ContactVendorPage: React.FC = () => {
                       placeholder="tu@email.com"
                       value={formData.email}
                       onChange={handleInputChange}
+                      className="text-sm sm:text-base"
                     />
                   </div>
-                  
+                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       <MessageCircle className="h-4 w-4 inline mr-1" />
@@ -504,13 +507,14 @@ export const ContactVendorPage: React.FC = () => {
                       onChange={handleInputChange}
                       rows={4}
                       required
+                      className="text-sm sm:text-base"
                     />
                   </div>
 
                   {/* Información importante */}
                   <Alert className="border-blue-200 bg-blue-50 rounded-lg">
-                    <CheckCircle className="h-4 w-4 text-blue-600" />
-                    <AlertDescription className="text-blue-800">
+                    <CheckCircle className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                    <AlertDescription className="text-blue-800 text-sm">
                       <strong>Importante:</strong> Tu mensaje será enviado al vendedor junto con tus datos de contacto. 
                       El vendedor podrá responderte directamente por los medios que proporciones.
                     </AlertDescription>
@@ -521,16 +525,16 @@ export const ContactVendorPage: React.FC = () => {
                     <Button
                       onClick={handleSendMessage}
                       disabled={sendingMessage}
-                      className="w-full h-14 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 text-lg font-medium rounded-xl"
+                      className="w-full h-12 sm:h-14 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 text-base sm:text-lg font-medium rounded-xl"
                     >
                       {sendingMessage ? (
                         <>
-                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                          <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-white mr-2 sm:mr-3"></div>
                           Enviando mensaje...
                         </>
                       ) : (
                         <>
-                          <MessageCircle className="h-5 w-5 mr-3" />
+                          <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 mr-2 sm:mr-3" />
                           Enviar mensaje
                         </>
                       )}

@@ -15,8 +15,8 @@ export const LoginPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex">
-      {/* Panel izquierdo con información */}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex flex-col lg:flex-row">
+      {/* Panel izquierdo con información - Mejorado para móvil */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 to-indigo-700 p-12 flex-col justify-center">
         <div className="max-w-md">
           <div className="flex items-center mb-8">
@@ -67,25 +67,28 @@ export const LoginPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Panel derecho con formulario */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
+      {/* Panel derecho con formulario - Mejorado para móvil */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-6 lg:p-8">
         <div className="w-full max-w-md">
-          {/* Logo para móvil */}
-          <div className="lg:hidden text-center mb-8">
+          {/* Logo para móvil - Mejorado */}
+          <div className="lg:hidden text-center mb-6 sm:mb-8">
             <div className="flex items-center justify-center mb-4">
               <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
                 <ShoppingCart className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Sistema de Ventas</h1>
-                <p className="text-gray-600">Multiempresa</p>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Sistema de Ventas</h1>
+                <p className="text-gray-600 text-sm sm:text-base">Multiempresa</p>
               </div>
             </div>
           </div>
 
-          <LoginForm />
+          {/* Contenedor del formulario con mejor responsividad */}
+          <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
+            <LoginForm />
+          </div>
 
-          <div className="mt-8 text-center">
+          <div className="mt-6 sm:mt-8 text-center">
             <p className="text-sm text-gray-500">
               ¿Necesitas ayuda?{' '}
               <a href="mailto:soporte@sistemaventas.com" className="text-blue-600 hover:text-blue-800 font-medium">

@@ -19,40 +19,40 @@ export const HomePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
+      {/* Hero Section - Mejorado para móvil */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-24">
           <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6">
               Sistema de Ventas Multiempresa
             </h1>
-            <p className="text-xl md:text-2xl mb-8 text-blue-100">
+            <p className="text-lg sm:text-xl md:text-2xl mb-6 sm:mb-8 text-blue-100 px-4">
               La plataforma más completa para comprar y vender productos y servicios
             </p>
             {!isAuthenticated ? (
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/products">
-                  <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
+                <Link to="/products" className="w-full sm:w-auto">
+                  <Button size="lg" className="w-full sm:w-auto bg-white text-blue-600 hover:bg-gray-100">
                     <Eye className="mr-2 h-5 w-5" />
                     Ver Productos
                   </Button>
                 </Link>
-                <Link to="/register">
-                  <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
+                <Link to="/register" className="w-full sm:w-auto">
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-white hover:text-blue-600">
                     Comenzar Ahora
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
-                <Link to="/login">
-                  <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
+                <Link to="/login" className="w-full sm:w-auto">
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-white hover:text-blue-600">
                     Iniciar Sesión
                   </Button>
                 </Link>
               </div>
             ) : (
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/dashboard">
-                  <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
+                <Link to="/dashboard" className="w-full sm:w-auto">
+                  <Button size="lg" className="w-full sm:w-auto bg-white text-blue-600 hover:bg-gray-100">
                     Ir al Dashboard
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
@@ -63,19 +63,19 @@ export const HomePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Features Section */}
-      <div className="py-16">
+      {/* Features Section - Mejorado para móvil */}
+      <div className="py-12 sm:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">
               ¿Por qué elegir nuestro sistema?
             </h2>
-            <p className="text-lg text-gray-600">
+            <p className="text-base sm:text-lg text-gray-600 px-4">
               Ofrecemos las mejores herramientas para compradores y vendedores
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             <Card className="text-center">
               <CardHeader>
                 <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
@@ -163,19 +163,19 @@ export const HomePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Stats Section */}
-      <div className="bg-white py-16">
+      {/* Stats Section - Mejorado para móvil */}
+      <div className="bg-white py-12 sm:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">
               Números que hablan
             </h2>
-            <p className="text-lg text-gray-600">
+            <p className="text-base sm:text-lg text-gray-600 px-4">
               Miles de usuarios confían en nuestra plataforma
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
             <div className="text-center">
               <div className="text-4xl font-bold text-blue-600 mb-2">1000+</div>
               <div className="text-gray-600">Usuarios Activos</div>
@@ -196,37 +196,37 @@ export const HomePage: React.FC = () => {
         </div>
       </div>
 
-      {/* CTA Section */}
-      <div className="bg-gray-900 text-white py-16">
+      {/* CTA Section - Mejorado para móvil */}
+      <div className="bg-gray-900 text-white py-12 sm:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold mb-4">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4">
             ¿Listo para comenzar?
           </h2>
-          <p className="text-xl text-gray-300 mb-8">
+          <p className="text-lg sm:text-xl text-gray-300 mb-6 sm:mb-8 px-4">
             Únete a nuestra comunidad y descubre nuevas oportunidades
           </p>
           {!isAuthenticated ? (
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/products">
-                <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
+              <Link to="/products" className="w-full sm:w-auto">
+                <Button size="lg" className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700">
                   <Eye className="mr-2 h-5 w-5" />
                   Ver Productos
                 </Button>
               </Link>
-              <Link to="/register">
-                <Button size="lg" className="bg-green-600 hover:bg-green-700">
+              <Link to="/register" className="w-full sm:w-auto">
+                <Button size="lg" className="w-full sm:w-auto bg-green-600 hover:bg-green-700">
                   Crear Cuenta Gratis
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Link to="/login">
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-gray-900">
+              <Link to="/login" className="w-full sm:w-auto">
+                <Button size="lg" variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-white hover:text-gray-900">
                   Ya tengo cuenta
                 </Button>
               </Link>
             </div>
           ) : (
-            <Link to="/dashboard">
+            <Link to="/dashboard" className="inline-block">
               <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
                 Ir al Dashboard
                 <ArrowRight className="ml-2 h-5 w-5" />
