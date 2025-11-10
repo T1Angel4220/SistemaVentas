@@ -29,7 +29,6 @@ const testEmailService = async () => {
       );
       console.log('✅ Email de verificación enviado exitosamente\n');
     } catch (emailError) {
-      console.warn('⚠️  Error enviando email de prueba:', emailError.message);
       console.log('   (Esto es normal si no hay configuración de email válida)\n');
     }
     

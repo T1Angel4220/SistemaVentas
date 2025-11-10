@@ -1,4 +1,4 @@
-import app from './src/app';
+import app from './src/app.js';
 import dotenv from 'dotenv';
 import { testConnection, initializeDatabase } from './src/config/database';
 import { config, validateConfig, getConfigSummary } from './src/config/config';
@@ -56,9 +56,6 @@ const startServer = async () => {
       } catch (error) {
         console.error('❌ Error en tarea programada de suspensión automática:', error);
       }
-    }, {
-      scheduled: true,
-      timezone: "America/Costa_Rica" // Ajusta según tu zona horaria
     });
     
     console.log('✅ Tarea programada configurada: Suspensión automática de productos (diaria a las 02:00 AM)');

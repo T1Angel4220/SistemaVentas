@@ -13,7 +13,6 @@ yarn-error.log*
 .env.production
 
 # Build outputs
-dist/
 build/
 *.tsbuildinfo
 
@@ -67,7 +66,7 @@ jspm_packages/
 
 # Nuxt.js build / generate output
 .nuxt
-dist
+
 
 # Gatsby files
 .cache/
