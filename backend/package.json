@@ -30,7 +30,7 @@
     "test:mail": "tsx src/tests/testMail.ts",
     "test:full": "node src/tests/database.test.js",
   "build": "tsc",
-  "start": "npm run build && node dist/index.js",
+  "start": "node dist/index.js",
       "dev": "tsx index.ts"
   },
   "keywords": [],

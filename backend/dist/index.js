@@ -11,7 +11,7 @@ const node_cron_1 = __importDefault(require("node-cron"));
 const ProductsController = require('./src/controllers/productsController');
 // Cargar variables de entorno
 dotenv_1.default.config();
-const PORT = process.env.PORT || config_1.config.server.port || 3001;
+const PORT = process.env.PORT || 8080;
 // Función para inicializar el servidor
 const startServer = async () => {
     try {
