@@ -8,7 +8,7 @@ const ProductsController = require('./src/controllers/productsController');
 // Cargar variables de entorno
 dotenv.config();
 
-const PORT = process.env.PORT || config.server.port || 3001;
+const PORT = process.env.PORT || 8080;
 
 // Función para inicializar el servidor
 const startServer = async () => {
