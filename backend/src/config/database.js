@@ -16,7 +16,11 @@ const pool = new Pool({
   // Configuración UTF-8 para manejar caracteres especiales
   client_encoding: 'UTF8',
   // Configuración adicional para caracteres especiales
-  application_name: 'sistema_ventas_multiempresa'
+  application_name: 'sistema_ventas_multiempresa',
+  ssl: {
+    require: true,
+    rejectUnauthorized: false // 🔥 Necesario para Azure PostgreSQL
+  }
 });
 
 // Función para probar la conexión
