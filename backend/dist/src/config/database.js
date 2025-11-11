@@ -12,15 +12,20 @@ const pool = new Pool({
     password: config.database.password,
     max: 20,
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
+    connectionTimeoutMillis: 10000,
     // Configuración UTF-8 para manejar caracteres especiales
     client_encoding: 'UTF8',
     // Configuración adicional para caracteres especiales
-    application_name: 'sistema_ventas_multiempresa'
+    application_name: 'sistema_ventas_multiempresa',
+    ssl: {
+        require: true,
+        rejectUnauthorized: false // 🔥 Necesario para Azure PostgreSQL
+    }
 });
 // Función para probar la conexión
 const testConnection = async () => {
     try {
+        console.log('⏳ Intentando conectar con:', config.database);
         const client = await pool.connect();
         const result = await client.query('SELECT NOW()');
         // Verificar codificación de la conexión

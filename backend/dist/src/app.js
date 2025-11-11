@@ -34,7 +34,8 @@ app.set('trust proxy', true);
 const corsOrigins = [
     'http://localhost:5173',
     'http://localhost:3000',
-    'http://localhost:3001'
+    'http://localhost:3001',
+    'https://red-mud-057f2d60f.3.azurestaticapps.net' // 🔥 tu frontend en Azure
 ];
 // Agregar URL de producción si está configurada
 if (process.env.CORS_ORIGIN) {
@@ -56,6 +57,7 @@ app.use('/uploads', (req, res, next) => {
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
     next();
 });
+app.options('*', cors());
 // Rate limiting - TEMPORALMENTE DESHABILITADO
 // const limiter = rateLimit({
 //   windowMs: 15 * 60 * 1000, // 15 minutos
