@@ -2,7 +2,7 @@ import { sessionAlertManager } from '../utils/sessionAlert';
 import { suspendedAccountAlertManager } from '../utils/suspendedAccountAlert';
 
 // Configuración de la API
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = 'https://backend-sistema-ventas-g9hhdue0fehhagdj.canadacentral-01.azurewebsites.net/api';
 
 // Tipos de datos
 export interface User {
