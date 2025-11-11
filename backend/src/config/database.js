@@ -26,6 +26,7 @@ const pool = new Pool({
 // Función para probar la conexión
 const testConnection = async () => {
   try {
+    console.log('⏳ Intentando conectar con:', config.database);
     const client = await pool.connect();
     const result = await client.query('SELECT NOW()');
     
