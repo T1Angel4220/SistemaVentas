@@ -1,0 +1,317 @@
+import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
+import { useState, useEffect, useCallback } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { usePermissions } from '../hooks/usePermissions';
+import { useAlert } from '../hooks/useAlert';
+import { apiService } from '../services/api';
+import { Card, CardContent } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { Alert, AlertDescription } from '../components/ui/Alert';
+import { AlertDialog } from '../components/ui/AlertDialog';
+import { Package, MapPin, Edit, Trash2, ArrowLeft, AlertTriangle, AlertCircle, Clock, Calendar, Timer, Tag, FileText, Shield, CheckCircle, XCircle, Eye, ShoppingCart, Camera, DollarSign, ChevronLeft, ChevronRight, Flag } from 'lucide-react';
+import { ReportProductDialog } from '../components/ui/ReportProductDialog';
+import { ModerationReasonModal } from '../components/ui/ModerationReasonModal';
+export const ProductDetailPage = () => {
+    const { id } = useParams();
+    const { user } = useAuth();
+    const navigate = useNavigate();
+    const { canModifyProduct, canDeleteProduct, canModerateProduct, getRoleDisplayName } = usePermissions();
+    const { alert, showSuccess, showError, showWarning, hideAlert } = useAlert();
+    const [product, setProduct] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [isZoomed, setIsZoomed] = useState(false);
+    const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+    const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
+    const [reviewLoading, setReviewLoading] = useState(false);
+    const [isScrolled, setIsScrolled] = useState(false); // Estado para detectar scroll
+    // Estado para modal de reporte
+    const [reportModalOpen, setReportModalOpen] = useState(false);
+    // Estado para modal de motivo de moderación
+    const [moderationModal, setModerationModal] = useState(null);
+    const handleReportProduct = () => {
+        setReportModalOpen(true);
+    };
+    const handleReportSuccess = () => {
+        showSuccess('¡Reporte enviado!', 'Tu reporte ha sido enviado correctamente. Será revisado por un moderador.', () => { });
+        setReportModalOpen(false);
+    };
+    // Handlers de moderación
+    const handleModerateProduct = async (action, motivo) => {
+        if (!product)
+            return;
+        try {
+            setReviewLoading(true);
+            const response = await fetch(`http://localhost:3001/api/products/${product.id}/moderate`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiService.getToken()}`
+                },
+                body: JSON.stringify({
+                    accion: action,
+                    motivo: motivo || `Producto ${action} por ${getRoleDisplayName()}`,
+                    decision_final: `Decisión: ${action}`
+                })
+            });
+            const data = await response.json();
+            if (data.success) {
+                let titulo = '';
+                let mensaje = '';
+                switch (action) {
+                    case 'aprobar':
+                        titulo = '✅ Producto Aprobado';
+                        mensaje = `"${product.nombre}" ha sido APROBADO exitosamente.\n\nEl producto ahora es visible para todos los compradores.`;
+                        break;
+                    case 'rechazar':
+                        titulo = '🔴 Producto Rechazado';
+                        mensaje = `"${product.nombre}" ha sido RECHAZADO.\n\nEl vendedor podrá verlo, editarlo, eliminarlo o apelar esta decisión.`;
+                        break;
+                    case 'suspender':
+                        titulo = '🟡 Producto Suspendido';
+                        mensaje = `"${product.nombre}" ha sido SUSPENDIDO temporalmente.\n\nEl vendedor podrá verlo y apelar, pero no editarlo ni eliminarlo hasta que se resuelva.`;
+                        break;
+                    case 'marcar_peligroso':
+                        titulo = '🚫 Producto Marcado como Peligroso';
+                        mensaje = `"${product.nombre}" ha sido marcado como PELIGROSO.\n\nEl producto está ahora OCULTO para vendedor y compradores.\nSolo moderadores y administradores pueden verlo.\n\nEl vendedor podrá apelar esta decisión.`;
+                        break;
+                }
+                showSuccess(titulo, mensaje, () => navigate('/products/moderation'));
+            }
+            else {
+                showError('Error', data.message || 'Error al moderar producto');
+            }
+        }
+        catch (error) {
+            console.error('Error al moderar producto:', error);
+            showError('Error', 'Error de conexión al moderar producto');
+        }
+        finally {
+            setReviewLoading(false);
+        }
+    };
+    const handleApproveProduct = () => {
+        if (!product)
+            return;
+        showWarning('¿Aprobar producto?', `¿Estás seguro de que quieres aprobar "${product.nombre}"?\n\nEste producto será APROBADO y visible para todos los compradores en la plataforma.`, () => handleModerateProduct('aprobar'));
+    };
+    const handleRejectProduct = () => {
+        if (!product)
+            return;
+        setModerationModal({
+            isOpen: true,
+            action: 'rechazar',
+            productId: product.id,
+            productName: product.nombre
+        });
+    };
+    const handleSuspendProduct = () => {
+        if (!product)
+            return;
+        setModerationModal({
+            isOpen: true,
+            action: 'suspender',
+            productId: product.id,
+            productName: product.nombre
+        });
+    };
+    const handleMarkAsDangerous = () => {
+        if (!product)
+            return;
+        setModerationModal({
+            isOpen: true,
+            action: 'marcar_peligroso',
+            productId: product.id,
+            productName: product.nombre
+        });
+    };
+    const handleModerationConfirm = (motivo) => {
+        if (moderationModal) {
+            handleModerateProduct(moderationModal.action, motivo);
+            setModerationModal(null);
+        }
+    };
+    const handleMouseMove = (e) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        setMousePosition({ x, y });
+    };
+    const handleMouseEnter = (e) => {
+        setIsZoomed(true);
+        // Calcular posición del popup solo una vez al entrar
+        const rect = e.currentTarget.getBoundingClientRect();
+        const popupX = rect.right + 20; // 20px a la derecha de la imagen
+        const popupY = rect.top; // Alineado con la parte superior de la imagen
+        setPopupPosition({ x: popupX, y: popupY });
+    };
+    const handleMouseLeave = () => {
+        setIsZoomed(false);
+    };
+    const loadProduct = useCallback(async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await fetch(`http://localhost:3001/api/products/${id}`);
+            const data = await response.json();
+            if (data.success) {
+                const productData = data.data;
+                // Verificar si es un producto peligroso y el usuario es el vendedor (no moderador/admin)
+                if (productData.es_peligroso && user) {
+                    const isOwner = user.id === productData.vendedor_id;
+                    const isModerator = user.tipo_usuario === 'moderador' || user.tipo_usuario === 'administrador';
+                    // Si es el propietario pero NO es moderador/admin, bloquear acceso
+                    if (isOwner && !isModerator) {
+                        showError('🚫 Acceso Denegado', 'Este producto ha sido marcado como peligroso y no está disponible para visualización. Solo los moderadores pueden acceder a él para revisión.', () => navigate('/my-products'));
+                        return; // No establecer el producto
+                    }
+                }
+                setProduct(productData);
+            }
+            else {
+                setError(data.message || 'Error al cargar el producto');
+            }
+        }
+        catch (error) {
+            console.error('Error al cargar producto:', error);
+            setError('Error al cargar el producto');
+        }
+        finally {
+            setLoading(false);
+        }
+    }, [id, user, navigate, showError]);
+    useEffect(() => {
+        // Forzar scroll al inicio
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        if (id) {
+            loadProduct();
+        }
+    }, [id, loadProduct]);
+    // 🆕 Navegación con teclado (flechas izquierda/derecha)
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (!product || product.imagenes.length <= 1)
+                return;
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                setCurrentImageIndex((prev) => prev === 0 ? product.imagenes.length - 1 : prev - 1);
+            }
+            else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                setCurrentImageIndex((prev) => prev === product.imagenes.length - 1 ? 0 : prev + 1);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [product]);
+    // 🆕 Detectar scroll para hacer los botones sticky
+    useEffect(() => {
+        const handleScroll = () => {
+            // Los botones se vuelven sticky después de hacer scroll más de 100px (umbral reducido para mejor UX)
+            const scrollThreshold = 100;
+            setIsScrolled(window.scrollY > scrollThreshold);
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+    const handleDeleteProduct = async () => {
+        if (!product || !user)
+            return;
+        const isOwner = user.id === product.vendedor_id || user.tipo_usuario === 'administrador';
+        if (!isOwner)
+            return;
+        showWarning('¿Eliminar producto?', `¿Estás seguro de que quieres eliminar "${product.nombre}"? Esta acción no se puede deshacer.`, async () => {
+            try {
+                const response = await fetch(`http://localhost:3001/api/products/${product.id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${apiService.getToken()}`
+                    }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showSuccess('¡Producto eliminado!', 'El producto ha sido eliminado correctamente.', () => navigate('/products'));
+                }
+                else {
+                    showError('Error', data.message || 'Error al eliminar el producto');
+                }
+            }
+            catch (error) {
+                console.error('Error al eliminar producto:', error);
+                showError('Error', 'Error al eliminar el producto');
+            }
+        }, undefined // onCancel - no necesita hacer nada especial
+        );
+    };
+    const formatDate = (dateString) => {
+        return new Date(dateString).toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    };
+    if (loading) {
+        return (_jsx("div", { className: "min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center", children: _jsxs("div", { className: "text-center", children: [_jsx("div", { className: "w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg animate-pulse", children: _jsx(Package, { className: "h-10 w-10 text-blue-600" }) }), _jsx("h2", { className: "text-3xl font-bold text-gray-900 mb-4", children: "Cargando producto..." }), _jsx("p", { className: "text-gray-600 text-lg", children: "Obteniendo informaci\u00F3n detallada" })] }) }));
+    }
+    if (error || !product) {
+        return (_jsx("div", { className: "min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center", children: _jsx(Card, { className: "max-w-md w-full shadow-2xl border-0 bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden", children: _jsxs(CardContent, { className: "text-center py-12", children: [_jsx("div", { className: "w-24 h-24 bg-gradient-to-br from-red-100 to-pink-100 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg", children: _jsx(Package, { className: "h-12 w-12 text-red-500" }) }), _jsx("h2", { className: "text-3xl font-bold text-gray-900 mb-4", children: "Error" }), _jsx("p", { className: "text-gray-600 text-lg mb-8", children: error || 'Producto no encontrado' }), _jsx(Link, { to: "/products", children: _jsxs(Button, { className: "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl px-8 py-3", children: [_jsx(ArrowLeft, { className: "h-4 w-4 mr-2" }), "Volver a productos"] }) })] }) }) }));
+    }
+    return (_jsxs("div", { className: "min-h-screen bg-white", children: [_jsxs("div", { className: "relative bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white overflow-hidden shadow-lg", children: [_jsx("div", { className: "absolute inset-0 bg-black/10", children: _jsx("div", { className: "absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-transparent" }) }), _jsx("div", { className: "relative max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8", children: _jsxs("div", { className: "flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 md:gap-6", children: [_jsx(Link, { to: !user // Si no hay usuario (visitante)
+                                        ? "/products"
+                                        : user.tipo_usuario === 'moderador' || user.tipo_usuario === 'administrador'
+                                            ? "/products/moderation"
+                                            : "/products" // comprador o vendedor
+                                    , children: _jsxs(Button, { variant: "outline", size: "sm", className: "bg-white/20 text-white border-white/30 hover:bg-white hover:text-blue-600 backdrop-blur-sm rounded-lg sm:rounded-xl px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 font-medium transition-all duration-300 shadow-lg hover:shadow-xl text-sm sm:text-base w-full sm:w-auto", children: [_jsx(ArrowLeft, { className: "h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2" }), _jsx("span", { children: "Regresar" })] }) }), _jsx("div", { className: "flex items-center flex-wrap gap-x-1.5 sm:gap-x-2 gap-y-1 text-xs sm:text-sm md:text-base text-blue-100", children: (user?.tipo_usuario === 'moderador' || user?.tipo_usuario === 'administrador') ? (_jsxs(_Fragment, { children: [_jsx(Link, { to: "/products/moderation", className: "hover:text-white transition-colors whitespace-nowrap", children: "Moderaci\u00F3n" }), _jsx("span", { className: "text-blue-200", children: "/" }), _jsx("span", { className: "text-white font-medium", children: "Revisi\u00F3n de producto" })] })) : (_jsxs(_Fragment, { children: [_jsx(Link, { to: "/products", className: "hover:text-white transition-colors whitespace-nowrap", children: "Productos" }), _jsx("span", { className: "text-blue-200", children: "/" }), _jsx("span", { className: "text-white whitespace-nowrap truncate max-w-[120px] sm:max-w-[180px] md:max-w-[220px]", title: product.categoria_nombre, children: product.categoria_nombre }), _jsx("span", { className: "text-blue-200 hidden sm:inline", children: "/" }), _jsx("span", { className: "text-white font-medium truncate max-w-[150px] sm:max-w-[200px] md:max-w-[280px] lg:max-w-[400px] hidden sm:inline", title: product.nombre, children: product.nombre })] })) })] }) })] }), _jsxs("main", { className: "max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6", children: [_jsxs("div", { className: "grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12", children: [_jsxs("div", { className: "space-y-4", children: [_jsx("div", { className: "border border-gray-200 rounded-lg overflow-hidden bg-white", children: product.imagenes.length > 0 ? (_jsxs("div", { className: "relative group", children: [_jsxs("div", { className: "relative overflow-hidden cursor-zoom-in", onMouseMove: handleMouseMove, onMouseEnter: handleMouseEnter, onMouseLeave: handleMouseLeave, children: [_jsx("img", { src: product.imagenes[currentImageIndex]?.url_imagen, alt: product.nombre, className: "w-full h-[300px] sm:h-[400px] lg:h-[500px] object-contain bg-white" }), isZoomed && (_jsx("div", { className: "absolute inset-0 bg-black/10 pointer-events-none", children: _jsx("div", { className: "absolute w-20 h-20 border-2 border-blue-500 bg-blue-500/20 rounded-full pointer-events-none", style: {
+                                                                    left: `${mousePosition.x}%`,
+                                                                    top: `${mousePosition.y}%`,
+                                                                    transform: 'translate(-50%, -50%)'
+                                                                } }) }))] }), product.imagenes.length > 1 && (_jsxs(_Fragment, { children: [_jsx("button", { onClick: (e) => {
+                                                                e.stopPropagation();
+                                                                setCurrentImageIndex((prev) => prev === 0 ? product.imagenes.length - 1 : prev - 1);
+                                                            }, className: "absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-2 sm:p-3 rounded-full transition-all duration-200 shadow-xl hover:scale-110 opacity-0 group-hover:opacity-100 z-10", "aria-label": "Imagen anterior", children: _jsx(ChevronLeft, { className: "h-5 w-5 sm:h-6 sm:w-6" }) }), _jsx("button", { onClick: (e) => {
+                                                                e.stopPropagation();
+                                                                setCurrentImageIndex((prev) => prev === product.imagenes.length - 1 ? 0 : prev + 1);
+                                                            }, className: "absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-2 sm:p-3 rounded-full transition-all duration-200 shadow-xl hover:scale-110 opacity-0 group-hover:opacity-100 z-10", "aria-label": "Imagen siguiente", children: _jsx(ChevronRight, { className: "h-5 w-5 sm:h-6 sm:w-6" }) })] })), product.imagenes.length > 1 && (_jsx("div", { className: "absolute top-4 right-4", children: _jsxs("div", { className: "bg-black/70 rounded px-2 py-1 text-white text-xs", children: [currentImageIndex + 1, " de ", product.imagenes.length] }) })), _jsx("div", { className: "hidden lg:block absolute bottom-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200", children: _jsxs("div", { className: "bg-black/80 backdrop-blur-sm rounded-lg px-3 py-2 text-white text-xs font-medium shadow-xl flex items-center space-x-2", children: [_jsx(Eye, { className: "h-4 w-4" }), _jsx("span", { children: "Pasa el cursor para hacer zoom" })] }) }), product.imagenes.length > 1 && (_jsx("div", { className: "absolute top-4 left-4", children: _jsxs("div", { className: "bg-blue-600/90 backdrop-blur-sm rounded-lg px-3 py-1.5 text-white text-xs font-bold shadow-lg flex items-center space-x-1", children: [_jsx(Camera, { className: "h-4 w-4" }), _jsxs("span", { children: [product.imagenes.length, " fotos"] })] }) }))] })) : (_jsx("div", { className: "h-[300px] sm:h-[400px] lg:h-[500px] bg-gray-100 flex items-center justify-center", children: _jsxs("div", { className: "text-center px-4", children: [_jsx(Package, { className: "h-12 w-12 sm:h-16 sm:w-16 text-gray-400 mx-auto mb-3 sm:mb-4" }), _jsx("h3", { className: "text-base sm:text-lg font-medium text-gray-600", children: "Sin im\u00E1genes disponibles" })] }) })) }), product.imagenes.length > 1 && (_jsx("div", { className: "flex space-x-2 overflow-x-auto pb-2", children: product.imagenes.map((imagen, index) => (_jsx("button", { onClick: () => setCurrentImageIndex(index), className: `flex-shrink-0 w-16 h-16 border-2 rounded transition-all duration-200 ${index === currentImageIndex
+                                                ? 'border-orange-500'
+                                                : 'border-gray-300 hover:border-gray-400'}`, children: _jsx("img", { src: imagen.url_imagen, alt: `${product.nombre} ${index + 1}`, className: "w-full h-full object-cover rounded" }) }, imagen.id))) })), product.tipo === 'servicio' && product.servicio && (_jsxs("div", { className: "border-l-4 border-purple-500 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg p-4 shadow-lg hover:shadow-xl transition-shadow duration-300", children: [_jsxs("h3", { className: "font-semibold text-gray-900 mb-4 flex items-center text-base", children: [_jsx(Clock, { className: "h-5 w-5 mr-2 text-purple-600" }), "Detalles del servicio"] }), _jsxs("div", { className: "space-y-3 text-sm", children: [product.servicio.horario_atencion && (_jsxs("div", { className: "flex items-start space-x-3 p-2 bg-white/60 rounded-lg", children: [_jsx(Clock, { className: "h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" }), _jsxs("div", { className: "flex-1", children: [_jsx("span", { className: "text-gray-600 block text-xs font-medium mb-1", children: "Horario de atenci\u00F3n" }), _jsx("span", { className: "text-gray-900 font-semibold", children: product.servicio.horario_atencion })] })] })), product.servicio.dias_disponibles && (_jsxs("div", { className: "flex items-start space-x-3 p-2 bg-white/60 rounded-lg", children: [_jsx(Calendar, { className: "h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" }), _jsxs("div", { className: "flex-1", children: [_jsx("span", { className: "text-gray-600 block text-xs font-medium mb-2", children: "D\u00EDas disponibles" }), _jsx("div", { className: "flex flex-wrap gap-1.5", children: product.servicio.dias_disponibles.split(',').map((dia, index) => (_jsx("span", { className: "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 border border-purple-200 shadow-sm", children: dia.trim().charAt(0).toUpperCase() + dia.trim().slice(1) }, index))) })] })] })), product.servicio.duracion_estimada && (_jsxs("div", { className: "flex items-start space-x-3 p-2 bg-white/60 rounded-lg", children: [_jsx(Timer, { className: "h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" }), _jsxs("div", { className: "flex-1", children: [_jsx("span", { className: "text-gray-600 block text-xs font-medium mb-1", children: "Duraci\u00F3n estimada" }), _jsx("span", { className: "text-gray-900 font-semibold", children: product.servicio.duracion_estimada })] })] }))] })] })), product.tipo === 'producto' && (_jsxs("div", { className: "border-l-4 border-green-500 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 shadow-lg hover:shadow-xl transition-shadow duration-300", children: [_jsxs("h3", { className: "font-semibold text-gray-900 mb-3 flex items-center text-base", children: [_jsx(Tag, { className: "h-5 w-5 mr-2 text-green-600" }), "Informaci\u00F3n del producto"] }), _jsxs("div", { className: "space-y-3", children: [_jsxs("div", { className: "py-1.5", children: [_jsx("span", { className: "text-gray-600 text-xs font-medium uppercase tracking-wide block mb-1", children: "Categor\u00EDa" }), _jsx("span", { className: "text-gray-900 font-bold text-base", children: product.categoria_nombre })] }), product.categoria_descripcion && (_jsx("div", { className: "py-1.5 pl-3 border-l-2 border-green-300 bg-white/40 rounded-r-lg", children: _jsxs("div", { className: "flex items-start space-x-2", children: [_jsx(FileText, { className: "h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" }), _jsx("span", { className: "text-gray-700 text-xs leading-relaxed", children: product.categoria_descripcion })] }) })), _jsxs("div", { className: "py-1.5", children: [_jsx("span", { className: "text-gray-600 text-xs font-medium uppercase tracking-wide block mb-1", children: "Publicado" }), _jsx("span", { className: "text-gray-900 font-semibold text-base", children: formatDate(product.fecha_publicacion) })] }), _jsxs("div", { className: "py-1.5", children: [_jsx("span", { className: "text-gray-600 text-xs font-medium uppercase tracking-wide block mb-1", children: "Tipo" }), _jsx("span", { className: "font-bold text-lg text-green-700", children: "\uD83D\uDCE6 Producto" })] })] })] }))] }), _jsxs("div", { className: "space-y-4 sm:space-y-6", children: [_jsxs("div", { children: [_jsx("h1", { className: "text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 leading-tight mb-2 sm:mb-3 tracking-tight break-words", children: product.nombre }), _jsxs("div", { className: "text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 flex items-center", children: [_jsx("span", { className: "text-gray-500", children: "C\u00F3digo:" }), _jsx("span", { className: "font-semibold text-gray-900 ml-2 bg-gray-100 px-3 py-1 rounded-md text-xs sm:text-sm", children: product.codigo })] }), _jsxs("div", { className: "mb-4 sm:mb-6 bg-gradient-to-r from-green-50 via-emerald-50 to-green-100 border-l-4 border-green-500 p-5 sm:p-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]", children: [_jsxs("div", { className: "text-xs sm:text-sm text-green-700 mb-2 font-bold uppercase tracking-wider flex items-center", children: [_jsx(DollarSign, { className: "h-4 w-4 mr-1" }), "Precio"] }), _jsxs("span", { className: "text-4xl sm:text-5xl lg:text-6xl font-black bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent inline-block leading-none", children: ["$", product.precio ? Number(product.precio).toFixed(2) : '0.00'] })] }), user && (user.tipo_usuario === 'moderador' ||
+                                                user.tipo_usuario === 'administrador' ||
+                                                product.vendedor_id === user.id) && (_jsx("div", { className: "mb-4", children: _jsx("span", { className: "inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800", children: product.estado === 'pendiente_revision' ? 'Pendiente de revisión' : product.estado.replace('_', ' ') }) }))] }), (user?.tipo_usuario === 'comprador' || user?.tipo_usuario === 'vendedor') && product.estado === 'activo' && product.disponibilidad && (_jsxs("div", { className: `space-y-3 transition-all duration-300 ${isScrolled ? 'sticky top-20 z-40 bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-lg' : ''}`, children: [_jsxs(Button, { onClick: () => navigate(`/products/contact/${product.id}`), className: "w-full h-12 sm:h-14 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-base sm:text-lg font-bold shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl", children: [_jsx(ShoppingCart, { className: "h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" }), _jsx("span", { children: "Contactar Vendedor" })] }), _jsxs(Button, { onClick: handleReportProduct, variant: "outline", className: "w-full h-10 sm:h-11 border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 bg-white text-sm sm:text-base font-semibold shadow-sm hover:shadow-md transition-all duration-300 rounded-xl", children: [_jsx(Flag, { className: "h-4 w-4 sm:h-5 sm:w-5 mr-2" }), _jsx("span", { children: "Reportar producto" })] }), _jsx("p", { className: "text-xs text-center text-gray-500 mt-2", children: "\u2713 Disponible para compra inmediata" })] })), product.estado === 'pendiente_revision' && (_jsxs(Alert, { className: "border-yellow-200 bg-yellow-50 rounded-lg", children: [_jsx(AlertCircle, { className: "h-4 w-4 text-yellow-600" }), _jsx(AlertDescription, { className: "text-yellow-800 font-medium text-sm", children: "Este producto est\u00E1 pendiente de revisi\u00F3n por parte de los moderadores." })] })), (canModifyProduct(product.vendedor_id) || canDeleteProduct(product.vendedor_id)) && user?.tipo_usuario !== 'moderador' && (_jsxs("div", { className: "border-l-4 border-gray-500 bg-gradient-to-br from-gray-50 to-slate-100 rounded-lg p-4 shadow-lg hover:shadow-xl transition-shadow duration-300", children: [_jsxs("h3", { className: "font-semibold text-gray-900 mb-4 flex items-center text-base", children: [_jsx(Shield, { className: "h-5 w-5 mr-2 text-gray-600" }), "Gestionar producto"] }), _jsxs("div", { className: "space-y-3", children: [canModifyProduct(product.vendedor_id) && !product.es_peligroso && product.estado !== 'pendiente_revision' && product.estado !== 'suspendido' && (_jsxs(Button, { onClick: () => navigate(`/products/${product.id}/edit`), className: "w-full h-11 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 text-sm font-semibold", children: [_jsx(Edit, { className: "h-4 w-4 mr-2" }), "Editar Producto"] })), canDeleteProduct(product.vendedor_id) && !product.es_peligroso && product.estado !== 'pendiente_revision' && product.estado !== 'suspendido' && (_jsxs(Button, { onClick: handleDeleteProduct, className: "w-full h-11 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 text-sm font-semibold", children: [_jsx(Trash2, { className: "h-4 w-4 mr-2" }), "Eliminar Producto"] })), product.estado === 'pendiente_revision' && user?.tipo_usuario !== 'administrador' && (_jsx("div", { className: "bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded", children: _jsxs("p", { className: "text-sm text-yellow-800", children: [_jsx("strong", { children: "\u23F3 En revisi\u00F3n:" }), " No puedes editar ni eliminar este producto hasta que los moderadores lo revisen."] }) })), product.estado === 'suspendido' && user?.tipo_usuario !== 'administrador' && (_jsx("div", { className: "bg-red-50 border-l-4 border-red-400 p-3 rounded", children: _jsxs("p", { className: "text-sm text-red-800", children: [_jsx("strong", { children: "\uD83D\uDEAB Suspendido:" }), " Este producto ha sido suspendido por los moderadores. No puedes editarlo ni eliminarlo. Contacta con los moderadores para m\u00E1s informaci\u00F3n."] }) }))] })] })), canModerateProduct() && (_jsxs("div", { className: "border-l-4 border-slate-700 bg-gradient-to-br from-slate-50 to-gray-100 rounded-lg p-4 shadow-lg hover:shadow-xl transition-shadow duration-300", children: [_jsxs("h3", { className: "font-semibold text-gray-900 mb-4 flex items-center text-base", children: [_jsx(Shield, { className: "h-5 w-5 mr-2 text-slate-700" }), "Acciones de Moderaci\u00F3n"] }), _jsxs("div", { className: "grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3", children: [_jsxs(Button, { size: "sm", onClick: handleApproveProduct, disabled: reviewLoading, className: "h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200", title: "Aprobar producto", children: [reviewLoading ? (_jsx(Clock, { className: "h-4 w-4 animate-spin" })) : (_jsx(CheckCircle, { className: "h-4 w-4" })), _jsx("span", { className: "ml-2", children: "Aprobar" })] }), _jsxs(Button, { size: "sm", onClick: handleRejectProduct, disabled: reviewLoading, className: "h-10 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200", title: "Rechazar por errores corregibles (vendedor puede editar)", children: [reviewLoading ? (_jsx(Clock, { className: "h-4 w-4 animate-spin" })) : (_jsx(XCircle, { className: "h-4 w-4" })), _jsx("span", { className: "ml-2", children: "Rechazar" })] }), _jsxs(Button, { size: "sm", onClick: handleSuspendProduct, disabled: reviewLoading, className: "h-10 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200", title: "Suspender por violaci\u00F3n grave (vendedor NO puede editar)", children: [reviewLoading ? (_jsx(Clock, { className: "h-4 w-4 animate-spin" })) : (_jsx(AlertTriangle, { className: "h-4 w-4" })), _jsx("span", { className: "ml-2", children: "Suspender" })] })] }), _jsx("div", { className: "pt-3 border-t border-slate-200", children: _jsxs(Button, { size: "sm", onClick: handleMarkAsDangerous, disabled: reviewLoading, className: "w-full h-10 bg-gradient-to-r from-red-700 to-red-900 hover:from-red-800 hover:to-red-950 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200", title: "Contenido prohibido - Producto OCULTO completamente", children: [reviewLoading ? (_jsx(Clock, { className: "h-4 w-4 animate-spin" })) : (_jsx(AlertTriangle, { className: "h-4 w-4" })), _jsx("span", { className: "ml-2", children: "\uD83D\uDEAB Marcar como Peligroso" })] }) }), _jsxs("div", { className: "mt-3 p-2 bg-slate-100 border border-slate-200 rounded text-xs text-slate-700", children: [_jsx("strong", { children: "Nota:" }), " Todas las acciones son permanentes y quedan registradas en el historial de moderaci\u00F3n."] })] })), user && user.id !== product.vendedor_id && (_jsxs("div", { className: "border border-gray-200 rounded-lg p-4 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg hover:shadow-xl transition-shadow duration-300", children: [_jsxs("h3", { className: "font-semibold text-gray-900 mb-3 flex items-center", children: [_jsx("div", { className: "w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mr-2", children: _jsx("span", { className: "text-white font-bold text-sm", children: product.vendedor_nombre?.charAt(0) || 'U' }) }), "Vendedor"] }), _jsxs("div", { className: "space-y-1 mb-3", children: [_jsx("div", { className: "font-medium text-gray-900 text-lg", children: product.vendedor_nombre }), _jsx("div", { className: "text-sm text-gray-600", children: product.vendedor_email })] }), user?.tipo_usuario !== 'comprador' && user?.tipo_usuario !== 'vendedor' && (_jsx(Button, { onClick: () => navigate(`/products/contact/${product.id}`), className: "w-full bg-orange-500 hover:bg-orange-600 text-white h-10 rounded-lg text-sm font-medium shadow-lg hover:shadow-xl transition-all", children: "Contactar vendedor" }))] })), (product.ubicacion_provincia || product.ubicacion_canton || product.ubicacion_distrito || product.ubicacion_direccion || product.coordenadas) && (_jsxs("div", { className: "border-l-4 border-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 shadow-lg hover:shadow-xl transition-shadow duration-300", children: [_jsxs("h3", { className: "font-semibold text-gray-900 mb-3 flex items-center text-base", children: [_jsx(MapPin, { className: "h-5 w-5 mr-2 text-blue-600" }), "\uD83D\uDCCD Ubicaci\u00F3n del ", product.tipo === 'servicio' ? 'servicio' : 'producto'] }), _jsxs("div", { className: "space-y-2 text-sm", children: [product.ubicacion_provincia && (_jsxs("div", { className: "flex items-start space-x-2", children: [_jsx("span", { className: "text-gray-600 w-24 flex-shrink-0 font-medium", children: "Provincia:" }), _jsx("span", { className: "text-gray-900 font-semibold", children: product.ubicacion_provincia })] })), product.ubicacion_canton && (_jsxs("div", { className: "flex items-start space-x-2", children: [_jsx("span", { className: "text-gray-600 w-24 flex-shrink-0 font-medium", children: "Cant\u00F3n:" }), _jsx("span", { className: "text-gray-900 font-semibold", children: product.ubicacion_canton })] })), product.ubicacion_distrito && (_jsxs("div", { className: "flex items-start space-x-2", children: [_jsx("span", { className: "text-gray-600 w-24 flex-shrink-0 font-medium", children: "Distrito:" }), _jsx("span", { className: "text-gray-900", children: product.ubicacion_distrito })] })), product.ubicacion_direccion && (_jsxs("div", { className: "flex items-start space-x-2", children: [_jsx("span", { className: "text-gray-600 w-24 flex-shrink-0 font-medium", children: "Direcci\u00F3n:" }), _jsx("span", { className: "text-gray-900", children: product.ubicacion_direccion })] })), product.coordenadas && (_jsxs("div", { className: "mt-3 pt-3 border-t border-blue-200", children: [_jsxs("div", { className: "flex items-start space-x-2", children: [_jsx("span", { className: "text-gray-600 w-24 flex-shrink-0 font-medium", children: "\uD83D\uDCCC GPS:" }), _jsx("a", { href: `https://www.google.com/maps?q=${product.coordenadas}`, target: "_blank", rel: "noopener noreferrer", className: "text-blue-600 hover:text-blue-800 font-mono text-xs underline hover:no-underline transition-colors", title: "Ver en Google Maps", children: product.coordenadas })] }), _jsx("p", { className: "text-xs text-gray-500 mt-1 ml-24", children: "Haz clic para ver en Google Maps" })] }))] })] })), product.tipo === 'servicio' && (_jsxs("div", { className: "border-l-4 border-green-500 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 shadow-lg hover:shadow-xl transition-shadow duration-300", children: [_jsxs("h3", { className: "font-semibold text-gray-900 mb-3 flex items-center text-base", children: [_jsx(Tag, { className: "h-5 w-5 mr-2 text-green-600" }), "Informaci\u00F3n del servicio"] }), _jsxs("div", { className: "space-y-3", children: [_jsxs("div", { className: "py-1.5", children: [_jsx("span", { className: "text-gray-600 text-xs font-medium uppercase tracking-wide block mb-1", children: "Categor\u00EDa" }), _jsx("span", { className: "text-gray-900 font-bold text-base", children: product.categoria_nombre })] }), product.categoria_descripcion && (_jsx("div", { className: "py-1.5 pl-3 border-l-2 border-green-300 bg-white/40 rounded-r-lg", children: _jsxs("div", { className: "flex items-start space-x-2", children: [_jsx(FileText, { className: "h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" }), _jsx("span", { className: "text-gray-700 text-xs leading-relaxed", children: product.categoria_descripcion })] }) })), _jsxs("div", { className: "py-1.5", children: [_jsx("span", { className: "text-gray-600 text-xs font-medium uppercase tracking-wide block mb-1", children: "Publicado" }), _jsx("span", { className: "text-gray-900 font-semibold text-base", children: formatDate(product.fecha_publicacion) })] }), _jsxs("div", { className: "py-1.5", children: [_jsx("span", { className: "text-gray-600 text-xs font-medium uppercase tracking-wide block mb-1", children: "Tipo" }), _jsx("span", { className: "font-bold text-lg text-green-700", children: "\uD83D\uDD27 Servicio" })] })] })] }))] })] }), isZoomed && product.imagenes.length > 0 && (_jsx("div", { className: "fixed z-50 pointer-events-none", style: {
+                            left: `${popupPosition.x}px`,
+                            top: `${Math.max(10, popupPosition.y)}px`,
+                        }, children: _jsx("div", { className: "border border-gray-300 rounded-lg overflow-hidden bg-white shadow-2xl", children: _jsx("div", { className: "w-[700px] h-[600px] overflow-hidden relative", children: _jsx("img", { src: product.imagenes[currentImageIndex]?.url_imagen, alt: `${product.nombre} - Vista ampliada`, className: "absolute object-contain bg-white", style: {
+                                        width: '200%',
+                                        height: '200%',
+                                        left: `${25 - mousePosition.x}%`,
+                                        top: `${25 - mousePosition.y}%`,
+                                        transition: 'none'
+                                    } }) }) }) })), _jsxs("div", { className: "mt-8 sm:mt-12 border-t-2 border-gray-200 pt-6 sm:pt-8", children: [_jsxs("h2", { className: "text-2xl sm:text-3xl font-bold text-gray-900 mb-4 sm:mb-6 flex items-center", children: [_jsx("div", { className: "w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 rounded-xl flex items-center justify-center mr-3 shadow-lg", children: _jsx(FileText, { className: "h-5 w-5 sm:h-6 sm:w-6 text-white" }) }), _jsx("span", { children: "Descripci\u00F3n detallada" })] }), _jsx("div", { className: "bg-gradient-to-br from-white via-blue-50 to-indigo-50 rounded-2xl p-4 sm:p-6 lg:p-8 border-2 border-blue-300 shadow-xl hover:shadow-2xl transition-shadow duration-300 backdrop-blur-sm", children: _jsx("div", { className: "prose prose-lg max-w-none", children: _jsx("div", { className: "text-gray-800 leading-relaxed text-base whitespace-pre-wrap", style: {
+                                            lineHeight: '1.8',
+                                            wordBreak: 'break-word'
+                                        }, children: product.descripcion.split('\n').map((paragraph, index) => {
+                                            if (!paragraph.trim())
+                                                return null;
+                                            // Función para renderizar texto con negritas **texto**
+                                            const renderWithBold = (text) => {
+                                                const parts = text.split(/(\*\*.*?\*\*)/g);
+                                                return parts.map((part, i) => {
+                                                    if (part.startsWith('**') && part.endsWith('**')) {
+                                                        return _jsx("strong", { className: "font-bold text-gray-900", children: part.slice(2, -2) }, i);
+                                                    }
+                                                    return _jsx("span", { children: part }, i);
+                                                });
+                                            };
+                                            // Detectar si es una lista (comienza con - o *)
+                                            if (paragraph.trim().startsWith('-') || paragraph.trim().startsWith('*')) {
+                                                const listText = paragraph.trim().substring(1).trim();
+                                                return (_jsxs("div", { className: "flex items-start space-x-2 my-2", children: [_jsx("span", { className: "text-blue-600 font-bold mt-1", children: "\u2022" }), _jsx("span", { className: "flex-1", children: renderWithBold(listText) })] }, index));
+                                            }
+                                            // Detectar si es un título (todo en mayúsculas o termina con :)
+                                            if (paragraph === paragraph.toUpperCase() || paragraph.trim().endsWith(':')) {
+                                                return (_jsx("h3", { className: "font-bold text-lg text-gray-900 mt-6 mb-3 first:mt-0", children: renderWithBold(paragraph) }, index));
+                                            }
+                                            // Párrafo normal
+                                            return (_jsx("p", { className: "mb-4 last:mb-0", children: renderWithBold(paragraph) }, index));
+                                        }) }) }) })] }), _jsxs("div", { className: "mt-8 space-y-4", children: [!product.disponibilidad && (_jsxs(Alert, { className: "border-red-200 bg-red-50 rounded-lg", children: [_jsx(AlertCircle, { className: "h-4 w-4 text-red-600" }), _jsx(AlertDescription, { className: "text-red-800 font-medium text-sm", children: "Este producto no est\u00E1 disponible actualmente." })] })), product.es_peligroso && (_jsxs(Alert, { className: "border-red-200 bg-red-50 rounded-lg", children: [_jsx(AlertTriangle, { className: "h-4 w-4 text-red-600" }), _jsx(AlertDescription, { className: "text-red-800 font-medium text-sm", children: "Este producto est\u00E1 marcado como peligroso y no puede ser modificado." })] }))] })] }), _jsx(AlertDialog, { isOpen: alert.isOpen, onClose: hideAlert, title: alert.title, message: alert.message, type: alert.type, confirmText: alert.confirmText, cancelText: alert.cancelText, onConfirm: alert.onConfirm, onCancel: alert.onCancel }), product && (_jsx(ReportProductDialog, { isOpen: reportModalOpen, onClose: () => setReportModalOpen(false), productId: product.id, productName: product.nombre, onSuccess: handleReportSuccess })), moderationModal && (_jsx(ModerationReasonModal, { isOpen: moderationModal.isOpen, onClose: () => setModerationModal(null), onConfirm: handleModerationConfirm, action: moderationModal.action, productName: moderationModal.productName }))] }));
+};
