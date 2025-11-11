@@ -137,20 +137,19 @@ const login = async (req, res) => {
         const tokens = generateSessionTokens(user);
         // Obtener la IP real del cliente (considerando proxies)
         const getClientIp = (req) => {
-            // Intentar obtener IP de headers de proxy primero
             const forwardedFor = req.headers['x-forwarded-for'];
             if (forwardedFor) {
-                // x-forwarded-for puede ser una lista de IPs, tomar la primera (cliente original)
                 return forwardedFor.split(',')[0].trim();
             }
-            // Fallback a otras opciones
             return req.headers['x-real-ip'] ||
                 req.connection.remoteAddress ||
                 req.socket.remoteAddress ||
                 req.ip ||
                 'IP desconocida';
         };
-        const clientIp = getClientIp(req);
+        let clientIp = getClientIp(req);
+        // 🔧 LIMPIAR la IP: eliminar ::ffff: y puerto (si existe)
+        clientIp = clientIp.replace('::ffff:', '').split(':')[0];
         // Crear sesión en la base de datos
         const sessionResult = await query(`
       INSERT INTO sesiones_usuario (

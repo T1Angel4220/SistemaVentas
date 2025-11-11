@@ -49,6 +49,7 @@ app.use(cors({
     exposedHeaders: ['Content-Type', 'Content-Length'],
     optionsSuccessStatus: 200
 }));
+app.options(/.*/, cors());
 // Middleware específico para archivos estáticos
 app.use('/uploads', (req, res, next) => {
     // Permitir acceso desde cualquier origen para archivos estáticos
@@ -57,7 +58,6 @@ app.use('/uploads', (req, res, next) => {
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
     next();
 });
-app.options('*', cors());
 // Rate limiting - TEMPORALMENTE DESHABILITADO
 // const limiter = rateLimit({
 //   windowMs: 15 * 60 * 1000, // 15 minutos
