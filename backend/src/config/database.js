@@ -12,7 +12,7 @@ const pool = new Pool({
   password: config.database.password,
   max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 10000,
   // Configuración UTF-8 para manejar caracteres especiales
   client_encoding: 'UTF8',
   // Configuración adicional para caracteres especiales
