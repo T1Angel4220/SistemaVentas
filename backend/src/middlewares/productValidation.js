@@ -299,8 +299,9 @@ const validateQuery = (schema) => {
       });
     }
 
-    // Reemplazar req.query con los datos validados y sanitizados
-    req.query = value;
+    // Actualizar req.query sin reemplazar la referencia (compatibilidad Express 5)
+    Object.keys(req.query).forEach(key => delete req.query[key]);
+    Object.assign(req.query, value);
     next();
   };
 };
