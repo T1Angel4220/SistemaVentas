@@ -170,12 +170,8 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
       case 'Enter':
         e.preventDefault();
         if (highlightedIndex >= 0 && flatCategories[highlightedIndex]) {
-          const { category, isParent, hasChildren } = flatCategories[highlightedIndex];
-          if (isParent && hasChildren) {
-            toggleExpansion(category.id);
-          } else {
-            handleCategorySelect(category);
-          }
+          const { category } = flatCategories[highlightedIndex];
+          handleCategorySelect(category);
         }
         break;
       case 'ArrowRight':
@@ -298,34 +294,38 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
                     } ${isHighlighted ? 'bg-blue-50' : ''}`}
                     style={{ paddingLeft: `${indent * 16 + 16}px` }}
                   >
+                    {isParent && hasChildren && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleExpansion(category.id);
+                        }}
+                        className="p-2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                        aria-label={isExpanded ? 'Colapsar categoría' : 'Expandir categoría'}
+                      >
+                        {isExpanded ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                      </button>
+                    )}
+                    {isParent && !hasChildren && (
+                      <div className="p-2 text-gray-400">
+                        <FolderOpen className="h-4 w-4" />
+                      </div>
+                    )}
                     <button
                       type="button"
-                      onClick={() => {
-                        if (isParent && hasChildren) {
-                          toggleExpansion(category.id);
-                        } else {
-                          handleCategorySelect(category);
-                        }
-                      }}
-                      className={`w-full px-4 py-2 text-left text-sm hover:bg-blue-50 focus:bg-blue-50 focus:outline-none flex items-center justify-between ${
+                      onClick={() => handleCategorySelect(category)}
+                      className={`flex-1 px-4 py-2 text-left text-sm hover:bg-blue-50 focus:bg-blue-50 focus:outline-none flex items-center justify-between rounded ${
                         isSelected ? 'bg-blue-100' : ''
                       }`}
                     >
-                      <div className="flex items-center space-x-2">
-                        {isParent && hasChildren && (
-                          <div className="flex items-center">
-                            {isExpanded ? (
-                              <ChevronDown className="h-3 w-3 text-gray-400" />
-                            ) : (
-                              <ChevronRight className="h-3 w-3 text-gray-400" />
-                            )}
-                            <FolderOpen className="h-4 w-4 text-blue-500 ml-1" />
-                          </div>
-                        )}
-                        <span className={isSelected ? 'text-blue-900' : 'text-gray-900'}>
-                          {category.nombre}
-                        </span>
-                      </div>
+                      <span className={isSelected ? 'text-blue-900' : 'text-gray-900'}>
+                        {category.nombre}
+                      </span>
                       {isSelected && (
                         <Check className="h-4 w-4 text-blue-600" />
                       )}
