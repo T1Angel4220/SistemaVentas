@@ -1476,9 +1476,14 @@ class ProductsController {
           COUNT(*) FILTER (WHERE estado = 'activo') as aprobados,
           COUNT(*) FILTER (WHERE estado = 'rechazado') as rechazados,
           COUNT(*) FILTER (WHERE estado = 'suspendido') as suspendidos,
-          COUNT(*) FILTER (WHERE estado = 'peligroso') as peligrosos,
-          COUNT(*) FILTER (WHERE estado = 'en_apelacion') as en_apelacion
+          COUNT(*) FILTER (WHERE estado = 'peligroso') as peligrosos
         FROM items
+      `);
+
+      const apelacionesStats = await query(`
+        SELECT 
+          COUNT(*) FILTER (WHERE estado = 'en_apelacion') as en_apelacion
+        FROM apelaciones
       `);
 
       const productosFormateados = productos.rows.map(producto => ({
@@ -1504,7 +1509,7 @@ class ProductsController {
           rechazados: parseInt(estadisticas.rows[0].rechazados),
           suspendidos: parseInt(estadisticas.rows[0].suspendidos),
           peligrosos: parseInt(estadisticas.rows[0].peligrosos),
-          en_apelacion: parseInt(estadisticas.rows[0].en_apelacion)
+          en_apelacion: parseInt(apelacionesStats.rows[0].en_apelacion)
         }
       });
 
