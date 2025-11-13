@@ -39,7 +39,8 @@ CREATE TYPE estado_item AS ENUM (
     'pendiente_revision',
     'rechazado',
     'peligroso',
-    'suspendido'
+    'suspendido',
+    'en_apelacion'
 );
 
 -- Estados de reporte/incidencia

@@ -81,10 +81,18 @@ class AppealsController {
 
       // Actualizar el estado del producto a "en_apelacion" si estaba rechazado o suspendido
       if (producto.estado === 'rechazado' || producto.estado === 'suspendido') {
-        await query(
-          'UPDATE items SET estado = $1 WHERE id = $2',
-          ['en_apelacion', item_id]
-        );
+        try {
+          await query(
+            'UPDATE items SET estado = $1 WHERE id = $2',
+            ['en_apelacion', item_id]
+          );
+        } catch (enumError) {
+          if (enumError.code === '22P02') {
+            console.warn('⚠️ El estado "en_apelacion" no existe en enum estado_item. Se mantiene el estado original.');
+          } else {
+            throw enumError;
+          }
+        }
       }
 
       res.status(201).json({

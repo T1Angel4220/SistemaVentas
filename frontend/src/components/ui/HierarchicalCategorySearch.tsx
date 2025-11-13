@@ -106,14 +106,14 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
 
   // Crear lista plana para navegación con teclado
   const flatCategories = React.useMemo(() => {
-    const flat: Array<{ category: Category; isParent: boolean; indent: number }> = [];
+    const flat: Array<{ category: Category; isParent: boolean; hasChildren: boolean; indent: number }> = [];
     
     filteredCategories.forEach(parent => {
-      flat.push({ category: parent, isParent: true, indent: 0 });
+      flat.push({ category: parent, isParent: true, hasChildren: parent.subcategorias.length > 0, indent: 0 });
       
       if (expandedCategories.has(parent.id) || searchTerm) {
         parent.subcategorias.forEach(child => {
-          flat.push({ category: child, isParent: false, indent: 1 });
+          flat.push({ category: child, isParent: false, hasChildren: false, indent: 1 });
         });
       }
     });
@@ -170,8 +170,8 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
       case 'Enter':
         e.preventDefault();
         if (highlightedIndex >= 0 && flatCategories[highlightedIndex]) {
-          const { category, isParent } = flatCategories[highlightedIndex];
-          if (isParent) {
+          const { category, isParent, hasChildren } = flatCategories[highlightedIndex];
+          if (isParent && hasChildren) {
             toggleExpansion(category.id);
           } else {
             handleCategorySelect(category);
@@ -180,7 +180,7 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
         break;
       case 'ArrowRight':
         e.preventDefault();
-        if (highlightedIndex >= 0 && flatCategories[highlightedIndex]?.isParent) {
+        if (highlightedIndex >= 0 && flatCategories[highlightedIndex]?.isParent && flatCategories[highlightedIndex]?.hasChildren) {
           const category = flatCategories[highlightedIndex].category;
           setExpandedCategories(prev => new Set(prev).add(category.id));
         }
@@ -285,7 +285,7 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
           ) : (
             <div className="py-1">
               {flatCategories.map((item, index) => {
-                const { category, isParent, indent } = item;
+                const { category, isParent, hasChildren, indent } = item;
                 const isHighlighted = index === highlightedIndex;
                 const isSelected = selectedCategoryId === category.id.toString();
                 const isExpanded = expandedCategories.has(category.id);
@@ -301,7 +301,7 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
                     <button
                       type="button"
                       onClick={() => {
-                        if (isParent) {
+                        if (isParent && hasChildren) {
                           toggleExpansion(category.id);
                         } else {
                           handleCategorySelect(category);
@@ -312,7 +312,7 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
                       }`}
                     >
                       <div className="flex items-center space-x-2">
-                        {isParent && (
+                        {isParent && hasChildren && (
                           <div className="flex items-center">
                             {isExpanded ? (
                               <ChevronDown className="h-3 w-3 text-gray-400" />
