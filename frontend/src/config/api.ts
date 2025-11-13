@@ -1,8 +1,39 @@
 import { apiService } from '../services/api';
 
+const DEFAULT_API_ORIGIN = 'http://localhost:3001';
+
+const sanitizeUrl = (url: string): string => url.replace(/\/+$/, '');
+
+const addProtocolIfMissing = (url: string): string => {
+  if (!url) return '';
+  if (/^https?:\/\//i.test(url)) {
+    return url;
+  }
+  return `https://${url}`;
+};
+
+const rawEnvUrl = (import.meta.env?.VITE_API_URL ?? '').toString().trim();
+
+const resolveApiOrigin = (): string => {
+  if (!rawEnvUrl) {
+    return DEFAULT_API_ORIGIN;
+  }
+
+  const withProtocol = addProtocolIfMissing(rawEnvUrl);
+  if (withProtocol.toLowerCase().endsWith('/api')) {
+    return sanitizeUrl(withProtocol.slice(0, -4));
+  }
+
+  return sanitizeUrl(withProtocol);
+};
+
+export const LOCAL_API_ORIGIN = DEFAULT_API_ORIGIN;
+export const API_ORIGIN = resolveApiOrigin();
+export const API_BASE_URL = sanitizeUrl(`${API_ORIGIN}/api`);
+
 // Configuración de la API
 export const API_CONFIG = {
-  BASE_URL: 'http://localhost:3001',
+  BASE_URL: API_ORIGIN,
   ENDPOINTS: {
     // Autenticación
     AUTH: {

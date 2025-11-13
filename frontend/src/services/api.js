@@ -1,7 +1,33 @@
 import { sessionAlertManager } from '../utils/sessionAlert';
 import { suspendedAccountAlertManager } from '../utils/suspendedAccountAlert';
-// Configuración de la API
-const API_BASE_URL = 'https://backend-sistema-ventas-g9hhdue0fehhagdj.canadacentral-01.azurewebsites.net/api';
+
+const DEFAULT_API_ORIGIN = 'http://localhost:3001';
+
+const sanitizeUrl = (url) => url.replace(/\/+$/, '');
+
+const addProtocolIfMissing = (url) => {
+    if (!url) return '';
+    if (/^https?:\/\//i.test(url)) {
+        return url;
+    }
+    return `https://${url}`;
+};
+
+const rawEnvUrl = (import.meta.env?.VITE_API_URL ?? '').toString().trim();
+
+const resolveApiOrigin = () => {
+    if (!rawEnvUrl) {
+        return DEFAULT_API_ORIGIN;
+    }
+    const withProtocol = addProtocolIfMissing(rawEnvUrl);
+    if (withProtocol.toLowerCase().endsWith('/api')) {
+        return sanitizeUrl(withProtocol.slice(0, -4));
+    }
+    return sanitizeUrl(withProtocol);
+};
+
+export const API_ORIGIN = resolveApiOrigin();
+export const API_BASE_URL = sanitizeUrl(`${API_ORIGIN}/api`);
 // Clase para manejar la API
 class ApiService {
     baseURL;
