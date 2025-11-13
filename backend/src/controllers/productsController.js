@@ -3,11 +3,83 @@ const { config } = require('../config/config');
 const { detectarContenidoInadecuado, obtenerMensajeRechazo } = require('../services/contentDetection');
 const { filtrarPorProximidad } = require('../utils/geoLocation');
 const { sendAccountBlockedByDangerousProductsEmail } = require('../services/email');
+const azureStorage = require('../services/azureStorageService');
+const path = require('path');
+const fs = require('fs').promises;
+const { randomUUID } = require('crypto');
 
-// Función helper para construir URLs completas de imágenes
-const buildImageUrl = (filename) => {
-  const baseUrl = `${config.server.host}:${config.server.port}`;
-  return `http://${baseUrl}/uploads/${filename}`;
+const LOCAL_UPLOAD_DIR = path.join(__dirname, '../../uploads/products');
+
+const ensureLocalDir = async () => {
+  await fs.mkdir(LOCAL_UPLOAD_DIR, { recursive: true });
+};
+
+const isAbsoluteUrl = (url) => /^https?:\/\//i.test(url);
+
+const removeProductImageResource = async (imageUrl) => {
+  if (!imageUrl) {
+    return;
+  }
+
+  if (azureStorage.isEnabled()) {
+    const blobName = azureStorage.getBlobNameFromUrl(imageUrl);
+    if (blobName) {
+      await azureStorage.deleteBlob(blobName);
+      return;
+    }
+  }
+
+  try {
+    const relativePath = imageUrl.startsWith('/uploads/')
+      ? imageUrl.replace(/^\/+/, '')
+      : path.join('uploads/products', path.basename(imageUrl));
+    const filePath = path.join(__dirname, '../../', relativePath);
+    await fs.unlink(filePath);
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      console.warn('⚠️  No se pudo eliminar el archivo local:', error.message);
+    }
+  }
+};
+
+const buildImageUrl = (value) => {
+  if (!value) {
+    return null;
+  }
+
+  if (isAbsoluteUrl(value)) {
+    return value;
+  }
+
+  const normalized = value.startsWith('/uploads/')
+    ? value
+    : `/uploads/${value}`;
+
+  const baseHost = config.server.host?.startsWith('http')
+    ? config.server.host.replace(/\/+$/, '')
+    : `http://${config.server.host}:${config.server.port}`;
+
+  return `${baseHost}${normalized}`;
+};
+
+const saveProductImageFile = async (file, productId) => {
+  const ext = path.extname(file.originalname) || '.jpg';
+  const uniqueName = `product-${productId}-${Date.now()}-${randomUUID()}${ext}`;
+
+  if (azureStorage.isEnabled()) {
+    const blobName = `products/${productId}/${uniqueName}`;
+    const uploadResult = await azureStorage.uploadBuffer(file.buffer, blobName, {
+      contentType: file.mimetype,
+    });
+
+    return uploadResult.url;
+  }
+
+  await ensureLocalDir();
+  const destination = path.join(LOCAL_UPLOAD_DIR, uniqueName);
+  await fs.writeFile(destination, file.buffer);
+
+  return `/uploads/products/${uniqueName}`;
 };
 
 // Controlador de productos y servicios
@@ -18,7 +90,7 @@ class ProductsController {
     try {
       console.log('Datos recibidos:', {
         body: req.body,
-        files: req.files ? req.files.map(f => ({ filename: f.filename, originalname: f.originalname })) : 'No files'
+        files: req.files ? req.files.map(f => ({ originalname: f.originalname, size: f.size })) : 'No files'
       });
 
       const { 
@@ -158,11 +230,12 @@ class ProductsController {
         for (let i = 0; i < req.files.length; i++) {
           const file = req.files[i];
           const esPrincipal = i === 0; // La primera imagen es la principal
+          const savedUrl = await saveProductImageFile(file, producto.id);
           
           await query(
             `INSERT INTO item_imagenes (item_id, url_imagen, orden, es_principal)
              VALUES ($1, $2, $3, $4)`,
-            [producto.id, buildImageUrl(file.filename), i + 1, esPrincipal]
+            [producto.id, savedUrl, i + 1, esPrincipal]
           );
         }
         
@@ -405,9 +478,14 @@ class ProductsController {
         totalPagesFinal = Math.ceil(totalFinal / limit);
       }
 
+      const productosConUrls = productosFinales.map(producto => ({
+        ...producto,
+        primera_imagen: buildImageUrl(producto.primera_imagen),
+      }));
+
       res.json({
         success: true,
-        data: productosFinales,
+        data: productosConUrls,
         pagination: {
           current_page: parseInt(page),
           total_pages: totalPagesFinal,
@@ -482,9 +560,7 @@ class ProductsController {
       // Convertir URLs relativas a absolutas
       const imagenesConUrlsCompletas = imagenes.rows.map(imagen => ({
         ...imagen,
-        url_imagen: imagen.url_imagen.startsWith('http') 
-          ? imagen.url_imagen 
-          : buildImageUrl(imagen.url_imagen.replace('/uploads/', ''))
+        url_imagen: buildImageUrl(imagen.url_imagen)
       }));
 
       // Si es un servicio, obtener información adicional
@@ -574,9 +650,7 @@ class ProductsController {
       // Convertir URLs relativas a absolutas
       const imagenesConUrlsCompletas = imagenes.rows.map(imagen => ({
         ...imagen,
-        url_imagen: imagen.url_imagen.startsWith('http') 
-          ? imagen.url_imagen 
-          : buildImageUrl(imagen.url_imagen.replace('/uploads/', ''))
+        url_imagen: buildImageUrl(imagen.url_imagen)
       }));
 
       // Si es un servicio, obtener información adicional
@@ -841,7 +915,17 @@ class ProductsController {
               );
               
               console.log('📁 URLs de imágenes a eliminar:', imagesToDelete.rows);
-              
+
+              await Promise.all(
+                imagesToDelete.rows.map(async (img) => {
+                  try {
+                    await removeProductImageResource(img.url_imagen);
+                  } catch (cleanupError) {
+                    console.warn('⚠️  No se pudo eliminar la imagen asociada:', cleanupError.message);
+                  }
+                })
+              );
+
               // Eliminar de la base de datos
               await query(
                 'DELETE FROM item_imagenes WHERE id = ANY($1)',
@@ -871,10 +955,12 @@ class ProductsController {
             [id]
           );
           
+          const savedUrl = await saveProductImageFile(file, id);
+
           await query(
             `INSERT INTO item_imagenes (item_id, url_imagen, orden, es_principal)
              VALUES ($1, $2, $3, $4)`,
-            [id, buildImageUrl(file.filename), nextOrder.rows[0].next_order, false]
+            [id, savedUrl, nextOrder.rows[0].next_order, false]
           );
         }
       }
@@ -980,6 +1066,21 @@ class ProductsController {
           message: 'No se puede eliminar un producto que ha sido suspendido. Contacta con los moderadores para más información.'
         });
       }
+
+      const imagenesProducto = await query(
+        'SELECT url_imagen FROM item_imagenes WHERE item_id = $1',
+        [id]
+      );
+
+      await Promise.all(
+        imagenesProducto.rows.map(async (img) => {
+          try {
+            await removeProductImageResource(img.url_imagen);
+          } catch (cleanupError) {
+            console.warn('⚠️  No se pudo eliminar la imagen asociada al producto:', cleanupError.message);
+          }
+        })
+      );
 
       // Eliminar producto (CASCADE eliminará imágenes y servicios relacionados)
       await query('DELETE FROM items WHERE id = $1', [id]);
@@ -1126,9 +1227,14 @@ class ProductsController {
       const total = parseInt(totalCount.rows[0].total);
       const totalPages = Math.ceil(total / limit);
 
+      const productosFormateados = productos.rows.map(producto => ({
+        ...producto,
+        primera_imagen: buildImageUrl(producto.primera_imagen),
+      }));
+
       res.json({
         success: true,
-        data: productos.rows,
+        data: productosFormateados,
         pagination: {
           current_page: parseInt(page),
           total_pages: totalPages,
@@ -1375,9 +1481,14 @@ class ProductsController {
         FROM items
       `);
 
+      const productosFormateados = productos.rows.map(producto => ({
+        ...producto,
+        primera_imagen: buildImageUrl(producto.primera_imagen),
+      }));
+
       res.json({
         success: true,
-        data: productos.rows,
+        data: productosFormateados,
         pagination: {
           current_page: parseInt(page),
           total_pages: totalPages,
@@ -1464,9 +1575,14 @@ class ProductsController {
         ORDER BY sp.fecha_guardado DESC
       `, [userId]);
 
+      const productosGuardados = result.rows.map(producto => ({
+        ...producto,
+        primera_imagen: buildImageUrl(producto.primera_imagen),
+      }));
+
       return res.status(200).json({
         success: true,
-        data: result.rows,
+        data: productosGuardados,
         message: 'Productos guardados obtenidos exitosamente'
       });
 
@@ -1656,9 +1772,14 @@ class ProductsController {
         [vendedor_id]
       );
 
+      const productosPeligrosos = result.rows.map(producto => ({
+        ...producto,
+        primera_imagen: buildImageUrl(producto.primera_imagen),
+      }));
+
       res.json({
         success: true,
-        data: result.rows
+        data: productosPeligrosos
       });
 
     } catch (error) {

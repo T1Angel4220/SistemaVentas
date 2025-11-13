@@ -3,25 +3,91 @@ const { config } = require('../config/config');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
+const { randomUUID } = require('crypto');
+const azureStorage = require('../services/azureStorageService');
+
+const LOCAL_UPLOAD_DIR = path.join(__dirname, '../../uploads/products');
+
+const ensureLocalDir = async () => {
+  await fs.mkdir(LOCAL_UPLOAD_DIR, { recursive: true });
+};
+
+const isAbsoluteUrl = (url) => /^https?:\/\//i.test(url);
+
+const buildPublicUrl = (value) => {
+  if (!value) {
+    return null;
+  }
+
+  if (isAbsoluteUrl(value)) {
+    return value;
+  }
+
+  const normalized = value.startsWith('/uploads/')
+    ? value
+    : `/uploads/${value}`;
+
+  const baseHost = config.server.host?.startsWith('http')
+    ? config.server.host.replace(/\/+$/, '')
+    : `http://${config.server.host}:${config.server.port}`;
+
+  return `${baseHost}${normalized}`;
+};
+
+const saveImageBuffer = async (file, productId) => {
+  const ext = path.extname(file.originalname) || '.jpg';
+  const uniqueName = `product-${productId}-${Date.now()}-${randomUUID()}${ext}`;
+
+  if (azureStorage.isEnabled()) {
+    const blobName = `products/${productId}/${uniqueName}`;
+    const uploaded = await azureStorage.uploadBuffer(file.buffer, blobName, {
+      contentType: file.mimetype,
+    });
+    return {
+      url: uploaded.url,
+      storage: 'azure',
+    };
+  }
+
+  await ensureLocalDir();
+  const destination = path.join(LOCAL_UPLOAD_DIR, uniqueName);
+  await fs.writeFile(destination, file.buffer);
+
+  return {
+    url: `/uploads/products/${uniqueName}`,
+    storage: 'local',
+    filename: uniqueName,
+  };
+};
+
+const removeImageResource = async (imageUrl) => {
+  if (!imageUrl) {
+    return;
+  }
+
+  if (azureStorage.isEnabled()) {
+    const blobName = azureStorage.getBlobNameFromUrl(imageUrl);
+    if (blobName) {
+      await azureStorage.deleteBlob(blobName);
+      return;
+    }
+  }
+
+  try {
+    const relativePath = imageUrl.startsWith('/uploads/')
+      ? imageUrl.replace(/^\/+/, '')
+      : path.join('uploads/products', path.basename(imageUrl));
+    const filePath = path.join(__dirname, '../../', relativePath);
+    await fs.unlink(filePath);
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      console.warn('⚠️  No se pudo eliminar el archivo físico:', error.message);
+    }
+  }
+};
 
 // Configuración de multer para subida de archivos
-const storage = multer.diskStorage({
-  destination: async (req, file, cb) => {
-    const uploadDir = path.join(__dirname, '../../uploads/products');
-    try {
-      await fs.mkdir(uploadDir, { recursive: true });
-      cb(null, uploadDir);
-    } catch (error) {
-      cb(error);
-    }
-  },
-  filename: (req, file, cb) => {
-    // Generar nombre único: timestamp + random + extensión
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    cb(null, `product-${uniqueSuffix}${ext}`);
-  }
-});
+const storage = multer.memoryStorage();
 
 // Filtro de archivos permitidos
 const fileFilter = (req, file, cb) => {
@@ -106,7 +172,8 @@ class ImageController {
       
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const urlImagen = `/uploads/products/${file.filename}`;
+        const savedImage = await saveImageBuffer(file, id);
+        const urlImagen = savedImage.url;
         const orden = totalExistentes + i + 1;
         const esPrincipal = totalExistentes === 0 && i === 0; // Primera imagen es principal si no hay otras
 
@@ -119,9 +186,10 @@ class ImageController {
 
         imagenesSubidas.push({
           ...imagenGuardada.rows[0],
-          filename: file.filename,
           originalname: file.originalname,
-          size: file.size
+          size: file.size,
+          url_imagen: buildPublicUrl(urlImagen),
+          storage: azureStorage.isEnabled() ? 'azure' : 'local',
         });
       }
 
@@ -151,9 +219,14 @@ class ImageController {
         [id]
       );
 
+      const imagenesConUrl = imagenes.rows.map(imagen => ({
+        ...imagen,
+        url_imagen: buildPublicUrl(imagen.url_imagen),
+      }));
+
       res.json({
         success: true,
-        data: imagenes.rows
+        data: imagenesConUrl
       });
 
     } catch (error) {
@@ -206,13 +279,8 @@ class ImageController {
         });
       }
 
-      // Eliminar archivo físico
-      const filePath = path.join(__dirname, '../../uploads/products', path.basename(imagen.url_imagen));
-      try {
-        await fs.unlink(filePath);
-      } catch (fileError) {
-        console.warn('No se pudo eliminar el archivo físico:', fileError.message);
-      }
+      // Eliminar recurso físico o del storage
+      await removeImageResource(imagen.url_imagen);
 
       // Eliminar registro de la base de datos
       await query('DELETE FROM item_imagenes WHERE id = $1', [imageId]);

@@ -41,6 +41,14 @@ const config = {
   cors: {
     origin: process.env.CORS_ORIGIN,
     credentials: true
+  },
+
+  storage: {
+    account: process.env.AZURE_STORAGE_ACCOUNT,
+    container: process.env.AZURE_STORAGE_CONTAINER,
+    url: process.env.AZURE_STORAGE_URL,
+    connectionString: process.env.AZURE_STORAGE_CONNECTION_STRING,
+    key: process.env.AZURE_STORAGE_KEY
   }
 };
 
