@@ -1,4 +1,4 @@
-# 🚀 Guía de Despliegue en Azure - Sistema de Ventas Multiempresa
+![Imagen de WhatsApp 2025-11-10 a las 15 09 15_cb132ce5](https://github.com/user-attachments/assets/9dbc2176-9a5b-4963-a5e1-4788d96176b2)# 🚀 Guía de Despliegue en Azure - Sistema de Ventas Multiempresa
 
 ## 📋 Tabla de Contenidos
 
@@ -150,11 +150,14 @@ Asegúrate de que `package.json` del backend tenga:
 5. Click en **"Revisar y crear"** → **"Crear"**
 6. Espera 5-10 minutos a que se cree el servidor
 
+
+
 ### 2.2 Configurar la base de datos
 
 1. Una vez creado, ve a **"Bases de datos"** → **"Crear base de datos"**
 2. Nombre: `sistema_ventas_multiempresa`
 3. Click en **"Crear"**
+![Imagen de WhatsApp 2025-11-10 a las 15 09 15_cb132ce5](https://github.com/user-attachments/assets/46aedc50-2a2c-4053-9ed2-e3ef2280ed47)
 
 ### 2.3 Obtener la cadena de conexión
 
@@ -164,6 +167,7 @@ Asegúrate de que `package.json` del backend tenga:
    ```
    postgres://azureuser:TU_PASSWORD@postgres-sistema-ventas.postgres.database.azure.com:5432/sistema_ventas_multiempresa?sslmode=require
    ```
+   ![Imagen de WhatsApp 2025-11-10 a las 15 15 36_1fec1a56](https://github.com/user-attachments/assets/423b9093-4dc5-4790-8506-3e6f4a4a5e93)
 
 ### 2.4 Ejecutar scripts de inicialización
 
