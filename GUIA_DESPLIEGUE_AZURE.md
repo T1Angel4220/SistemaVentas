@@ -421,6 +421,8 @@ Imagenes guardadas:
 1. Abre: `https://frontend-sistema-ventas.azurestaticapps.net`
 2. Deberías ver la aplicación React
 3. Intenta hacer login/registro
+![Imagen de WhatsApp 2025-11-10 a las 21 43 56_319af93f](https://github.com/user-attachments/assets/0c96dd55-be2d-46d2-ae00-873e4d02e137)
+
 
 ### 6.3 Verificar conexión a la base de datos
 
@@ -435,6 +437,9 @@ Imagenes guardadas:
 - [ ] Subir imagen
 - [ ] Ver productos
 - [ ] Búsqueda y filtros
+
+LOGS:
+![Imagen de WhatsApp 2025-11-10 a las 19 36 01_946d81fb](https://github.com/user-attachments/assets/8ed1e2f1-5bcd-4057-980f-148d05a0351b)
 
 ---
 
