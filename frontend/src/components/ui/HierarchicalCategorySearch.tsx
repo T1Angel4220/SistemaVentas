@@ -39,15 +39,63 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
 
   // Organizar categorías en estructura jerárquica
   const organizeCategories = (categories: Category[]) => {
+    if (!categories || categories.length === 0) {
+      return [];
+    }
+
     const parents = categories.filter(cat => cat.nivel === 0).sort((a, b) => a.orden - b.orden);
     const children = categories.filter(cat => cat.nivel === 1);
     
-    return parents.map(parent => ({
-      ...parent,
-      subcategorias: children
+    const organized = parents.map(parent => {
+      const subcategorias = children
         .filter(child => child.categoria_padre_id === parent.id)
-        .sort((a, b) => a.orden - b.orden)
-    }));
+        .sort((a, b) => a.orden - b.orden);
+      
+      return {
+        ...parent,
+        subcategorias
+      };
+    });
+
+    // Filtrar duplicados: agrupar por nombre y mantener solo las que tienen subcategorías
+    // Si ninguna tiene subcategorías, mantener solo una (la de menor orden)
+    const categoriesByName = new Map<string, typeof organized>();
+    
+    // Agrupar todas las categorías por nombre
+    organized.forEach(cat => {
+      if (!categoriesByName.has(cat.nombre)) {
+        categoriesByName.set(cat.nombre, []);
+      }
+      categoriesByName.get(cat.nombre)!.push(cat);
+    });
+    
+    // Procesar cada grupo de duplicados
+    const finalFiltered: typeof organized = [];
+    
+    categoriesByName.forEach((duplicates) => {
+      if (duplicates.length === 1) {
+        // No hay duplicados - mantener todas las categorías (incluso sin subcategorías)
+        finalFiltered.push(duplicates[0]);
+      } else {
+        // Hay duplicados - filtrar correctamente
+        const withSubs = duplicates.filter(c => c.subcategorias && c.subcategorias.length > 0);
+        const withoutSubs = duplicates.filter(c => !c.subcategorias || c.subcategorias.length === 0);
+        
+        if (withSubs.length > 0) {
+          // Hay categorías con subcategorías - mantener SOLO estas
+          finalFiltered.push(...withSubs);
+        } else {
+          // Ninguna tiene subcategorías - mantener solo una (la de menor orden)
+          const sorted = duplicates.sort((a, b) => a.orden - b.orden);
+          finalFiltered.push(sorted[0]);
+        }
+      }
+    });
+    
+    // Ordenar por orden final
+    finalFiltered.sort((a, b) => a.orden - b.orden);
+    
+    return finalFiltered;
   };
 
   // Obtener ruta completa de una categoría
@@ -109,9 +157,17 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
     const flat: Array<{ category: Category; isParent: boolean; hasChildren: boolean; indent: number }> = [];
     
     filteredCategories.forEach(parent => {
-      flat.push({ category: parent, isParent: true, hasChildren: parent.subcategorias.length > 0, indent: 0 });
+      const hasSubcategories = parent.subcategorias && parent.subcategorias.length > 0;
+      const isExpanded = expandedCategories.has(parent.id);
       
-      if (expandedCategories.has(parent.id) || searchTerm) {
+      // Las subcategorías SOLO se muestran si la categoría padre está expandida
+      // O si hay búsqueda activa (para mostrar resultados de búsqueda)
+      const shouldShowSubcategories = isExpanded || (searchTerm && searchTerm.trim() !== '');
+      
+      flat.push({ category: parent, isParent: true, hasChildren: hasSubcategories, indent: 0 });
+      
+      // Mostrar subcategorías SOLO si la categoría padre está expandida y tiene subcategorías
+      if (shouldShowSubcategories && hasSubcategories) {
         parent.subcategorias.forEach(child => {
           flat.push({ category: child, isParent: false, hasChildren: false, indent: 1 });
         });
@@ -217,6 +273,31 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Auto-expandir todas las categorías padre con subcategorías cuando se abre el dropdown
+  useEffect(() => {
+    if (isOpen && !searchTerm && filteredCategories.length > 0) {
+      // Expandir automáticamente TODAS las categorías padre que tienen subcategorías
+      const parentIdsWithSubcategories = filteredCategories
+        .filter(cat => {
+          const hasSubs = cat.subcategorias && cat.subcategorias.length > 0;
+          return hasSubs;
+        })
+        .map(cat => cat.id);
+      
+      // Si hay una categoría seleccionada, también expandir su categoría padre
+      if (selectedCategory && selectedCategory.nivel === 1 && selectedCategory.categoria_padre_id) {
+        const parentId = selectedCategory.categoria_padre_id;
+        if (!parentIdsWithSubcategories.includes(parentId)) {
+          parentIdsWithSubcategories.push(parentId);
+        }
+      }
+      
+      if (parentIdsWithSubcategories.length > 0) {
+        setExpandedCategories(new Set(parentIdsWithSubcategories));
+      }
+    }
+  }, [isOpen, searchTerm, filteredCategories, selectedCategory]);
 
   // Auto-expandir categorías cuando hay búsqueda
   useEffect(() => {
