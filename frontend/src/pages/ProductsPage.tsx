@@ -613,18 +613,18 @@ export const ProductsPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Segunda fila - Botones de Ubicación */}
+                {/* Segunda fila - Botones de Ubicación - RESPONSIVE */}
                 <div className="space-y-4">
-                  {/* Fila de botones */}
-                  <div className="flex flex-col md:flex-row gap-3">
+                  {/* Fila de botones - RESPONSIVE */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {/* Botón para mostrar/ocultar filtros de ubicación manual */}
                     <Button
                       onClick={() => setShowLocationFilter(!showLocationFilter)}
                       variant="outline"
-                      className="w-full md:w-auto border-purple-300 text-purple-700 hover:bg-purple-50 rounded-xl flex items-center justify-center space-x-2 h-12"
+                      className="w-full border-purple-300 text-purple-700 hover:bg-purple-50 rounded-xl flex items-center justify-center space-x-2 h-12 sm:h-11 transition-all duration-200"
                     >
-                      <MapPin className="h-5 w-5" />
-                      <span>
+                      <MapPin className="h-5 w-5 flex-shrink-0" />
+                      <span className="text-sm sm:text-base">
                         {showLocationFilter ? 'Ocultar filtros de ubicación' : 'Filtrar por ubicación'}
                       </span>
                     </Button>
@@ -634,7 +634,7 @@ export const ProductsPage: React.FC = () => {
                       onClick={proximityEnabled ? handleDisableProximity : handleEnableProximity}
                       disabled={gettingLocation}
                       variant="outline"
-                      className={`w-full md:w-auto rounded-xl flex items-center justify-center space-x-2 h-12 ${
+                      className={`w-full rounded-xl flex items-center justify-center space-x-2 h-12 sm:h-11 transition-all duration-200 ${
                         proximityEnabled 
                           ? 'border-red-300 text-red-700 hover:bg-red-50' 
                           : 'border-green-300 text-green-700 hover:bg-green-50'
@@ -642,45 +642,52 @@ export const ProductsPage: React.FC = () => {
                     >
                       {gettingLocation ? (
                         <>
-                          <div className="animate-spin h-4 w-4 border-2 border-green-700 border-t-transparent rounded-full"></div>
-                          <span>Obteniendo ubicación...</span>
+                          <div className="animate-spin h-4 w-4 border-2 border-green-700 border-t-transparent rounded-full flex-shrink-0"></div>
+                          <span className="text-sm sm:text-base">Obteniendo ubicación...</span>
                         </>
                       ) : proximityEnabled ? (
                         <>
-                          <X className="h-5 w-5" />
-                          <span>Desactivar proximidad ({proximityFilters.radio_km} km)</span>
+                          <X className="h-5 w-5 flex-shrink-0" />
+                          <span className="text-sm sm:text-base">
+                            <span className="hidden sm:inline">Desactivar proximidad </span>
+                            <span className="sm:hidden">Desactivar </span>
+                            ({proximityFilters.radio_km} km)
+                          </span>
                         </>
                       ) : (
                         <>
-                          <MapPin className="h-5 w-5" />
-                          <span>Filtrar por mi ubicación actual</span>
+                          <MapPin className="h-5 w-5 flex-shrink-0" />
+                          <span className="text-sm sm:text-base">
+                            <span className="hidden sm:inline">Filtrar por mi ubicación actual</span>
+                            <span className="sm:hidden">Mi ubicación</span>
+                          </span>
                         </>
                       )}
                     </Button>
                   </div>
 
-                  {/* Panel de configuración de proximidad cuando está activo */}
+                  {/* Panel de configuración de proximidad cuando está activo - RESPONSIVE */}
                   {proximityEnabled && (
-                    <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 sm:p-5 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div className="flex items-center space-x-3">
-                          <div className="bg-green-100 rounded-full p-2">
+                          <div className="bg-green-100 rounded-full p-2 flex-shrink-0">
                             <MapPin className="h-5 w-5 text-green-600" />
                           </div>
                           <div>
-                            <p className="text-sm font-semibold text-green-900">Filtro de proximidad activo</p>
-                            <p className="text-xs text-green-700">Mostrando productos dentro de {proximityFilters.radio_km} km</p>
+                            <p className="text-sm sm:text-base font-semibold text-green-900">Filtro de proximidad activo</p>
+                            <p className="text-xs sm:text-sm text-green-700">Mostrando productos dentro de {proximityFilters.radio_km} km</p>
                           </div>
                         </div>
                         
-                        <div className="flex items-center space-x-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
                           <label className="text-sm font-medium text-green-900 whitespace-nowrap">
                             Radio:
                           </label>
                           <select
                             value={proximityFilters.radio_km}
                             onChange={(e) => handleRadiusChange(e.target.value)}
-                            className="h-9 rounded-lg border-green-300 shadow-sm focus:border-green-500 focus:ring-green-500 bg-white"
+                            className="h-9 sm:h-10 w-full sm:w-auto px-3 rounded-lg border-green-300 shadow-sm focus:border-green-500 focus:ring-green-500 bg-white text-sm"
                           >
                             <option value="5">5 km</option>
                             <option value="10">10 km</option>
@@ -694,12 +701,12 @@ export const ProductsPage: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Filtros de ubicación manual - Solo visible cuando showLocationFilter es true */}
+                  {/* Filtros de ubicación manual - Solo visible cuando showLocationFilter es true - RESPONSIVE */}
                   {showLocationFilter && (
-                    <div className="bg-purple-50/50 border-2 border-purple-200 rounded-xl p-6 animate-in fade-in slide-in-from-top-2 duration-300">
-                      <div className="flex items-center space-x-2 mb-3">
-                        <MapPin className="h-5 w-5 text-purple-600" />
-                        <h3 className="font-semibold text-purple-900">Filtrar por Provincia/Cantón</h3>
+                    <div className="bg-purple-50/50 border-2 border-purple-200 rounded-xl p-4 sm:p-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="flex items-center space-x-2 mb-3 sm:mb-4">
+                        <MapPin className="h-5 w-5 text-purple-600 flex-shrink-0" />
+                        <h3 className="font-semibold text-purple-900 text-sm sm:text-base">Filtrar por Provincia/Cantón</h3>
                       </div>
                       <HierarchicalLocationSearch
                         locations={locations}
@@ -725,9 +732,9 @@ export const ProductsPage: React.FC = () => {
               </div>
             </div>
             
-            {/* Botones de acción */}
-            <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-100">
-              <div className="flex items-center space-x-4">
+            {/* Botones de acción - RESPONSIVE */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-6 pt-6 border-t border-gray-100">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                 <Button
                   onClick={() => {
                     setFilters({
@@ -752,23 +759,25 @@ export const ProductsPage: React.FC = () => {
                       radio_km: '50'
                     });
                     setProximityEnabled(false);
+                    setShowLocationFilter(false);
                   }}
                   variant="outline"
-                  className="border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 rounded-xl font-semibold transition-all duration-200 shadow-sm hover:shadow-md"
+                  className="w-full sm:w-auto border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 rounded-xl font-semibold transition-all duration-200 shadow-sm hover:shadow-md h-10 sm:h-9 text-sm sm:text-base"
                 >
-                  <X className="h-4 w-4 mr-2" />
-                  🧹 Limpiar todos los filtros
+                  <X className="h-4 w-4 mr-2 flex-shrink-0" />
+                  <span className="hidden sm:inline">🧹 Limpiar todos los filtros</span>
+                  <span className="sm:hidden">🧹 Limpiar filtros</span>
                 </Button>
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-gray-500 text-center sm:text-left">
                   {pagination.total_items} producto{pagination.total_items !== 1 ? 's' : ''} encontrado{pagination.total_items !== 1 ? 's' : ''}
                 </span>
               </div>
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-600">Mostrar:</span>
+              <div className="flex items-center justify-center sm:justify-end space-x-2">
+                <span className="text-sm text-gray-600 whitespace-nowrap">Mostrar:</span>
                 <select 
                   value={filters.limit} 
                   onChange={(e) => handleFilterChange('limit', e.target.value)}
-                  className="h-8 px-3 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="h-9 sm:h-8 px-3 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto"
                 >
                   <option value="12">12 por página</option>
                   <option value="24">24 por página</option>
