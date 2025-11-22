@@ -20,10 +20,10 @@ const resolveApiOrigin = (): string => {
     return DEFAULT_API_ORIGIN;
   }
   const withProtocol = addProtocolIfMissing(rawEnvUrl);
-  if (withProtocol.toLowerCase().endsWith('/api')) {
-    return sanitizeUrl(withProtocol.slice(0, -4));
-  }
-  return sanitizeUrl(withProtocol);
+  // Normalizar: quitar /api o /api/ al final (case-insensitive)
+  // Usar regex para ser más robusto con diferentes variaciones
+  const normalized = withProtocol.replace(/\/api\/?$/i, '');
+  return sanitizeUrl(normalized);
 };
 
 export const API_ORIGIN = resolveApiOrigin();

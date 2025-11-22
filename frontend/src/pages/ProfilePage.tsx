@@ -19,6 +19,40 @@ import {
   Shield
 } from 'lucide-react';
 
+// Helper para construir URLs de API correctamente
+// Asegura que solo haya un /api en la URL final
+const buildApiUrl = (endpoint: string): string => {
+  // Obtener el valor original de VITE_API_URL para debug
+  const rawEnvUrl = (import.meta.env?.VITE_API_URL ?? '').toString().trim();
+  
+  // Normalizar API_ORIGIN: quitar cualquier /api o /api/ al final (case-insensitive)
+  let baseUrl = API_ORIGIN.replace(/\/api\/?$/i, '').trim();
+  // Quitar barras finales múltiples
+  baseUrl = baseUrl.replace(/\/+$/, '');
+  
+  // Si después de normalizar está vacío o es inválido, usar el valor original sin /api
+  if (!baseUrl || baseUrl.length < 10) {
+    // Si API_ORIGIN tiene /api, quitarlo manualmente
+    baseUrl = API_ORIGIN.replace(/\/api\/?$/i, '').replace(/\/+$/, '');
+    // Si aún está vacío, usar el valor original
+    if (!baseUrl) {
+      baseUrl = API_ORIGIN.replace(/\/+$/, '');
+    }
+  }
+  
+  // Construir la URL final asegurándonos de que solo haya un /api
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  const finalUrl = `${baseUrl}/api${cleanEndpoint}`;
+  
+  // Log para debug
+  console.log('🔧 buildApiUrl - VITE_API_URL:', rawEnvUrl);
+  console.log('🔧 buildApiUrl - API_ORIGIN:', API_ORIGIN);
+  console.log('🔧 buildApiUrl - Base URL normalizada:', baseUrl);
+  console.log('🔧 buildApiUrl - URL final:', finalUrl);
+  
+  return finalUrl;
+};
+
 export const ProfilePage: React.FC = () => {
   const { user, refreshUser } = useAuth();
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -96,10 +130,7 @@ export const ProfilePage: React.FC = () => {
 
     try {
       const token = localStorage.getItem('accessToken');
-      // Construir URL correctamente: API_ORIGIN no debería terminar con /api
-      // pero por si acaso, lo normalizamos
-      const normalizedOrigin = API_ORIGIN.replace(/\/api\/?$/, '');
-      const url = `${normalizedOrigin}/api/auth/profile`;
+      const url = buildApiUrl('/auth/profile');
       
       console.log('🌐 URL de la petición:', url);
       console.log('🌐 API_ORIGIN original:', API_ORIGIN);
@@ -180,10 +211,7 @@ export const ProfilePage: React.FC = () => {
 
     try {
       const token = localStorage.getItem('accessToken');
-      // Construir URL correctamente: API_ORIGIN no debería terminar con /api
-      // pero por si acaso, lo normalizamos
-      const normalizedOrigin = API_ORIGIN.replace(/\/api\/?$/, '');
-      const url = `${normalizedOrigin}/api/auth/change-password`;
+      const url = buildApiUrl('/auth/change-password');
       
       console.log('🌐 URL de la petición:', url);
       console.log('🌐 API_ORIGIN original:', API_ORIGIN);
