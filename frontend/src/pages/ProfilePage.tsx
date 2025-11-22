@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
+import { API_ORIGIN } from '../services/api';
 import { 
   User, 
   Mail, 
@@ -94,10 +95,17 @@ export const ProfilePage: React.FC = () => {
     setLoadingProfile(true);
 
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
       const token = localStorage.getItem('accessToken');
+      // Construir URL correctamente: API_ORIGIN no debería terminar con /api
+      // pero por si acaso, lo normalizamos
+      const normalizedOrigin = API_ORIGIN.replace(/\/api\/?$/, '');
+      const url = `${normalizedOrigin}/api/auth/profile`;
+      
+      console.log('🌐 URL de la petición:', url);
+      console.log('🌐 API_ORIGIN original:', API_ORIGIN);
+      console.log('📤 Datos enviados:', profileData);
 
-      const response = await fetch(`${API_URL}/api/auth/profile`, {
+      const response = await fetch(url, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -105,6 +113,20 @@ export const ProfilePage: React.FC = () => {
         },
         body: JSON.stringify(profileData)
       });
+
+      if (!response.ok) {
+        // Si la respuesta no es OK, intentar parsear el JSON del error
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch {
+          errorData = { message: `Error ${response.status}: ${response.statusText}` };
+        }
+        console.log('❌ Error del servidor:', errorData);
+        setErrorMessage(errorData.message || `Error ${response.status}: ${response.statusText}`);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
 
       const data = await response.json();
       console.log('📥 Respuesta del servidor:', data);
@@ -123,7 +145,7 @@ export const ProfilePage: React.FC = () => {
       }
     } catch (error) {
       console.error('❌ Error de conexión:', error);
-      setErrorMessage('Error al conectar con el servidor');
+      setErrorMessage(error instanceof Error ? error.message : 'Error al conectar con el servidor');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setLoadingProfile(false);
@@ -157,10 +179,16 @@ export const ProfilePage: React.FC = () => {
     setLoadingPassword(true);
 
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
       const token = localStorage.getItem('accessToken');
+      // Construir URL correctamente: API_ORIGIN no debería terminar con /api
+      // pero por si acaso, lo normalizamos
+      const normalizedOrigin = API_ORIGIN.replace(/\/api\/?$/, '');
+      const url = `${normalizedOrigin}/api/auth/change-password`;
+      
+      console.log('🌐 URL de la petición:', url);
+      console.log('🌐 API_ORIGIN original:', API_ORIGIN);
 
-      const response = await fetch(`${API_URL}/api/auth/change-password`, {
+      const response = await fetch(url, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -171,6 +199,20 @@ export const ProfilePage: React.FC = () => {
           newPassword: passwordData.newPassword
         })
       });
+
+      if (!response.ok) {
+        // Si la respuesta no es OK, intentar parsear el JSON del error
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch {
+          errorData = { message: `Error ${response.status}: ${response.statusText}` };
+        }
+        console.log('❌ Error del servidor:', errorData);
+        setErrorMessage(errorData.message || `Error ${response.status}: ${response.statusText}`);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
 
       const data = await response.json();
 

@@ -23,16 +23,39 @@ const pool = new Pool({
   }
 });
 
+// Configurar zona horaria de Ecuador para todas las conexiones
+// Esto asegura que CURRENT_TIMESTAMP y NOW() usen la hora de Ecuador (UTC-5)
+pool.on('connect', async (client) => {
+  try {
+    // Configurar la zona horaria de Ecuador
+    // 'America/Guayaquil' y 'America/Quito' son equivalentes (ambas UTC-5)
+    await client.query("SET timezone = 'America/Guayaquil'");
+    console.log('✅ Zona horaria configurada a Ecuador (America/Guayaquil)');
+  } catch (error) {
+    console.error('⚠️ Error configurando zona horaria:', error.message);
+    // Continuar aunque falle la configuración de timezone
+  }
+});
+
 // Función para probar la conexión
 const testConnection = async () => {
   try {
     console.log('⏳ Intentando conectar con:', config.database);
     const client = await pool.connect();
-    const result = await client.query('SELECT NOW()');
+    
+    // Configurar zona horaria de Ecuador
+    await client.query("SET timezone = 'America/Guayaquil'");
+    
+    // Obtener la hora actual con la zona horaria configurada
+    const result = await client.query('SELECT NOW() as hora_actual, current_setting(\'timezone\') as timezone');
     
     // Verificar codificación de la conexión
     const encodingResult = await client.query("SHOW client_encoding");
-    console.log(`✅ Conexión a la base de datos exitosa (Codificación: ${encodingResult.rows[0].client_encoding})`);
+    
+    console.log(`✅ Conexión a la base de datos exitosa`);
+    console.log(`   - Codificación: ${encodingResult.rows[0].client_encoding}`);
+    console.log(`   - Zona horaria: ${result.rows[0].timezone}`);
+    console.log(`   - Hora actual: ${result.rows[0].hora_actual}`);
     
     client.release();
     return true;
