@@ -789,12 +789,12 @@ export const ProductDetailPage: React.FC = () => {
                 
                 {/* Botones principales: Aprobar, Rechazar, Suspender */}
                 <div className={`grid gap-2 mb-3 ${
-                  product.estado?.toLowerCase().trim() === 'activo' 
+                  (product.estado && String(product.estado).toLowerCase().trim() === 'activo')
                     ? 'grid-cols-1 sm:grid-cols-2' 
                     : 'grid-cols-1 sm:grid-cols-3'
                 }`}>
                   {/* Botón Aprobar - SOLO visible si NO está aprobado */}
-                  {product.estado?.toLowerCase().trim() !== 'activo' && (
+                  {!(product.estado && String(product.estado).toLowerCase().trim() === 'activo') && (
                     <Button 
                       size="sm"
                       onClick={handleApproveProduct}
