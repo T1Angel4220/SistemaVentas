@@ -1,4 +1,4 @@
-# 🚀 Guía de Despliegue en Azure - Sistema de Ventas Multiempresa
+<img width="1389" height="248" alt="image" src="https://github.com/user-attachments/assets/9b4d35ed-a675-4e93-b441-53ee3cd82478" />![Imagen de WhatsApp 2025-11-10 a las 21 44 09_8782449a](https://github.com/user-attachments/assets/dee362b2-b00c-4563-a244-6f11e61f02b1)![Imagen de WhatsApp 2025-11-10 a las 15 25 15_520eb31f](https://github.com/user-attachments/assets/1639f2f6-c21c-4446-8eec-d63bf70c04be) 🚀 Guía de Despliegue en Azure - Sistema de Ventas Multiempresa
 
 ## 📋 Tabla de Contenidos
 
@@ -150,11 +150,14 @@ Asegúrate de que `package.json` del backend tenga:
 5. Click en **"Revisar y crear"** → **"Crear"**
 6. Espera 5-10 minutos a que se cree el servidor
 
+
+
 ### 2.2 Configurar la base de datos
 
 1. Una vez creado, ve a **"Bases de datos"** → **"Crear base de datos"**
 2. Nombre: `sistema_ventas_multiempresa`
 3. Click en **"Crear"**
+![Imagen de WhatsApp 2025-11-10 a las 15 09 15_cb132ce5](https://github.com/user-attachments/assets/46aedc50-2a2c-4053-9ed2-e3ef2280ed47)
 
 ### 2.3 Obtener la cadena de conexión
 
@@ -164,6 +167,7 @@ Asegúrate de que `package.json` del backend tenga:
    ```
    postgres://azureuser:TU_PASSWORD@postgres-sistema-ventas.postgres.database.azure.com:5432/sistema_ventas_multiempresa?sslmode=require
    ```
+   ![Imagen de WhatsApp 2025-11-10 a las 15 15 36_1fec1a56](https://github.com/user-attachments/assets/423b9093-4dc5-4790-8506-3e6f4a4a5e93)
 
 ### 2.4 Ejecutar scripts de inicialización
 
@@ -175,12 +179,10 @@ Asegúrate de que `package.json` del backend tenga:
    psql "postgres://azureuser:PASSWORD@postgres-sistema-ventas.postgres.database.azure.com:5432/sistema_ventas_multiempresa?sslmode=require" -f backend/src/config/database.sql
    ```
 
-**Opción B: Desde Azure Cloud Shell**
+   ![Imagen de WhatsApp 2025-11-10 a las 15 19 44_0d941b81](https://github.com/user-attachments/assets/2244a96e-e973-4e0c-a45f-0ee7e46b1580)
+![Imagen de WhatsApp 2025-11-10 a las 15 21 25_499077fe](https://github.com/user-attachments/assets/829edc90-1d59-4fb4-b8de-b6fa6663f4f0)
 
-1. Abre Azure Cloud Shell en el portal
-2. Conecta a PostgreSQL y ejecuta los scripts
 
----
 
 ## 🚀 Paso 3: Desplegar Backend (App Service)
 
@@ -207,6 +209,8 @@ Asegúrate de que `package.json` del backend tenga:
 
 4. Click en **"Revisar y crear"** → **"Crear"**
 5. Espera 2-3 minutos
+![Imagen de WhatsApp 2025-11-10 a las 15 25 15_520eb31f](https://github.com/user-attachments/assets/24ae60be-4bc2-4a19-bc59-58d1b814aacb)
+
 
 ### 3.2 Configurar variables de entorno
 
@@ -242,6 +246,8 @@ Asegúrate de que `package.json` del backend tenga:
    ```
 
 3. Click en **"Guardar"** (puede tardar 1-2 minutos)
+![Imagen de WhatsApp 2025-11-10 a las 15 38 37_bd6f8a40](https://github.com/user-attachments/assets/bc11141f-b331-4ebe-85be-265808f746ce)
+
 
 ### 3.3 Configurar comando de inicio
 
@@ -251,12 +257,16 @@ Asegúrate de que `package.json` del backend tenga:
    tsx index.ts
    ```
 3. Click en **"Guardar"**
+   ![Imagen de WhatsApp 2025-11-10 a las 15 41 29_052c2997](https://github.com/user-attachments/assets/a8acaeeb-066d-4091-9b4c-6ec7a14df3d1)
+
 
 ### 3.4 Habilitar "Always On" (para cron jobs)
 
 1. Ve a **"Configuración"** → **"Configuración general"**
 2. Activa **"Always On"** (solo disponible en planes de pago)
    - ⚠️ Si usas plan F1 (gratis), las tareas cron pueden no ejecutarse siempre
+   ![Imagen de WhatsApp 2025-11-10 a las 15 43 20_b2e3a292](https://github.com/user-attachments/assets/a3a2265b-8035-4343-b252-479a94d265dc)
+
 
 ### 3.5 Conectar con GitHub
 
@@ -271,6 +281,11 @@ Asegúrate de que `package.json` del backend tenga:
 5. Click en **"Guardar"**
 6. Azure comenzará a desplegar automáticamente
 
+![Imagen de WhatsApp 2025-11-10 a las 15 46 15_3b3b3fca](https://github.com/user-attachments/assets/6be0c890-2c2f-4d00-a8bc-6b51a8516b0a)
+
+![Imagen de WhatsApp 2025-11-10 a las 19 36 13_707a88d5](https://github.com/user-attachments/assets/ba479f75-e11f-4185-97b4-bbb8fb1f9a35)
+
+
 ### 3.6 Verificar despliegue
 
 1. Ve a **"Registros"** → **"Registro de implementación"** para ver el progreso
@@ -284,6 +299,9 @@ Asegúrate de que `package.json` del backend tenga:
    }
    ```
 
+   ![Imagen de WhatsApp 2025-11-10 a las 19 36 20_bfda678a](https://github.com/user-attachments/assets/c81900d7-dc3f-4fea-a12c-3d478c21c9a9)
+
+
 ### 3.7 Configurar reglas de firewall de PostgreSQL
 
 1. Ve a tu servidor PostgreSQL → **"Seguridad"** → **"Redes"**
@@ -294,6 +312,8 @@ Asegúrate de que `package.json` del backend tenga:
    - O mejor: Obtén la IP de salida de tu App Service y agrega solo esa
 
 ---
+<img width="1644" height="404" alt="image" src="https://github.com/user-attachments/assets/d4d2821e-b208-42f2-8a7e-593a6af10292" />
+
 
 ## 🎨 Paso 4: Desplegar Frontend (Static Web App)
 
@@ -321,6 +341,8 @@ Asegúrate de que `package.json` del backend tenga:
 
 4. Click en **"Revisar y crear"** → **"Crear"**
 5. Azure creará un workflow de GitHub Actions automáticamente
+![Imagen de WhatsApp 2025-11-10 a las 19 43 47_9700f0c1](https://github.com/user-attachments/assets/9a39009b-6335-4375-a885-a3288ac6ce03)
+
 
 ### 4.2 Configurar variables de entorno del Frontend
 
@@ -330,6 +352,8 @@ Asegúrate de que `package.json` del backend tenga:
    VITE_API_URL = https://backend-sistema-ventas.azurewebsites.net/api
    ```
 3. Click en **"Guardar"**
+   ![Imagen de WhatsApp 2025-11-10 a las 21 44 09_8782449a](https://github.com/user-attachments/assets/94c7a69f-4121-4a4b-aed7-3441fcf3d201)
+
 
 ### 4.3 Actualizar el workflow de GitHub Actions
 
@@ -339,12 +363,17 @@ Azure crea un archivo `.github/workflows/azure-static-web-apps-*.yml`. Edítalo 
 env:
   VITE_API_URL: https://backend-sistema-ventas.azurewebsites.net/api
 ```
+<img width="1333" height="277" alt="image" src="https://github.com/user-attachments/assets/477a5d36-0e92-4dd7-872a-3eb04d58a6b0" />
+
 
 ### 4.4 Verificar despliegue
 
 1. Ve a **"Registros"** → **"Registro de implementación"** en tu Static Web App
 2. O ve a la pestaña **"Actions"** en tu repositorio de GitHub
 3. Una vez completado, obtén la URL de tu Static Web App (ej: `https://frontend-sistema-ventas.azurestaticapps.net`)
+
+<img width="1156" height="563" alt="image" src="https://github.com/user-attachments/assets/508de009-0fee-4a65-9ec3-097952ed6aab" />
+
 
 ### 4.5 Actualizar CORS del Backend
 
@@ -354,6 +383,7 @@ env:
    CORS_ORIGIN = https://frontend-sistema-ventas.azurestaticapps.net
    ```
 3. Click en **"Guardar"**
+<img width="738" height="69" alt="image" src="https://github.com/user-attachments/assets/db9adb7d-b174-4a11-96ea-31e5d8ae9e45" />
 
 ---
 
@@ -365,15 +395,18 @@ env:
 2. Crea un contenedor llamado `product-images`
 3. Modifica el código del backend para usar Azure Blob Storage en lugar del sistema de archivos
 4. Actualiza las rutas de imágenes para usar URLs de Blob Storage
+![Imagen de WhatsApp 2025-11-10 a las 21 55 06_2ab69083](https://github.com/user-attachments/assets/137c443c-55fc-4d01-9bfe-40ec3c7f9d8e)
+![Imagen de WhatsApp 2025-11-10 a las 22 00 56_5636384b](https://github.com/user-attachments/assets/b2010a17-dbee-4e68-9f38-f8b9c7ae8da5)
 
-### Opción B: Usar sistema de archivos (Temporal)
+<img width="913" height="696" alt="image" src="https://github.com/user-attachments/assets/ca19483e-8e78-46dc-b95f-86fefb3273a7" />
+<img width="1272" height="867" alt="image" src="https://github.com/user-attachments/assets/16dc2c10-86fe-4f3d-ac66-d8d7ad3cac44" />
 
-⚠️ **Advertencia:** Las imágenes se perderán al reiniciar el App Service.
+Imagenes guardadas:
+<img width="1714" height="484" alt="image" src="https://github.com/user-attachments/assets/50d9bfa5-3954-4b8f-8553-df1ed2a7db28" />
 
-1. El código actual funcionará, pero las imágenes no persistirán
-2. Para desarrollo/pruebas, esto es aceptable
+<img width="1694" height="933" alt="image" src="https://github.com/user-attachments/assets/24e3382f-119d-45b8-9afb-449318e0f560" />
 
----
+
 
 ## ✅ Paso 6: Verificación y Pruebas
 
@@ -388,6 +421,8 @@ env:
 1. Abre: `https://frontend-sistema-ventas.azurestaticapps.net`
 2. Deberías ver la aplicación React
 3. Intenta hacer login/registro
+![Imagen de WhatsApp 2025-11-10 a las 21 43 56_319af93f](https://github.com/user-attachments/assets/0c96dd55-be2d-46d2-ae00-873e4d02e137)
+
 
 ### 6.3 Verificar conexión a la base de datos
 
@@ -403,13 +438,20 @@ env:
 - [ ] Ver productos
 - [ ] Búsqueda y filtros
 
+LOGS:
+![Imagen de WhatsApp 2025-11-10 a las 19 36 01_946d81fb](https://github.com/user-attachments/assets/8ed1e2f1-5bcd-4057-980f-148d05a0351b)
+
 ---
 
-## 🔧 Solución de Problemas
+## 🔧 Problemas encontrados
 
 ### Error: "Cannot find module 'tsx'"
 
 **Solución:** Asegúrate de que `tsx` esté en `dependencies` (no `devDependencies`)
+
+la solucion fue cambiar a node dist/index.js
+<img width="906" height="511" alt="image" src="https://github.com/user-attachments/assets/503a0de9-f1e0-4c01-86d1-54fc770c1020" />
+
 
 ### Error: "Connection refused" a PostgreSQL
 
@@ -417,12 +459,15 @@ env:
 1. Verifica las reglas de firewall en PostgreSQL
 2. Asegúrate de que `AllowAzureServices` esté habilitado
 3. Verifica que la IP de salida del App Service esté permitida
+<img width="1389" height="248" alt="image" src="https://github.com/user-attachments/assets/b43fefc4-4b39-48cb-920f-f24bbeb826ae" />
+
 
 ### Error: CORS bloqueado
 
 **Solución:**
 1. Verifica que `CORS_ORIGIN` en App Service tenga la URL correcta del frontend
 2. Actualiza `backend/src/app.js` para incluir la URL de producción
+<img width="790" height="74" alt="image" src="https://github.com/user-attachments/assets/ad6550c6-5f1d-4e6d-89ba-26400b408799" />
 
 ### Error: "Module not found" en el frontend
 
@@ -430,20 +475,16 @@ env:
 1. Verifica que todas las dependencias estén en `package.json`
 2. Revisa los logs de GitHub Actions para ver errores de build
 
-### Las imágenes no se cargan
+### Las imágenes no se cargan y pues tuviste que usar una cuenta de almacenamiento para guardar las imagenes
 
 **Solución:**
 1. Si usas sistema de archivos, las imágenes se pierden al reiniciar
 2. Considera migrar a Azure Blob Storage
 
-### Las tareas cron no se ejecutan
-
-**Solución:**
-1. Si usas plan F1 (gratis), activa "Always On" no está disponible
-2. Considera usar Azure Functions para tareas programadas
-3. O actualiza a un plan de pago
-
 ---
+## Los CRUD no funcionaban por estar localmente
+**Solucion**
+Modificar todo el backend y frontend para que hagan referencia a sus URLS correctas de Azure (Frontend y Backend)
 
 ## 📊 Resumen de URLs y Recursos
 
