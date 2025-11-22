@@ -768,6 +768,29 @@ class ProductsController {
         });
       }
 
+      // ✅ Verificar si el producto rechazado ya tiene una apelación (ya fue corregido)
+      if (producto.estado === 'rechazado' || producto.estado === 'en_apelacion') {
+        const apelacionExistente = await query(
+          'SELECT * FROM apelaciones WHERE item_id = $1 AND estado IN ($2, $3)',
+          [id, 'en_apelacion', 'pendiente']
+        );
+
+        if (apelacionExistente.rows.length > 0) {
+          return res.status(400).json({
+            success: false,
+            message: 'Este producto ya fue corregido y está en proceso de revisión. No puedes editarlo nuevamente hasta que los moderadores resuelvan la apelación.'
+          });
+        }
+      }
+
+      // ✅ Verificar que no esté en apelación (ya fue corregido una vez)
+      if (producto.estado === 'en_apelacion' && req.user.tipo_usuario !== 'administrador') {
+        return res.status(400).json({
+          success: false,
+          message: 'Este producto ya fue corregido y está en proceso de revisión. No puedes editarlo nuevamente hasta que los moderadores resuelvan la apelación.'
+        });
+      }
+
       // Detectar contenido inadecuado en los campos actualizados
       const nombreParaDetectar = nombre || producto.nombre;
       const descripcionParaDetectar = descripcion || producto.descripcion;
@@ -779,6 +802,14 @@ class ProductsController {
       let nuevoEstado = producto.estado;
       let esPeligroso = producto.es_peligroso;
       let motivoRechazo = producto.motivo_rechazo;
+
+      // ✅ Si el producto está rechazado y se está actualizando, cambiar a pendiente_revision
+      // (Esto indica que el vendedor corrigió el producto y debe ser revisado nuevamente)
+      if (producto.estado === 'rechazado') {
+        nuevoEstado = 'pendiente_revision';
+        // Limpiar el motivo de rechazo ya que se está corrigiendo
+        motivoRechazo = null;
+      }
 
       if (deteccion.esInadecuado) {
         if (deteccion.nivelRiesgo === 'alto') {

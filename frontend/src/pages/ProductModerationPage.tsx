@@ -688,26 +688,31 @@ export const ProductModerationPage: React.FC = () => {
                   {product.estado === 'pendiente_revision' && (
                     <>
                       {/* Acciones principales: Aprobar, Rechazar, Suspender */}
-                      <div className="grid grid-cols-3 gap-2 pt-3 border-t border-gray-100">
-                        <Button 
-                          size="sm"
-                          onClick={() => handleApproveProduct(product.id, product.nombre)}
-                          disabled={actionLoading === product.id || !product.fecha_revision}
-                          className={`h-10 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 ${
-                            !product.fecha_revision 
-                              ? 'bg-gray-400 cursor-not-allowed opacity-50' 
-                              : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800'
-                          } text-white`}
-                          title="Aprobar producto"
-                        >
-                          {actionLoading === product.id ? (
-                            <Clock className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <CheckCircle className="h-4 w-4" />
-                          )}
-                          <span className="ml-1 hidden sm:inline">{!product.fecha_revision ? 'Revisar' : 'Aprobar'}</span>
-                          <span className="ml-1 sm:hidden">✓</span>
-                        </Button>
+                      <div className={`grid gap-2 pt-3 border-t border-gray-100 ${
+                        product.estado === 'activo' ? 'grid-cols-2' : 'grid-cols-3'
+                      }`}>
+                        {/* Botón Aprobar - SOLO visible si NO está aprobado */}
+                        {product.estado !== 'activo' && (
+                          <Button 
+                            size="sm"
+                            onClick={() => handleApproveProduct(product.id, product.nombre)}
+                            disabled={actionLoading === product.id || !product.fecha_revision}
+                            className={`h-10 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 ${
+                              !product.fecha_revision 
+                                ? 'bg-gray-400 cursor-not-allowed opacity-50' 
+                                : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800'
+                            } text-white`}
+                            title="Aprobar producto"
+                          >
+                            {actionLoading === product.id ? (
+                              <Clock className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <CheckCircle className="h-4 w-4" />
+                            )}
+                            <span className="ml-1 hidden sm:inline">{!product.fecha_revision ? 'Revisar' : 'Aprobar'}</span>
+                            <span className="ml-1 sm:hidden">✓</span>
+                          </Button>
+                        )}
                         
                         <Button 
                           size="sm"

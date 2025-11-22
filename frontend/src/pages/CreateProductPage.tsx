@@ -53,6 +53,8 @@ export const CreateProductPage: React.FC = () => {
   
   // Estado para respuesta del vendedor al rechazo
   const [respuestaRechazo, setRespuestaRechazo] = useState('');
+  // Estado para verificar si ya se corrigió (tiene apelaciones)
+  const [yaCorregido, setYaCorregido] = useState(false);
 
   // Usar hooks optimizados para evitar múltiples requests
   const { data: categories, loading: categoriesLoading, error: categoriesError } = useCategories();
@@ -199,6 +201,43 @@ export const CreateProductPage: React.FC = () => {
           showError(
             '🚫 Producto Peligroso',
             'Este producto ha sido marcado como peligroso y no puede ser editado.',
+            () => navigate('/my-products')
+          );
+          return;
+        }
+        
+        // ⚠️ Verificar si el producto rechazado ya fue corregido (tiene apelaciones)
+        if (product.estado === 'rechazado' || product.estado === 'en_apelacion') {
+          try {
+            const appealsResponse = await fetch(`http://localhost:3001/api/products/${productId}/appeals`, {
+              headers: {
+                'Authorization': `Bearer ${apiService.getToken()}`
+              }
+            });
+            
+            const appealsData = await appealsResponse.json();
+            
+            if (appealsData.success && appealsData.data && appealsData.data.length > 0) {
+              // Ya existe una apelación, significa que ya se corrigió una vez
+              setYaCorregido(true);
+              showError(
+                '🚫 Ya Corregido',
+                'Este producto ya fue corregido y enviado para revisión. No puedes editarlo nuevamente hasta que los moderadores revisen tu corrección anterior.',
+                () => navigate('/my-products')
+              );
+              return;
+            }
+          } catch (error) {
+            console.error('Error al verificar apelaciones:', error);
+            // Continuar sin bloquear si hay error al verificar
+          }
+        }
+        
+        // Si el estado es en_apelacion, también bloquear edición
+        if (product.estado === 'en_apelacion' && user?.tipo_usuario !== 'administrador') {
+          showError(
+            '⏳ Producto en Apelación',
+            'Este producto ya fue corregido y está en proceso de revisión. No puedes editarlo hasta que los moderadores resuelvan la apelación.',
             () => navigate('/my-products')
           );
           return;
@@ -716,6 +755,49 @@ export const CreateProductPage: React.FC = () => {
     setLoading(true);
     setErrors({});
 
+    // ✅ VALIDACIÓN: Si el producto está rechazado, la respuesta al moderador es OBLIGATORIA
+    if (isEditMode && form.estado === 'rechazado') {
+      if (!respuestaRechazo || respuestaRechazo.trim().length === 0) {
+        setErrors({
+          respuestaRechazo: 'Debes proporcionar una respuesta al moderador explicando los cambios realizados'
+        });
+        setLoading(false);
+        showError(
+          '⚠️ Respuesta Requerida',
+          'Para corregir un producto rechazado, debes explicar qué cambios realizaste para solucionar el problema mencionado por el moderador.',
+          () => {
+            // Scroll al campo de respuesta
+            const respuestaField = document.getElementById('respuesta-rechazo');
+            if (respuestaField) {
+              respuestaField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              respuestaField.focus();
+            }
+          }
+        );
+        return;
+      }
+      
+      // Validar longitud mínima de la respuesta
+      if (respuestaRechazo.trim().length < 20) {
+        setErrors({
+          respuestaRechazo: 'La respuesta debe tener al menos 20 caracteres para explicar adecuadamente los cambios'
+        });
+        setLoading(false);
+        showError(
+          '⚠️ Respuesta Muy Corta',
+          'Por favor, proporciona una explicación más detallada de los cambios realizados (mínimo 20 caracteres).',
+          () => {
+            const respuestaField = document.getElementById('respuesta-rechazo');
+            if (respuestaField) {
+              respuestaField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              respuestaField.focus();
+            }
+          }
+        );
+        return;
+      }
+    }
+
     try {
       // Crear FormData para enviar archivos
       const formData = new FormData();
@@ -1016,8 +1098,8 @@ export const CreateProductPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Banner de Motivo de Rechazo - SOLO cuando el producto está rechazado */}
-      {isEditMode && form.estado === 'rechazado' && form.motivo_rechazo && (
+      {/* Banner de Motivo de Rechazo - SOLO cuando el producto está rechazado y NO ya fue corregido */}
+      {isEditMode && form.estado === 'rechazado' && form.motivo_rechazo && !yaCorregido && (
         <div className="bg-red-50 border-t-4 border-red-500 shadow-lg">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
             <div className="flex items-start gap-4">
@@ -1040,21 +1122,38 @@ export const CreateProductPage: React.FC = () => {
                   <p className="text-sm text-red-700 whitespace-pre-wrap">{form.motivo_rechazo}</p>
                 </div>
 
-                {/* Campo para responder al moderador */}
-                <div className="bg-white border border-orange-200 rounded-lg p-4 mb-3">
+                {/* Campo para responder al moderador - OBLIGATORIO cuando está rechazado */}
+                <div className={`bg-white border rounded-lg p-4 mb-3 ${
+                  errors.respuestaRechazo ? 'border-red-300' : 'border-orange-200'
+                }`}>
                   <Label htmlFor="respuesta-rechazo" className="text-sm font-semibold text-orange-800 mb-2 flex items-center">
                     <Info className="h-4 w-4 mr-1.5" />
-                    Tu respuesta al moderador (Opcional)
+                    Tu respuesta al moderador <span className="text-red-600 ml-1">*</span>
                   </Label>
                   <Textarea
                     id="respuesta-rechazo"
                     value={respuestaRechazo}
-                    onChange={(e) => setRespuestaRechazo(e.target.value)}
+                    onChange={(e) => {
+                      setRespuestaRechazo(e.target.value);
+                      // Limpiar error cuando el usuario empiece a escribir
+                      if (errors.respuestaRechazo) {
+                        setErrors(prev => ({ ...prev, respuestaRechazo: '' }));
+                      }
+                    }}
                     placeholder="Explica qué cambios realizaste para corregir el problema... (Ej: 'He actualizado la descripción eliminando contenido inapropiado y agregado información más clara sobre el producto')"
-                    className="mt-2 min-h-[100px] text-sm"
+                    className={`mt-2 min-h-[100px] text-sm ${
+                      errors.respuestaRechazo ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''
+                    }`}
+                    required
                   />
+                  {errors.respuestaRechazo && (
+                    <p className="text-xs text-red-600 mt-1 flex items-center">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      {errors.respuestaRechazo}
+                    </p>
+                  )}
                   <p className="text-xs text-gray-600 mt-2">
-                    💡 Este comentario será enviado junto con tus correcciones para facilitar la revisión del moderador.
+                    💡 <strong>Requerido:</strong> Debes explicar los cambios realizados. Este comentario será enviado junto con tus correcciones para facilitar la revisión del moderador.
                   </p>
                 </div>
 

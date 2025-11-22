@@ -23,7 +23,8 @@ import {
   MessageSquare,
   CheckCircle,
   ToggleRight,
-  Search
+  Search,
+  Clock
 } from 'lucide-react';
 import type { Product, ProductsResponse } from '../types/product.types';
 import { AppealProductDialog } from '../components/ui/AppealProductDialog';
@@ -62,6 +63,8 @@ export const MyProductsPage: React.FC = () => {
     nombre: string;
     motivo_rechazo?: string;
   } | null>(null);
+  // Estado para rastrear productos que ya tienen apelaciones (ya fueron corregidos)
+  const [productsWithAppeals, setProductsWithAppeals] = useState<Set<number>>(new Set());
 
   const loadProducts = useCallback(async () => {
     try {
@@ -82,6 +85,32 @@ export const MyProductsPage: React.FC = () => {
       if (data.success) {
         setProducts(data.data);
         setPagination(data.pagination);
+        
+        // Verificar apelaciones para productos rechazados
+        const rejectedProducts = data.data.filter(p => p.estado === 'rechazado' || p.estado === 'en_apelacion');
+        const appealsSet = new Set<number>();
+        
+        // Verificar apelaciones para cada producto rechazado
+        for (const product of rejectedProducts) {
+          try {
+            const appealsResponse = await fetch(`http://localhost:3001/api/products/${product.id}/appeals`, {
+              headers: {
+                'Authorization': `Bearer ${apiService.getToken()}`
+              }
+            });
+            
+            const appealsData = await appealsResponse.json();
+            
+            if (appealsData.success && appealsData.data && appealsData.data.length > 0) {
+              // Tiene apelaciones, ya fue corregido
+              appealsSet.add(product.id);
+            }
+          } catch (error) {
+            console.error(`Error al verificar apelaciones para producto ${product.id}:`, error);
+          }
+        }
+        
+        setProductsWithAppeals(appealsSet);
       }
     } catch (error) {
       console.error('Error al cargar productos:', error);
@@ -697,14 +726,49 @@ export const MyProductsPage: React.FC = () => {
                       </Button>
                     </Link>
                     
-                    {/* Botón para productos rechazados - Redirige a EDITAR */}
+                    {/* Botón para productos rechazados - Redirige a EDITAR (bloqueado si ya se corrigió) */}
                     {product.estado === 'rechazado' && (
                       <Button 
-                        onClick={() => handleEditProduct(product.id)}
-                        className="flex-1 min-w-[120px] h-10 sm:h-11 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl text-xs sm:text-sm font-semibold"
+                        onClick={() => {
+                          if (productsWithAppeals.has(product.id)) {
+                            showWarning(
+                              '⚠️ Ya Corregido',
+                              'Este producto ya fue corregido y enviado para revisión. No puedes editarlo nuevamente hasta que los moderadores revisen tu corrección anterior.'
+                            );
+                            return;
+                          }
+                          handleEditProduct(product.id);
+                        }}
+                        disabled={productsWithAppeals.has(product.id)}
+                        className={`flex-1 min-w-[120px] h-10 sm:h-11 border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl text-xs sm:text-sm font-semibold ${
+                          productsWithAppeals.has(product.id)
+                            ? 'bg-gradient-to-r from-gray-400 to-gray-500 cursor-not-allowed opacity-60'
+                            : 'bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800'
+                        }`}
+                        title={
+                          productsWithAppeals.has(product.id)
+                            ? 'Ya fue corregido y está en revisión'
+                            : 'Corregir producto rechazado'
+                        }
                       >
                         <Edit className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
-                        <span>Corregir</span>
+                        <span>
+                          {productsWithAppeals.has(product.id)
+                            ? 'En Revisión'
+                            : 'Corregir'}
+                        </span>
+                      </Button>
+                    )}
+                    
+                    {/* Mostrar estado "En Apelación" para productos que ya fueron corregidos */}
+                    {product.estado === 'en_apelacion' && (
+                      <Button 
+                        disabled
+                        className="flex-1 min-w-[120px] h-10 sm:h-11 bg-gradient-to-r from-gray-400 to-gray-500 cursor-not-allowed opacity-60 border-0 shadow-lg rounded-xl text-xs sm:text-sm font-semibold"
+                        title="Este producto ya fue corregido y está en proceso de revisión"
+                      >
+                        <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                        <span>En Revisión</span>
                       </Button>
                     )}
                     

@@ -779,21 +779,28 @@ export const ProductDetailPage: React.FC = () => {
                 </h3>
                 
                 {/* Botones principales: Aprobar, Rechazar, Suspender */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
-                  <Button 
-                    size="sm"
-                    onClick={handleApproveProduct}
-                    disabled={reviewLoading}
-                    className="h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
-                    title="Aprobar producto"
-                  >
-                    {reviewLoading ? (
-                      <Clock className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <CheckCircle className="h-4 w-4" />
-                    )}
-                    <span className="ml-2">Aprobar</span>
-                  </Button>
+                <div className={`grid gap-2 mb-3 ${
+                  product.estado === 'activo' 
+                    ? 'grid-cols-1 sm:grid-cols-2' 
+                    : 'grid-cols-1 sm:grid-cols-3'
+                }`}>
+                  {/* Botón Aprobar - SOLO visible si NO está aprobado */}
+                  {product.estado !== 'activo' && (
+                    <Button 
+                      size="sm"
+                      onClick={handleApproveProduct}
+                      disabled={reviewLoading}
+                      className="h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
+                      title="Aprobar producto"
+                    >
+                      {reviewLoading ? (
+                        <Clock className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <CheckCircle className="h-4 w-4" />
+                      )}
+                      <span className="ml-2">Aprobar</span>
+                    </Button>
+                  )}
                   
                   <Button 
                     size="sm"
