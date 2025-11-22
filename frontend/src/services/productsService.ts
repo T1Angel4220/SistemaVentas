@@ -230,7 +230,9 @@ class ProductsService {
 
   // Guardar producto como favorito
   async saveProduct(productId: number): Promise<{ success: boolean; message?: string }> {
-    const response = await fetch(`http://localhost:3001/api/saved-products/${productId}`, {
+    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+    const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+    const response = await fetch(`${apiUrl}/saved-products/${productId}`, {
       method: 'POST',
       headers: this.getHeaders()
     });
@@ -246,7 +248,9 @@ class ProductsService {
 
   // Quitar producto de favoritos
   async unsaveProduct(productId: number): Promise<{ success: boolean; message?: string }> {
-    const response = await fetch(`http://localhost:3001/api/saved-products/${productId}`, {
+    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+    const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+    const response = await fetch(`${apiUrl}/saved-products/${productId}`, {
       method: 'DELETE',
       headers: this.getHeaders()
     });
@@ -262,7 +266,9 @@ class ProductsService {
 
   // Verificar si un producto está guardado
   async isProductSaved(productId: number): Promise<{ success: boolean; data: { is_saved: boolean } }> {
-    const response = await fetch(`http://localhost:3001/api/saved-products/check/${productId}`, {
+    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+    const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+    const response = await fetch(`${apiUrl}/saved-products/check/${productId}`, {
       headers: this.getHeaders()
     });
 
@@ -277,7 +283,9 @@ class ProductsService {
 
   // Obtener productos guardados
   async getSavedProducts(page: number = 1, limit: number = 12): Promise<ProductsResponse> {
-    const response = await fetch(`http://localhost:3001/api/saved-products?page=${page}&limit=${limit}`, {
+    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+    const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+    const response = await fetch(`${apiUrl}/saved-products?page=${page}&limit=${limit}`, {
       headers: this.getHeaders()
     });
     

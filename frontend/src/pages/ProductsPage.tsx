@@ -111,7 +111,9 @@ export const ProductsPage: React.FC = () => {
         console.log('📦 Cargando productos sin filtro de proximidad');
       }
 
-      const response = await fetch(`http://localhost:3001/api/products?${queryParams}`);
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      const response = await fetch(`${apiUrl}/products?${queryParams}`);
       const data: ProductsResponse = await response.json();
       
       if (data.success) {
@@ -141,7 +143,9 @@ export const ProductsPage: React.FC = () => {
 
   const loadCategories = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/categories');
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      const response = await fetch(`${apiUrl}/categories`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -158,7 +162,9 @@ export const ProductsPage: React.FC = () => {
   const loadLocations = async () => {
     try {
       // Pedir todas las ubicaciones (sin paginación)
-      const response = await fetch('http://localhost:3001/api/locations?limit=1000');
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      const response = await fetch(`${apiUrl}/locations?limit=1000`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -176,7 +182,9 @@ export const ProductsPage: React.FC = () => {
     if (!user || (user.tipo_usuario !== 'comprador' && user.tipo_usuario !== 'vendedor')) return;
     
     try {
-      const response = await fetch('http://localhost:3001/api/products/saved', {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      const response = await fetch(`${apiUrl}/products/saved`, {
         headers: {
           'Authorization': `Bearer ${apiService.getToken()}`
         }
@@ -223,7 +231,9 @@ export const ProductsPage: React.FC = () => {
 
     setSavingProduct(productId);
     try {
-      const response = await fetch(`http://localhost:3001/api/products/${productId}/save`, {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      const response = await fetch(`${apiUrl}/products/${productId}/save`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -251,7 +261,9 @@ export const ProductsPage: React.FC = () => {
 
     setSavingProduct(productId);
     try {
-      const response = await fetch(`http://localhost:3001/api/products/${productId}/unsave`, {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      const response = await fetch(`${apiUrl}/products/${productId}/unsave`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${apiService.getToken()}`

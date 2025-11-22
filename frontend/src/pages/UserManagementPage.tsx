@@ -5,20 +5,15 @@ import { apiService } from '../services/api';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
-import { Alert } from '../components/ui/Alert';
 import { 
   Users, 
   UserPlus, 
   Shield, 
   UserCheck, 
-  UserX, 
   UserMinus,
   Search,
   Filter,
-  MoreVertical,
   Eye,
-  Edit,
-  Trash2,
   Clock,
   CheckCircle,
   XCircle,
@@ -30,19 +25,7 @@ import {
   X
 } from 'lucide-react';
 
-interface User {
-  id: number;
-  cedula: string;
-  nombre: string;
-  apellido: string;
-  correo: string;
-  telefono?: string;
-  tipo_usuario: 'comprador' | 'vendedor' | 'moderador' | 'administrador';
-  estado: 'activo' | 'inactivo' | 'suspendido' | 'pendiente_verificacion';
-  email_verificado: boolean;
-  fecha_registro: string;
-  fecha_ultimo_acceso?: string;
-}
+import type { User } from '../services/api';
 
 export const UserManagementPage: React.FC = () => {
   const navigate = useNavigate();

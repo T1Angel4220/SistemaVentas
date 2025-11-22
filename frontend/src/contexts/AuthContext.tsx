@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useReducer, useEffect, useCallback, ReactNode } from 'react';
-import { apiService, User, LoginRequest, RegisterRequest, ApiResponse } from '../services/api';
+import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
+import type { ReactNode } from 'react';
+import { apiService } from '../services/api';
+import type { User, LoginRequest, RegisterRequest } from '../services/api';
 
 // Tipos para el contexto
 interface AuthState {
@@ -116,9 +118,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const response = await apiService.getProfile();
           
           if (response.success && response.data) {
-            // El backend devuelve { data: { user: {...} } }, necesitamos extraer el user
-            const userData = response.data.user;
-            dispatch({ type: 'AUTH_SUCCESS', payload: userData });
+            // El backend devuelve { data: User } directamente
+            const user = response.data;
+            // Asegurar que el user tenga todos los campos necesarios
+            const userWithDefaults = {
+              ...user,
+              estado: user.estado || 'activo',
+              nombre: user.nombre || '',
+              apellido: user.apellido || '',
+              correo: user.correo || '',
+              tipo_usuario: user.tipo_usuario || 'comprador',
+              email_verificado: user.email_verificado || false
+            };
+            dispatch({ type: 'AUTH_SUCCESS', payload: userWithDefaults });
           } else {
             apiService.setToken(null);
             dispatch({ type: 'AUTH_LOGOUT' });
@@ -140,9 +152,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       dispatch({ type: 'AUTH_START' });
       const response = await apiService.login(credentials);
       
+      // El backend responde con: { success: true, data: { user: {...}, tokens: {...} } }
       if (response.success && response.data) {
-        const userData = response.data.user;
-        dispatch({ type: 'AUTH_SUCCESS', payload: userData });
+        // Asegurar que tenemos el user correctamente
+        const user = response.data.user;
+        if (user) {
+          // Asegurar que el user tenga todos los campos necesarios
+          const userWithDefaults = {
+            ...user,
+            estado: user.estado || 'activo',
+            nombre: user.nombre || '',
+            apellido: user.apellido || '',
+            correo: user.correo || '',
+            tipo_usuario: user.tipo_usuario || 'comprador',
+            email_verificado: user.email_verificado || false
+          };
+          dispatch({ type: 'AUTH_SUCCESS', payload: userWithDefaults });
+        } else {
+          throw new Error('No se recibió información del usuario');
+        }
       } else {
         throw new Error(response.message || 'Error en el login');
       }
@@ -258,7 +286,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await apiService.getProfile();
       if (response.success && response.data) {
-        dispatch({ type: 'AUTH_SUCCESS', payload: response.data.user });
+        const user = response.data;
+        // Asegurar que el user tenga todos los campos necesarios
+        const userWithDefaults = {
+          ...user,
+          estado: user.estado || 'activo',
+          nombre: user.nombre || '',
+          apellido: user.apellido || '',
+          correo: user.correo || '',
+          tipo_usuario: user.tipo_usuario || 'comprador',
+          email_verificado: user.email_verificado || false
+        };
+        dispatch({ type: 'AUTH_SUCCESS', payload: userWithDefaults });
       }
     } catch (error) {
       console.error('Error refrescando usuario:', error);

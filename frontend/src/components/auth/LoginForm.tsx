@@ -1,11 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
-import { Alert, AlertDescription } from '../ui/Alert';
 import { Link } from 'react-router-dom';
 import { Eye, EyeOff, Mail } from 'lucide-react';
+import { redirectTo } from '../../utils/pathUtils';
 
 // Icono de candado simple
 const LockIcon = ({ className }: { className?: string }) => (
@@ -85,8 +82,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
     clearError();
     
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${API_URL}/api/auth/resend-verification-code`, {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      const response = await fetch(`${apiUrl}/auth/resend-verification-code`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -99,7 +97,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
       if (data.success) {
         setResendMessage(data.message);
         setTimeout(() => {
-          window.location.href = `/verify-code?email=${encodeURIComponent(formData.correo)}`;
+          redirectTo(`/verify-code?email=${encodeURIComponent(formData.correo)}`);
         }, 2000);
       } else {
         setResendMessage(data.message);

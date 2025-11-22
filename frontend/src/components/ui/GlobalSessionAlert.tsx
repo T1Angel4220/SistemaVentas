@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertTriangle } from 'lucide-react';
+import { redirectTo } from '../../utils/pathUtils';
 
 interface GlobalSessionAlertProps {
   isOpen: boolean;
@@ -12,7 +13,7 @@ export const GlobalSessionAlert: React.FC<GlobalSessionAlertProps> = ({ isOpen, 
   const handleConfirm = () => {
     onClose();
     // Redirigir al login
-    window.location.href = '/login';
+    redirectTo('/login');
   };
 
   return (

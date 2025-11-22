@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Eye, EyeOff, User, Mail, Phone, MapPin, Hash, CheckCircle } from 'lucide-react';
 import { TermsOfServiceModal } from '../modals/TermsOfServiceModal';
 import { PrivacyPolicyModal } from '../modals/PrivacyPolicyModal';
+import { redirectTo } from '../../utils/pathUtils';
 
 // Icono de candado simple
 const LockIcon = ({ className }: { className?: string }) => (
@@ -199,7 +200,7 @@ export const RegisterForm: React.FC = () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       // Redirigir a la página de verificación de código después de 3 segundos
       setTimeout(() => {
-        window.location.href = `/verify-code?email=${encodeURIComponent(formData.correo)}`;
+        redirectTo(`/verify-code?email=${encodeURIComponent(formData.correo)}`);
       }, 3000);
     } catch (error) {
       console.error('Error en registro:', error);

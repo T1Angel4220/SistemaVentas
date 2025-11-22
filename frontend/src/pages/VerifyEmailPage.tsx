@@ -23,7 +23,9 @@ export const VerifyEmailPage: React.FC = () => {
   const verifyEmail = async () => {
     try {
       setIsVerifying(true);
-      const response = await fetch(`http://localhost:3001/api/auth/verify-email?token=${token}`, {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      const response = await fetch(`${apiUrl}/auth/verify-email?token=${token}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

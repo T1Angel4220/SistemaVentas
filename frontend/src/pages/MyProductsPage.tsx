@@ -72,7 +72,9 @@ export const MyProductsPage: React.FC = () => {
         if (value) queryParams.append(key, value.toString());
       });
 
-      const response = await fetch(`http://localhost:3001/api/products/my/products?${queryParams}`, {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      const response = await fetch(`${apiUrl}/products/my/products?${queryParams}`, {
         headers: {
           'Authorization': `Bearer ${apiService.getToken()}`
         }
@@ -92,7 +94,9 @@ export const MyProductsPage: React.FC = () => {
 
   const loadDangerousProductsCount = useCallback(async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/products/my-dangerous`, {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      const response = await fetch(`${apiUrl}/products/my-dangerous`, {
         headers: {
           'Authorization': `Bearer ${apiService.getToken()}`
         }
@@ -168,7 +172,9 @@ export const MyProductsPage: React.FC = () => {
       `¿Estás seguro de que quieres eliminar "${productName}"? Esta acción no se puede deshacer.`,
       async () => {
         try {
-          const response = await fetch(`http://localhost:3001/api/products/${productId}`, {
+          const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+          const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+          const response = await fetch(`${apiUrl}/products/${productId}`, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${apiService.getToken()}`

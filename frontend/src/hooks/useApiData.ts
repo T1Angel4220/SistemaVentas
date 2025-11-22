@@ -20,12 +20,13 @@ export const useApiData = <T>(
   const [retryCount, setRetryCount] = useState(0);
 
   const fetchData = useCallback(async () => {
-    if (!enabled || loading) return;
+    if (!enabled) return;
 
     setLoading(true);
     setError(null);
 
     try {
+      console.log(`🔄 Cargando datos desde: ${url}`);
       const response = await fetch(url);
       
       if (!response.ok) {
@@ -44,24 +45,28 @@ export const useApiData = <T>(
       }
 
       const result = await response.json();
+      console.log(`✅ Datos recibidos de ${url}:`, result);
       
       if (result.success) {
-        setData(result.data);
+        const dataArray = Array.isArray(result.data) ? result.data : [];
+        setData(dataArray);
         setRetryCount(0); // Reset retry count on success
+        console.log(`✅ ${dataArray.length} elementos cargados`);
       } else {
         throw new Error(result.message || 'Error al cargar datos');
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
       setError(errorMessage);
-      console.error(`Error fetching ${url}:`, err);
+      console.error(`❌ Error fetching ${url}:`, err);
     } finally {
       setLoading(false);
     }
-  }, [url, enabled, loading, retryOnError, maxRetries, retryCount]);
+  }, [url, enabled, retryOnError, maxRetries, retryCount]);
 
   useEffect(() => {
-    // Solo cargar si no hay datos y está habilitado
+    // Cargar datos cuando el componente se monta o cuando se habilita
+    // Solo cargar si no hay datos o si está habilitado y no está cargando
     if (enabled && data.length === 0 && !loading) {
       fetchData();
     }
@@ -84,7 +89,9 @@ export const useApiData = <T>(
 
 // Hook específico para categorías
 export const useCategories = () => {
-  return useApiData<Category>('http://localhost:3001/api/categories', {
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+  const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+  return useApiData<Category>(`${apiUrl}/categories`, {
     enabled: true,
     retryOnError: true,
     maxRetries: 3
@@ -93,7 +100,9 @@ export const useCategories = () => {
 
 // Hook específico para ubicaciones
 export const useLocations = () => {
-  return useApiData<Location>('http://localhost:3001/api/locations', {
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+  const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+  return useApiData<Location>(`${apiUrl}/locations`, {
     enabled: true,
     retryOnError: true,
     maxRetries: 3

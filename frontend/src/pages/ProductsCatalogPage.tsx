@@ -74,7 +74,9 @@ export const ProductsCatalogPage: React.FC = () => {
       queryParams.append('estado', 'activo');
       queryParams.append('disponibilidad', 'true');
 
-      const response = await fetch(`http://localhost:3001/api/products?${queryParams}`);
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      const response = await fetch(`${apiUrl}/products?${queryParams}`);
       const data = await response.json();
       
       if (data.success) {
@@ -95,7 +97,9 @@ export const ProductsCatalogPage: React.FC = () => {
     if (!user) return;
     
     try {
-      const response = await fetch('http://localhost:3001/api/products/saved', {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      const response = await fetch(`${apiUrl}/products/saved`, {
         headers: {
           'Authorization': `Bearer ${apiService.getToken()}`
         }
@@ -116,10 +120,11 @@ export const ProductsCatalogPage: React.FC = () => {
 
   useEffect(() => {
     // Solo cargar productos guardados si NO estamos en /products/saved
-    if (user && location.pathname !== '/products/saved') {
+    const currentPath = location?.pathname || '';
+    if (user && currentPath !== '/products/saved' && !currentPath.endsWith('/products/saved')) {
       loadSavedProducts();
     }
-  }, [user, loadSavedProducts, location.pathname]);
+  }, [user, loadSavedProducts, location?.pathname]);
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({
@@ -198,7 +203,9 @@ export const ProductsCatalogPage: React.FC = () => {
 
     setSavingProduct(productId);
     try {
-      const response = await fetch(`http://localhost:3001/api/products/${productId}/save`, {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      const response = await fetch(`${apiUrl}/products/${productId}/save`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -226,7 +233,9 @@ export const ProductsCatalogPage: React.FC = () => {
 
     setSavingProduct(productId);
     try {
-      const response = await fetch(`http://localhost:3001/api/products/${productId}/unsave`, {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      const response = await fetch(`${apiUrl}/products/${productId}/unsave`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${apiService.getToken()}`

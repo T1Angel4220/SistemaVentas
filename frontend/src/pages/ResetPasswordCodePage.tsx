@@ -3,8 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
-import { Alert } from '../components/ui/Alert';
-import { ArrowLeft, Shield, CheckCircle, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Shield, Eye, EyeOff } from 'lucide-react';
 import { apiService } from '../services/api';
 
 export const ResetPasswordCodePage: React.FC = () => {

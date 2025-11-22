@@ -55,9 +55,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     });
   };
 
-  const getStatusBadge = (estado: string, disponibilidad: boolean) => {
+  const getStatusBadge = (estado: string | undefined, disponibilidad: boolean) => {
     if (!disponibilidad) {
       return <Badge variant="secondary">No disponible</Badge>;
+    }
+    
+    // Validar que estado existe y es una cadena válida
+    if (!estado || typeof estado !== 'string') {
+      return <Badge variant="secondary">Sin estado</Badge>;
     }
     
     const statusColors = {
@@ -67,9 +72,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       suspendido: 'bg-gray-100 text-gray-800'
     };
     
+    // Asegurar que estado sea una cadena antes de llamar a replace
+    const estadoNormalizado = estado || 'activo';
+    
     return (
-      <Badge className={statusColors[estado as keyof typeof statusColors] || 'bg-gray-100 text-gray-800'}>
-        {estado.replace('_', ' ').toUpperCase()}
+      <Badge className={statusColors[estadoNormalizado as keyof typeof statusColors] || 'bg-gray-100 text-gray-800'}>
+        {estadoNormalizado.replace('_', ' ').toUpperCase()}
       </Badge>
     );
   };

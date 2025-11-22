@@ -46,7 +46,23 @@ export const ProfilePage: React.FC = () => {
     confirmPassword: ''
   });
 
-  // Cargar datos del usuario al montar (solo la primera vez)
+  // Cargar datos del usuario al montar y refrescar si es necesario
+  useEffect(() => {
+    const loadUserData = async () => {
+      // Siempre refrescar al montar para asegurar datos actualizados
+      console.log('🔄 Cargando datos del usuario...');
+      try {
+        await refreshUser();
+      } catch (error) {
+        console.error('Error al cargar datos del usuario:', error);
+      }
+    };
+    
+    loadUserData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Solo al montar
+
+  // Actualizar profileData cuando user cambie
   useEffect(() => {
     if (user) {
       setProfileData({
@@ -94,10 +110,12 @@ export const ProfilePage: React.FC = () => {
     setLoadingProfile(true);
 
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      // Si VITE_API_URL ya incluye /api, usarlo directamente, sino agregar /api
+      const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
       const token = localStorage.getItem('accessToken');
 
-      const response = await fetch(`${API_URL}/api/auth/profile`, {
+      const response = await fetch(`${apiUrl}/auth/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -157,10 +175,12 @@ export const ProfilePage: React.FC = () => {
     setLoadingPassword(true);
 
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      // Si VITE_API_URL ya incluye /api, usarlo directamente, sino agregar /api
+      const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
       const token = localStorage.getItem('accessToken');
 
-      const response = await fetch(`${API_URL}/api/auth/change-password`, {
+      const response = await fetch(`${apiUrl}/auth/change-password`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -215,7 +235,13 @@ export const ProfilePage: React.FC = () => {
           <div className="flex items-center space-x-4">
             <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-lg">
               <span className="text-2xl font-bold text-white">
-                {user.nombre.charAt(0)}{user.apellido.charAt(0)}
+                {(() => {
+                  const nombre = user.nombre || '';
+                  const apellido = user.apellido || '';
+                  const inicialNombre = nombre.charAt(0) || 'U';
+                  const inicialApellido = apellido.charAt(0) || '';
+                  return `${inicialNombre}${inicialApellido}`;
+                })()}
               </span>
             </div>
             <div>
@@ -284,7 +310,7 @@ export const ProfilePage: React.FC = () => {
                   </label>
                   <Input
                     type="text"
-                    value={user.cedula}
+                    value={user.cedula || ''}
                     disabled
                     className="bg-gray-100 cursor-not-allowed"
                   />
@@ -298,7 +324,7 @@ export const ProfilePage: React.FC = () => {
                   </label>
                   <Input
                     type="email"
-                    value={user.correo}
+                    value={user.correo || ''}
                     disabled
                     className="bg-gray-100 cursor-not-allowed"
                   />
@@ -406,13 +432,13 @@ export const ProfilePage: React.FC = () => {
                     Estado de Cuenta
                   </label>
                   <div className={`inline-flex px-3 py-1 rounded-full text-sm font-semibold ${
-                    user.estado === 'activo' 
+                    (user.estado || 'activo') === 'activo' 
                       ? 'bg-green-100 text-green-800' 
-                      : user.estado === 'suspendido'
+                      : (user.estado || 'activo') === 'suspendido'
                       ? 'bg-red-100 text-red-800'
                       : 'bg-yellow-100 text-yellow-800'
                   }`}>
-                    {user.estado.replace('_', ' ')}
+                    {(user.estado || 'activo').replace('_', ' ')}
                   </div>
                 </div>
               </div>

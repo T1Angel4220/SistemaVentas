@@ -86,7 +86,9 @@ export const ProductModerationPage: React.FC = () => {
         if (value) queryParams.append(key, value.toString());
       });
 
-      const response = await fetch(`http://localhost:3001/api/products/moderation/pending?${queryParams}`, {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      const response = await fetch(`${apiUrl}/products/moderation/pending?${queryParams}`, {
         headers: {
           'Authorization': `Bearer ${apiService.getToken()}`
         }
@@ -134,7 +136,9 @@ export const ProductModerationPage: React.FC = () => {
     try {
       setActionLoading(productId);
       
-      const response = await fetch(`http://localhost:3001/api/products/${productId}/moderate`, {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      const response = await fetch(`${apiUrl}/products/${productId}/moderate`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -685,90 +689,92 @@ export const ProductModerationPage: React.FC = () => {
                     </Button>
                   </div>
                   
-                  {product.estado === 'pendiente_revision' && (
+                  {(product.estado === 'pendiente_revision' || product.estado === 'activo' || product.estado === 'rechazado' || product.estado === 'suspendido' || product.estado === 'peligroso') && (
                     <>
                       {/* Acciones principales: Aprobar, Rechazar, Suspender */}
                       <div className="grid grid-cols-3 gap-2 pt-3 border-t border-gray-100">
                         <Button 
                           size="sm"
                           onClick={() => handleApproveProduct(product.id, product.nombre)}
-                          disabled={actionLoading === product.id || !product.fecha_revision}
+                          disabled={actionLoading === product.id || product.estado === 'activo' || product.estado === 'peligroso' || product.es_peligroso}
                           className={`h-10 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 ${
-                            !product.fecha_revision 
+                            product.estado === 'activo' || product.estado === 'peligroso' || product.es_peligroso
                               ? 'bg-gray-400 cursor-not-allowed opacity-50' 
                               : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800'
                           } text-white`}
-                          title="Aprobar producto"
+                          title={product.estado === 'activo' ? 'Producto ya está aprobado' : (product.estado === 'peligroso' || product.es_peligroso ? 'No se puede aprobar un producto marcado como peligroso' : 'Aprobar producto')}
                         >
                           {actionLoading === product.id ? (
                             <Clock className="h-4 w-4 animate-spin" />
                           ) : (
                             <CheckCircle className="h-4 w-4" />
                           )}
-                          <span className="ml-1 hidden sm:inline">{!product.fecha_revision ? 'Revisar' : 'Aprobar'}</span>
+                          <span className="ml-1 hidden sm:inline">{product.estado === 'activo' ? 'Aprobado' : 'Aprobar'}</span>
                           <span className="ml-1 sm:hidden">✓</span>
                         </Button>
                         
                         <Button 
                           size="sm"
                           onClick={() => handleRejectProduct(product.id, product.nombre)}
-                          disabled={actionLoading === product.id || !product.fecha_revision}
+                          disabled={actionLoading === product.id || product.estado === 'rechazado' || product.estado === 'peligroso' || product.es_peligroso}
                           className={`h-10 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 ${
-                            !product.fecha_revision 
+                            product.estado === 'rechazado' || product.estado === 'peligroso' || product.es_peligroso
                               ? 'bg-gray-400 cursor-not-allowed opacity-50' 
                               : 'bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800'
                           } text-white`}
-                          title="Rechazar por errores corregibles (vendedor puede editar)"
+                          title={product.estado === 'rechazado' ? 'Producto ya está rechazado' : (product.estado === 'peligroso' || product.es_peligroso ? 'No se puede rechazar un producto marcado como peligroso' : 'Rechazar por errores corregibles (vendedor puede editar)')}
                         >
                           {actionLoading === product.id ? (
                             <Clock className="h-4 w-4 animate-spin" />
                           ) : (
                             <XCircle className="h-4 w-4" />
                           )}
-                          <span className="ml-1 hidden sm:inline">{!product.fecha_revision ? 'Revisar' : 'Rechazar'}</span>
+                          <span className="ml-1 hidden sm:inline">Rechazar</span>
                           <span className="ml-1 sm:hidden">✗</span>
                         </Button>
                         
                         <Button 
                           size="sm"
                           onClick={() => handleSuspendProduct(product.id, product.nombre)}
-                          disabled={actionLoading === product.id || !product.fecha_revision}
+                          disabled={actionLoading === product.id || product.estado === 'suspendido' || product.estado === 'peligroso' || product.es_peligroso}
                           className={`h-10 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 ${
-                            !product.fecha_revision 
+                            product.estado === 'suspendido' || product.estado === 'peligroso' || product.es_peligroso
                               ? 'bg-gray-400 cursor-not-allowed opacity-50' 
                               : 'bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800'
                           } text-white`}
-                          title="Suspender por violación grave (vendedor NO puede editar)"
+                          title={product.estado === 'suspendido' ? 'Producto ya está suspendido' : (product.estado === 'peligroso' || product.es_peligroso ? 'No se puede suspender un producto marcado como peligroso' : 'Suspender por violación grave (vendedor NO puede editar)')}
                         >
                           {actionLoading === product.id ? (
                             <Clock className="h-4 w-4 animate-spin" />
                           ) : (
                             <AlertTriangle className="h-4 w-4" />
                           )}
-                          <span className="ml-1 hidden sm:inline">{!product.fecha_revision ? 'Revisar' : 'Suspender'}</span>
+                          <span className="ml-1 hidden sm:inline">Suspender</span>
                           <span className="ml-1 sm:hidden">⚠</span>
                         </Button>
                       </div>
                       
                       {/* Acción crítica: Marcar como Peligroso */}
-                      {product.fecha_revision && (
-                        <div className="pt-3 border-t border-gray-100">
-                          <Button 
-                            size="sm"
-                            onClick={() => handleMarkAsDangerous(product.id, product.nombre)}
-                            disabled={actionLoading === product.id}
-                            className="w-full h-10 bg-gradient-to-r from-red-700 to-red-900 hover:from-red-800 hover:to-red-950 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
-                            title="Contenido prohibido - Producto OCULTO completamente"
-                          >
-                            {actionLoading === product.id ? (
-                              <Clock className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <AlertTriangle className="h-4 w-4" />
-                            )}
-                            <span className="ml-2">🚫 Marcar como Peligroso</span>
-                          </Button>
-                        </div>
-                      )}
+                      <div className="pt-3 border-t border-gray-100">
+                        <Button 
+                          size="sm"
+                          onClick={() => handleMarkAsDangerous(product.id, product.nombre)}
+                          disabled={actionLoading === product.id || product.estado === 'peligroso' || product.es_peligroso}
+                          className={`w-full h-10 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 ${
+                            product.estado === 'peligroso' || product.es_peligroso
+                              ? 'bg-gray-400 cursor-not-allowed opacity-50'
+                              : 'bg-gradient-to-r from-red-700 to-red-900 hover:from-red-800 hover:to-red-950'
+                          } text-white`}
+                          title={product.estado === 'peligroso' || product.es_peligroso ? 'Producto ya está marcado como peligroso' : 'Contenido prohibido - Producto OCULTO completamente'}
+                        >
+                          {actionLoading === product.id ? (
+                            <Clock className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <AlertTriangle className="h-4 w-4" />
+                          )}
+                          <span className="ml-2">🚫 Marcar como Peligroso</span>
+                        </Button>
+                      </div>
                     </>
                   )}
                   

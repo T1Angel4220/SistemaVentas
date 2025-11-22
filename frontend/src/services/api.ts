@@ -105,6 +105,19 @@ class ApiService {
 
     try {
       const response = await fetch(url, config);
+      
+      // Verificar que la respuesta sea JSON válido
+      if (!response.ok && response.status === 404) {
+        // Para rutas de SPA, no lanzar error en 404
+        const text = await response.text();
+        try {
+          const data = JSON.parse(text);
+          return data;
+        } catch {
+          throw new Error('Respuesta no válida del servidor');
+        }
+      }
+      
       const data = await response.json();
 
       if (!response.ok) {
@@ -155,8 +168,18 @@ class ApiService {
       body: JSON.stringify(credentials),
     });
 
-    if (response.data?.tokens?.accessToken) {
-      this.setToken(response.data.tokens.accessToken);
+    // El backend responde con: { success: true, data: { user: {...}, tokens: {...} } }
+    // La estructura esperada es: response.data.tokens.accessToken
+    if (response.data) {
+      const data = response.data as any;
+      // Buscar el token en diferentes posibles ubicaciones
+      if (data.tokens?.accessToken) {
+        this.setToken(data.tokens.accessToken);
+      } else if (data.accessToken) {
+        this.setToken(data.accessToken);
+      } else if (data.token) {
+        this.setToken(data.token);
+      }
     }
 
     return response as AuthResponse;
@@ -191,7 +214,19 @@ class ApiService {
   }
 
   async getProfile(): Promise<ApiResponse<User>> {
-    return this.request<User>('/auth/profile');
+    const response = await this.request<any>('/auth/profile');
+    
+    // El backend devuelve: { success: true, data: { user: {...} } }
+    // Necesitamos extraer el user y devolverlo como data directa
+    if (response.success && response.data?.user) {
+      return {
+        ...response,
+        data: response.data.user
+      } as ApiResponse<User>;
+    }
+    
+    // Si la estructura es diferente, devolver tal cual
+    return response as ApiResponse<User>;
   }
 
   async getUsers(params?: {

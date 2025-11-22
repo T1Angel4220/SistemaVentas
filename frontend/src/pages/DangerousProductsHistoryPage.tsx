@@ -44,7 +44,9 @@ export const DangerousProductsHistoryPage: React.FC = () => {
     try {
       setLoading(true);
       
-      const response = await fetch(`http://localhost:3001/api/products/my-dangerous`, {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      const response = await fetch(`${apiUrl}/products/my-dangerous`, {
         headers: {
           'Authorization': `Bearer ${apiService.getToken()}`
         }

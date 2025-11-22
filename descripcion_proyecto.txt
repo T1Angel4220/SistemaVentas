@@ -1,0 +1,29 @@
+🏗️ ESTRUCTURA
+- Backend: API REST con Node.js + Express + TypeScript
+- Frontend: SPA con React 19 + TypeScript + Vite
+- Base de datos: PostgreSQL relacional
+
+🛠️ TECNOLOGÍAS PRINCIPALES
+
+Backend:
+- Node.js 18+, Express 5.1.0, TypeScript 5.9.2
+- PostgreSQL 8.16+, JWT, bcrypt, Joi
+- Multer (imágenes), Nodemailer (emails)
+- Helmet, CORS, Rate limiting
+
+Frontend:
+- React 19.1.1, TypeScript 5.8.3, Vite 7.1.2
+- Tailwind CSS 4.1.13, React Router 7.8.2
+- shadcn/ui, Lucide React, Chart.js
+- jsPDF (reportes), Leaflet (mapas)
+
+🎯 DEFINICIÓN
+Un marketplace multiempresa completo con:
+- 4 roles de usuario (Comprador, Vendedor, Moderador, Admin)
+- Sistema de moderación de contenido automático
+- Gestión de productos con imágenes y ubicaciones geográficas
+- Autenticación robusta con JWT y verificación por email
+- Panel de administración y estadísticas
+- API RESTful y frontend moderno responsive
+
+Es una plataforma B2B/B2C para que vendedores publiquen productos/servicios y compradores los adquieran, con control de calidad mediante moderación.

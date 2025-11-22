@@ -1,5 +1,6 @@
 import React from 'react';
 import { ShieldX, AlertTriangle } from 'lucide-react';
+import { redirectTo } from '../../utils/pathUtils';
 
 interface GlobalSuspendedAlertProps {
   isOpen: boolean;
@@ -12,7 +13,7 @@ export const GlobalSuspendedAlert: React.FC<GlobalSuspendedAlertProps> = ({ isOp
   const handleConfirm = () => {
     onClose();
     // Redirigir al login
-    window.location.href = '/login';
+    redirectTo('/login');
   };
 
   return (

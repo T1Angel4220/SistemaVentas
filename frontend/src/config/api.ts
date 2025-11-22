@@ -1,8 +1,21 @@
 import { apiService } from '../services/api';
 
+// Obtener la URL base de la API desde variables de entorno
+// Si VITE_API_URL incluye /api, lo removemos para construir URLs correctamente
+const getBaseUrl = (): string => {
+  const envUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+  // Si la URL termina con /api, la removemos
+  if (envUrl.endsWith('/api')) {
+    return envUrl.replace('/api', '');
+  }
+  // Si no tiene /api, asumimos que es la base y agregamos /api si es necesario
+  // Pero para mantener compatibilidad, si ya tiene /api, lo dejamos
+  return envUrl.includes('/api') ? envUrl.replace('/api', '') : envUrl;
+};
+
 // Configuración de la API
 export const API_CONFIG = {
-  BASE_URL: 'http://localhost:3001',
+  BASE_URL: getBaseUrl(),
   ENDPOINTS: {
     // Autenticación
     AUTH: {
@@ -53,9 +66,36 @@ export const API_CONFIG = {
   }
 };
 
+// Función helper para obtener la URL base de la API (con /api incluido)
+export const getApiBaseUrl = (): string => {
+  const envUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+  // Si VITE_API_URL ya incluye /api, usarlo directamente
+  if (envUrl.endsWith('/api')) {
+    return envUrl;
+  }
+  // Si no termina con /api, agregarlo
+  return envUrl.includes('/api') ? envUrl : `${envUrl}/api`;
+};
+
+// Función helper simple para construir URLs de API
+// Uso: getApiUrl('/products') -> 'http://localhost:3001/api/products'
+export const getApiUrl = (endpoint: string): string => {
+  const baseUrl = getApiBaseUrl();
+  // Asegurar que el endpoint comience con /
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  return `${baseUrl}${cleanEndpoint}`;
+};
+
 // Función helper para construir URLs completas
 export const buildApiUrl = (endpoint: string): string => {
-  return `${API_CONFIG.BASE_URL}${endpoint}`;
+  const baseUrl = getApiBaseUrl();
+  // Asegurar que el endpoint comience con /
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  // Si el endpoint ya incluye /api, no duplicarlo
+  if (cleanEndpoint.startsWith('/api/')) {
+    return `${baseUrl.replace('/api', '')}${cleanEndpoint}`;
+  }
+  return `${baseUrl}${cleanEndpoint}`;
 };
 
 // Función helper para obtener headers con autenticación

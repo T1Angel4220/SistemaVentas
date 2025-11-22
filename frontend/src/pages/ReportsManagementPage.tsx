@@ -81,7 +81,9 @@ export const ReportsManagementPage: React.FC = () => {
       if (filters.tipo_reporte) queryParams.append('tipo_reporte', filters.tipo_reporte);
       if (filters.estado) queryParams.append('estado', filters.estado);
 
-      const response = await fetch(`http://localhost:3001/api/reports/pending?${queryParams}`, {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      const response = await fetch(`${apiUrl}/reports/pending?${queryParams}`, {
         headers: {
           'Authorization': `Bearer ${apiService.getToken()}`
         }
@@ -121,7 +123,9 @@ export const ReportsManagementPage: React.FC = () => {
     try {
       setActionLoading(selectedReport.id);
       
-      const response = await fetch(`http://localhost:3001/api/reports/${selectedReport.id}/resolve`, {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      const response = await fetch(`${apiUrl}/reports/${selectedReport.id}/resolve`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

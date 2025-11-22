@@ -10,7 +10,12 @@ export const LoginPage: React.FC = () => {
 
   // Si ya está autenticado, redirigir a la página anterior o al dashboard
   if (isAuthenticated) {
-    const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard';
+    // Validar y normalizar la ruta de destino
+    const locationState = location.state as { from?: { pathname?: string } } | null | undefined;
+    const fromPath = locationState?.from?.pathname;
+    const from = fromPath && typeof fromPath === 'string' && fromPath.startsWith('/') 
+      ? fromPath 
+      : '/dashboard';
     return <Navigate to={from} replace />;
   }
 

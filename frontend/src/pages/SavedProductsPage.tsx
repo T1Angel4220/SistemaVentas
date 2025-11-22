@@ -55,7 +55,9 @@ export const SavedProductsPage: React.FC = () => {
       
       console.log('🔍 Haciendo petición a /products/saved con token:', token.substring(0, 20) + '...');
       
-      const response = await fetch('http://localhost:3001/api/products/saved', {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      const response = await fetch(`${apiUrl}/products/saved`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -83,7 +85,8 @@ export const SavedProductsPage: React.FC = () => {
   }, [user]); // isLoadingProducts se omite intencionalmente para evitar bucles infinitos
 
   useEffect(() => {
-    if (location.pathname === '/products/saved') {
+    const currentPath = location?.pathname || '';
+    if (currentPath === '/products/saved' || currentPath.endsWith('/products/saved')) {
       if (user && (user.tipo_usuario === 'comprador' || user.tipo_usuario === 'vendedor')) {
         loadSavedProducts();
       } else {
@@ -91,7 +94,7 @@ export const SavedProductsPage: React.FC = () => {
         setError('Debes iniciar sesión como comprador o vendedor para ver tus productos guardados');
       }
     }
-  }, [user, loadSavedProducts, location.pathname]);
+  }, [user, loadSavedProducts, location?.pathname]);
 
   const handleRemoveProduct = async (product: Product) => {
     showWarning(
@@ -100,7 +103,9 @@ export const SavedProductsPage: React.FC = () => {
       async () => {
         setRemovingProduct(product.id);
         try {
-          const response = await fetch(`http://localhost:3001/api/products/${product.id}/unsave`, {
+          const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+          const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+          const response = await fetch(`${apiUrl}/products/${product.id}/unsave`, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${apiService.getToken()}`

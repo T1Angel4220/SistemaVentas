@@ -47,21 +47,21 @@ export const DashboardPage: React.FC = () => {
     );
   }
 
-  // Verificar que todos los datos esenciales estén cargados
-  if (!user.nombre || !user.apellido || !user.correo) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Cargando datos del usuario...</h2>
-          <p className="text-gray-600">Obteniendo información completa...</p>
-        </div>
-      </div>
-    );
-  }
+  // Asegurar que user.estado tenga un valor por defecto
+  const userEstado = user.estado || 'activo';
+  
+  // Valores por defecto para evitar errores
+  const userNombre = user.nombre || '';
+  const userApellido = user.apellido || '';
+  const userCorreo = user.correo || '';
+  const userTipoUsuario = user.tipo_usuario || 'comprador';
+  
+  // Si no hay datos esenciales, mostrar loading pero no bloquear
+  // El usuario puede tener datos parciales
 
 
-  const getStatusColor = (estado: string) => {
+  const getStatusColor = (estado: string | undefined) => {
+    if (!estado) return 'bg-gray-100 text-gray-800';
     const colors = {
       activo: 'bg-green-100 text-green-800',
       inactivo: 'bg-gray-100 text-gray-800',
@@ -247,11 +247,11 @@ export const DashboardPage: React.FC = () => {
             <div className="flex items-center space-x-3 sm:space-x-4">
               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
                 <span className="text-sm sm:text-lg font-bold text-white">
-                  {user.nombre.charAt(0)}{user.apellido.charAt(0)}
+                  {userNombre.charAt(0) || 'U'}{userApellido.charAt(0) || ''}
                 </span>
               </div>
               <div>
-                <h1 className="text-lg sm:text-xl font-bold text-gray-900">¡Hola, {user.nombre}!</h1>
+                <h1 className="text-lg sm:text-xl font-bold text-gray-900">¡Hola, {userNombre || 'Usuario'}!</h1>
                 <p className="text-xs sm:text-sm text-gray-600">Sistema de Ventas Multiempresa</p>
               </div>
             </div>
@@ -294,12 +294,12 @@ export const DashboardPage: React.FC = () => {
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
                   <span className="text-lg font-bold">
-                    {user.nombre.charAt(0)}{user.apellido.charAt(0)}
+                    {userNombre.charAt(0) || 'U'}{userApellido.charAt(0) || ''}
                   </span>
                 </div>
                 <div>
-                  <h3 className="font-semibold">{user.nombre} {user.apellido}</h3>
-                  <p className="text-blue-100 text-sm capitalize">{user.tipo_usuario}</p>
+                  <h3 className="font-semibold">{userNombre || 'Usuario'} {userApellido || ''}</h3>
+                  <p className="text-blue-100 text-sm capitalize">{userTipoUsuario}</p>
                 </div>
               </div>
               <Button
@@ -444,11 +444,11 @@ export const DashboardPage: React.FC = () => {
                 <div className="space-y-4">
                   <div>
                     <label className="text-sm font-medium text-gray-500">Nombre completo</label>
-                    <p className="text-sm font-semibold text-gray-900">{user.nombre} {user.apellido}</p>
+                    <p className="text-sm font-semibold text-gray-900">{userNombre || 'Usuario'} {userApellido || ''}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">Correo electrónico</label>
-                    <p className="text-sm text-gray-900">{user.correo}</p>
+                    <p className="text-sm text-gray-900">{userCorreo || 'No proporcionado'}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">Cédula</label>
@@ -484,8 +484,8 @@ export const DashboardPage: React.FC = () => {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">Estado</label>
-                    <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(user.estado)}`}>
-                      {user.estado.replace('_', ' ').toUpperCase()}
+                    <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(userEstado)}`}>
+                      {userEstado.replace('_', ' ').toUpperCase()}
                     </span>
                   </div>
                   <div>
@@ -732,11 +732,11 @@ export const DashboardPage: React.FC = () => {
 
         {/* Status Alerts - Email verification removed as it's handled at login */}
 
-        {user.estado !== 'activo' && (
+        {userEstado && userEstado !== 'activo' && (
           <div className="mt-8">
             <Alert variant="destructive">
               <AlertDescription>
-                Tu cuenta está {user.estado.replace('_', ' ')}. Contacta al administrador para más información.
+                Tu cuenta está {userEstado.replace('_', ' ')}. Contacta al administrador para más información.
               </AlertDescription>
             </Alert>
           </div>

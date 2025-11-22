@@ -52,8 +52,10 @@ export const ReportProductDialog: React.FC<ReportProductDialogProps> = ({
     setLoading(true);
 
     try {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
       const token = localStorage.getItem('accessToken');
-      const response = await fetch(`http://localhost:3001/api/products/${productId}/report`, {
+      const response = await fetch(`${apiUrl}/products/${productId}/report`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

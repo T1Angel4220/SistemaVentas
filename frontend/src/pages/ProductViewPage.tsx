@@ -63,7 +63,9 @@ export const ProductViewPage: React.FC = () => {
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`http://localhost:3001/api/products/${id}`);
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      const response = await fetch(`${apiUrl}/products/${id}`);
       const data = await response.json();
       
       if (data.success) {
@@ -86,7 +88,9 @@ export const ProductViewPage: React.FC = () => {
 
   const checkIfSaved = async (productId: number) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/products/${productId}/saved-status`, {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      const response = await fetch(`${apiUrl}/products/${productId}/saved-status`, {
         headers: {
           'Authorization': `Bearer ${apiService.getToken()}`
         }
@@ -131,7 +135,9 @@ export const ProductViewPage: React.FC = () => {
 
     setSavingProduct(true);
     try {
-      const response = await fetch(`http://localhost:3001/api/products/${product?.id}/save`, {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      const response = await fetch(`${apiUrl}/products/${product?.id}/save`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -159,7 +165,9 @@ export const ProductViewPage: React.FC = () => {
 
     setSavingProduct(true);
     try {
-      const response = await fetch(`http://localhost:3001/api/products/${product?.id}/unsave`, {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      const response = await fetch(`${apiUrl}/products/${product?.id}/unsave`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${apiService.getToken()}`

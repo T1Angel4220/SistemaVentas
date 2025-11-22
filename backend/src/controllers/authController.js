@@ -126,9 +126,12 @@ const login = async (req, res) => {
   try {
     const { correo, password } = req.body;
     
-    // Buscar usuario por email
+    // Buscar usuario por email - obtener todos los campos necesarios
     const userResult = await query(
-      'SELECT * FROM usuarios WHERE correo = $1',
+      `SELECT id, cedula, nombre, apellido, correo, telefono, direccion, genero,
+              tipo_usuario, estado, email_verificado, fecha_registro, fecha_ultimo_acceso,
+              password_hash
+       FROM usuarios WHERE correo = $1`,
       [correo]
     );
     
@@ -241,8 +244,14 @@ const login = async (req, res) => {
           nombre: user.nombre,
           apellido: user.apellido,
           correo: user.correo,
+          telefono: user.telefono,
+          direccion: user.direccion,
+          genero: user.genero,
           tipo_usuario: user.tipo_usuario,
-          estado: user.estado
+          estado: user.estado,
+          email_verificado: user.email_verificado,
+          fecha_registro: user.fecha_registro,
+          fecha_ultimo_acceso: user.fecha_ultimo_acceso
         },
         tokens: {
           accessToken: tokens.accessToken,

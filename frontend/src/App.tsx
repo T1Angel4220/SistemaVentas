@@ -38,7 +38,7 @@ import { NotFoundPage } from './pages/NotFoundPage';
 function App() {
   return (
     <AuthProvider>
-      <Router>
+      <Router basename="/SistemaVentas">
         <GlobalSessionAlertContainer />
         <GlobalSuspendedAlertContainer />
         <div className="min-h-screen bg-gray-50">
@@ -204,25 +204,6 @@ function App() {
                         </h2>
                         <p className="text-gray-600">
                           Sistema de chat en desarrollo...
-                        </p>
-                      </div>
-                    </div>
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Rutas de perfil */}
-              <Route 
-                path="/profile" 
-                element={
-                  <ProtectedRoute>
-                    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                      <div className="text-center">
-                        <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                          Perfil de Usuario
-                        </h2>
-                        <p className="text-gray-600">
-                          Gestión de perfil en desarrollo...
                         </p>
                       </div>
                     </div>

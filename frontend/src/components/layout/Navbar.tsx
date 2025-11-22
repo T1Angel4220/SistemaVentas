@@ -5,6 +5,7 @@ import { Button } from '../ui/Button';
 import { LogoutConfirmModal } from '../ui/LogoutConfirmModal';
 import { LogOut, User, Shield, AlertTriangle, Flag, FileText } from 'lucide-react';
 import { apiService } from '../../services/api';
+import { redirectTo } from '../../utils/pathUtils';
 
 export const Navbar: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
@@ -16,7 +17,9 @@ export const Navbar: React.FC = () => {
     const loadDangerousCount = async () => {
       if (user?.tipo_usuario === 'vendedor') {
         try {
-          const response = await fetch('http://localhost:3001/api/products/my-dangerous', {
+          const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+          const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+          const response = await fetch(`${apiUrl}/products/my-dangerous`, {
             headers: {
               'Authorization': `Bearer ${apiService.getToken()}`
             }
@@ -42,12 +45,12 @@ export const Navbar: React.FC = () => {
     setShowLogoutModal(false);
     try {
       await logout();
-      // Usar window.location para forzar recarga completa y evitar problemas de estado
-      window.location.href = '/login';
+      // Usar redirectTo para forzar recarga completa y evitar problemas de estado
+      redirectTo('/login');
     } catch (error) {
       console.error('Error en logout:', error);
       // Si hay error, forzar redirección de todas formas
-      window.location.href = '/login';
+      redirectTo('/login');
     }
   };
 
@@ -189,7 +192,17 @@ export const Navbar: React.FC = () => {
           <div className="flex items-center gap-4">
             <div className="hidden md:block text-right">
               <p className="text-sm font-medium text-gray-900">
-                {user.nombre || ''} {user.apellido || ''}
+                {(() => {
+                  // Mostrar nombre completo si está disponible
+                  const nombre = user.nombre?.trim() || '';
+                  const apellido = user.apellido?.trim() || '';
+                  const nombreCompleto = `${nombre} ${apellido}`.trim();
+                  // Si no hay nombre completo, mostrar correo sin dominio
+                  if (!nombreCompleto && user.correo) {
+                    return user.correo.split('@')[0];
+                  }
+                  return nombreCompleto || 'Usuario';
+                })()}
               </p>
               <p className="text-xs text-gray-500">
                 {user.tipo_usuario ? user.tipo_usuario.charAt(0).toUpperCase() + user.tipo_usuario.slice(1) : 'Usuario'}

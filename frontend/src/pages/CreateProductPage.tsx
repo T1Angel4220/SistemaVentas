@@ -32,6 +32,7 @@ import {
   Info
 } from 'lucide-react';
 import type { ProductForm, ImageFile } from '../types/product.types';
+import { redirectTo } from '../utils/pathUtils';
 
 export const CreateProductPage: React.FC = () => {
   const { user } = useAuth();
@@ -84,7 +85,9 @@ export const CreateProductPage: React.FC = () => {
   const loadProductData = useCallback(async (productId: string) => {
     try {
       setLoadingData(true);
-      const response = await fetch(`http://localhost:3001/api/products/${productId}`);
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      const response = await fetch(`${apiUrl}/products/${productId}`);
       const data = await response.json();
       
       if (data.success) {
@@ -234,7 +237,9 @@ export const CreateProductPage: React.FC = () => {
     const loadLocations = async () => {
       try {
         // Pedir todas las ubicaciones (sin paginación)
-        const response = await fetch('http://localhost:3001/api/locations?limit=1000');
+        const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+        const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+        const response = await fetch(`${apiUrl}/locations?limit=1000`);
         const data = await response.json();
         if (data.success) {
           setLocations(data.data);
@@ -696,7 +701,7 @@ export const CreateProductPage: React.FC = () => {
       showSuccess(
         'Sin cambios', 
         'No se han realizado cambios en el formulario. Todo está actualizado.',
-        () => window.location.href = `/products/${id}` // Redirigir a la vista del producto con recarga
+        () => redirectTo(`/products/${id}`) // Redirigir a la vista del producto con recarga
       );
       return;
     }
@@ -794,9 +799,11 @@ export const CreateProductPage: React.FC = () => {
         console.log('❌ No se agregaron deleted_images (no es modo edición)');
       }
 
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
       const url = isEditMode 
-        ? `http://localhost:3001/api/products/${id}`
-        : 'http://localhost:3001/api/products';
+        ? `${apiUrl}/products/${id}`
+        : `${apiUrl}/products`;
       
       const method = isEditMode ? 'PUT' : 'POST';
 
@@ -832,7 +839,7 @@ export const CreateProductPage: React.FC = () => {
         // Si el producto estaba rechazado y el vendedor escribió una respuesta, crear apelación
         if (isEditMode && form.estado === 'rechazado' && respuestaRechazo.trim()) {
           try {
-            const appealResponse = await fetch(`http://localhost:3001/api/products/${id}/appeal`, {
+            const appealResponse = await fetch(`${apiUrl}/products/${id}/appeal`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -898,7 +905,7 @@ export const CreateProductPage: React.FC = () => {
               () => {
                 setSuccess(false);
                 // Forzar recarga completa de la página
-                window.location.href = '/my-products';
+                redirectTo('/my-products');
               }
             );
           } else if (seEnvioApelacion) {
@@ -909,7 +916,7 @@ export const CreateProductPage: React.FC = () => {
               () => {
                 setSuccess(false);
                 // Forzar recarga completa de la página
-                window.location.href = '/my-products';
+                redirectTo('/my-products');
               }
             );
           } else if (tipoAlerta === 'info') {
@@ -919,7 +926,7 @@ export const CreateProductPage: React.FC = () => {
               () => {
                 setSuccess(false);
                 // Forzar recarga completa de la página para mostrar los cambios
-                window.location.href = `/products/${data.data.id || id}`;
+                redirectTo(`/products/${data.data.id || id}`);
               }
             );
           } else {
@@ -929,7 +936,7 @@ export const CreateProductPage: React.FC = () => {
               () => {
                 setSuccess(false);
                 // Forzar recarga completa de la página para mostrar los cambios
-                window.location.href = `/products/${data.data.id || id}`;
+                redirectTo(`/products/${data.data.id || id}`);
               }
             );
           }
@@ -1510,7 +1517,7 @@ export const CreateProductPage: React.FC = () => {
                 <HierarchicalCategorySearch
                   categories={categories}
                   selectedCategoryId={form.categoria_id}
-                  onCategorySelect={(categoryId) => {
+                  onCategorySelect={(categoryId, _categoryName, _fullPath) => {
                     handleInputChange('categoria_id', categoryId);
                   }}
                   loading={categoriesLoading}

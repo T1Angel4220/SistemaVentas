@@ -1,11 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
 import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
-import { Alert } from '../components/ui/Alert';
 import { 
   ArrowLeft, 
   Monitor, 
@@ -41,7 +38,6 @@ interface User {
 export const SessionManagementPage: React.FC = () => {
   const navigate = useNavigate();
   const { userId } = useParams<{ userId: string }>();
-  const { user: currentUser } = useAuth();
   const [user, setUser] = useState<User | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
@@ -117,7 +113,7 @@ export const SessionManagementPage: React.FC = () => {
     try {
       setLoading(true);
       const response = await apiService.getUserSessions(parseInt(userId!));
-      if (response.success) {
+      if (response.success && response.data) {
         setUser(response.data.user);
         setSessions(response.data.sessions);
       } else {
