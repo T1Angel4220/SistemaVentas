@@ -79,7 +79,6 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
       } else {
         // Hay duplicados - filtrar correctamente
         const withSubs = duplicates.filter(c => c.subcategorias && c.subcategorias.length > 0);
-        const withoutSubs = duplicates.filter(c => !c.subcategorias || c.subcategorias.length === 0);
         
         if (withSubs.length > 0) {
           // Hay categorías con subcategorías - mantener SOLO estas
@@ -384,7 +383,10 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
                           e.preventDefault();
                           toggleExpansion(category.id);
                         }}
-                        className="p-1.5 text-gray-500 hover:text-gray-700 focus:outline-none flex-shrink-0 mr-1"
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                        }}
+                        className="p-1.5 text-gray-500 hover:text-gray-700 focus:outline-none flex-shrink-0 mr-1 z-10 relative"
                         aria-label={isExpanded ? 'Colapsar categoría' : 'Expandir categoría'}
                         title={isExpanded ? 'Colapsar categoría' : 'Expandir categoría'}
                       >
@@ -400,15 +402,21 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
                         <FolderOpen className="h-4 w-4" />
                       </div>
                     )}
-                    {/* Botón de selección - ÁREA PRINCIPAL CLICKEABLE */}
+                    {/* Botón de selección - ÁREA PRINCIPAL CLICKEABLE - Funciona para TODAS las categorías (padre e hijas) */}
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
+                        console.log('🔵 Seleccionando categoría:', category.nombre, 'ID:', category.id, 'Nivel:', category.nivel, 'isParent:', isParent);
                         handleCategorySelect(category);
                       }}
-                      className={`flex-1 px-4 py-2 text-left text-sm hover:bg-blue-50 focus:bg-blue-50 focus:outline-none flex items-center justify-between rounded transition-colors ${
+                      onMouseDown={(e) => {
+                        // Permitir que el evento se propague para asegurar que se seleccione
+                        // pero prevenir el comportamiento por defecto
+                        e.preventDefault();
+                      }}
+                      className={`flex-1 px-4 py-2 text-left text-sm hover:bg-blue-50 focus:bg-blue-50 focus:outline-none flex items-center justify-between rounded transition-colors cursor-pointer ${
                         isSelected ? 'bg-blue-100 font-semibold' : ''
                       }`}
                       title={`Seleccionar ${category.nombre}`}
