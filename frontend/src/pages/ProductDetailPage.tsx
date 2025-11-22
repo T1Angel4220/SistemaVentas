@@ -121,7 +121,12 @@ export const ProductDetailPage: React.FC = () => {
             break;
         }
 
-        // Recargar el producto para actualizar el estado
+        // Actualizar el estado del producto inmediatamente
+        if (action === 'aprobar') {
+          setProduct(prev => prev ? { ...prev, estado: 'activo' } : null);
+        }
+        
+        // Recargar el producto para actualizar el estado completo
         await loadProduct();
         
         showSuccess(titulo, mensaje, () => {
@@ -233,6 +238,11 @@ export const ProductDetailPage: React.FC = () => {
             );
             return; // No establecer el producto
           }
+        }
+        
+        // Asegurar que el estado esté normalizado
+        if (productData.estado) {
+          productData.estado = String(productData.estado).toLowerCase().trim();
         }
         
         setProduct(productData);
@@ -789,12 +799,12 @@ export const ProductDetailPage: React.FC = () => {
                 
                 {/* Botones principales: Aprobar, Rechazar, Suspender */}
                 <div className={`grid gap-2 mb-3 ${
-                  (product.estado && String(product.estado).toLowerCase().trim() === 'activo')
+                  product.estado === 'activo'
                     ? 'grid-cols-1 sm:grid-cols-2' 
                     : 'grid-cols-1 sm:grid-cols-3'
                 }`}>
                   {/* Botón Aprobar - SOLO visible si NO está aprobado */}
-                  {!(product.estado && String(product.estado).toLowerCase().trim() === 'activo') && (
+                  {product.estado !== 'activo' && (
                     <Button 
                       size="sm"
                       onClick={handleApproveProduct}

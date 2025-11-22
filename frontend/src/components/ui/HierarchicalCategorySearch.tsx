@@ -301,8 +301,9 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
                           e.stopPropagation();
                           toggleExpansion(category.id);
                         }}
-                        className="p-2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                        className="p-2 text-gray-500 hover:text-gray-700 focus:outline-none flex-shrink-0"
                         aria-label={isExpanded ? 'Colapsar categoría' : 'Expandir categoría'}
+                        title={isExpanded ? 'Colapsar categoría' : 'Expandir categoría'}
                       >
                         {isExpanded ? (
                           <ChevronDown className="h-4 w-4" />
@@ -312,16 +313,22 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
                       </button>
                     )}
                     {isParent && !hasChildren && (
-                      <div className="p-2 text-gray-400">
+                      <div className="p-2 text-gray-400 flex-shrink-0">
                         <FolderOpen className="h-4 w-4" />
                       </div>
                     )}
                     <button
                       type="button"
-                      onClick={() => handleCategorySelect(category)}
+                      onClick={(e) => {
+                        // Si es una categoría padre con hijos, permitir seleccionar directamente
+                        // El botón de expandir solo expande/colapsa, no selecciona
+                        e.stopPropagation();
+                        handleCategorySelect(category);
+                      }}
                       className={`flex-1 px-4 py-2 text-left text-sm hover:bg-blue-50 focus:bg-blue-50 focus:outline-none flex items-center justify-between rounded ${
                         isSelected ? 'bg-blue-100' : ''
                       }`}
+                      title={`Seleccionar ${category.nombre}`}
                     >
                       <span className={isSelected ? 'text-blue-900' : 'text-gray-900'}>
                         {category.nombre}
