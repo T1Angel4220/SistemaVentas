@@ -121,19 +121,32 @@ export const ProductDetailPage: React.FC = () => {
             break;
         }
 
-        // Actualizar el estado del producto inmediatamente
-        if (action === 'aprobar') {
-          setProduct(prev => prev ? { ...prev, estado: 'activo' } : null);
-        }
-        
-        // Recargar el producto para actualizar el estado completo
+        // Recargar el producto para actualizar el estado completo ANTES de mostrar el mensaje
         await loadProduct();
+        
+        // Forzar actualización del estado después de recargar
+        if (action === 'aprobar') {
+          // Esperar un momento para asegurar que el estado se actualizó
+          setTimeout(() => {
+            setProduct(prev => {
+              if (prev) {
+                const updated = { ...prev, estado: 'activo' as const };
+                console.log('✅ Estado actualizado a activo:', updated.estado);
+                return updated;
+              }
+              return null;
+            });
+          }, 100);
+        }
         
         showSuccess(titulo, mensaje, () => {
           // Si estamos en la página de detalle, quedarnos aquí
           // Si estamos en la página de moderación, navegar allí
           if (window.location.pathname.includes('/products/moderation')) {
             navigate('/products/moderation');
+          } else {
+            // Forzar recarga del producto después de cerrar el mensaje
+            loadProduct();
           }
         });
       } else {
@@ -269,7 +282,15 @@ export const ProductDetailPage: React.FC = () => {
   // Debug: Log del estado del producto cuando cambia
   useEffect(() => {
     if (product) {
-      console.log('🔍 Estado del producto actualizado:', product.estado, 'Tipo:', typeof product.estado, 'Es activo?', String(product.estado).toLowerCase().trim() === 'activo');
+      const estadoNormalizado = String(product.estado).toLowerCase().trim();
+      const esActivo = estadoNormalizado === 'activo';
+      console.log('🔍 Estado del producto:', {
+        original: product.estado,
+        normalizado: estadoNormalizado,
+        tipo: typeof product.estado,
+        esActivo: esActivo,
+        deberiaOcultarBoton: esActivo
+      });
     }
   }, [product]);
 

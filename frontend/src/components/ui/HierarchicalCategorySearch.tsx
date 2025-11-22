@@ -294,6 +294,7 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
                     } ${isHighlighted ? 'bg-blue-50' : ''}`}
                     style={{ paddingLeft: `${indent * 16 + 16}px` }}
                   >
+                    {/* Botón de expandir/colapsar - SOLO para expandir, NO para seleccionar */}
                     {isParent && hasChildren && (
                       <button
                         type="button"
@@ -302,11 +303,7 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
                           e.preventDefault();
                           toggleExpansion(category.id);
                         }}
-                        onMouseDown={(e) => {
-                          // Prevenir que el clic se propague al botón de selección
-                          e.stopPropagation();
-                        }}
-                        className="p-2 text-gray-500 hover:text-gray-700 focus:outline-none flex-shrink-0 z-10"
+                        className="p-1.5 text-gray-500 hover:text-gray-700 focus:outline-none flex-shrink-0 mr-1"
                         aria-label={isExpanded ? 'Colapsar categoría' : 'Expandir categoría'}
                         title={isExpanded ? 'Colapsar categoría' : 'Expandir categoría'}
                       >
@@ -318,24 +315,20 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
                       </button>
                     )}
                     {isParent && !hasChildren && (
-                      <div className="p-2 text-gray-400 flex-shrink-0">
+                      <div className="p-1.5 text-gray-400 flex-shrink-0 mr-1">
                         <FolderOpen className="h-4 w-4" />
                       </div>
                     )}
+                    {/* Botón de selección - ÁREA PRINCIPAL CLICKEABLE */}
                     <button
                       type="button"
                       onClick={(e) => {
-                        // Permitir seleccionar la categoría (padre o hijo)
                         e.stopPropagation();
                         e.preventDefault();
                         handleCategorySelect(category);
                       }}
-                      onMouseDown={(e) => {
-                        // Asegurar que el clic se capture correctamente
-                        e.stopPropagation();
-                      }}
-                      className={`flex-1 px-4 py-2 text-left text-sm hover:bg-blue-50 focus:bg-blue-50 focus:outline-none flex items-center justify-between rounded ${
-                        isSelected ? 'bg-blue-100' : ''
+                      className={`flex-1 px-4 py-2 text-left text-sm hover:bg-blue-50 focus:bg-blue-50 focus:outline-none flex items-center justify-between rounded transition-colors ${
+                        isSelected ? 'bg-blue-100 font-semibold' : ''
                       }`}
                       title={`Seleccionar ${category.nombre}`}
                     >
@@ -343,7 +336,7 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
                         {category.nombre}
                       </span>
                       {isSelected && (
-                        <Check className="h-4 w-4 text-blue-600" />
+                        <Check className="h-4 w-4 text-blue-600 flex-shrink-0" />
                       )}
                     </button>
                   </div>
