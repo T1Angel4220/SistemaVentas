@@ -18,13 +18,59 @@ import {
   Shield
 } from 'lucide-react';
 
-// Helper para construir URLs de API correctamente (igual que VerifyCodePage)
+// Helper para construir URLs de API correctamente
+// Asegura que solo haya un /api en la URL final, sin importar cómo esté configurado VITE_API_URL
 const buildApiUrl = (endpoint: string): string => {
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-  // Normalizar: quitar /api al final si existe, luego agregar /api + endpoint
-  const normalizedBase = API_URL.replace(/\/api\/?$/i, '').replace(/\/+$/, '');
+  const rawApiUrl = (import.meta.env.VITE_API_URL || 'http://localhost:3001').toString().trim();
+  
+  // Log para debug
+  console.log('🔧 buildApiUrl - VITE_API_URL original:', rawApiUrl);
+  
+  // Quitar TODOS los /api al final de manera iterativa hasta que no quede ninguno
+  let normalizedBase = rawApiUrl;
+  let previousBase = '';
+  
+  // Iterar hasta que no haya más cambios (para manejar casos como /api/api/api)
+  while (normalizedBase !== previousBase) {
+    previousBase = normalizedBase;
+    // Quitar /api o /api/ al final (case-insensitive)
+    normalizedBase = normalizedBase.replace(/\/api\/?$/i, '');
+  }
+  
+  // Quitar barras finales múltiples
+  normalizedBase = normalizedBase.replace(/\/+$/, '');
+  
+  // Validar que tenemos una URL válida
+  if (!normalizedBase || normalizedBase.length < 10) {
+    console.warn('⚠️ URL base normalizada parece inválida, usando valor original');
+    normalizedBase = rawApiUrl.replace(/\/api\/?$/i, '').replace(/\/+$/, '');
+    if (!normalizedBase) {
+      normalizedBase = rawApiUrl.replace(/\/+$/, '');
+    }
+  }
+  
+  // Construir endpoint limpio
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  return `${normalizedBase}/api${cleanEndpoint}`;
+  
+  // Construir URL final: base + /api + endpoint
+  const finalUrl = `${normalizedBase}/api${cleanEndpoint}`;
+  
+  // Verificar que no haya /api/api en la URL final
+  if (finalUrl.includes('/api/api')) {
+    console.error('❌ ERROR: URL final contiene /api/api duplicado!');
+    console.error('   URL problemática:', finalUrl);
+    // Intentar corregir quitando /api/api y dejando solo uno
+    const correctedUrl = finalUrl.replace(/\/api\/api/g, '/api');
+    console.warn('   URL corregida:', correctedUrl);
+    return correctedUrl;
+  }
+  
+  // Logs detallados
+  console.log('🔧 buildApiUrl - Base normalizada:', normalizedBase);
+  console.log('🔧 buildApiUrl - Endpoint:', cleanEndpoint);
+  console.log('🔧 buildApiUrl - URL final:', finalUrl);
+  
+  return finalUrl;
 };
 
 export const ProfilePage: React.FC = () => {
