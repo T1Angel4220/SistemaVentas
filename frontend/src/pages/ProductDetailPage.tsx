@@ -121,7 +121,16 @@ export const ProductDetailPage: React.FC = () => {
             break;
         }
 
-        showSuccess(titulo, mensaje, () => navigate('/products/moderation'));
+        // Recargar el producto para actualizar el estado
+        await loadProduct();
+        
+        showSuccess(titulo, mensaje, () => {
+          // Si estamos en la página de detalle, quedarnos aquí
+          // Si estamos en la página de moderación, navegar allí
+          if (window.location.pathname.includes('/products/moderation')) {
+            navigate('/products/moderation');
+          }
+        });
       } else {
         showError('Error', data.message || 'Error al moderar producto');
       }
@@ -780,12 +789,12 @@ export const ProductDetailPage: React.FC = () => {
                 
                 {/* Botones principales: Aprobar, Rechazar, Suspender */}
                 <div className={`grid gap-2 mb-3 ${
-                  product.estado === 'activo' 
+                  product.estado?.toLowerCase().trim() === 'activo' 
                     ? 'grid-cols-1 sm:grid-cols-2' 
                     : 'grid-cols-1 sm:grid-cols-3'
                 }`}>
                   {/* Botón Aprobar - SOLO visible si NO está aprobado */}
-                  {product.estado !== 'activo' && (
+                  {product.estado?.toLowerCase().trim() !== 'activo' && (
                     <Button 
                       size="sm"
                       onClick={handleApproveProduct}

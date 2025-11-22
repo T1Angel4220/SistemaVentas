@@ -689,10 +689,10 @@ export const ProductModerationPage: React.FC = () => {
                     <>
                       {/* Acciones principales: Aprobar, Rechazar, Suspender */}
                       <div className={`grid gap-2 pt-3 border-t border-gray-100 ${
-                        product.estado === 'activo' ? 'grid-cols-2' : 'grid-cols-3'
+                        product.estado?.toLowerCase().trim() === 'activo' ? 'grid-cols-2' : 'grid-cols-3'
                       }`}>
                         {/* Botón Aprobar - SOLO visible si NO está aprobado */}
-                        {product.estado !== 'activo' && (
+                        {product.estado?.toLowerCase().trim() !== 'activo' && (
                           <Button 
                             size="sm"
                             onClick={() => handleApproveProduct(product.id, product.nombre)}
