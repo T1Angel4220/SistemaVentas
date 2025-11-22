@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
+import { API_BASE_URL } from '../services/api';
 import { 
   User, 
   Mail, 
@@ -17,61 +18,6 @@ import {
   Edit3,
   Shield
 } from 'lucide-react';
-
-// Helper para construir URLs de API correctamente
-// Asegura que solo haya un /api en la URL final, sin importar cómo esté configurado VITE_API_URL
-const buildApiUrl = (endpoint: string): string => {
-  const rawApiUrl = (import.meta.env.VITE_API_URL || 'http://localhost:3001').toString().trim();
-  
-  // Log para debug
-  console.log('🔧 buildApiUrl - VITE_API_URL original:', rawApiUrl);
-  
-  // Quitar TODOS los /api al final de manera iterativa hasta que no quede ninguno
-  let normalizedBase = rawApiUrl;
-  let previousBase = '';
-  
-  // Iterar hasta que no haya más cambios (para manejar casos como /api/api/api)
-  while (normalizedBase !== previousBase) {
-    previousBase = normalizedBase;
-    // Quitar /api o /api/ al final (case-insensitive)
-    normalizedBase = normalizedBase.replace(/\/api\/?$/i, '');
-  }
-  
-  // Quitar barras finales múltiples
-  normalizedBase = normalizedBase.replace(/\/+$/, '');
-  
-  // Validar que tenemos una URL válida
-  if (!normalizedBase || normalizedBase.length < 10) {
-    console.warn('⚠️ URL base normalizada parece inválida, usando valor original');
-    normalizedBase = rawApiUrl.replace(/\/api\/?$/i, '').replace(/\/+$/, '');
-    if (!normalizedBase) {
-      normalizedBase = rawApiUrl.replace(/\/+$/, '');
-    }
-  }
-  
-  // Construir endpoint limpio
-  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  
-  // Construir URL final: base + /api + endpoint
-  const finalUrl = `${normalizedBase}/api${cleanEndpoint}`;
-  
-  // Verificar que no haya /api/api en la URL final
-  if (finalUrl.includes('/api/api')) {
-    console.error('❌ ERROR: URL final contiene /api/api duplicado!');
-    console.error('   URL problemática:', finalUrl);
-    // Intentar corregir quitando /api/api y dejando solo uno
-    const correctedUrl = finalUrl.replace(/\/api\/api/g, '/api');
-    console.warn('   URL corregida:', correctedUrl);
-    return correctedUrl;
-  }
-  
-  // Logs detallados
-  console.log('🔧 buildApiUrl - Base normalizada:', normalizedBase);
-  console.log('🔧 buildApiUrl - Endpoint:', cleanEndpoint);
-  console.log('🔧 buildApiUrl - URL final:', finalUrl);
-  
-  return finalUrl;
-};
 
 export const ProfilePage: React.FC = () => {
   const { user, refreshUser } = useAuth();
@@ -150,7 +96,8 @@ export const ProfilePage: React.FC = () => {
 
     try {
       const token = localStorage.getItem('accessToken');
-      const url = buildApiUrl('/auth/profile');
+      // Usar API_BASE_URL que ya está configurado correctamente (igual que otras páginas)
+      const url = `${API_BASE_URL}/auth/profile`;
       
       console.log('🌐 URL de la petición:', url);
       console.log('📤 Datos enviados:', profileData);
@@ -230,7 +177,8 @@ export const ProfilePage: React.FC = () => {
 
     try {
       const token = localStorage.getItem('accessToken');
-      const url = buildApiUrl('/auth/change-password');
+      // Usar API_BASE_URL que ya está configurado correctamente (igual que otras páginas)
+      const url = `${API_BASE_URL}/auth/change-password`;
       
       console.log('🌐 URL de la petición:', url);
 
