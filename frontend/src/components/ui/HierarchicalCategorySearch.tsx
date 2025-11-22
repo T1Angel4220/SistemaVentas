@@ -31,11 +31,20 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [categoryMode, setCategoryMode] = useState<'general' | 'subcategoria'>('subcategoria'); // Modo por defecto: subcategoría
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Obtener la categoría seleccionada
   const selectedCategory = categories.find(cat => cat.id.toString() === selectedCategoryId);
+  
+  // Detectar automáticamente el modo basado en la categoría seleccionada
+  useEffect(() => {
+    if (selectedCategory) {
+      // Si la categoría seleccionada es nivel 0, es general; si es nivel 1, es subcategoría
+      setCategoryMode(selectedCategory.nivel === 0 ? 'general' : 'subcategoria');
+    }
+  }, [selectedCategory]);
 
   // Organizar categorías en estructura jerárquica
   const organizeCategories = (categories: Category[]) => {
@@ -155,6 +164,15 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
   const flatCategories = React.useMemo(() => {
     const flat: Array<{ category: Category; isParent: boolean; hasChildren: boolean; indent: number }> = [];
     
+    // Si el modo es "general", solo mostrar categorías padre (nivel 0)
+    if (categoryMode === 'general') {
+      filteredCategories.forEach(parent => {
+        flat.push({ category: parent, isParent: true, hasChildren: false, indent: 0 });
+      });
+      return flat;
+    }
+    
+    // Modo "subcategoría": comportamiento normal con jerarquía
     filteredCategories.forEach(parent => {
       const hasSubcategories = parent.subcategorias && parent.subcategorias.length > 0;
       const isExpanded = expandedCategories.has(parent.id);
@@ -174,7 +192,7 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
     });
     
     return flat;
-  }, [filteredCategories, expandedCategories, searchTerm]);
+  }, [filteredCategories, expandedCategories, searchTerm, categoryMode]);
 
   // Manejar selección de categoría
   const handleCategorySelect = (category: Category) => {
@@ -273,9 +291,9 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Auto-expandir todas las categorías padre con subcategorías cuando se abre el dropdown
+  // Auto-expandir todas las categorías padre con subcategorías cuando se abre el dropdown (solo en modo subcategoría)
   useEffect(() => {
-    if (isOpen && !searchTerm && filteredCategories.length > 0) {
+    if (isOpen && !searchTerm && filteredCategories.length > 0 && categoryMode === 'subcategoria') {
       // Expandir automáticamente TODAS las categorías padre que tienen subcategorías
       const parentIdsWithSubcategories = filteredCategories
         .filter(cat => {
@@ -295,8 +313,11 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
       if (parentIdsWithSubcategories.length > 0) {
         setExpandedCategories(new Set(parentIdsWithSubcategories));
       }
+    } else if (categoryMode === 'general') {
+      // En modo general, no expandir nada
+      setExpandedCategories(new Set());
     }
-  }, [isOpen, searchTerm, filteredCategories, selectedCategory]);
+  }, [isOpen, searchTerm, filteredCategories, selectedCategory, categoryMode]);
 
   // Auto-expandir categorías cuando hay búsqueda
   useEffect(() => {
@@ -350,6 +371,66 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
           ref={dropdownRef}
           className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-80 overflow-auto"
         >
+          {/* Selector de modo: Categoría General vs Subcategoría */}
+          <div className="sticky top-0 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 px-4 py-3 z-10">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-gray-700">Seleccionar:</span>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setCategoryMode('general');
+                  setSearchTerm('');
+                  setExpandedCategories(new Set());
+                  // Si la categoría seleccionada es una subcategoría (nivel 1), limpiar la selección
+                  if (selectedCategory && selectedCategory.nivel === 1) {
+                    onCategorySelect('', '', '');
+                  }
+                }}
+                className={`flex-1 px-3 py-2 text-xs font-medium rounded-lg transition-all duration-200 ${
+                  categoryMode === 'general'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                }`}
+                title="Seleccionar solo categorías principales (sin subcategorías)"
+              >
+                📦 Categoría General
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setCategoryMode('subcategoria');
+                  setSearchTerm('');
+                  // No necesitamos limpiar la selección al cambiar a subcategoría
+                  // porque las categorías generales también son válidas en este modo
+                }}
+                className={`flex-1 px-3 py-2 text-xs font-medium rounded-lg transition-all duration-200 ${
+                  categoryMode === 'subcategoria'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                }`}
+                title="Seleccionar subcategorías específicas (con jerarquía)"
+              >
+                🔽 Subcategoría
+              </button>
+            </div>
+            {categoryMode === 'general' && (
+              <p className="text-xs text-gray-600 mt-2">
+                Solo categorías principales (ej: "Electrónicos", "Hogar y Jardín")
+              </p>
+            )}
+            {categoryMode === 'subcategoria' && (
+              <p className="text-xs text-gray-600 mt-2">
+                Categorías principales o subcategorías específicas (ej: &quot;Electrónicos &gt; Computadoras&quot;)
+              </p>
+            )}
+          </div>
+          
           {loading ? (
             <div className="px-4 py-3 text-sm text-gray-500 text-center">
               Cargando categorías...
@@ -374,8 +455,8 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
                     } ${isHighlighted ? 'bg-blue-50' : ''}`}
                     style={{ paddingLeft: `${indent * 16 + 16}px` }}
                   >
-                    {/* Botón de expandir/colapsar - SOLO para expandir, NO para seleccionar */}
-                    {isParent && hasChildren && (
+                    {/* Botón de expandir/colapsar - SOLO para expandir, NO para seleccionar - Solo en modo subcategoría */}
+                    {categoryMode === 'subcategoria' && isParent && hasChildren && (
                       <button
                         type="button"
                         onClick={(e) => {
@@ -397,8 +478,13 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
                         )}
                       </button>
                     )}
-                    {isParent && !hasChildren && (
+                    {categoryMode === 'subcategoria' && isParent && !hasChildren && (
                       <div className="p-1.5 text-gray-400 flex-shrink-0 mr-1">
+                        <FolderOpen className="h-4 w-4" />
+                      </div>
+                    )}
+                    {categoryMode === 'general' && isParent && (
+                      <div className="p-1.5 text-blue-500 flex-shrink-0 mr-1">
                         <FolderOpen className="h-4 w-4" />
                       </div>
                     )}

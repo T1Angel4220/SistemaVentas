@@ -83,7 +83,9 @@ export const ProductDetailPage: React.FC = () => {
     try {
       setReviewLoading(true);
       
-      const response = await fetch(`http://localhost:3001/api/products/${product.id}/moderate`, {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      const response = await fetch(`${apiUrl}/products/${product.id}/moderate`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -139,16 +141,7 @@ export const ProductDetailPage: React.FC = () => {
           }, 100);
         }
         
-        showSuccess(titulo, mensaje, () => {
-          // Si estamos en la página de detalle, quedarnos aquí
-          // Si estamos en la página de moderación, navegar allí
-          if (window.location.pathname.includes('/products/moderation')) {
-            navigate('/products/moderation');
-          } else {
-            // Forzar recarga del producto después de cerrar el mensaje
-            loadProduct();
-          }
-        });
+        showSuccess(titulo, mensaje, () => navigate('/products/moderation'));
       } else {
         showError('Error', data.message || 'Error al moderar producto');
       }
@@ -231,7 +224,9 @@ export const ProductDetailPage: React.FC = () => {
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`http://localhost:3001/api/products/${id}`);
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+      const response = await fetch(`${apiUrl}/products/${id}`);
       const data = await response.json();
       
       if (data.success) {
@@ -340,7 +335,9 @@ export const ProductDetailPage: React.FC = () => {
       `¿Estás seguro de que quieres eliminar "${product.nombre}"? Esta acción no se puede deshacer.`,
       async () => {
       try {
-        const response = await fetch(`http://localhost:3001/api/products/${product.id}`, {
+        const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+        const apiUrl = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+        const response = await fetch(`${apiUrl}/products/${product.id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${apiService.getToken()}`
@@ -826,35 +823,28 @@ export const ProductDetailPage: React.FC = () => {
                 </h3>
                 
                 {/* Botones principales: Aprobar, Rechazar, Suspender */}
-                <div className={`grid gap-2 mb-3 ${
-                  product.estado && String(product.estado).toLowerCase().trim() === 'activo'
-                    ? 'grid-cols-1 sm:grid-cols-2' 
-                    : 'grid-cols-1 sm:grid-cols-3'
-                }`}>
-                  {/* Botón Aprobar - SOLO visible si NO está aprobado */}
-                  {!(product.estado && String(product.estado).toLowerCase().trim() === 'activo') && (
-                    <Button 
-                      size="sm"
-                      onClick={handleApproveProduct}
-                      disabled={reviewLoading}
-                      className="h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
-                      title="Aprobar producto"
-                    >
-                      {reviewLoading ? (
-                        <Clock className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <CheckCircle className="h-4 w-4" />
-                      )}
-                      <span className="ml-2">Aprobar</span>
-                    </Button>
-                  )}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
+                  <Button 
+                    size="sm"
+                    onClick={handleApproveProduct}
+                    disabled={reviewLoading || product.estado === 'activo' || product.estado === 'peligroso' || product.es_peligroso}
+                    className="h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={product.estado === 'activo' ? 'Producto ya está aprobado' : (product.estado === 'peligroso' || product.es_peligroso ? 'No se puede aprobar un producto marcado como peligroso' : 'Aprobar producto')}
+                  >
+                    {reviewLoading ? (
+                      <Clock className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <CheckCircle className="h-4 w-4" />
+                    )}
+                    <span className="ml-2">{product.estado === 'activo' ? 'Aprobado' : 'Aprobar'}</span>
+                  </Button>
                   
                   <Button 
                     size="sm"
                     onClick={handleRejectProduct}
-                    disabled={reviewLoading}
-                    className="h-10 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
-                    title="Rechazar por errores corregibles (vendedor puede editar)"
+                    disabled={reviewLoading || product.estado === 'rechazado' || product.estado === 'peligroso' || product.es_peligroso}
+                    className="h-10 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={product.estado === 'rechazado' ? 'Producto ya está rechazado' : (product.estado === 'peligroso' || product.es_peligroso ? 'No se puede rechazar un producto marcado como peligroso' : 'Rechazar por errores corregibles (vendedor puede editar)')}
                   >
                     {reviewLoading ? (
                       <Clock className="h-4 w-4 animate-spin" />
@@ -867,9 +857,9 @@ export const ProductDetailPage: React.FC = () => {
                   <Button 
                     size="sm"
                     onClick={handleSuspendProduct}
-                    disabled={reviewLoading}
-                    className="h-10 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
-                    title="Suspender por violación grave (vendedor NO puede editar)"
+                    disabled={reviewLoading || product.estado === 'suspendido' || product.estado === 'peligroso' || product.es_peligroso}
+                    className="h-10 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={product.estado === 'suspendido' ? 'Producto ya está suspendido' : (product.estado === 'peligroso' || product.es_peligroso ? 'No se puede suspender un producto marcado como peligroso' : 'Suspender por violación grave (vendedor NO puede editar)')}
                   >
                     {reviewLoading ? (
                       <Clock className="h-4 w-4 animate-spin" />
@@ -885,9 +875,9 @@ export const ProductDetailPage: React.FC = () => {
                   <Button 
                     size="sm"
                     onClick={handleMarkAsDangerous}
-                    disabled={reviewLoading}
-                    className="w-full h-10 bg-gradient-to-r from-red-700 to-red-900 hover:from-red-800 hover:to-red-950 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
-                    title="Contenido prohibido - Producto OCULTO completamente"
+                    disabled={reviewLoading || product.estado === 'peligroso' || product.es_peligroso}
+                    className="w-full h-10 bg-gradient-to-r from-red-700 to-red-900 hover:from-red-800 hover:to-red-950 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={product.estado === 'peligroso' || product.es_peligroso ? 'Producto ya está marcado como peligroso' : 'Contenido prohibido - Producto OCULTO completamente'}
                   >
                     {reviewLoading ? (
                       <Clock className="h-4 w-4 animate-spin" />
