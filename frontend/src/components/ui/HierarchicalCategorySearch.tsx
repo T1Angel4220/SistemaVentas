@@ -299,9 +299,14 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
+                          e.preventDefault();
                           toggleExpansion(category.id);
                         }}
-                        className="p-2 text-gray-500 hover:text-gray-700 focus:outline-none flex-shrink-0"
+                        onMouseDown={(e) => {
+                          // Prevenir que el clic se propague al botón de selección
+                          e.stopPropagation();
+                        }}
+                        className="p-2 text-gray-500 hover:text-gray-700 focus:outline-none flex-shrink-0 z-10"
                         aria-label={isExpanded ? 'Colapsar categoría' : 'Expandir categoría'}
                         title={isExpanded ? 'Colapsar categoría' : 'Expandir categoría'}
                       >
@@ -320,10 +325,14 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
                     <button
                       type="button"
                       onClick={(e) => {
-                        // Si es una categoría padre con hijos, permitir seleccionar directamente
-                        // El botón de expandir solo expande/colapsa, no selecciona
+                        // Permitir seleccionar la categoría (padre o hijo)
                         e.stopPropagation();
+                        e.preventDefault();
                         handleCategorySelect(category);
+                      }}
+                      onMouseDown={(e) => {
+                        // Asegurar que el clic se capture correctamente
+                        e.stopPropagation();
                       }}
                       className={`flex-1 px-4 py-2 text-left text-sm hover:bg-blue-50 focus:bg-blue-50 focus:outline-none flex items-center justify-between rounded ${
                         isSelected ? 'bg-blue-100' : ''
