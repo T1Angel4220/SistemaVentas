@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { apiService } from '../services/api';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
@@ -94,19 +95,7 @@ export const ProfilePage: React.FC = () => {
     setLoadingProfile(true);
 
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-      const token = localStorage.getItem('accessToken');
-
-      const response = await fetch(`${API_URL}/api/auth/profile`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(profileData)
-      });
-
-      const data = await response.json();
+      const data = await apiService.updateProfile(profileData);
       console.log('📥 Respuesta del servidor:', data);
 
       if (data.success) {
@@ -157,22 +146,10 @@ export const ProfilePage: React.FC = () => {
     setLoadingPassword(true);
 
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-      const token = localStorage.getItem('accessToken');
-
-      const response = await fetch(`${API_URL}/api/auth/change-password`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          currentPassword: passwordData.currentPassword,
-          newPassword: passwordData.newPassword
-        })
-      });
-
-      const data = await response.json();
+      const data = await apiService.changePassword(
+        passwordData.currentPassword,
+        passwordData.newPassword
+      );
 
       if (data.success) {
         setSuccessMessage('Contraseña actualizada exitosamente');

@@ -194,6 +194,20 @@ class ApiService {
     return this.request<User>('/auth/profile');
   }
 
+  async updateProfile(profileData: Partial<User>): Promise<ApiResponse<User>> {
+    return this.request<User>('/auth/profile', {
+      method: 'PUT',
+      body: JSON.stringify(profileData),
+    });
+  }
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<ApiResponse> {
+    return this.request('/auth/change-password', {
+      method: 'PUT',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+  }
+
   async getUsers(params?: {
     page?: number;
     limit?: number;

@@ -99,6 +99,15 @@ export const ProductDetailPage: React.FC = () => {
       const data = await response.json();
       
       if (data.success) {
+        // Actualizar el estado del producto localmente para desactivar botones inmediatamente
+        if (data.data && product) {
+          setProduct({
+            ...product,
+            estado: data.data.estado || product.estado,
+            es_peligroso: data.data.es_peligroso !== undefined ? data.data.es_peligroso : product.es_peligroso
+          });
+        }
+        
         let titulo = '';
         let mensaje = '';
 
@@ -783,8 +792,12 @@ export const ProductDetailPage: React.FC = () => {
                   <Button 
                     size="sm"
                     onClick={handleApproveProduct}
-                    disabled={reviewLoading}
-                    className="h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
+                    disabled={reviewLoading || product.estado === 'activo' || product.estado === 'peligroso' || product.es_peligroso}
+                    className={`h-10 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 ${
+                      product.estado === 'activo' || product.estado === 'peligroso' || product.es_peligroso
+                        ? 'bg-gray-400 cursor-not-allowed opacity-50'
+                        : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800'
+                    } text-white`}
                     title="Aprobar producto"
                   >
                     {reviewLoading ? (
@@ -798,8 +811,12 @@ export const ProductDetailPage: React.FC = () => {
                   <Button 
                     size="sm"
                     onClick={handleRejectProduct}
-                    disabled={reviewLoading}
-                    className="h-10 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
+                    disabled={reviewLoading || product.estado === 'rechazado' || product.estado === 'peligroso' || product.es_peligroso}
+                    className={`h-10 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 ${
+                      product.estado === 'rechazado' || product.estado === 'peligroso' || product.es_peligroso
+                        ? 'bg-gray-400 cursor-not-allowed opacity-50'
+                        : 'bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800'
+                    } text-white`}
                     title="Rechazar por errores corregibles (vendedor puede editar)"
                   >
                     {reviewLoading ? (
@@ -813,8 +830,12 @@ export const ProductDetailPage: React.FC = () => {
                   <Button 
                     size="sm"
                     onClick={handleSuspendProduct}
-                    disabled={reviewLoading}
-                    className="h-10 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
+                    disabled={reviewLoading || product.estado === 'suspendido' || product.estado === 'peligroso' || product.es_peligroso}
+                    className={`h-10 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 ${
+                      product.estado === 'suspendido' || product.estado === 'peligroso' || product.es_peligroso
+                        ? 'bg-gray-400 cursor-not-allowed opacity-50'
+                        : 'bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800'
+                    } text-white`}
                     title="Suspender por violación grave (vendedor NO puede editar)"
                   >
                     {reviewLoading ? (
@@ -831,8 +852,12 @@ export const ProductDetailPage: React.FC = () => {
                   <Button 
                     size="sm"
                     onClick={handleMarkAsDangerous}
-                    disabled={reviewLoading}
-                    className="w-full h-10 bg-gradient-to-r from-red-700 to-red-900 hover:from-red-800 hover:to-red-950 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
+                    disabled={reviewLoading || product.estado === 'peligroso' || product.es_peligroso}
+                    className={`w-full h-10 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 ${
+                      product.estado === 'peligroso' || product.es_peligroso
+                        ? 'bg-gray-400 cursor-not-allowed opacity-50'
+                        : 'bg-gradient-to-r from-red-700 to-red-900 hover:from-red-800 hover:to-red-950'
+                    } text-white`}
                     title="Contenido prohibido - Producto OCULTO completamente"
                   >
                     {reviewLoading ? (

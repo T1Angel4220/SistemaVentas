@@ -235,11 +235,8 @@ app.get('/api/docs', (req, res) => {
   });
 });
 
-// Rutas de la API
-// Aplicar rate limiting específico por ruta - TEMPORALMENTE DESHABILITADO
-// app.use('/api/auth/login', loginLimiter);
-// app.use('/api/auth/register', registerLimiter);
-app.use('/api/auth', authRoutes);
+// Rutas de la API - Ya están registradas arriba (línea 128)
+// Las rutas de auth ya están registradas, no es necesario duplicarlas
 
 // Middleware para manejar rutas no encontradas
 app.use((req, res, next) => {

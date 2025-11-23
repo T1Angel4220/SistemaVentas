@@ -13,7 +13,7 @@ interface Category {
 interface HierarchicalCategorySearchProps {
   categories: Category[];
   selectedCategoryId: string;
-  onCategorySelect: (categoryId: string, categoryName: string, fullPath: string) => void;
+  onCategorySelect: (categoryId: string, categoryName?: string, fullPath?: string) => void;
   loading?: boolean;
   error?: string;
   placeholder?: string;
@@ -27,6 +27,17 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
   error,
   placeholder = "Buscar categoría..."
 }) => {
+  // Log para depuración
+  React.useEffect(() => {
+    if (categories && categories.length > 0) {
+      console.log(`✅ HierarchicalCategorySearch recibió ${categories.length} categorías`);
+      const parents = categories.filter(cat => cat.nivel === 0);
+      const children = categories.filter(cat => cat.nivel === 1);
+      console.log(`   → ${parents.length} categorías padre, ${children.length} subcategorías`);
+    } else {
+      console.log('⚠ HierarchicalCategorySearch: No hay categorías disponibles');
+    }
+  }, [categories]);
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
@@ -39,15 +50,96 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
 
   // Organizar categorías en estructura jerárquica
   const organizeCategories = (categories: Category[]) => {
+    if (!categories || categories.length === 0) {
+      console.log('⚠ No hay categorías para organizar');
+      return [];
+    }
+    
+    console.log(`📦 Organizando ${categories.length} categorías`);
     const parents = categories.filter(cat => cat.nivel === 0).sort((a, b) => a.orden - b.orden);
     const children = categories.filter(cat => cat.nivel === 1);
     
-    return parents.map(parent => ({
-      ...parent,
-      subcategorias: children
+    console.log(`📁 Categorías padre: ${parents.length}, Subcategorías: ${children.length}`);
+    
+    // Agrupar categorías padre por nombre para detectar duplicados
+    const parentsByName = new Map<string, Category[]>();
+    parents.forEach(parent => {
+      if (!parentsByName.has(parent.nombre)) {
+        parentsByName.set(parent.nombre, []);
+      }
+      parentsByName.get(parent.nombre)!.push(parent);
+    });
+    
+    // Detectar duplicados
+    parentsByName.forEach((duplicates, name) => {
+      if (duplicates.length > 1) {
+        console.log(`⚠ Categoría duplicada "${name}": ${duplicates.map(c => `ID ${c.id}`).join(', ')}`);
+      }
+    });
+    
+    const organized = parents.map(parent => {
+      const subcategorias = children
         .filter(child => child.categoria_padre_id === parent.id)
-        .sort((a, b) => a.orden - b.orden)
-    }));
+        .sort((a, b) => a.orden - b.orden);
+      
+      console.log(`  → ${parent.nombre} (ID: ${parent.id}): ${subcategorias.length} subcategorías`);
+      
+      return {
+        ...parent,
+        subcategorias
+      };
+    });
+    
+    // Filtrar duplicados de forma definitiva: agrupar por nombre y mantener solo las que tienen subcategorías
+    // Si ninguna tiene subcategorías, mantener solo una (la de menor orden)
+    const categoriesByName = new Map<string, typeof organized>();
+    
+    // Agrupar todas las categorías por nombre
+    organized.forEach(cat => {
+      if (!categoriesByName.has(cat.nombre)) {
+        categoriesByName.set(cat.nombre, []);
+      }
+      categoriesByName.get(cat.nombre)!.push(cat);
+    });
+    
+    // Procesar cada grupo de duplicados
+    const finalFiltered: typeof organized = [];
+    
+    categoriesByName.forEach((duplicates, name) => {
+      if (duplicates.length === 1) {
+        // No hay duplicados
+        const cat = duplicates[0];
+        // Solo mantener si tiene subcategorías
+        if (cat.subcategorias && cat.subcategorias.length > 0) {
+          finalFiltered.push(cat);
+        } else {
+          console.log(`  ❌ Eliminando "${name}" (ID: ${cat.id}) porque no tiene subcategorías`);
+        }
+      } else {
+        // Hay duplicados - filtrar correctamente
+        const withSubs = duplicates.filter(c => c.subcategorias && c.subcategorias.length > 0);
+        const withoutSubs = duplicates.filter(c => !c.subcategorias || c.subcategorias.length === 0);
+        
+        if (withSubs.length > 0) {
+          // Hay categorías con subcategorías - mantener SOLO estas
+          finalFiltered.push(...withSubs);
+          console.log(`  ✅ "${name}": ${duplicates.length} duplicados encontrados, manteniendo ${withSubs.length} con subcategorías (IDs: ${withSubs.map(c => c.id).join(', ')})`);
+          if (withoutSubs.length > 0) {
+            console.log(`  ❌ Eliminando ${withoutSubs.length} duplicados sin subcategorías (IDs: ${withoutSubs.map(c => c.id).join(', ')})`);
+          }
+        } else {
+          // Ninguna tiene subcategorías - NO mantener ninguna
+          console.log(`  ❌ "${name}": ${duplicates.length} duplicados sin subcategorías, eliminando todos (IDs: ${duplicates.map(c => c.id).join(', ')})`);
+        }
+      }
+    });
+    
+    // Ordenar por orden final
+    finalFiltered.sort((a, b) => a.orden - b.orden);
+    
+    console.log(`📦 Después de filtrar duplicados: ${finalFiltered.length} categorías padre`);
+    
+    return finalFiltered;
   };
 
   // Obtener ruta completa de una categoría
@@ -63,7 +155,14 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
   // Filtrar categorías basado en el término de búsqueda
   const filteredCategories = React.useMemo(() => {
     if (!searchTerm) {
-      return organizeCategories(categories);
+      const organized = organizeCategories(categories);
+      console.log(`📦 filteredCategories (sin búsqueda): ${organized.length} categorías organizadas`);
+      organized.forEach(cat => {
+        if (cat.subcategorias && cat.subcategorias.length > 0) {
+          console.log(`   → ${cat.nombre} (ID: ${cat.id}): ${cat.subcategorias.length} subcategorías`);
+        }
+      });
+      return organized;
     }
 
     const searchLower = searchTerm.toLowerCase();
@@ -108,16 +207,35 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
   const flatCategories = React.useMemo(() => {
     const flat: Array<{ category: Category; isParent: boolean; indent: number }> = [];
     
+    console.log(`📋 Creando lista plana con ${filteredCategories.length} categorías padre`);
+    console.log(`   → Categorías expandidas:`, Array.from(expandedCategories));
+    
     filteredCategories.forEach(parent => {
+      const hasSubcategories = parent.subcategorias && parent.subcategorias.length > 0;
+      const isExpanded = expandedCategories.has(parent.id);
+      
+      // Las subcategorías SOLO se muestran si la categoría padre está expandida
+      // O si hay búsqueda activa (para mostrar resultados de búsqueda)
+      const shouldShowSubcategories = isExpanded || (searchTerm && searchTerm.trim() !== '');
+      
+      console.log(`   → Procesando ${parent.nombre} (ID: ${parent.id}): ${hasSubcategories ? `${parent.subcategorias.length} subcategorías` : 'sin subcategorías'}, expandida: ${isExpanded}, shouldShow: ${shouldShowSubcategories}, searchTerm: "${searchTerm}"`);
+      
       flat.push({ category: parent, isParent: true, indent: 0 });
       
-      if (expandedCategories.has(parent.id) || searchTerm) {
+      // Mostrar subcategorías SOLO si la categoría padre está expandida y tiene subcategorías
+      if (shouldShowSubcategories && hasSubcategories) {
+        console.log(`  ✅ Mostrando ${parent.subcategorias.length} subcategorías de ${parent.nombre} (ID: ${parent.id}) porque está expandida`);
         parent.subcategorias.forEach(child => {
           flat.push({ category: child, isParent: false, indent: 1 });
         });
+      } else if (hasSubcategories) {
+        console.log(`  ⏸ ${parent.nombre} (ID: ${parent.id}) tiene ${parent.subcategorias.length} subcategorías pero no se están mostrando (expandida: ${isExpanded})`);
+      } else {
+        console.log(`  ❌ ${parent.nombre} (ID: ${parent.id}) no tiene subcategorías`);
       }
     });
     
+    console.log(`📋 Total de items en lista plana: ${flat.length}`);
     return flat;
   }, [filteredCategories, expandedCategories, searchTerm]);
 
@@ -132,12 +250,41 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
 
   // Manejar expansión/colapso de categorías
   const toggleExpansion = (categoryId: number) => {
+    const category = categories.find(cat => cat.id === categoryId);
+    
+    // Buscar en filteredCategories primero
+    let parentCategory = filteredCategories.find(cat => cat.id === categoryId);
+    
+    // Si no se encuentra, buscar directamente organizando las categorías
+    if (!parentCategory) {
+      const organized = organizeCategories(categories);
+      parentCategory = organized.find(cat => cat.id === categoryId);
+      console.log(`   ⚠ No encontrada en filteredCategories, buscando en organizeCategories...`);
+    }
+    
+    console.log(`🔄 Toggle expansión para categoría ID: ${categoryId} (${category?.nombre || 'desconocida'})`);
+    console.log(`   → filteredCategories tiene ${filteredCategories.length} categorías organizadas`);
+    
+    if (parentCategory) {
+      console.log(`   → Categoría encontrada`);
+      console.log(`   → Tiene ${parentCategory.subcategorias?.length || 0} subcategorías`);
+      if (parentCategory.subcategorias && parentCategory.subcategorias.length > 0) {
+        console.log(`   → Subcategorías:`, parentCategory.subcategorias.map(s => s.nombre));
+      }
+    } else {
+      console.log(`   ⚠ Categoría NO encontrada en ninguna estructura`);
+      console.log(`   → IDs en filteredCategories:`, filteredCategories.map(c => `${c.nombre} (${c.id})`));
+    }
+    
     setExpandedCategories(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(categoryId)) {
+      const wasExpanded = newSet.has(categoryId);
+      if (wasExpanded) {
         newSet.delete(categoryId);
+        console.log(`   → Colapsando categoría`);
       } else {
         newSet.add(categoryId);
+        console.log(`   → Expandiendo categoría`);
       }
       return newSet;
     });
@@ -221,6 +368,52 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Auto-expandir todas las categorías padre con subcategorías cuando se abre el dropdown
+  useEffect(() => {
+    console.log(`🔍 Efecto de auto-expansión: isOpen=${isOpen}, searchTerm="${searchTerm}", filteredCategories.length=${filteredCategories.length}`);
+    
+    if (isOpen && !searchTerm && filteredCategories.length > 0) {
+      console.log(`🔓 Iniciando auto-expansión de categorías...`);
+      // Expandir automáticamente TODAS las categorías padre que tienen subcategorías
+      const parentIdsWithSubcategories = filteredCategories
+        .filter(cat => {
+          const hasSubs = cat.subcategorias && cat.subcategorias.length > 0;
+          if (hasSubs) {
+            console.log(`  ✅ ${cat.nombre} (ID: ${cat.id}) tiene ${cat.subcategorias.length} subcategorías - será expandida`);
+          } else {
+            console.log(`  ⚠ ${cat.nombre} (ID: ${cat.id}) NO tiene subcategorías`);
+          }
+          return hasSubs;
+        })
+        .map(cat => cat.id);
+      
+      // Si hay una categoría seleccionada, también expandir su categoría padre
+      if (selectedCategory && selectedCategory.nivel === 1 && selectedCategory.categoria_padre_id) {
+        const parentId = selectedCategory.categoria_padre_id;
+        if (!parentIdsWithSubcategories.includes(parentId)) {
+          parentIdsWithSubcategories.push(parentId);
+          console.log(`  ✅ Expandiendo categoría padre de la seleccionada: ID ${parentId}`);
+        }
+      }
+      
+      if (parentIdsWithSubcategories.length > 0) {
+        console.log(`🔓 Auto-expandiendo ${parentIdsWithSubcategories.length} categorías padre con subcategorías:`, parentIdsWithSubcategories);
+        // Reemplazar completamente el Set para asegurar que todas las categorías estén expandidas
+        const newSet = new Set(parentIdsWithSubcategories);
+        console.log(`   → Categorías expandidas después de actualizar:`, Array.from(newSet));
+        setExpandedCategories(newSet);
+      } else {
+        console.log(`⚠ No se encontraron categorías padre con subcategorías para expandir`);
+        console.log(`   → filteredCategories tiene ${filteredCategories.length} categorías`);
+        filteredCategories.forEach(cat => {
+          console.log(`   → ${cat.nombre} (ID: ${cat.id}): ${cat.subcategorias?.length || 0} subcategorías`);
+        });
+      }
+    } else {
+      console.log(`⏸ No se ejecuta auto-expansión: isOpen=${isOpen}, searchTerm="${searchTerm}", filteredCategories.length=${filteredCategories.length}`);
+    }
+  }, [isOpen, searchTerm, filteredCategories, selectedCategory]);
 
   // Auto-expandir categorías cuando hay búsqueda
   useEffect(() => {
