@@ -45,7 +45,7 @@ jobs:
           ###### Repository/Build Configurations ######
           app_location: "./frontend"     # Path de tu proyecto React
           api_location: ""               # No usas API Functions aquí
-          output_location: "dist"        # ⚠️ Vite genera la build aquí, no en 'build'
+          output_location: "frontend/dist"        # ⚠️ Ruta completa desde la raíz: frontend/dist
           ###### End of Configurations ######
 
   close_pull_request_job:
