@@ -35,6 +35,9 @@ jobs:
           npm run build
         env:
           VITE_API_URL: https://backend-sistema-ventas-g9hhdue0fehhagdj.canadacentral-01.azurewebsites.net
+      - name: Copy staticwebapp.config.json to dist
+        run: |
+          cp frontend/staticwebapp.config.json frontend/dist/staticwebapp.config.json
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
@@ -45,7 +48,7 @@ jobs:
           ###### Repository/Build Configurations ######
           app_location: "./frontend"     # Path de tu proyecto React
           api_location: ""               # No usas API Functions aquí
-          output_location: "dist"        # Ruta relativa al app_location donde están los archivos construidos
+          app_artifact_location: "frontend/dist"  # ✅ Ruta completa desde la raíz del repo cuando usamos skip_app_build
           skip_app_build: true           # ✅ Saltar el build de Oryx porque ya construimos con Node 22
           ###### End of Configurations ######
 
