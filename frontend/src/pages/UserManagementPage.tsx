@@ -37,6 +37,8 @@ interface User {
   apellido: string;
   correo: string;
   telefono?: string;
+  direccion?: string;
+  genero?: 'masculino' | 'femenino' | 'otro';
   tipo_usuario: 'comprador' | 'vendedor' | 'moderador' | 'administrador';
   estado: 'activo' | 'inactivo' | 'suspendido' | 'pendiente_verificacion';
   email_verificado: boolean;

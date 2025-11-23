@@ -332,6 +332,11 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
     setHighlightedIndex(-1);
   }, [searchTerm]);
 
+  // Debug: Verificar que el componente se está renderizando
+  useEffect(() => {
+    console.log('🟢 HierarchicalCategorySearch renderizado, categoryMode:', categoryMode, 'isOpen:', isOpen);
+  }, [categoryMode, isOpen]);
+
   return (
     <div className="relative">
       {/* Input de búsqueda */}
@@ -371,17 +376,18 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
           ref={dropdownRef}
           className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-80 overflow-auto"
         >
-          {/* Selector de modo: Categoría General vs Subcategoría */}
-          <div className="sticky top-0 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 px-4 py-3 z-10">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-gray-700">Seleccionar:</span>
+          {/* Selector de modo: Categoría General vs Subcategoría - SIEMPRE VISIBLE */}
+          <div className="sticky top-0 bg-gradient-to-r from-blue-100 to-indigo-100 border-b-2 border-blue-500 px-4 py-4 z-10 shadow-lg">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-bold text-gray-900">Seleccionar tipo de categoría:</span>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
+                  console.log('🟢 Cambiando a modo GENERAL');
                   setCategoryMode('general');
                   setSearchTerm('');
                   setExpandedCategories(new Set());
@@ -390,10 +396,10 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
                     onCategorySelect('', '', '');
                   }
                 }}
-                className={`flex-1 px-3 py-2 text-xs font-medium rounded-lg transition-all duration-200 ${
+                className={`flex-1 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
                   categoryMode === 'general'
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                    ? 'bg-blue-600 text-white shadow-lg scale-105'
+                    : 'bg-white text-gray-700 border-2 border-gray-300 hover:bg-gray-50 hover:border-blue-400'
                 }`}
                 title="Seleccionar solo categorías principales (sin subcategorías)"
               >
@@ -404,15 +410,16 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
+                  console.log('🟢 Cambiando a modo SUBCATEGORÍA');
                   setCategoryMode('subcategoria');
                   setSearchTerm('');
                   // No necesitamos limpiar la selección al cambiar a subcategoría
                   // porque las categorías generales también son válidas en este modo
                 }}
-                className={`flex-1 px-3 py-2 text-xs font-medium rounded-lg transition-all duration-200 ${
+                className={`flex-1 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
                   categoryMode === 'subcategoria'
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                    ? 'bg-blue-600 text-white shadow-lg scale-105'
+                    : 'bg-white text-gray-700 border-2 border-gray-300 hover:bg-gray-50 hover:border-blue-400'
                 }`}
                 title="Seleccionar subcategorías específicas (con jerarquía)"
               >
@@ -420,13 +427,13 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
               </button>
             </div>
             {categoryMode === 'general' && (
-              <p className="text-xs text-gray-600 mt-2">
-                Solo categorías principales (ej: "Electrónicos", "Hogar y Jardín")
+              <p className="text-xs text-gray-700 mt-3 font-medium">
+                ℹ️ Solo categorías principales (ej: "Electrónicos", "Hogar y Jardín")
               </p>
             )}
             {categoryMode === 'subcategoria' && (
-              <p className="text-xs text-gray-600 mt-2">
-                Categorías principales o subcategorías específicas (ej: &quot;Electrónicos &gt; Computadoras&quot;)
+              <p className="text-xs text-gray-700 mt-3 font-medium">
+                ℹ️ Categorías principales o subcategorías específicas (ej: &quot;Electrónicos &gt; Computadoras&quot;)
               </p>
             )}
           </div>

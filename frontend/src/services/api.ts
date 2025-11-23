@@ -215,8 +215,8 @@ class ApiService {
     });
   }
 
-  async getProfile(): Promise<ApiResponse<User>> {
-    return this.request<User>('/auth/profile');
+  async getProfile(): Promise<ApiResponse<{ user: User }>> {
+    return this.request<{ user: User }>('/auth/profile');
   }
 
   async getUsers(params?: {
