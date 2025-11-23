@@ -45,7 +45,8 @@ jobs:
           ###### Repository/Build Configurations ######
           app_location: "./frontend"     # Path de tu proyecto React
           api_location: ""               # No usas API Functions aquí
-          output_location: "frontend/dist"        # ⚠️ Ruta completa desde la raíz: frontend/dist
+          output_location: "dist"        # Ruta relativa al app_location donde están los archivos construidos
+          skip_app_build: true           # ✅ Saltar el build de Oryx porque ya construimos con Node 22
           ###### End of Configurations ######
 
   close_pull_request_job:
