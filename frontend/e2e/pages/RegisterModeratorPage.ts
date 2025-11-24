@@ -10,6 +10,7 @@ export class RegisterModeratorPage {
   readonly apellidoInput: Locator;
   readonly correoInput: Locator;
   readonly telefonoInput: Locator;
+  readonly direccionInput: Locator;
   readonly passwordInput: Locator;
   readonly confirmPasswordInput: Locator;
   readonly submitButton: Locator;
@@ -23,6 +24,7 @@ export class RegisterModeratorPage {
     this.apellidoInput = page.locator('input[name="apellido"]');
     this.correoInput = page.locator('input[name="correo"]');
     this.telefonoInput = page.locator('input[name="telefono"]');
+    this.direccionInput = page.locator('textarea[name="direccion"]');
     this.passwordInput = page.locator('input[name="password"]');
     this.confirmPasswordInput = page.locator('input[name="confirmPassword"]');
     this.submitButton = page.locator('button[type="submit"]:has-text("Registrar"), button:has-text("Crear")');
@@ -46,7 +48,7 @@ export class RegisterModeratorPage {
     await this.page.goto('/admin/register-moderator');
     await this.page.waitForLoadState('networkidle', { timeout: 20000 });
     // await this.page.waitForTimeout(2000); // COMENTADO
-    
+
     // Verificar que la página se cargó correctamente
     // Esperar a que aparezca al menos un campo del formulario
     // Intentar múltiples selectores posibles
@@ -57,7 +59,7 @@ export class RegisterModeratorPage {
       'input[type="text"]',
       'form input'
     ];
-    
+
     let found = false;
     for (const selector of possibleSelectors) {
       try {
@@ -68,7 +70,7 @@ export class RegisterModeratorPage {
         // Continuar con el siguiente selector
       }
     }
-    
+
     if (!found) {
       // Si no se encuentra ningún campo, esperar un poco más y verificar la URL
       // await this.page.waitForTimeout(2000); // COMENTADO
@@ -90,36 +92,40 @@ export class RegisterModeratorPage {
     password: string;
     confirmPassword: string;
     telefono?: string;
+    direccion: string;
   }) {
     await this.cedulaInput.waitFor({ state: 'visible', timeout: 10000 });
     await this.cedulaInput.fill(data.cedula);
     // await this.page.waitForTimeout(600); // COMENTADO
-    
+
     await this.nombreInput.waitFor({ state: 'visible', timeout: 10000 });
     await this.nombreInput.fill(data.nombre);
     // await this.page.waitForTimeout(600); // COMENTADO
-    
+
     await this.apellidoInput.waitFor({ state: 'visible', timeout: 10000 });
     await this.apellidoInput.fill(data.apellido);
     // await this.page.waitForTimeout(600); // COMENTADO
-    
+
     await this.correoInput.waitFor({ state: 'visible', timeout: 10000 });
     await this.correoInput.fill(data.correo);
     // await this.page.waitForTimeout(600); // COMENTADO
-    
+
     await this.passwordInput.waitFor({ state: 'visible', timeout: 10000 });
     await this.passwordInput.fill(data.password);
     // await this.page.waitForTimeout(600); // COMENTADO
-    
+
     await this.confirmPasswordInput.waitFor({ state: 'visible', timeout: 10000 });
     await this.confirmPasswordInput.fill(data.confirmPassword);
     // await this.page.waitForTimeout(600); // COMENTADO
-    
+
     if (data.telefono) {
       await this.telefonoInput.waitFor({ state: 'visible', timeout: 10000 });
       await this.telefonoInput.fill(data.telefono);
       // await this.page.waitForTimeout(600); // COMENTADO
     }
+
+    await this.direccionInput.waitFor({ state: 'visible', timeout: 10000 });
+    await this.direccionInput.fill(data.direccion);
   }
 
   /**
@@ -139,25 +145,25 @@ export class RegisterModeratorPage {
   async isRegistrationSuccessful(): Promise<boolean> {
     // Esperar un poco para que aparezca el mensaje
     // await this.page.waitForTimeout(2000); // COMENTADO
-    
+
     // Verificar mensaje de éxito o redirección
     const hasSuccessMessage = await this.successMessage.isVisible({ timeout: 5000 }).catch(() => false);
-    
+
     if (hasSuccessMessage) {
       return true;
     }
-    
+
     // También verificar si redirigió a /admin/users (después de 3 segundos)
     const currentUrl = this.page.url();
     if (currentUrl.includes('/admin/users')) {
       return true;
     }
-    
+
     // Verificar texto de éxito en la página
     const pageText = await this.page.textContent('body') || '';
-    return pageText.includes('éxito') || 
-           pageText.includes('exitosamente') || 
-           pageText.includes('registrado');
+    return pageText.includes('éxito') ||
+      pageText.includes('exitosamente') ||
+      pageText.includes('registrado');
   }
 }
 
