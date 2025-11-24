@@ -1,3 +1,4 @@
+
 const bcrypt = require('bcrypt');
 const { query } = require('./src/config/database');
 

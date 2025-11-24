@@ -196,3 +196,4 @@ Si quieres ampliar a **pruebas del sistema completas**, podemos agregar:
 
 ¿Quieres que actualice la estrategia para incluir pruebas del sistema más amplias, o te enfocas primero en E2E?
 
+

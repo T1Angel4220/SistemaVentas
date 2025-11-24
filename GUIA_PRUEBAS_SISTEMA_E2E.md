@@ -701,3 +701,4 @@ El reporte incluye:
 
 **ROI:** Validación completa de funcionalidad desde perspectiva del usuario, detección temprana de bugs de integración, confianza en deployments.
 
+

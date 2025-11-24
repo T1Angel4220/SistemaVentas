@@ -912,6 +912,15 @@ const updateProfile = async (req, res) => {
  */
 const changePassword = async (req, res) => {
   try {
+    // Verificar que req.user existe (debería estar definido por el middleware authenticate)
+    if (!req.user || !req.user.id) {
+      console.error('❌ Error: req.user no está definido en changePassword');
+      return res.status(401).json({
+        success: false,
+        message: 'Usuario no autenticado'
+      });
+    }
+    
     const userId = req.user.id;
     const { currentPassword, newPassword } = req.body;
 
@@ -969,7 +978,12 @@ const changePassword = async (req, res) => {
     }
 
     // Encriptar la nueva contraseña
-    const newPasswordHash = await bcrypt.hash(newPassword, config.bcrypt.saltRounds);
+    let saltRounds = config.bcrypt.saltRounds || 10;
+    if (isNaN(saltRounds) || saltRounds <= 0) {
+      console.error('❌ Error: BCRYPT_SALT_ROUNDS no está configurado correctamente. Usando valor por defecto: 10');
+      saltRounds = 10;
+    }
+    const newPasswordHash = await bcrypt.hash(newPassword, saltRounds);
 
     // Actualizar la contraseña en la base de datos
     await query(
@@ -986,10 +1000,12 @@ const changePassword = async (req, res) => {
 
   } catch (error) {
     console.error('❌ Error cambiando contraseña:', error);
+    console.error('❌ Stack trace:', error.stack);
     return res.status(500).json({
       success: false,
       message: 'Error interno del servidor',
-      error: config.server.nodeEnv === 'development' ? error.message : {}
+      error: process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' ? error.message : undefined,
+      stack: process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' ? error.stack : undefined
     });
   }
 };

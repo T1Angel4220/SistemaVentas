@@ -35,7 +35,7 @@ const config = {
   },
   
   bcrypt: {
-    saltRounds: parseInt(process.env.BCRYPT_SALT_ROUNDS)
+    saltRounds: parseInt(process.env.BCRYPT_SALT_ROUNDS) || 10
   },
   
   cors: {

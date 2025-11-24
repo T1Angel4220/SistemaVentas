@@ -207,7 +207,6 @@ test.describe('Flujo Completo: Suspensión y Reactivación de Usuario', () => {
 
     // Paso 3: Logout y intentar login con el usuario suspendido
     await authHelper.logout();
-    await loginPage.goto();
     await loginPage.login(email, password);
 
     // Verificar que muestra error de cuenta suspendida
@@ -231,7 +230,6 @@ test.describe('Flujo Completo: Suspensión y Reactivación de Usuario', () => {
 
     // Paso 5: Verificar que el usuario puede hacer login nuevamente
     await authHelper.logout();
-    await loginPage.goto();
     await loginPage.login(email, password);
 
     // Verificar que el login es exitoso

@@ -615,3 +615,4 @@ jobs:
 
 **ROI:** Reducción del 60-80% en bugs en producción, mayor confianza en deployments, y mejor documentación viva del código.
 
+

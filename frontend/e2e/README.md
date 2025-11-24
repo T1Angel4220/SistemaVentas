@@ -135,3 +135,4 @@ npm run test:e2e:report
 - [ ] Agregar tests de búsqueda y filtros
 - [ ] Configurar CI/CD para ejecutar tests automáticamente
 
+

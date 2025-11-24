@@ -415,3 +415,4 @@ backend/src/__tests__/
 - **Martin Fowler - Test Pyramid:** https://martinfowler.com/articles/practical-test-pyramid.html
 - **Kent C. Dodds - Testing Trophy:** https://kentcdodds.com/blog/the-testing-trophy-and-testing-classifications
 
+
