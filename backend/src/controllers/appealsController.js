@@ -59,8 +59,8 @@ class AppealsController {
 
       // Verificar si ya existe una apelación pendiente para este producto
       const apelacionExistente = await query(
-        'SELECT * FROM apelaciones WHERE item_id = $1 AND estado IN ($2, $3)',
-        [item_id, 'en_apelacion', 'pendiente']
+        'SELECT * FROM apelaciones WHERE item_id = $1 AND estado IN (\'en_apelacion\', \'pendiente\')',
+        [item_id]
       );
 
       if (apelacionExistente.rows.length > 0) {
