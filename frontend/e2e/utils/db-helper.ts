@@ -10,19 +10,30 @@ import dotenv from 'dotenv';
 import { resolve } from 'path';
 
 // Cargar variables de entorno desde .env (ruta relativa desde la raíz del proyecto frontend)
-dotenv.config({ path: resolve(process.cwd(), '.env') });
+const envPath = resolve(process.cwd(), '.env');
+dotenv.config({ path: envPath });
 
 // Configuración de conexión a la BD (usar variables de entorno o valores por defecto)
-const pool = new Pool({
+// Nota: Si DB_PASSWORD no está definida, se usa undefined (no cadena vacía) para evitar errores de SCRAM
+const poolConfig: any = {
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5432'),
   database: process.env.DB_NAME || 'sistema_ventas',
   user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || '',
   max: 5,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
-});
+};
+
+// Solo incluir password si está definida (evita errores de SCRAM)
+if (process.env.DB_PASSWORD !== undefined && process.env.DB_PASSWORD !== '') {
+  poolConfig.password = process.env.DB_PASSWORD;
+} else {
+  // Advertencia si no hay contraseña configurada (puede fallar si la BD requiere contraseña)
+  console.warn('⚠️  DB_PASSWORD no está configurada. Si tu base de datos requiere contraseña, crea un archivo .env en el directorio frontend/ con las variables DB_HOST, DB_PORT, DB_NAME, DB_USER y DB_PASSWORD');
+}
+
+const pool = new Pool(poolConfig);
 
 export class DBHelper {
   /**
