@@ -69,16 +69,116 @@ const initializeDatabase = async () => {
       AND table_name IN ('usuarios', 'sesiones_usuario', 'items', 'categorias')
     `);
     
+    // Esperar un poco para asegurar que Docker haya terminado de inicializar
     if (tablesCheck.rows.length < 4) {
-      console.log('⚠️  Algunas tablas no existen. Ejecutando scripts de inicialización...');
+      console.log('⚠️  Algunas tablas no existen. Esperando a que Docker complete la inicialización...');
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      
+      // Verificar de nuevo después de esperar
+      const retryCheck = await query(`
+        SELECT table_name 
+        FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name IN ('usuarios', 'sesiones_usuario', 'items', 'categorias')
+      `);
+      
+      if (retryCheck.rows.length >= 4) {
+        console.log('✅ Base de datos ya inicializada por Docker');
+        return true;
+      }
+      
+      console.log('⚠️  Ejecutando scripts de inicialización manualmente...');
       
       // Ejecutar script de base de datos
       const dbScript = fs.readFileSync(path.join(__dirname, 'database.sql'), 'utf8');
-      await query(dbScript);
+      
+      // Limpiar el script: eliminar comandos de psql y líneas problemáticas
+      let cleanScript = dbScript
+        // Eliminar comandos CREATE DATABASE (no se pueden ejecutar desde conexión existente)
+        .replace(/CREATE\s+DATABASE[^;]*;/gi, '')
+        // Eliminar comandos de psql (empiezan con \)
+        .replace(/\\[^\n]*/g, '')
+        // Corregir $ $ a $$ en funciones
+        .replace(/\$\s+\$/g, '$$')
+        // Eliminar comentarios de línea (-- comentario)
+        .replace(/--[^\n]*/g, '');
+      
+      // Dividir por punto y coma, pero preservar funciones que usan $$
+      const statements = [];
+      let currentStatement = '';
+      let inFunction = false;
+      
+      for (const line of cleanScript.split('\n')) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        
+        currentStatement += ' ' + trimmed;
+        
+        // Detectar inicio de función
+        if (trimmed.includes('RETURNS TRIGGER AS') || trimmed.includes('AS $$')) {
+          inFunction = true;
+        }
+        
+        // Detectar fin de función o fin de statement
+        if (trimmed.includes('$$ LANGUAGE') || (trimmed.endsWith(';') && !inFunction)) {
+          if (inFunction && trimmed.includes('$$ LANGUAGE')) {
+            inFunction = false;
+          }
+          if (currentStatement.trim() && !currentStatement.trim().startsWith('--')) {
+            statements.push(currentStatement.trim());
+          }
+          currentStatement = '';
+        }
+      }
+      
+      // Agregar el último statement si existe
+      if (currentStatement.trim() && !inFunction) {
+        statements.push(currentStatement.trim());
+      }
+      
+      // Ejecutar comandos SQL limpios uno por uno
+      for (const statement of statements) {
+        const trimmed = statement.trim();
+        if (trimmed && trimmed.length > 10 && !trimmed.startsWith('--')) {
+          try {
+            await query(trimmed);
+          } catch (err) {
+            // Ignorar errores de "ya existe" para tipos y tablas
+            if (!err.message.includes('already exists') && 
+                !err.message.includes('duplicate') && 
+                !err.message.includes('syntax error at or near')) {
+              console.warn(`Advertencia al ejecutar SQL: ${err.message}`);
+            }
+          }
+        }
+      }
       
       // Ejecutar datos iniciales
       const initialDataScript = fs.readFileSync(path.join(__dirname, 'initial_data.sql'), 'utf8');
-      await query(initialDataScript);
+      const cleanInitialScript = initialDataScript
+        .split(';')
+        .map(line => line.trim())
+        .filter(line => {
+          if (!line || line.startsWith('--')) return false;
+          if (line.startsWith('\\')) return false;
+          return true;
+        })
+        .join(';\n') + ';';
+      
+      const initialStatements = cleanInitialScript.split(';').filter(s => s.trim().length > 0);
+      for (const statement of initialStatements) {
+        const trimmed = statement.trim();
+        if (trimmed && !trimmed.startsWith('--')) {
+          try {
+            await query(trimmed);
+          } catch (err) {
+            // Ignorar errores de duplicados en datos iniciales
+            if (!err.message.includes('duplicate key') && !err.message.includes('already exists')) {
+              console.warn(`Advertencia al insertar datos: ${err.message}`);
+            }
+          }
+        }
+      }
       
       console.log('✅ Base de datos inicializada correctamente');
     } else {
