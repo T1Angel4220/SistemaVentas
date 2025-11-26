@@ -2,6 +2,9 @@ const { Pool } = require('pg');
 const { config } = require('./config');
 const fs = require('fs');
 const path = require('path');
+const { exec } = require('child_process');
+const { promisify } = require('util');
+const execAsync = promisify(exec);
 
 // Configuración de la base de datos
 const pool = new Pool({
@@ -185,10 +188,137 @@ const initializeDatabase = async () => {
       console.log('✅ Estructura de la base de datos verificada');
     }
     
+    // Verificar si necesitamos poblar datos iniciales
+    await populateInitialData();
+    
     return true;
   } catch (error) {
     console.error('❌ Error al inicializar la base de datos:', error.message);
     throw error;
+  }
+};
+
+// Función para poblar datos iniciales (categorías, ubicaciones, usuarios, productos)
+const populateInitialData = async () => {
+  try {
+    console.log('📦 Verificando datos iniciales...');
+    
+    // Verificar si ya existen categorías
+    const categoriesCheck = await query('SELECT COUNT(*) as count FROM categorias');
+    const categoriesCount = parseInt(categoriesCheck.rows[0].count);
+    
+    // Verificar si ya existen ubicaciones de Ecuador (deben tener provincia)
+    const locationsCheck = await query(`
+      SELECT COUNT(*) as count FROM ubicaciones WHERE provincia IS NOT NULL
+    `);
+    const locationsCount = parseInt(locationsCheck.rows[0].count);
+    
+    // Verificar si ya existen usuarios de prueba
+    const usersCheck = await query(`
+      SELECT COUNT(*) as count FROM usuarios WHERE correo IN (
+        'vendedor@test.com', 
+        'comprador@test.com', 
+        'admin@test.com', 
+        'moderador@test.com'
+      )
+    `);
+    const testUsersCount = parseInt(usersCheck.rows[0].count);
+    
+    // Si ya existen datos, no hacer nada
+    if (categoriesCount > 0 && locationsCount > 0 && testUsersCount === 4) {
+      console.log('✅ Datos iniciales ya están cargados');
+      return;
+    }
+    
+    console.log('🔄 Poblando datos iniciales...');
+    
+    // 1. Crear categorías jerárquicas
+    if (categoriesCount === 0) {
+      console.log('📂 Creando categorías jerárquicas...');
+      try {
+        const scriptPath = path.join(__dirname, '..', '..', 'create-hierarchical-categories.js');
+        if (fs.existsSync(scriptPath)) {
+          const { stdout, stderr } = await execAsync(`node "${scriptPath}"`, {
+            cwd: path.join(__dirname, '..', '..'),
+            env: { ...process.env, DB_HOST: config.database.host, DB_PORT: config.database.port, DB_NAME: config.database.name, DB_USER: config.database.user, DB_PASSWORD: config.database.password }
+          });
+          if (stdout) console.log(stdout);
+          console.log('✅ Categorías jerárquicas creadas');
+        } else {
+          console.warn('⚠️ No se encontró el script create-hierarchical-categories.js');
+        }
+      } catch (err) {
+        console.warn('⚠️ Error creando categorías:', err.message);
+      }
+    }
+    
+    // 2. Verificar/crear ubicaciones de Ecuador (el SQL ya se ejecutó por Docker, pero verificamos)
+    if (locationsCount === 0) {
+      console.log('🌎 Verificando ubicaciones de Ecuador...');
+      // Las ubicaciones deberían haberse cargado desde 05-ecuador-locations.sql en las migraciones
+      // Si no están, esperamos un poco más por si Docker aún está ejecutando el script
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      const recheckLocations = await query(`
+        SELECT COUNT(*) as count FROM ubicaciones WHERE provincia IS NOT NULL
+      `);
+      const recheckCount = parseInt(recheckLocations.rows[0].count);
+      
+      if (recheckCount === 0) {
+        console.log('⚠️ Ubicaciones de Ecuador no encontradas. Se cargarán cuando Docker ejecute las migraciones SQL.');
+      } else {
+        console.log(`✅ Ubicaciones de Ecuador encontradas (${recheckCount} ubicaciones)`);
+      }
+    }
+    
+    // 3. Crear usuarios de prueba
+    if (testUsersCount < 4) {
+      console.log('👥 Creando usuarios de prueba...');
+      try {
+        const scriptPath = path.join(__dirname, '..', '..', 'create-test-users.js');
+        if (fs.existsSync(scriptPath)) {
+          const { stdout, stderr } = await execAsync(`node "${scriptPath}"`, {
+            cwd: path.join(__dirname, '..', '..'),
+            env: { ...process.env, DB_HOST: config.database.host, DB_PORT: config.database.port, DB_NAME: config.database.name, DB_USER: config.database.user, DB_PASSWORD: config.database.password }
+          });
+          if (stdout) console.log(stdout);
+          console.log('✅ Usuarios de prueba creados');
+        } else {
+          console.warn('⚠️ No se encontró el script create-test-users.js');
+        }
+      } catch (err) {
+        console.warn('⚠️ Error creando usuarios de prueba:', err.message);
+      }
+    }
+    
+    // 4. Insertar productos de prueba (opcional)
+    const productsCheck = await query('SELECT COUNT(*) as count FROM items');
+    const productsCount = parseInt(productsCheck.rows[0].count);
+    
+    if (productsCount === 0) {
+      console.log('📦 Insertando productos de prueba...');
+      try {
+        const scriptPath = path.join(__dirname, '..', '..', 'insert-test-products-corregido.js');
+        if (fs.existsSync(scriptPath)) {
+          const { stdout, stderr } = await execAsync(`node "${scriptPath}"`, {
+            cwd: path.join(__dirname, '..', '..'),
+            env: { ...process.env, DB_HOST: config.database.host, DB_PORT: config.database.port, DB_NAME: config.database.name, DB_USER: config.database.user, DB_PASSWORD: config.database.password }
+          });
+          if (stdout) console.log(stdout);
+          console.log('✅ Productos de prueba insertados');
+        } else {
+          console.warn('⚠️ No se encontró el archivo insert-test-products-corregido.js');
+        }
+      } catch (err) {
+        console.warn('⚠️ Error insertando productos de prueba:', err.message);
+      }
+    }
+    
+    console.log('✅ Población de datos iniciales completada');
+    
+  } catch (error) {
+    console.warn('⚠️ Error al poblar datos iniciales:', error.message);
+    // No lanzar error para no detener el inicio del servidor
   }
 };
 
@@ -333,6 +463,7 @@ module.exports = {
   getClient,
   testConnection,
   initializeDatabase,
+  populateInitialData,
   cleanTestData,
   restoreTestData,
   getDatabaseStatus,

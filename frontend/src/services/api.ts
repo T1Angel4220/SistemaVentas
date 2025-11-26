@@ -2,7 +2,9 @@ import { sessionAlertManager } from '../utils/sessionAlert';
 import { suspendedAccountAlertManager } from '../utils/suspendedAccountAlert';
 
 // Configuración de la API
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+// VITE_API_URL debe ser solo el host (ej: http://localhost:3001)
+// El /api se agrega en cada endpoint
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/api';
 
 // Tipos de datos
 export interface User {

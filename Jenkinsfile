@@ -129,7 +129,7 @@ pipeline {
                     echo 'Construyendo imagen Docker del Frontend...'
                     dir('frontend') {
                         sh '''
-                            docker build --build-arg VITE_API_URL=http://localhost:3001/api -t ${FRONTEND_IMAGE}:${IMAGE_TAG} .
+                            docker build --build-arg VITE_API_URL=http://localhost:3001 -t ${FRONTEND_IMAGE}:${IMAGE_TAG} .
                             docker tag ${FRONTEND_IMAGE}:${IMAGE_TAG} ${FRONTEND_IMAGE}:latest
                         '''
                     }

@@ -35,13 +35,47 @@ app.set('trust proxy', true);
 // }));
 
 // Configurar CORS
+// Parsear CORS_ORIGIN que puede ser una cadena separada por comas
+const corsOrigins = config.cors.origin 
+  ? config.cors.origin.split(',').map(origin => origin.trim())
+  : ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001', 'http://localhost:80', 'http://localhost'];
+
+// Configurar CORS con manejo mejorado de preflight
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001'],
+  origin: (origin, callback) => {
+    // Permitir requests sin origin (como Postman, curl, apps móviles)
+    if (!origin) {
+      return callback(null, true);
+    }
+    
+    // Permitir cualquier localhost (con o sin puerto)
+    if (origin.startsWith('http://localhost') || 
+        origin.startsWith('http://127.0.0.1') ||
+        origin === 'http://localhost' ||
+        origin === 'http://localhost:80') {
+      console.log(`✅ CORS permitido para origin: ${origin}`);
+      return callback(null, true);
+    }
+    
+    // Verificar si el origin está en la lista permitida
+    const isAllowed = corsOrigins.some(allowed => {
+      return origin === allowed || origin.startsWith(allowed);
+    });
+    
+    if (isAllowed) {
+      console.log(`✅ CORS permitido para origin: ${origin}`);
+      callback(null, true);
+    } else {
+      console.warn(`⚠️ CORS bloqueado para origin: ${origin}`);
+      callback(new Error('No permitido por CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   exposedHeaders: ['Content-Type', 'Content-Length'],
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
+  preflightContinue: false
 }));
 
 // Middleware específico para archivos estáticos

@@ -1,12 +1,16 @@
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const { query } = require('./src/config/database');
+const path = require('path');
+
+// Asegurar que el .env esté cargado
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 async function createTestUsers() {
   try {
     console.log('🔧 Creando usuarios de prueba...');
     
     // Contraseña para todos los usuarios de prueba
-    const password = 'password123';
+    const password = 'Angel_4220';
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
     
