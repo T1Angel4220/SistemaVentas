@@ -225,11 +225,12 @@ INSERT INTO apelaciones (reporte_id, item_id, usuario_apelante_id, motivo_apelac
 -- SESIONES DE USUARIO DE PRUEBA
 -- =====================================================
 
-INSERT INTO sesiones_usuario (usuario_id, token_sesion, fecha_expiracion, ip_address, user_agent) VALUES
-(1, 'admin_token_12345', '2024-12-31 23:59:59', '192.168.1.100', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'),
-(2, 'moderador_token_67890', '2024-12-31 23:59:59', '192.168.1.101', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'),
-(4, 'vendedor_token_11111', '2024-12-31 23:59:59', '192.168.1.102', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'),
-(8, 'comprador_token_22222', '2024-12-31 23:59:59', '192.168.1.103', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
+-- INSERT INTO sesiones_usuario deshabilitado - las sesiones se crean automáticamente al hacer login
+-- INSERT INTO sesiones_usuario (usuario_id, token_sesion, fecha_expiracion, ip_address, user_agent) VALUES
+-- (1, 'admin_token_12345', '2024-12-31 23:59:59', '192.168.1.100', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'),
+-- (2, 'moderador_token_67890', '2024-12-31 23:59:59', '192.168.1.101', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'),
+-- (4, 'vendedor_token_11111', '2024-12-31 23:59:59', '192.168.1.102', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'),
+-- (8, 'comprador_token_22222', '2024-12-31 23:59:59', '192.168.1.103', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
 
 -- =====================================================
 -- COMENTARIOS FINALES

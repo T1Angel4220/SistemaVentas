@@ -272,8 +272,8 @@ const populateInitialData = async () => {
       }
     }
     
-    // 2. Verificar/crear ubicaciones de Ecuador (el SQL ya se ejecutó por Docker, pero verificamos)
-    if (locationsCount === 0) {
+    // 2. Verificar/crear ubicaciones de Ecuador (SIEMPRE verificar e insertar si faltan)
+    if (locationsCount === 0 || locationsCount < 100) {
       console.log('🌎 Verificando ubicaciones de Ecuador...');
       // Las ubicaciones deberían haberse cargado desde 05-ecuador-locations.sql en las migraciones
       // Si no están, esperamos un poco más por si Docker aún está ejecutando el script
@@ -284,35 +284,117 @@ const populateInitialData = async () => {
       `);
       const recheckCount = parseInt(recheckLocations.rows[0].count);
       
-      if (recheckCount === 0) {
-        console.log('⚠️ Ubicaciones de Ecuador no encontradas. Cargando desde el script SQL...');
+      if (recheckCount === 0 || recheckCount < 100) {
+        console.log(`⚠️ Ubicaciones de Ecuador no encontradas o insuficientes (${recheckCount} encontradas). Cargando desde el script SQL...`);
         // Intentar cargar el SQL desde el archivo
         try {
           const locationsSQLPath = path.join(__dirname, '..', '..', 'migrations', '05-ecuador-locations.sql');
           if (fs.existsSync(locationsSQLPath)) {
             const locationsSQL = fs.readFileSync(locationsSQLPath, 'utf8');
-            // Ejecutar el SQL línea por línea para evitar problemas con comandos especiales
-            const statements = locationsSQL
-              .split(';')
-              .map(s => s.trim())
-              .filter(s => s && !s.startsWith('--') && !s.toLowerCase().startsWith('set'));
             
-            for (const statement of statements) {
-              if (statement.length > 10) {
-                try {
-                  await query(statement);
-                } catch (err) {
-                  // Ignorar errores de duplicados o sintaxis menores
-                  if (!err.message.includes('already exists') && !err.message.includes('duplicate')) {
-                    console.warn(`   Advertencia: ${err.message.substring(0, 50)}...`);
+            // Primero ejecutar TRUNCATE y ALTER SEQUENCE si existen
+            try {
+              await query('TRUNCATE TABLE ubicaciones CASCADE');
+              await query('ALTER SEQUENCE ubicaciones_id_seq RESTART WITH 1');
+              console.log('   Limpiando ubicaciones antiguas...');
+            } catch (truncateErr) {
+              console.log('   No se pudieron limpiar ubicaciones antiguas (puede ser normal si está vacío)');
+            }
+            
+            // Ejecutar el SQL usando el cliente directamente para manejar mejor statements multilínea
+            const client = await getClient();
+            try {
+              // Ejecutar el SQL completo - PostgreSQL puede manejar múltiples statements
+              // Dividir por ; pero reconstruir statements completos que pueden estar en múltiples líneas
+              const lines = locationsSQL.split('\n');
+              let currentStatement = '';
+              let inComment = false;
+              let insertedCount = 0;
+              
+              for (let i = 0; i < lines.length; i++) {
+                let line = lines[i].trim();
+                
+                // Ignorar líneas de comentario completas
+                if (line.startsWith('--')) continue;
+                if (line.startsWith('/*')) {
+                  inComment = true;
+                  continue;
+                }
+                if (inComment) {
+                  if (line.includes('*/')) {
+                    inComment = false;
+                    line = line.split('*/')[1].trim();
+                  } else {
+                    continue;
+                  }
+                }
+                
+                // Ignorar líneas SET y comandos especiales de psql
+                if (line.toLowerCase().startsWith('set ') || line.startsWith('\\c') || line.toLowerCase().includes('client_encoding')) {
+                  continue;
+                }
+                
+                if (line) {
+                  currentStatement += (currentStatement ? ' ' : '') + line;
+                  
+                  // Si la línea termina con ; y tenemos un statement completo
+                  if (line.endsWith(';') && currentStatement) {
+                    const statement = currentStatement.trim();
+                    if (statement.length > 10) {
+                      try {
+                        await client.query(statement);
+                        if (statement.toUpperCase().includes('INSERT')) {
+                          insertedCount++;
+                        }
+                      } catch (err) {
+                        // Ignorar errores de duplicados, pero mostrar otros
+                        if (!err.message.includes('already exists') && 
+                            !err.message.includes('duplicate') && 
+                            !err.message.includes('violates foreign key') &&
+                            !err.message.includes('does not exist')) {
+                          console.warn(`   Advertencia en línea ${i + 1}: ${err.message.substring(0, 80)}`);
+                        }
+                      }
+                    }
+                    currentStatement = '';
                   }
                 }
               }
+              
+              // Ejecutar cualquier statement que quede sin terminar
+              if (currentStatement.trim().length > 10) {
+                try {
+                  await client.query(currentStatement.trim());
+                  if (currentStatement.toUpperCase().includes('INSERT')) {
+                    insertedCount++;
+                  }
+                } catch (err) {
+                  if (!err.message.includes('already exists') && !err.message.includes('duplicate')) {
+                    console.warn(`   Advertencia en statement final: ${err.message.substring(0, 80)}`);
+                  }
+                }
+              }
+              
+              console.log(`✅ Ubicaciones de Ecuador cargadas (${insertedCount} inserts ejecutados)`);
+              
+              // Verificar que se insertaron
+              const verifyLocations = await query(`
+                SELECT COUNT(*) as count FROM ubicaciones WHERE provincia IS NOT NULL
+              `);
+              const finalCount = parseInt(verifyLocations.rows[0].count);
+              console.log(`   Verificado: ${finalCount} ubicaciones en la base de datos`);
+              
+            } finally {
+              client.release();
             }
-            console.log('✅ Ubicaciones de Ecuador cargadas desde el script');
+          } else {
+            console.warn('⚠️ No se encontró el archivo migrations/05-ecuador-locations.sql');
           }
         } catch (err) {
           console.warn('⚠️ Error cargando ubicaciones:', err.message);
+          if (err.stack) {
+            console.warn('   Stack:', err.stack.substring(0, 200));
+          }
         }
       } else {
         console.log(`✅ Ubicaciones de Ecuador encontradas (${recheckCount} ubicaciones)`);
@@ -339,26 +421,46 @@ const populateInitialData = async () => {
       }
     }
     
-    // 4. Insertar productos de prueba (opcional)
-    const productsCheck = await query('SELECT COUNT(*) as count FROM items');
-    const productsCount = parseInt(productsCheck.rows[0].count);
+    // 4. Insertar productos de prueba (SIEMPRE verificar e insertar si faltan)
+    // Verificar primero que existan ubicaciones
+    const finalLocationsCheck = await query(`
+      SELECT COUNT(*) as count FROM ubicaciones WHERE provincia IS NOT NULL
+    `);
+    const finalLocationsCount = parseInt(finalLocationsCheck.rows[0].count);
     
-    if (productsCount === 0) {
-      console.log('📦 Insertando productos de prueba...');
-      try {
-        const scriptPath = path.join(__dirname, '..', '..', 'insert-test-products-corregido.js');
-        if (fs.existsSync(scriptPath)) {
-          const { stdout, stderr } = await execAsync(`node "${scriptPath}"`, {
-            cwd: path.join(__dirname, '..', '..'),
-            env: { ...process.env, DB_HOST: config.database.host, DB_PORT: config.database.port, DB_NAME: config.database.name, DB_USER: config.database.user, DB_PASSWORD: config.database.password }
-          });
-          if (stdout) console.log(stdout);
-          console.log('✅ Productos de prueba insertados');
-        } else {
-          console.warn('⚠️ No se encontró el archivo insert-test-products-corregido.js');
+    if (finalLocationsCount === 0) {
+      console.warn('⚠️ No hay ubicaciones disponibles. Los productos no se pueden insertar sin ubicaciones.');
+    } else {
+      const productsCheck = await query('SELECT COUNT(*) as count FROM items');
+      const productsCount = parseInt(productsCheck.rows[0].count);
+      
+      if (productsCount === 0 || productsCount < 5) {
+        console.log(`📦 Insertando productos de prueba (actualmente hay ${productsCount}, ubicaciones: ${finalLocationsCount})...`);
+        try {
+          const scriptPath = path.join(__dirname, '..', '..', 'insert-test-products-corregido.js');
+          if (fs.existsSync(scriptPath)) {
+            const { stdout, stderr } = await execAsync(`node "${scriptPath}"`, {
+              cwd: path.join(__dirname, '..', '..'),
+              env: { ...process.env, DB_HOST: config.database.host, DB_PORT: config.database.port, DB_NAME: config.database.name, DB_USER: config.database.user, DB_PASSWORD: config.database.password }
+            });
+            if (stdout) console.log(stdout);
+            if (stderr && !stderr.includes('Warning')) console.warn('Stderr:', stderr);
+            console.log('✅ Productos de prueba insertados');
+            
+            // Verificar que se insertaron productos
+            const verifyProducts = await query('SELECT COUNT(*) as count FROM items');
+            const finalProductsCount = parseInt(verifyProducts.rows[0].count);
+            console.log(`   Verificado: ${finalProductsCount} productos en la base de datos`);
+          } else {
+            console.warn('⚠️ No se encontró el archivo insert-test-products-corregido.js');
+          }
+        } catch (err) {
+          console.warn('⚠️ Error insertando productos de prueba:', err.message);
+          if (err.stdout) console.log('Stdout:', err.stdout);
+          if (err.stderr) console.warn('Stderr:', err.stderr);
         }
-      } catch (err) {
-        console.warn('⚠️ Error insertando productos de prueba:', err.message);
+      } else {
+        console.log(`✅ Productos de prueba ya existen (${productsCount} productos)`);
       }
     }
     

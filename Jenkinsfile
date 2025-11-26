@@ -169,30 +169,41 @@
                 steps {
                     script {
                         echo 'Desplegando aplicacion con Docker Compose...'
+                        // Crear archivo .env.docker usando writeFile de Jenkins
+                        def envContent = """DB_NAME=${env.DB_NAME}
+DB_USER=${env.DB_USER}
+DB_PASSWORD=${env.DB_PASSWORD}
+DB_PORT=${env.DB_PORT}
+JWT_SECRET=${env.JWT_SECRET}
+JWT_EXPIRES_IN=${env.JWT_EXPIRES_IN}
+JWT_REFRESH_EXPIRES_IN=${env.JWT_REFRESH_EXPIRES_IN}
+EMAIL_HOST=${env.EMAIL_HOST}
+EMAIL_PORT=${env.EMAIL_PORT}
+EMAIL_SECURE=${env.EMAIL_SECURE}
+EMAIL_USER=${env.EMAIL_USER}
+EMAIL_PASSWORD=${env.EMAIL_PASSWORD}
+EMAIL_FROM=${env.EMAIL_FROM}
+CORS_ORIGIN=${env.CORS_ORIGIN}
+FRONTEND_URL=${env.FRONTEND_URL}
+BCRYPT_SALT_ROUNDS=${env.BCRYPT_SALT_ROUNDS}
+BACKEND_PORT=${env.BACKEND_PORT}
+FRONTEND_PORT=${env.FRONTEND_PORT}
+"""
+                        writeFile file: '.env.docker', text: envContent
+                        
                         sh '''
-                            # Crear archivo .env para docker-compose
-                            cat > .env.docker << EOF
-    DB_NAME=${DB_NAME}
-    DB_USER=${DB_USER}
-    DB_PASSWORD=${DB_PASSWORD}
-    DB_PORT=${DB_PORT}
-    JWT_SECRET=${JWT_SECRET}
-    JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
-    JWT_REFRESH_EXPIRES_IN=${JWT_REFRESH_EXPIRES_IN}
-    EMAIL_HOST=${EMAIL_HOST}
-    EMAIL_PORT=${EMAIL_PORT}
-    EMAIL_SECURE=${EMAIL_SECURE}
-    EMAIL_USER=${EMAIL_USER}
-    EMAIL_PASSWORD=${EMAIL_PASSWORD}
-    EMAIL_FROM=${EMAIL_FROM}
-    CORS_ORIGIN=${CORS_ORIGIN}
-    FRONTEND_URL=${FRONTEND_URL}
-    BCRYPT_SALT_ROUNDS=${BCRYPT_SALT_ROUNDS}
-    BACKEND_PORT=${BACKEND_PORT}
-    FRONTEND_PORT=${FRONTEND_PORT}
-    EOF
+                            echo "Archivo .env.docker creado"
+                            cat .env.docker
+                            
+                            # Verificar que docker-compose.yml existe
+                            if [ ! -f "docker-compose.yml" ]; then
+                                echo "ERROR: docker-compose.yml no encontrado"
+                                ls -la
+                                exit 1
+                            fi
                             
                             # Usar docker-compose para desplegar con rebuild si es necesario
+                            echo "Iniciando contenedores con docker-compose..."
                             docker-compose --env-file .env.docker up -d --build
                             
                             # Esperar a que los servicios estén listos
@@ -200,7 +211,12 @@
                             sleep 30
                             
                             # Verificar estado de los contenedores
+                            echo "Estado de contenedores:"
                             docker-compose ps
+                            
+                            # Verificar logs de inicio
+                            echo "Logs de inicio (últimas 20 líneas):"
+                            docker-compose logs --tail=20
                         '''
                     }
                 }
