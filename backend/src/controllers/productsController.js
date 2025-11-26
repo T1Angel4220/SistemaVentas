@@ -774,29 +774,41 @@ class ProductsController {
       let informacionAdicionalApelacion = null;
       
       if (producto.estado === 'rechazado' && req.user.id === producto.vendedor_id) {
-        // Verificar si viene respuesta del vendedor (para crear apelación)
+        // Cuando un vendedor corrige un producto rechazado, SIEMPRE crear apelación y cambiar a en_apelacion
+        crearApelacion = true;
+        nuevoEstado = 'en_apelacion';
+        
+        // Si viene respuesta del vendedor, usarla; si no, usar mensaje por defecto
         if (req.body.respuesta_rechazo && req.body.respuesta_rechazo.trim().length > 0) {
-          // Si hay respuesta, crear apelación y cambiar a en_apelacion
-          crearApelacion = true;
           motivoApelacion = req.body.respuesta_rechazo.trim();
           informacionAdicionalApelacion = 'Producto corregido y actualizado según las observaciones del moderador.';
-          nuevoEstado = 'en_apelacion';
         } else {
-          // Si no hay respuesta, simplemente cambiar a pendiente_revision para re-revisión
-          nuevoEstado = 'pendiente_revision';
-          // Limpiar el motivo de rechazo para que se genere uno nuevo en la siguiente revisión
-          motivoRechazo = null;
+          // Mensaje por defecto si no se proporciona respuesta
+          motivoApelacion = 'Producto corregido según las observaciones del moderador. Solicitando revisión nuevamente.';
+          informacionAdicionalApelacion = 'El vendedor ha realizado correcciones en el producto y solicita una nueva revisión.';
         }
       }
 
+      // Guardar si el producto estaba rechazado antes de cualquier cambio
+      const productoEstabaRechazado = producto.estado === 'rechazado';
+      
       if (deteccion.esInadecuado) {
         if (deteccion.nivelRiesgo === 'alto') {
+          // Si es alto riesgo, siempre marcarlo como peligroso (sobrescribe cualquier estado)
           nuevoEstado = 'peligroso';
           esPeligroso = true;
           motivoRechazo = obtenerMensajeRechazo(deteccion.categoria, deteccion.palabrasDetectadas);
-        } else if (deteccion.nivelRiesgo === 'medio' && producto.estado === 'activo') {
-          nuevoEstado = 'pendiente_revision';
-          motivoRechazo = obtenerMensajeRechazo(deteccion.categoria, deteccion.palabrasDetectadas);
+          crearApelacion = false; // No crear apelación si es peligroso
+        } else if (deteccion.nivelRiesgo === 'medio') {
+          // Si es riesgo medio:
+          // 1. NO sobrescribir si el producto estaba rechazado y se corrigió (mantener en_apelacion)
+          // 2. Solo cambiar a pendiente_revision si el producto estaba activo
+          if (producto.estado === 'activo' && !productoEstabaRechazado) {
+            nuevoEstado = 'pendiente_revision';
+            motivoRechazo = obtenerMensajeRechazo(deteccion.categoria, deteccion.palabrasDetectadas);
+          }
+          // Si el producto estaba rechazado y se corrigió, mantener en_apelacion (no cambiar)
+          // El motivo de rechazo ya existe del rechazo anterior
         }
       }
 
@@ -1011,15 +1023,10 @@ class ProductsController {
         }
       }
 
-      // Si el producto estaba rechazado y ahora está en pendiente_revision o en_apelacion, informar al usuario
-      let productoCorregido = false;
+      // Si el producto estaba rechazado y ahora está en en_apelacion, informar al usuario
       let productoEnApelacion = false;
-      if (producto.estado === 'rechazado') {
-        if (nuevoEstado === 'pendiente_revision') {
-          productoCorregido = true;
-        } else if (nuevoEstado === 'en_apelacion') {
-          productoEnApelacion = true;
-        }
+      if (producto.estado === 'rechazado' && nuevoEstado === 'en_apelacion') {
+        productoEnApelacion = true;
       }
 
       // Determinar mensaje de respuesta basado en cambios de estado
@@ -1033,16 +1040,7 @@ class ProductsController {
           estado_nuevo: 'en_apelacion',
           requiere_revision: true,
           apelacion_creada: true,
-          mensaje: 'Tu producto ha sido corregido y se ha creado una apelación. Será revisado por los moderadores.'
-        };
-      } else if (productoCorregido) {
-        mensajeRespuesta = 'Producto corregido y enviado para revisión nuevamente';
-        informacionAdicional = {
-          estado_anterior: 'rechazado',
-          estado_nuevo: 'pendiente_revision',
-          requiere_revision: true,
-          corregido: true,
-          mensaje: 'Tu producto ha sido corregido y será revisado nuevamente por los moderadores.'
+          mensaje: 'Tu producto ha sido corregido y se ha creado una apelación. Será revisado por los moderadores en la sección de apelaciones.'
         };
       } else if (deteccion.esInadecuado && (nuevoEstado !== producto.estado)) {
         if (nuevoEstado === 'peligroso') {
