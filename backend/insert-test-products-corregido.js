@@ -10,6 +10,79 @@ const pool = new Pool({
   password: process.env.DB_PASSWORD || 'postgres'
 });
 
+// Coordenadas aproximadas de las principales ciudades de Ecuador por provincia
+const coordenadasEcuador = {
+  'Pichincha': { lat: -0.1807, lng: -78.4678, ciudad: 'Quito' },
+  'Guayas': { lat: -2.1710, lng: -79.9224, ciudad: 'Guayaquil' },
+  'Azuay': { lat: -2.9001, lng: -79.0059, ciudad: 'Cuenca' },
+  'Tungurahua': { lat: -1.2417, lng: -78.6197, ciudad: 'Ambato' },
+  'Loja': { lat: -4.0071, lng: -79.2050, ciudad: 'Loja' },
+  'El Oro': { lat: -3.2586, lng: -79.9544, ciudad: 'Machala' },
+  'Manabí': { lat: -1.0544, lng: -80.4545, ciudad: 'Portoviejo' },
+  'Los Ríos': { lat: -1.8019, lng: -79.5344, ciudad: 'Babahoyo' },
+  'Imbabura': { lat: 0.3485, lng: -78.1264, ciudad: 'Ibarra' },
+  'Cotopaxi': { lat: -0.9318, lng: -78.6156, ciudad: 'Latacunga' },
+  'Chimborazo': { lat: -1.6631, lng: -78.6471, ciudad: 'Riobamba' },
+  'Cañar': { lat: -2.7386, lng: -78.8386, ciudad: 'Azogues' },
+  'Bolívar': { lat: -1.5906, lng: -79.0014, ciudad: 'Guaranda' },
+  'Esmeraldas': { lat: 0.9655, lng: -79.6538, ciudad: 'Esmeraldas' },
+  'Santa Elena': { lat: -2.2267, lng: -80.8581, ciudad: 'Santa Elena' },
+  'Santo Domingo de los Tsáchilas': { lat: -0.2542, lng: -79.1719, ciudad: 'Santo Domingo' },
+  'Sucumbíos': { lat: 0.0884, lng: -76.8953, ciudad: 'Nueva Loja' },
+  'Napo': { lat: -0.9936, lng: -77.8145, ciudad: 'Tena' },
+  'Orellana': { lat: -0.4657, lng: -76.9878, ciudad: 'Francisco de Orellana' },
+  'Pastaza': { lat: -1.4667, lng: -77.9833, ciudad: 'Puyo' },
+  'Morona Santiago': { lat: -2.3088, lng: -78.1200, ciudad: 'Macas' },
+  'Zamora Chinchipe': { lat: -4.0669, lng: -78.9544, ciudad: 'Zamora' },
+  'Carchi': { lat: 0.8090, lng: -77.7159, ciudad: 'Tulcán' },
+  'Galápagos': { lat: -0.7467, lng: -90.3038, ciudad: 'Puerto Baquerizo Moreno' }
+};
+
+// Calles típicas ecuatorianas
+const callesEcuador = [
+  'Av. 10 de Agosto', 'Av. 9 de Octubre', 'Av. Amazonas', 'Av. 6 de Diciembre',
+  'Calle Roca', 'Calle Sucre', 'Calle Bolívar', 'Calle García Moreno',
+  'Calle Guayaquil', 'Calle Cuenca', 'Calle Quito', 'Calle Ambato',
+  'Av. Simón Bolívar', 'Calle Primera', 'Calle Segunda', 'Calle 24 de Mayo',
+  'Av. de los Shyris', 'Calle Venezuela', 'Calle Colón', 'Av. Universitaria',
+  'Calle Principal', 'Av. del Ejército', 'Calle 5 de Junio', 'Calle 12 de Abril'
+];
+
+// Función para generar coordenadas válidas de Ecuador
+function generarCoordenadasEcuador(provincia) {
+  // Si tenemos coordenadas conocidas para la provincia, usarlas con variación
+  if (coordenadasEcuador[provincia]) {
+    const base = coordenadasEcuador[provincia];
+    // Agregar variación aleatoria pequeña (±0.05 grados ≈ 5.5 km)
+    const variacionLat = (Math.random() - 0.5) * 0.1;
+    const variacionLng = (Math.random() - 0.5) * 0.1;
+    return {
+      lat: (base.lat + variacionLat).toFixed(6),
+      lng: (base.lng + variacionLng).toFixed(6)
+    };
+  }
+  
+  // Si no conocemos la provincia, usar coordenadas generales de Ecuador
+  // Latitud: -4.23 a 1.46, Longitud: -81.08 a -75.19
+  const lat = (-4.23 + Math.random() * (1.46 - (-4.23))).toFixed(6);
+  const lng = (-81.08 + Math.random() * (-75.19 - (-81.08))).toFixed(6);
+  return { lat, lng };
+}
+
+// Función para generar dirección específica ecuatoriana
+function generarDireccionEcuador(canton) {
+  const calle = callesEcuador[Math.floor(Math.random() * callesEcuador.length)];
+  const numero = Math.floor(Math.random() * 2000) + 1;
+  const referencia = [
+    'Frente al parque', 'Cerca del mercado', 'Diagonal a la escuela',
+    'Junto al centro comercial', 'Cerca de la iglesia', 'Frente al banco',
+    'Esquina principal', 'Cerca del hospital', 'Frente al estadio',
+    'Junto a la universidad', 'Cerca de la terminal', 'Frente a la plaza'
+  ][Math.floor(Math.random() * 12)];
+  
+  return `${calle} #${numero}, ${referencia}`;
+}
+
 // Productos de prueba variados
 const productos = [
   {
@@ -226,9 +299,9 @@ async function insertProducts() {
       return;
     }
     
-    // Obtener ubicaciones disponibles
+    // Obtener ubicaciones disponibles con nombre completo
     const ubicacionesResult = await client.query(
-      'SELECT id, provincia, canton FROM ubicaciones ORDER BY RANDOM() LIMIT 10'
+      'SELECT id, nombre, provincia, canton FROM ubicaciones ORDER BY RANDOM() LIMIT 10'
     );
     
     if (ubicacionesResult.rows.length === 0) {
@@ -251,12 +324,18 @@ async function insertProducts() {
       // Seleccionar ubicación aleatoria
       const ubicacion = ubicacionesResult.rows[Math.floor(Math.random() * ubicacionesResult.rows.length)];
       
-      // Insertar producto
+      // Generar datos de ubicación completos de Ecuador
+      const coordenadas = generarCoordenadasEcuador(ubicacion.provincia);
+      const direccion = generarDireccionEcuador(ubicacion.canton);
+      const distrito = ubicacion.nombre || ubicacion.canton;
+      
+      // Insertar producto con todos los campos de ubicación de Ecuador
       const itemResult = await client.query(
         `INSERT INTO items (
           codigo, nombre, descripcion, precio, ubicacion_id, 
+          ubicacion_provincia, ubicacion_canton, ubicacion_distrito, ubicacion_direccion, coordenadas,
           tipo, estado, categoria_id, vendedor_id, disponibilidad
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
         RETURNING id, nombre`,
         [
           producto.codigo,
@@ -264,6 +343,11 @@ async function insertProducts() {
           producto.descripcion,
           producto.precio,
           ubicacion.id,
+          ubicacion.provincia,
+          ubicacion.canton,
+          distrito,
+          direccion,
+          `${coordenadas.lat},${coordenadas.lng}`,
           producto.tipo,
           'activo', // Productos activos para prueba (equivalente a aprobado)
           categoria.id,
@@ -278,7 +362,9 @@ async function insertProducts() {
       console.log(`✅ Producto insertado: ${itemNombre} (ID: ${itemId})`);
       console.log(`   Vendedor: ${vendedor.nombre} ${vendedor.apellido}`);
       console.log(`   Categoría: ${categoria.nombre}`);
-      console.log(`   Ubicación: ${ubicacion.canton}, ${ubicacion.provincia}`);
+      console.log(`   Ubicación: ${distrito}, ${ubicacion.canton}, ${ubicacion.provincia}`);
+      console.log(`   Dirección: ${direccion}`);
+      console.log(`   Coordenadas: ${coordenadas.lat}, ${coordenadas.lng}`);
       console.log(`   Precio: $${producto.precio}`);
       
       productosInsertados++;

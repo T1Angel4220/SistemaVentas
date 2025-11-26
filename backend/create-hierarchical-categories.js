@@ -117,6 +117,14 @@ const categoriesStructure = {
       'Peces': { orden: 3 },
       'Otros': { orden: 4 }
     }
+  },
+  'Otros': {
+    nivel: 0,
+    orden: 11,
+    subcategorias: {
+      'Varios': { orden: 1 },
+      'Sin categoría': { orden: 2 }
+    }
   }
 };
 

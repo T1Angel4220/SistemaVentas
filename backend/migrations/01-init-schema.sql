@@ -54,7 +54,8 @@ DO $$ BEGIN
         'pendiente_revision',
         'rechazado',
         'peligroso',
-        'suspendido'
+        'suspendido',
+        'en_apelacion'
     );
 EXCEPTION
     WHEN duplicate_object THEN null;

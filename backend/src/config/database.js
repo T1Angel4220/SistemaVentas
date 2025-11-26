@@ -232,6 +232,26 @@ const populateInitialData = async () => {
     
     console.log('🔄 Poblando datos iniciales...');
     
+    // Verificar y agregar categoría "Otros" si no existe
+    const otrosCheck = await query(`
+      SELECT COUNT(*) as count FROM categorias WHERE nombre = 'Otros' AND nivel = 0
+    `);
+    const otrosExists = parseInt(otrosCheck.rows[0].count) > 0;
+    
+    if (!otrosExists) {
+      console.log('📂 Agregando categoría "Otros"...');
+      try {
+        await query(`
+          INSERT INTO categorias (nombre, descripcion, categoria_padre_id, nivel, orden, activa)
+          VALUES ('Otros', 'Categoría general para productos diversos', NULL, 0, 11, true)
+          ON CONFLICT DO NOTHING
+        `);
+        console.log('✅ Categoría "Otros" agregada');
+      } catch (err) {
+        console.warn('⚠️ Error agregando categoría Otros:', err.message);
+      }
+    }
+    
     // 1. Crear categorías jerárquicas
     if (categoriesCount === 0) {
       console.log('📂 Creando categorías jerárquicas...');
@@ -265,7 +285,35 @@ const populateInitialData = async () => {
       const recheckCount = parseInt(recheckLocations.rows[0].count);
       
       if (recheckCount === 0) {
-        console.log('⚠️ Ubicaciones de Ecuador no encontradas. Se cargarán cuando Docker ejecute las migraciones SQL.');
+        console.log('⚠️ Ubicaciones de Ecuador no encontradas. Cargando desde el script SQL...');
+        // Intentar cargar el SQL desde el archivo
+        try {
+          const locationsSQLPath = path.join(__dirname, '..', '..', 'migrations', '05-ecuador-locations.sql');
+          if (fs.existsSync(locationsSQLPath)) {
+            const locationsSQL = fs.readFileSync(locationsSQLPath, 'utf8');
+            // Ejecutar el SQL línea por línea para evitar problemas con comandos especiales
+            const statements = locationsSQL
+              .split(';')
+              .map(s => s.trim())
+              .filter(s => s && !s.startsWith('--') && !s.toLowerCase().startsWith('set'));
+            
+            for (const statement of statements) {
+              if (statement.length > 10) {
+                try {
+                  await query(statement);
+                } catch (err) {
+                  // Ignorar errores de duplicados o sintaxis menores
+                  if (!err.message.includes('already exists') && !err.message.includes('duplicate')) {
+                    console.warn(`   Advertencia: ${err.message.substring(0, 50)}...`);
+                  }
+                }
+              }
+            }
+            console.log('✅ Ubicaciones de Ecuador cargadas desde el script');
+          }
+        } catch (err) {
+          console.warn('⚠️ Error cargando ubicaciones:', err.message);
+        }
       } else {
         console.log(`✅ Ubicaciones de Ecuador encontradas (${recheckCount} ubicaciones)`);
       }
