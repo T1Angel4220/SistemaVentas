@@ -1544,9 +1544,25 @@ class ProductsController {
         FROM items
       `);
 
+      // Normalizar URLs de imágenes antes de enviar la respuesta
+      const productosNormalizados = productos.rows.map(producto => {
+        const primeraImagenNormalizada = producto.primera_imagen 
+          ? normalizeImageUrl(
+              producto.primera_imagen.startsWith('http') 
+                ? producto.primera_imagen 
+                : buildImageUrl(producto.primera_imagen.replace('/uploads/', '').replace('/uploads/products/', ''))
+            )
+          : null;
+
+        return {
+          ...producto,
+          primera_imagen: primeraImagenNormalizada
+        };
+      });
+
       res.json({
         success: true,
-        data: productos.rows,
+        data: productosNormalizados,
         pagination: {
           current_page: parseInt(page),
           total_pages: totalPages,
@@ -1633,9 +1649,25 @@ class ProductsController {
         ORDER BY sp.fecha_guardado DESC
       `, [userId]);
 
+      // Normalizar URLs de imágenes antes de enviar la respuesta
+      const productosNormalizados = result.rows.map(producto => {
+        const primeraImagenNormalizada = producto.primera_imagen 
+          ? normalizeImageUrl(
+              producto.primera_imagen.startsWith('http') 
+                ? producto.primera_imagen 
+                : buildImageUrl(producto.primera_imagen.replace('/uploads/', '').replace('/uploads/products/', ''))
+            )
+          : null;
+
+        return {
+          ...producto,
+          primera_imagen: primeraImagenNormalizada
+        };
+      });
+
       return res.status(200).json({
         success: true,
-        data: result.rows,
+        data: productosNormalizados,
         message: 'Productos guardados obtenidos exitosamente'
       });
 
@@ -1825,9 +1857,25 @@ class ProductsController {
         [vendedor_id]
       );
 
+      // Normalizar URLs de imágenes antes de enviar la respuesta
+      const productosNormalizados = result.rows.map(producto => {
+        const primeraImagenNormalizada = producto.primera_imagen 
+          ? normalizeImageUrl(
+              producto.primera_imagen.startsWith('http') 
+                ? producto.primera_imagen 
+                : buildImageUrl(producto.primera_imagen.replace('/uploads/', '').replace('/uploads/products/', ''))
+            )
+          : null;
+
+        return {
+          ...producto,
+          primera_imagen: primeraImagenNormalizada
+        };
+      });
+
       res.json({
         success: true,
-        data: result.rows
+        data: productosNormalizados
       });
 
     } catch (error) {
@@ -2020,4 +2068,10 @@ class ProductsController {
   }
 }
 
+// Exportar funciones helper para uso en otros controladores
+const normalizeImageUrlHelper = normalizeImageUrl;
+const buildImageUrlHelper = buildImageUrl;
+
 module.exports = ProductsController;
+module.exports.normalizeImageUrl = normalizeImageUrlHelper;
+module.exports.buildImageUrl = buildImageUrlHelper;

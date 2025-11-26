@@ -1,4 +1,6 @@
 const { query } = require('../config/database');
+const { config } = require('../config/config');
+const { normalizeImageUrl, buildImageUrl } = require('./productsController');
 
 // Controlador de Apelaciones
 class AppealsController {
@@ -170,6 +172,50 @@ class AppealsController {
   // Obtener todas las apelaciones pendientes (para moderadores)
   static async getPendingAppeals(req, res) {
     try {
+      // Primero, buscar productos en estado 'en_apelacion' que no tienen apelación
+      // y crear apelaciones automáticamente para ellos
+      const productosSinApelacion = await query(
+        `SELECT i.id, i.vendedor_id
+         FROM items i
+         WHERE i.estado = 'en_apelacion'
+         AND NOT EXISTS (
+           SELECT 1 FROM apelaciones a 
+           WHERE a.item_id = i.id 
+           AND a.estado IN ('en_apelacion', 'pendiente')
+         )`
+      );
+
+      // Crear apelaciones automáticas para productos que están en en_apelacion pero no tienen registro
+      for (const producto of productosSinApelacion.rows) {
+        try {
+          // Verificar si ya existe una apelación para evitar duplicados
+          const existeApelacion = await query(
+            'SELECT id FROM apelaciones WHERE item_id = $1',
+            [producto.id]
+          );
+
+          if (existeApelacion.rows.length === 0) {
+            // Solo crear si no existe
+            await query(
+              `INSERT INTO apelaciones 
+              (item_id, usuario_apelante_id, motivo_apelacion, informacion_adicional, estado, fecha_apelacion)
+              VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)`,
+              [
+                producto.id,
+                producto.vendedor_id,
+                'Producto corregido - requiere revisión',
+                'Este producto fue corregido por el vendedor y está en proceso de apelación.',
+                'en_apelacion'
+              ]
+            );
+            console.log(`✅ Apelación automática creada para producto ${producto.id}`);
+          }
+        } catch (error) {
+          console.error(`Error al crear apelación automática para producto ${producto.id}:`, error);
+        }
+      }
+
+      // Ahora obtener todas las apelaciones pendientes (incluyendo las recién creadas)
       const result = await query(
         `SELECT 
           a.*,
@@ -195,13 +241,30 @@ class AppealsController {
         INNER JOIN usuarios u_vendedor ON i.vendedor_id = u_vendedor.id
         LEFT JOIN categorias cat ON i.categoria_id = cat.id
         WHERE a.estado IN ('en_apelacion', 'pendiente')
+        AND i.estado = 'en_apelacion'
         ORDER BY a.fecha_apelacion ASC`
       );
 
+      // Normalizar URLs de imágenes antes de enviar la respuesta
+      const apelacionesNormalizadas = result.rows.map(apelacion => {
+        const primeraImagenNormalizada = apelacion.primera_imagen 
+          ? normalizeImageUrl(
+              apelacion.primera_imagen.startsWith('http') 
+                ? apelacion.primera_imagen 
+                : buildImageUrl(apelacion.primera_imagen.replace('/uploads/', '').replace('/uploads/products/', ''))
+            )
+          : null;
+
+        return {
+          ...apelacion,
+          primera_imagen: primeraImagenNormalizada
+        };
+      });
+
       res.json({
         success: true,
-        data: result.rows,
-        count: result.rows.length
+        data: apelacionesNormalizadas,
+        count: apelacionesNormalizadas.length
       });
 
     } catch (error) {

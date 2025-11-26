@@ -1,4 +1,5 @@
 const { query } = require('../config/database');
+const { normalizeImageUrl, buildImageUrl } = require('./productsController');
 
 // Controlador de Reportes/Denuncias
 class ReportsController {
@@ -216,10 +217,26 @@ class ReportsController {
         queryParams
       );
 
+      // Normalizar URLs de imágenes antes de enviar la respuesta
+      const reportesNormalizados = result.rows.map(reporte => {
+        const primeraImagenNormalizada = reporte.primera_imagen 
+          ? normalizeImageUrl(
+              reporte.primera_imagen.startsWith('http') 
+                ? reporte.primera_imagen 
+                : buildImageUrl(reporte.primera_imagen.replace('/uploads/', '').replace('/uploads/products/', ''))
+            )
+          : null;
+
+        return {
+          ...reporte,
+          primera_imagen: primeraImagenNormalizada
+        };
+      });
+
       res.json({
         success: true,
-        data: result.rows,
-        count: result.rows.length
+        data: reportesNormalizados,
+        count: reportesNormalizados.length
       });
 
     } catch (error) {
