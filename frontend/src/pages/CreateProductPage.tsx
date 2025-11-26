@@ -788,6 +788,11 @@ export const CreateProductPage: React.FC = () => {
         console.log('✅ Agregando deleted_images al formData:', deletedImagesString);
         formData.append('deleted_images', deletedImagesString);
         
+        // Agregar respuesta del vendedor al rechazo si existe (para crear apelación automática)
+        if (form.estado === 'rechazado' && respuestaRechazo.trim()) {
+          formData.append('respuesta_rechazo', respuestaRechazo.trim());
+        }
+        
         // Debug: Verificar que se agregó correctamente
         console.log('🔍 Verificando que se agregó deleted_images:', formData.has('deleted_images'));
       } else {
@@ -829,37 +834,17 @@ export const CreateProductPage: React.FC = () => {
         setSuccess(true);
         const actionText = isEditMode ? 'actualizado' : 'creado';
         
-        // Si el producto estaba rechazado y el vendedor escribió una respuesta, crear apelación
-        if (isEditMode && form.estado === 'rechazado' && respuestaRechazo.trim()) {
-          try {
-            const appealResponse = await fetch(`http://localhost:3001/api/products/${id}/appeal`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiService.getToken()}`
-              },
-              body: JSON.stringify({
-                motivo_apelacion: respuestaRechazo,
-                informacion_adicional: 'Producto corregido y actualizado según las observaciones del moderador.'
-              })
-            });
-            
-            const appealData = await appealResponse.json();
-            
-            if (!appealData.success) {
-              console.error('Error al crear apelación:', appealData.message);
-            }
-          } catch (error) {
-            console.error('Error al crear apelación automática:', error);
-          }
-        }
-        
         // Construir mensaje basado en información adicional
+        // El backend ya crea la apelación automáticamente si se envió respuesta_rechazo
         let mensajeExito = `El producto ha sido ${actionText} correctamente.`;
         
-        // Si se envió una respuesta al moderador, agregar al mensaje
-        if (isEditMode && form.estado === 'rechazado' && respuestaRechazo.trim()) {
-          mensajeExito += `\n\n✅ Tu respuesta al moderador ha sido enviada. El producto será revisado nuevamente.`;
+        // Si se creó una apelación o se corrigió el producto, informar al usuario
+        if (data.informacion) {
+          if (data.informacion.apelacion_creada) {
+            mensajeExito += `\n\n✅ Tu respuesta al moderador ha sido enviada. Se ha creado una apelación y el producto será revisado nuevamente.`;
+          } else if (data.informacion.corregido) {
+            mensajeExito += `\n\n✅ El producto ha sido corregido y será revisado nuevamente por los moderadores.`;
+          }
         }
         
         let tipoAlerta = 'success';

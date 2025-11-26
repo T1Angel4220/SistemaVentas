@@ -5,9 +5,38 @@ const { filtrarPorProximidad } = require('../utils/geoLocation');
 const { sendAccountBlockedByDangerousProductsEmail } = require('../services/email');
 
 // Función helper para construir URLs completas de imágenes
+// NOTA: SIEMPRE usar 'localhost' para que el navegador pueda acceder (nunca 0.0.0.0)
 const buildImageUrl = (filename) => {
-  const baseUrl = `${config.server.host}:${config.server.port}`;
-  return `http://${baseUrl}/uploads/${filename}`;
+  // SIEMPRE usar localhost para URLs accesibles desde el navegador
+  const port = config.server.port || 3001;
+  return `http://localhost:${port}/uploads/${filename}`;
+};
+
+// Función helper para normalizar URLs de imágenes (reemplazar 0.0.0.0 por localhost)
+// Esta función garantiza que todas las URLs usen localhost en lugar de 0.0.0.0
+const normalizeImageUrl = (url) => {
+  if (!url) return url;
+  
+  // Si es una URL absoluta, reemplazar cualquier 0.0.0.0 con localhost
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    // Reemplazar 0.0.0.0 por localhost en cualquier parte de la URL
+    let normalized = url.replace(/http:\/\/0\.0\.0\.0:(\d+)/gi, 'http://localhost:$1');
+    normalized = normalized.replace(/https:\/\/0\.0\.0\.0:(\d+)/gi, 'https://localhost:$1');
+    
+    // También reemplazar si viene con 127.0.0.1 o cualquier otra variante problemática
+    normalized = normalized.replace(/http:\/\/127\.0\.0\.1:(\d+)/gi, 'http://localhost:$1');
+    
+    return normalized;
+  }
+  
+  // Si es una URL relativa que empieza con /uploads, convertirla a absoluta con localhost
+  if (url.startsWith('/uploads')) {
+    // Extraer el nombre del archivo
+    const filename = url.replace('/uploads/', '').replace('/uploads/products/', '');
+    return buildImageUrl(filename);
+  }
+  
+  return url;
 };
 
 // Controlador de productos y servicios
@@ -158,11 +187,26 @@ class ProductsController {
         for (let i = 0; i < req.files.length; i++) {
           const file = req.files[i];
           const esPrincipal = i === 0; // La primera imagen es la principal
+          // Guardar solo la ruta relativa en la base de datos (mejor práctica)
+          // Asegurar que siempre sea relativa, eliminando cualquier URL absoluta
+          let urlImagen = `/uploads/${file.filename}`;
+          
+          // Validación adicional: si por alguna razón llegara una URL absoluta, convertirla a relativa
+          if (urlImagen.startsWith('http://') || urlImagen.startsWith('https://')) {
+            // Extraer solo la ruta relativa
+            const urlObj = new URL(urlImagen);
+            urlImagen = urlObj.pathname;
+          }
+          
+          // Asegurar que empiece con /uploads
+          if (!urlImagen.startsWith('/uploads')) {
+            urlImagen = `/uploads/${file.filename}`;
+          }
           
           await query(
             `INSERT INTO item_imagenes (item_id, url_imagen, orden, es_principal)
              VALUES ($1, $2, $3, $4)`,
-            [producto.id, buildImageUrl(file.filename), i + 1, esPrincipal]
+            [producto.id, urlImagen, i + 1, esPrincipal]
           );
         }
         
@@ -405,9 +449,19 @@ class ProductsController {
         totalPagesFinal = Math.ceil(totalFinal / limit);
       }
 
+      // Normalizar URLs de imágenes en todos los productos (reemplazar 0.0.0.0 por localhost)
+      const productosNormalizados = productosFinales.map(producto => ({
+        ...producto,
+        primera_imagen: producto.primera_imagen ? normalizeImageUrl(
+          producto.primera_imagen.startsWith('http') 
+            ? producto.primera_imagen 
+            : buildImageUrl(producto.primera_imagen.replace('/uploads/', '').replace('/uploads/products/', ''))
+        ) : null
+      }));
+
       res.json({
         success: true,
-        data: productosFinales,
+        data: productosNormalizados,
         pagination: {
           current_page: parseInt(page),
           total_pages: totalPagesFinal,
@@ -479,13 +533,16 @@ class ProductsController {
         [id]
       );
 
-      // Convertir URLs relativas a absolutas
-      const imagenesConUrlsCompletas = imagenes.rows.map(imagen => ({
-        ...imagen,
-        url_imagen: imagen.url_imagen.startsWith('http') 
+      // Convertir URLs relativas a absolutas y normalizar (reemplazar 0.0.0.0 por localhost)
+      const imagenesConUrlsCompletas = imagenes.rows.map(imagen => {
+        let url = imagen.url_imagen.startsWith('http') 
           ? imagen.url_imagen 
-          : buildImageUrl(imagen.url_imagen.replace('/uploads/', ''))
-      }));
+          : buildImageUrl(imagen.url_imagen.replace('/uploads/', '').replace('/uploads/products/', ''));
+        return {
+          ...imagen,
+          url_imagen: normalizeImageUrl(url)
+        };
+      });
 
       // Si es un servicio, obtener información adicional
       let servicioInfo = null;
@@ -571,13 +628,16 @@ class ProductsController {
         [id]
       );
 
-      // Convertir URLs relativas a absolutas
-      const imagenesConUrlsCompletas = imagenes.rows.map(imagen => ({
-        ...imagen,
-        url_imagen: imagen.url_imagen.startsWith('http') 
+      // Convertir URLs relativas a absolutas y normalizar (reemplazar 0.0.0.0 por localhost)
+      const imagenesConUrlsCompletas = imagenes.rows.map(imagen => {
+        let url = imagen.url_imagen.startsWith('http') 
           ? imagen.url_imagen 
-          : buildImageUrl(imagen.url_imagen.replace('/uploads/', ''))
-      }));
+          : buildImageUrl(imagen.url_imagen.replace('/uploads/', '').replace('/uploads/products/', ''));
+        return {
+          ...imagen,
+          url_imagen: normalizeImageUrl(url)
+        };
+      });
 
       // Si es un servicio, obtener información adicional
       let servicioInfo = null;
@@ -644,7 +704,8 @@ class ProductsController {
         categoria_id,
         horario_atencion, 
         dias_disponibles, 
-        duracion_estimada 
+        duracion_estimada,
+        respuesta_rechazo  // Respuesta del vendedor al rechazo (para crear apelación automática)
       } = req.body;
 
       // Verificar que el producto existe
@@ -705,6 +766,28 @@ class ProductsController {
       let nuevoEstado = producto.estado;
       let esPeligroso = producto.es_peligroso;
       let motivoRechazo = producto.motivo_rechazo;
+
+      // Si el producto estaba rechazado y el vendedor lo está editando
+      // Verificar si viene una respuesta/apelación del vendedor
+      let crearApelacion = false;
+      let motivoApelacion = null;
+      let informacionAdicionalApelacion = null;
+      
+      if (producto.estado === 'rechazado' && req.user.id === producto.vendedor_id) {
+        // Verificar si viene respuesta del vendedor (para crear apelación)
+        if (req.body.respuesta_rechazo && req.body.respuesta_rechazo.trim().length > 0) {
+          // Si hay respuesta, crear apelación y cambiar a en_apelacion
+          crearApelacion = true;
+          motivoApelacion = req.body.respuesta_rechazo.trim();
+          informacionAdicionalApelacion = 'Producto corregido y actualizado según las observaciones del moderador.';
+          nuevoEstado = 'en_apelacion';
+        } else {
+          // Si no hay respuesta, simplemente cambiar a pendiente_revision para re-revisión
+          nuevoEstado = 'pendiente_revision';
+          // Limpiar el motivo de rechazo para que se genere uno nuevo en la siguiente revisión
+          motivoRechazo = null;
+        }
+      }
 
       if (deteccion.esInadecuado) {
         if (deteccion.nivelRiesgo === 'alto') {
@@ -871,10 +954,26 @@ class ProductsController {
             [id]
           );
           
+          // Guardar solo la ruta relativa en la base de datos (mejor práctica)
+          // Asegurar que siempre sea relativa, eliminando cualquier URL absoluta
+          let urlImagen = `/uploads/${file.filename}`;
+          
+          // Validación adicional: si por alguna razón llegara una URL absoluta, convertirla a relativa
+          if (urlImagen.startsWith('http://') || urlImagen.startsWith('https://')) {
+            // Extraer solo la ruta relativa
+            const urlObj = new URL(urlImagen);
+            urlImagen = urlObj.pathname;
+          }
+          
+          // Asegurar que empiece con /uploads
+          if (!urlImagen.startsWith('/uploads')) {
+            urlImagen = `/uploads/${file.filename}`;
+          }
+          
           await query(
             `INSERT INTO item_imagenes (item_id, url_imagen, orden, es_principal)
              VALUES ($1, $2, $3, $4)`,
-            [id, buildImageUrl(file.filename), nextOrder.rows[0].next_order, false]
+            [id, urlImagen, nextOrder.rows[0].next_order, false]
           );
         }
       }
@@ -887,11 +986,65 @@ class ProductsController {
         }
       }
 
+      // Crear apelación si es necesario (después de actualizar el producto)
+      if (crearApelacion && motivoApelacion) {
+        try {
+          // Verificar si ya existe una apelación pendiente
+          const apelacionExistente = await query(
+            'SELECT * FROM apelaciones WHERE item_id = $1 AND estado IN ($2, $3)',
+            [id, 'en_apelacion', 'pendiente']
+          );
+
+          if (apelacionExistente.rows.length === 0) {
+            // Crear la apelación
+            await query(
+              `INSERT INTO apelaciones 
+              (item_id, usuario_apelante_id, motivo_apelacion, informacion_adicional, estado, fecha_apelacion)
+              VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+              RETURNING *`,
+              [id, req.user.id, motivoApelacion, informacionAdicionalApelacion || null, 'en_apelacion']
+            );
+          }
+        } catch (error) {
+          console.error('Error al crear apelación automática:', error);
+          // No fallar la actualización si hay error al crear apelación
+        }
+      }
+
+      // Si el producto estaba rechazado y ahora está en pendiente_revision o en_apelacion, informar al usuario
+      let productoCorregido = false;
+      let productoEnApelacion = false;
+      if (producto.estado === 'rechazado') {
+        if (nuevoEstado === 'pendiente_revision') {
+          productoCorregido = true;
+        } else if (nuevoEstado === 'en_apelacion') {
+          productoEnApelacion = true;
+        }
+      }
+
       // Determinar mensaje de respuesta basado en cambios de estado
       let mensajeRespuesta = 'Producto actualizado exitosamente';
       let informacionAdicional = null;
 
-      if (deteccion.esInadecuado && (nuevoEstado !== producto.estado)) {
+      if (productoEnApelacion) {
+        mensajeRespuesta = 'Producto corregido y apelación creada exitosamente';
+        informacionAdicional = {
+          estado_anterior: 'rechazado',
+          estado_nuevo: 'en_apelacion',
+          requiere_revision: true,
+          apelacion_creada: true,
+          mensaje: 'Tu producto ha sido corregido y se ha creado una apelación. Será revisado por los moderadores.'
+        };
+      } else if (productoCorregido) {
+        mensajeRespuesta = 'Producto corregido y enviado para revisión nuevamente';
+        informacionAdicional = {
+          estado_anterior: 'rechazado',
+          estado_nuevo: 'pendiente_revision',
+          requiere_revision: true,
+          corregido: true,
+          mensaje: 'Tu producto ha sido corregido y será revisado nuevamente por los moderadores.'
+        };
+      } else if (deteccion.esInadecuado && (nuevoEstado !== producto.estado)) {
         if (nuevoEstado === 'peligroso') {
           mensajeRespuesta = 'Producto actualizado pero marcado como peligroso automáticamente';
           informacionAdicional = {

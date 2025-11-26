@@ -4,6 +4,41 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
 
+// Función helper para construir URLs completas de imágenes
+// NOTA: SIEMPRE usar 'localhost' para que el navegador pueda acceder (nunca 0.0.0.0)
+const buildImageUrl = (filename) => {
+  // SIEMPRE usar localhost para URLs accesibles desde el navegador
+  const port = config.server.port || 3001;
+  return `http://localhost:${port}/uploads/${filename}`;
+};
+
+// Función helper para normalizar URLs de imágenes (reemplazar 0.0.0.0 por localhost)
+// Esta función garantiza que todas las URLs usen localhost en lugar de 0.0.0.0
+const normalizeImageUrl = (url) => {
+  if (!url) return url;
+  
+  // Si es una URL absoluta, reemplazar cualquier 0.0.0.0 con localhost
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    // Reemplazar 0.0.0.0 por localhost en cualquier parte de la URL
+    let normalized = url.replace(/http:\/\/0\.0\.0\.0:(\d+)/gi, 'http://localhost:$1');
+    normalized = normalized.replace(/https:\/\/0\.0\.0\.0:(\d+)/gi, 'https://localhost:$1');
+    
+    // También reemplazar si viene con 127.0.0.1 o cualquier otra variante problemática
+    normalized = normalized.replace(/http:\/\/127\.0\.0\.1:(\d+)/gi, 'http://localhost:$1');
+    
+    return normalized;
+  }
+  
+  // Si es una URL relativa que empieza con /uploads, convertirla a absoluta con localhost
+  if (url.startsWith('/uploads')) {
+    // Extraer el nombre del archivo
+    const filename = url.replace('/uploads/', '').replace('/uploads/products/', '');
+    return buildImageUrl(filename);
+  }
+  
+  return url;
+};
+
 // Configuración de multer para subida de archivos
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
@@ -106,7 +141,22 @@ class ImageController {
       
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const urlImagen = `/uploads/products/${file.filename}`;
+        // Guardar solo la ruta relativa en la base de datos (mejor práctica)
+        // Asegurar que siempre sea relativa, eliminando cualquier URL absoluta
+        let urlImagen = `/uploads/products/${file.filename}`;
+        
+        // Validación adicional: si por alguna razón llegara una URL absoluta, convertirla a relativa
+        if (urlImagen.startsWith('http://') || urlImagen.startsWith('https://')) {
+          // Extraer solo la ruta relativa
+          const urlObj = new URL(urlImagen);
+          urlImagen = urlObj.pathname;
+        }
+        
+        // Asegurar que empiece con /uploads
+        if (!urlImagen.startsWith('/uploads')) {
+          urlImagen = `/uploads/products/${file.filename}`;
+        }
+        
         const orden = totalExistentes + i + 1;
         const esPrincipal = totalExistentes === 0 && i === 0; // Primera imagen es principal si no hay otras
 
@@ -125,10 +175,20 @@ class ImageController {
         });
       }
 
+      // Normalizar URLs antes de devolverlas
+      const imagenesNormalizadas = imagenesSubidas.map(imagen => ({
+        ...imagen,
+        url_imagen: normalizeImageUrl(
+          imagen.url_imagen.startsWith('http') 
+            ? imagen.url_imagen 
+            : buildImageUrl(imagen.url_imagen.replace('/uploads/', '').replace('/uploads/products/', ''))
+        )
+      }));
+
       res.status(201).json({
         success: true,
         message: `${imagenesSubidas.length} imagen(es) subida(s) exitosamente`,
-        data: imagenesSubidas
+        data: imagenesNormalizadas
       });
 
     } catch (error) {
@@ -151,9 +211,20 @@ class ImageController {
         [id]
       );
 
+      // Normalizar URLs de imágenes (reemplazar 0.0.0.0 por localhost)
+      const imagenesNormalizadas = imagenes.rows.map(imagen => {
+        let url = imagen.url_imagen.startsWith('http') 
+          ? imagen.url_imagen 
+          : buildImageUrl(imagen.url_imagen.replace('/uploads/', '').replace('/uploads/products/', ''));
+        return {
+          ...imagen,
+          url_imagen: normalizeImageUrl(url)
+        };
+      });
+
       res.json({
         success: true,
-        data: imagenes.rows
+        data: imagenesNormalizadas
       });
 
     } catch (error) {
