@@ -3,7 +3,8 @@
 FROM node:18-alpine AS builder
 
 # Argumento para la URL de la API (se pasa durante el build)
-ARG VITE_API_URL=http://backend:3001/api
+# Usamos localhost porque el navegador accede desde fuera de Docker
+ARG VITE_API_URL=http://localhost:3001/api
 
 # Establecer directorio de trabajo
 WORKDIR /app
