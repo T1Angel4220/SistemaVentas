@@ -506,15 +506,215 @@ docker system prune -a --volumes
 
 ### A. Capturas de Pantalla
 
-_(Aquí se incluirían capturas de pantalla del proceso de instalación, configuración y ejecución del pipeline)_
+**Nota**: Debes incluir las siguientes capturas de pantalla en tu informe PDF:
+
+1. **Instalación de Docker**:
+   - Verificación de instalación (`docker --version`)
+   - Estado de Docker Desktop (si usas Windows)
+
+2. **Instalación de Jenkins**:
+   - Página inicial de Jenkins en `http://localhost:8080`
+   - Pantalla de instalación de plugins
+   - Panel principal de Jenkins
+
+3. **Configuración del Pipeline**:
+   - Creación del nuevo item (Pipeline)
+   - Configuración del SCM (Git)
+   - Configuración de variables de entorno
+
+4. **Ejecución del Pipeline**:
+   - Vista del pipeline ejecutándose (Blue Ocean o vista clásica)
+   - Etapas del pipeline mostrando éxito (stages con ✓)
+   - Logs de construcción de imágenes Docker
+   - Logs de despliegue con docker-compose
+   - Resultado final exitoso del pipeline
+
+5. **Verificación del Despliegue**:
+   - Estado de contenedores (`docker-compose ps`)
+   - Acceso al frontend en navegador (`http://localhost:80`)
+   - Acceso al backend API (`http://localhost:3001/api/health`)
+   - Listado de imágenes Docker creadas (`docker images`)
 
 ### B. Ejemplos de Logs
 
-_(Aquí se incluirían ejemplos de logs exitosos y errores comunes)_
+#### B.1 Logs de Ejecución Exitosa del Pipeline
+
+```bash
+# Ejemplo de logs del stage "Build Backend"
+[Pipeline] stage
+[Pipeline] { (Build Backend)
+[Pipeline] dir
+Running in /var/jenkins_home/workspace/SistemaVentas-Pipeline/backend
+[Pipeline] sh
++ docker build -t sistemaventas-backend:1 .
+Sending build context to Docker daemon  15.2MB
+Step 1/8 : FROM node:18-alpine
+ ---> a1b2c3d4e5f6
+Step 2/8 : RUN apk add --no-cache python3 make g++
+ ---> Using cache
+...
+Step 8/8 : CMD ["npm", "start"]
+ ---> Running in xyz123
+Successfully built abc123def456
+Successfully tagged sistemaventas-backend:1
+Successfully tagged sistemaventas-backend:latest
+
+# Ejemplo de logs del stage "Desplegar con Docker Compose"
+[Pipeline] stage
+[Pipeline] { (Desplegar con Docker Compose)
+[Pipeline] sh
++ docker-compose --env-file .env.docker up -d --build
+Creating network "sistema-ventas-pipeline_sistema-ventas-network" ... done
+Creating volume "sistema-ventas-pipeline_postgres_data" ... done
+Building backend...
+Building frontend...
+Creating sistema-ventas-db ... done
+Creating sistema-ventas-backend ... done
+Creating sistema-ventas-frontend ... done
+
+# Ejemplo de logs del stage "Health Check"
+[Pipeline] stage
+[Pipeline] { (Health Check)
+[Pipeline] sh
++ curl -f http://localhost:3001/api/health
+OK: Backend esta respondiendo
++ curl -f http://localhost:80
+OK: Frontend esta respondiendo
+```
+
+#### B.2 Ejemplo de Logs de Verificación de Servicios
+
+```bash
+# Verificar estado de contenedores
+$ docker-compose ps
+
+NAME                    STATUS              PORTS
+sistema-ventas-db       Up 2 minutes        0.0.0.0:5432->5432/tcp
+sistema-ventas-backend  Up 2 minutes (healthy)  0.0.0.0:3001->3001/tcp
+sistema-ventas-frontend Up 2 minutes        0.0.0.0:80->80/tcp
+
+# Verificar imágenes creadas
+$ docker images | grep sistemaventas
+
+REPOSITORY                TAG       IMAGE ID       CREATED          SIZE
+sistemaventas-backend     latest    abc123def456   5 minutes ago    250MB
+sistemaventas-backend     1         abc123def456   5 minutes ago    250MB
+sistemaventas-frontend    latest    xyz789ghi012   5 minutes ago    50MB
+sistemaventas-frontend    1         xyz789ghi012   5 minutes ago    50MB
+
+# Verificar logs del backend
+$ docker-compose logs backend | tail -20
+
+backend  | 🚀 Iniciando Sistema de Ventas Multiempresa...
+backend  | ✅ Conexión a la base de datos exitosa (Codificación: UTF8)
+backend  | ✅ Estructura de la base de datos verificada
+backend  | ✅ El valor "en_apelacion" ya existe en estado_item
+backend  | Server running on port 3001
+backend  | 📊 Query ejecutada { text: 'SELECT NOW()', duration: '5ms' }
+```
+
+#### B.3 Ejemplo de Respuesta del Health Check
+
+```json
+// GET http://localhost:3001/api/health
+{
+  "status": "ok",
+  "message": "API is running",
+  "timestamp": "2024-01-15T10:30:45.123Z",
+  "database": "connected"
+}
+```
+
+#### B.4 Ejemplo de Errores Comunes y Soluciones
+
+**Error**: `Cannot connect to Docker daemon`
+
+```bash
+# Solución:
+sudo systemctl start docker
+# Verificar:
+sudo systemctl status docker
+```
+
+**Error**: `Port 3001 already in use`
+
+```bash
+# Solución:
+docker-compose down
+# O cambiar el puerto en docker-compose.yml
+```
+
+**Error**: `Build failed: npm install error`
+
+```bash
+# Solución: Verificar que el Dockerfile copie correctamente los archivos
+# Verificar logs:
+docker-compose logs backend
+```
 
 ### C. Scripts de Utilidad
 
-_(Aquí se incluirían scripts adicionales para automatización)_
+#### C.1 Script para Ejecutar Pipeline Manualmente
+
+```bash
+#!/bin/bash
+# script-ejecutar-pipeline.sh
+
+echo "=== Ejecutando Pipeline Manualmente ==="
+echo "1. Limpiando recursos anteriores..."
+docker-compose down -v 2>/dev/null || true
+docker volume prune -f 2>/dev/null || true
+
+echo "2. Construyendo imágenes..."
+docker build -t sistemaventas-backend:latest ./backend
+docker build -t sistemaventas-frontend:latest ./frontend
+
+echo "3. Desplegando servicios..."
+docker-compose up -d --build
+
+echo "4. Esperando a que los servicios estén listos..."
+sleep 30
+
+echo "5. Verificando salud de los servicios..."
+curl -f http://localhost:3001/api/health && echo "✅ Backend OK"
+curl -f http://localhost:80 && echo "✅ Frontend OK"
+
+echo "=== Pipeline Completado ==="
+```
+
+#### C.2 Script para Limpiar Recursos
+
+```bash
+#!/bin/bash
+# script-limpiar-recursos.sh
+
+echo "Limpiando recursos Docker..."
+docker-compose down -v
+docker image prune -a -f
+docker volume prune -f
+docker system prune -f
+echo "✅ Limpieza completada"
+```
+
+#### C.3 Script para Verificar Estado
+
+```bash
+#!/bin/bash
+# script-verificar-estado.sh
+
+echo "=== Estado de Contenedores ==="
+docker-compose ps
+
+echo -e "\n=== Estado de Imágenes ==="
+docker images | grep sistemaventas
+
+echo -e "\n=== Health Checks ==="
+curl -s http://localhost:3001/api/health | jq . || echo "Backend no responde"
+curl -s -o /dev/null -w "Frontend: %{http_code}\n" http://localhost:80
+
+echo -e "\n=== Logs Recientes (Backend) ==="
+docker-compose logs --tail=10 backend
+```
 
 ---
 

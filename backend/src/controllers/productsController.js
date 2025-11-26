@@ -1279,9 +1279,25 @@ class ProductsController {
       const total = parseInt(totalCount.rows[0].total);
       const totalPages = Math.ceil(total / limit);
 
+      // Normalizar URLs de imágenes antes de enviar la respuesta
+      const productosNormalizados = productos.rows.map(producto => {
+        const primeraImagenNormalizada = producto.primera_imagen 
+          ? normalizeImageUrl(
+              producto.primera_imagen.startsWith('http') 
+                ? producto.primera_imagen 
+                : buildImageUrl(producto.primera_imagen.replace('/uploads/', '').replace('/uploads/products/', ''))
+            )
+          : null;
+
+        return {
+          ...producto,
+          primera_imagen: primeraImagenNormalizada
+        };
+      });
+
       res.json({
         success: true,
-        data: productos.rows,
+        data: productosNormalizados,
         pagination: {
           current_page: parseInt(page),
           total_pages: totalPages,
