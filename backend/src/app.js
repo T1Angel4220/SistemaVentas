@@ -124,6 +124,15 @@ app.get('/', (req, res) => {
   });
 });
 
+// Endpoint de health check
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
 // Rutas de la API
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productsRoutes);

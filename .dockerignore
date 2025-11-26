@@ -1,0 +1,26 @@
+# Git
+.git
+.gitignore
+
+# Documentación
+*.md
+README.md
+
+# Archivos de entorno locales
+.env
+.env.local
+.env.*.local
+
+# Archivos de sistema
+.DS_Store
+.vscode
+.idea
+
+# Node modules (se instalan en los contenedores)
+node_modules
+
+# Archivos temporales
+*.tmp
+*.temp
+*.log
+

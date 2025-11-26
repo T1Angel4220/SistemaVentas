@@ -1,0 +1,46 @@
+# Dependencias
+node_modules
+npm-debug.log
+# package-lock.json se incluye porque npm ci lo necesita
+
+# Archivos de entorno
+.env
+.env.local
+.env.*.local
+
+# Archivos de desarrollo
+*.log
+.DS_Store
+.vscode
+.idea
+
+# Archivos de prueba
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+test/
+tests/
+coverage/
+
+# Archivos de construcción (se reconstruyen en el contenedor)
+dist/
+build/
+
+# Archivos de sistema
+.git
+.gitignore
+README.md
+*.md
+
+# Scripts de desarrollo
+*.bat
+scripts/
+
+# Archivos temporales
+*.tmp
+*.temp
+
+# TypeScript build info
+*.tsbuildinfo
+
