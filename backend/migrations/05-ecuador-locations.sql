@@ -4,8 +4,7 @@
 -- Este script reemplaza las ubicaciones de Costa Rica con las de Ecuador
 -- Incluye 24 provincias y 209 cantones organizados por regiones
 -- Configurar encoding UTF-8
-SET
-    client_encoding = 'UTF8';
+SET client_encoding = 'UTF8';
 
 -- Limpiar ubicaciones existentes
 TRUNCATE TABLE ubicaciones CASCADE;

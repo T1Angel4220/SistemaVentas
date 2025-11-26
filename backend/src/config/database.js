@@ -191,6 +191,9 @@ const initializeDatabase = async () => {
     // Verificar si necesitamos poblar datos iniciales
     await populateInitialData();
     
+    // Verificar y agregar el valor 'en_apelacion' al enum estado_item si no existe
+    await ensureApelacionEstadoExists();
+    
     return true;
   } catch (error) {
     console.error('❌ Error al inicializar la base de datos:', error.message);
@@ -607,6 +610,99 @@ process.on('SIGTERM', () => {
   pool.end();
 });
 
+// Función para asegurar que el valor 'en_apelacion' exista en el enum estado_item
+// Esta función se ejecuta cada vez que el backend se inicializa para garantizar
+// que el valor existe incluso si los scripts de inicialización de PostgreSQL no se ejecutaron
+const ensureApelacionEstadoExists = async () => {
+  try {
+    console.log('🔍 Verificando que el enum estado_item tenga el valor "en_apelacion"...');
+    
+    // Verificar si el tipo enum existe
+    const typeCheck = await query(`
+      SELECT 1 FROM pg_type WHERE typname = 'estado_item'
+    `);
+    
+    if (typeCheck.rows.length === 0) {
+      console.log('⚠️  El tipo enum estado_item no existe aún');
+      return;
+    }
+    
+    // Verificar si el valor 'en_apelacion' ya existe
+    const enumCheck = await query(`
+      SELECT 1 
+      FROM pg_enum e
+      JOIN pg_type t ON e.enumtypid = t.oid
+      WHERE t.typname = 'estado_item'
+      AND e.enumlabel = 'en_apelacion'
+    `);
+    
+    if (enumCheck.rows.length > 0) {
+      console.log('✅ El valor "en_apelacion" ya existe en estado_item');
+      return;
+    }
+    
+    // Si no existe, agregarlo
+    console.log('➕ Agregando valor "en_apelacion" al enum estado_item...');
+    
+    // NOTA: ALTER TYPE ADD VALUE no puede ejecutarse dentro de una transacción
+    // pero podemos intentarlo directamente
+    try {
+      // Usar un cliente directo para ejecutar fuera de la transacción
+      const client = await pool.connect();
+      try {
+        // PostgreSQL no soporta IF NOT EXISTS, pero ya verificamos antes
+        await client.query('ALTER TYPE estado_item ADD VALUE \'en_apelacion\'');
+        console.log('✅ Valor "en_apelacion" agregado exitosamente al enum estado_item');
+      } catch (err) {
+        // Si falla, intentar sin IF NOT EXISTS (para versiones antiguas de PostgreSQL)
+        if (err.message.includes('syntax error') || err.message.includes('IF NOT EXISTS')) {
+          try {
+            await client.query('ALTER TYPE estado_item ADD VALUE \'en_apelacion\'');
+            console.log('✅ Valor "en_apelacion" agregado exitosamente al enum estado_item');
+          } catch (err2) {
+            if (err2.message.includes('already exists') || err2.message.includes('duplicate')) {
+              console.log('✅ El valor "en_apelacion" ya existe en estado_item');
+            } else {
+              console.warn('⚠️  No se pudo agregar "en_apelacion" al enum:', err2.message);
+              // Intentar ejecutar el script de migración directamente
+              const migrationScript = path.join(__dirname, '../../migrations/06-add-apelacion-estado.sql');
+              if (fs.existsSync(migrationScript)) {
+                console.log('📄 Ejecutando script de migración 06-add-apelacion-estado.sql...');
+                const scriptContent = fs.readFileSync(migrationScript, 'utf8');
+                const cleanScript = scriptContent
+                  .replace(/--[^\n]*/g, '')
+                  .split(';')
+                  .map(s => s.trim())
+                  .filter(s => s.length > 0);
+                
+                for (const statement of cleanScript) {
+                  try {
+                    await client.query(statement);
+                  } catch (err3) {
+                    if (!err3.message.includes('already exists') && !err3.message.includes('duplicate')) {
+                      console.warn('⚠️  Error ejecutando script:', err3.message);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } else if (err.message.includes('already exists') || err.message.includes('duplicate')) {
+          console.log('✅ El valor "en_apelacion" ya existe en estado_item');
+        } else {
+          console.warn('⚠️  No se pudo agregar "en_apelacion" al enum:', err.message);
+        }
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      console.warn('⚠️  Error al verificar/agregar "en_apelacion" al enum:', error.message);
+    }
+  } catch (error) {
+    console.warn('⚠️  Error al verificar enum estado_item:', error.message);
+  }
+};
+
 module.exports = {
   pool,
   query,
@@ -614,6 +710,7 @@ module.exports = {
   testConnection,
   initializeDatabase,
   populateInitialData,
+  ensureApelacionEstadoExists,
   cleanTestData,
   restoreTestData,
   getDatabaseStatus,

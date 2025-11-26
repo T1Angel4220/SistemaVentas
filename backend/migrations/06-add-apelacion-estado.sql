@@ -1,43 +1,32 @@
 -- =====================================================
--- AGREGAR ESTADO 'en_apelacion' AL ENUM estado_item (RESPALDO)
+-- AGREGAR ESTADO 'en_apelacion' AL ENUM estado_item
 -- =====================================================
--- NOTA IMPORTANTE: Este script es SOLO un respaldo de seguridad.
--- El valor 'en_apelacion' YA ESTÁ incluido en 01-init-schema.sql (línea 58)
--- cuando se crea el enum estado_item inicialmente.
--- 
--- Este script intenta agregar el valor solo si falta (caso edge case).
--- En ejecuciones normales de Jenkins, esto NO será necesario porque
--- 01-init-schema.sql ya incluye el valor.
---
--- Orden de ejecución de scripts de migración:
--- 1. 01-init-schema.sql - Crea el enum CON 'en_apelacion' incluido ✅
--- 2. 02-create-tables.sql - Crea las tablas
--- 3. 05-ecuador-locations.sql - Inserta ubicaciones
--- 4. 06-add-apelacion-estado.sql - Este script (respaldo seguro)
+-- Este script garantiza que el valor 'en_apelacion' exista en el enum
+-- Se ejecuta después de 01-init-schema.sql como respaldo de seguridad
+-- NOTA: PostgreSQL no soporta IF NOT EXISTS en ALTER TYPE ADD VALUE
+-- La función ensureApelacionEstadoExists() en database.js verifica antes de agregar
 
--- Este script verifica si el valor existe y lo agrega si falta
--- Si el valor ya existe (caso normal), el script simplemente continúa sin error
-
--- Verificar si necesitamos agregar el valor
+-- Verificar si el valor existe antes de agregarlo (evita errores)
 DO $$ 
 BEGIN
-    -- Solo intentar agregar si el tipo existe pero el valor no
-    IF EXISTS (
-        SELECT 1 FROM pg_type WHERE typname = 'estado_item'
-    ) AND NOT EXISTS (
+    -- Solo agregar si no existe
+    IF NOT EXISTS (
         SELECT 1 
         FROM pg_enum e
         JOIN pg_type t ON e.enumtypid = t.oid
         WHERE t.typname = 'estado_item'
         AND e.enumlabel = 'en_apelacion'
     ) THEN
-        -- El tipo existe pero el valor no
-        -- NOTA: No podemos ejecutar ALTER TYPE ADD VALUE aquí directamente
-        -- pero podemos registrar que necesitamos hacerlo
-        RAISE NOTICE 'Valor en_apelacion no encontrado en estado_item, pero debería estar en 01-init-schema.sql';
+        -- Agregar el valor al enum
+        EXECUTE 'ALTER TYPE estado_item ADD VALUE ''en_apelacion''';
+        RAISE NOTICE 'Valor "en_apelacion" agregado al enum estado_item';
+    ELSE
+        RAISE NOTICE 'Valor "en_apelacion" ya existe en estado_item';
     END IF;
 EXCEPTION
-    WHEN OTHERS THEN
-        -- Ignorar cualquier error
+    WHEN duplicate_object THEN
+        -- El valor ya existe, no hacer nada
         NULL;
+    WHEN OTHERS THEN
+        RAISE WARNING 'Error al agregar "en_apelacion" al enum estado_item: %', SQLERRM;
 END $$;
