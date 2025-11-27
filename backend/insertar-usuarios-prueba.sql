@@ -1,7 +1,7 @@
 -- =====================================================
 -- SCRIPT PARA INSERTAR USUARIOS DE PRUEBA
 -- =====================================================
--- Contraseña para todos: Angel_4220
+-- Contraseña para todos: S1805787841
 -- Hash (10 rounds): $2a$10$YiSMq4dF919h3du6RbZICercDHmgniYDT0LjbyjEyirYcKOL2QsgS
 -- Configurar encoding para manejar correctamente caracteres especiales y tildes
 SET
@@ -28,7 +28,7 @@ INSERT INTO
 VALUES
     (
         '0123456789',
-        'Angel',
+        'Sebastian',
         'Ayuquina',
         'ayuquinaangel4220@gmail.com',
         '0987654321',
@@ -59,8 +59,8 @@ VALUES
     (
         '0123456788',
         'Israel',
-        'Ayuquina',
-        'ayuquinaangel123@gmail.com',
+        'Ortiz',
+        'sebastianalejandroob20@gmail.com',
         '0987654322',
         'Quito, Ecuador',
         'masculino',

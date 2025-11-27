@@ -10,7 +10,7 @@ async function createTestUsers() {
     console.log('🔧 Creando usuarios de prueba...');
     
     // Contraseña para todos los usuarios de prueba
-    const password = 'Angel_4220';
+    const password = 'S1805787841';
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
     

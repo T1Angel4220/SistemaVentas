@@ -204,7 +204,7 @@ Crear un archivo `.env.docker` en la raíz del proyecto:
 # Base de Datos
 DB_NAME=sistema_ventas_multiempresa
 DB_USER=postgres
-DB_PASSWORD=Angel_4220
+DB_PASSWORD=S1805787841
 DB_PORT=5432
 
 # Backend

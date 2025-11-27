@@ -10,7 +10,7 @@
             // Variables para docker-compose - valores por defecto
             DB_NAME = 'sistema_ventas_multiempresa'
             DB_USER = 'postgres'
-            DB_PASSWORD = 'Angel_4220'
+            DB_PASSWORD = 'S1805787841'
             DB_PORT = '5432'
             JWT_SECRET = 'supersecretkey'
             JWT_EXPIRES_IN = '24h'
@@ -81,8 +81,8 @@
                                     git clone https://github.com/T1Angel4220/SistemaVentas.git .
                                 fi
                                 # Cambiar a la rama correcta
-                                git checkout Jankins/Angel || git checkout main || git checkout master
-                                git pull origin Jankins/Angel || git pull origin main || git pull origin master
+                                git checkout Jenkins/Sebastian || git checkout main || git checkout master
+                                git pull origin Jenkins/Sebastian || git pull origin main || git pull origin master
                             '''
                         }
                     }
