@@ -1,20 +1,20 @@
-# Dependencias
+# Módulos y dependencias de Node.js
 node_modules
 npm-debug.log
-# package-lock.json se incluye porque npm ci lo necesita
+# package-lock.json debe incluirse ya que npm ci requiere este archivo
 
-# Archivos de entorno
+# Variables de entorno y archivos de configuración
 .env
 .env.local
 .env.*.local
 
-# Archivos de desarrollo
+# Archivos generados durante el desarrollo
 *.log
 .DS_Store
 .vscode
 .idea
 
-# Archivos de prueba
+# Archivos y directorios de pruebas
 *.test.js
 *.test.ts
 *.spec.js
@@ -23,24 +23,24 @@ test/
 tests/
 coverage/
 
-# Archivos de construcción (se reconstruyen en el contenedor)
+# Directorios de compilación (se generan nuevamente dentro del contenedor)
 dist/
 build/
 
-# Archivos de sistema
+# Archivos del sistema de control de versiones y documentación
 .git
 .gitignore
 README.md
 *.md
 
-# Scripts de desarrollo
+# Scripts y herramientas de desarrollo
 *.bat
 scripts/
 
-# Archivos temporales
+# Archivos temporales y de trabajo
 *.tmp
 *.temp
 
-# TypeScript build info
+# Información de compilación de TypeScript
 *.tsbuildinfo
 
