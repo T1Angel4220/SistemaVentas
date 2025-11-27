@@ -443,8 +443,7 @@ const resendVerificationCode = async (req, res) => {
  */
 const getUsers = async (req, res) => {
   try {
-    const { page = 1, limit = 10, search = '', role = 'all', status = 'all' } = req.query;
-    const offset = (page - 1) * limit;
+    const { page = 1, limit, search = '', role = 'all', status = 'all' } = req.query;
     
     // Construir query base
     let whereConditions = [];
@@ -474,19 +473,39 @@ const getUsers = async (req, res) => {
     
     const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
     
-    // Query para obtener usuarios
-    const usersQuery = `
-      SELECT id, cedula, nombre, apellido, correo, telefono, direccion, genero,
-             tipo_usuario, estado, email_verificado, fecha_registro, fecha_ultimo_acceso
-      FROM usuarios 
-      ${whereClause}
-      ORDER BY fecha_registro DESC
-      LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}
-    `;
+    // Si no se especifica límite, obtener todos los usuarios sin paginación
+    let usersQuery;
+    let queryParamsFinal = [...queryParams];
     
-    queryParams.push(parseInt(limit), offset);
+    if (limit && parseInt(limit) > 0) {
+      // Paginación con límite
+      const limitValue = parseInt(limit);
+      const offset = (parseInt(page) - 1) * limitValue;
+      paramCount++;
+      queryParamsFinal.push(limitValue);
+      paramCount++;
+      queryParamsFinal.push(offset);
+      
+      usersQuery = `
+        SELECT id, cedula, nombre, apellido, correo, telefono, direccion, genero,
+               tipo_usuario, estado, email_verificado, fecha_registro, fecha_ultimo_acceso
+        FROM usuarios 
+        ${whereClause}
+        ORDER BY fecha_registro DESC
+        LIMIT $${paramCount - 1} OFFSET $${paramCount}
+      `;
+    } else {
+      // Sin límite - obtener todos los usuarios
+      usersQuery = `
+        SELECT id, cedula, nombre, apellido, correo, telefono, direccion, genero,
+               tipo_usuario, estado, email_verificado, fecha_registro, fecha_ultimo_acceso
+        FROM usuarios 
+        ${whereClause}
+        ORDER BY fecha_registro DESC
+      `;
+    }
     
-    const usersResult = await query(usersQuery, queryParams);
+    const usersResult = await query(usersQuery, queryParamsFinal);
     
     // Query para contar total
     const countQuery = `
@@ -495,7 +514,7 @@ const getUsers = async (req, res) => {
       ${whereClause}
     `;
     
-    const countResult = await query(countQuery, queryParams.slice(0, -2));
+    const countResult = await query(countQuery, queryParams);
     const total = parseInt(countResult.rows[0].total);
     
     res.json({
@@ -504,9 +523,9 @@ const getUsers = async (req, res) => {
         users: usersResult.rows,
         pagination: {
           page: parseInt(page),
-          limit: parseInt(limit),
+          limit: limit ? parseInt(limit) : total,
           total,
-          pages: Math.ceil(total / limit)
+          pages: limit && parseInt(limit) > 0 ? Math.ceil(total / parseInt(limit)) : 1
         }
       }
     });
