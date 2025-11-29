@@ -778,75 +778,109 @@ export const ProductDetailPage: React.FC = () => {
                   Acciones de Moderación
                 </h3>
                 
-                {/* Botones principales: Aprobar, Rechazar, Suspender */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
-                  <Button 
-                    size="sm"
-                    onClick={handleApproveProduct}
-                    disabled={reviewLoading}
-                    className="h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
-                    title="Aprobar producto"
-                  >
-                    {reviewLoading ? (
-                      <Clock className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <CheckCircle className="h-4 w-4" />
-                    )}
-                    <span className="ml-2">Aprobar</span>
-                  </Button>
+                {/* Funciones helper para determinar si los botones deben estar deshabilitados */}
+                {(() => {
+                  const isApproved = product.estado === 'activo' && !product.es_peligroso;
+                  const isRejected = product.estado === 'rechazado';
+                  const isSuspended = product.estado === 'suspendido';
+                  const isDangerous = product.es_peligroso === true;
                   
-                  <Button 
-                    size="sm"
-                    onClick={handleRejectProduct}
-                    disabled={reviewLoading}
-                    className="h-10 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
-                    title="Rechazar por errores corregibles (vendedor puede editar)"
-                  >
-                    {reviewLoading ? (
-                      <Clock className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <XCircle className="h-4 w-4" />
-                    )}
-                    <span className="ml-2">Rechazar</span>
-                  </Button>
+                  // Determinar qué botones deben estar deshabilitados
+                  const isApproveDisabled = isApproved || reviewLoading;
+                  const isRejectDisabled = isRejected || reviewLoading;
+                  const isSuspendDisabled = isSuspended || reviewLoading;
+                  const isDangerousDisabled = isDangerous || reviewLoading;
                   
-                  <Button 
-                    size="sm"
-                    onClick={handleSuspendProduct}
-                    disabled={reviewLoading}
-                    className="h-10 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
-                    title="Suspender por violación grave (vendedor NO puede editar)"
-                  >
-                    {reviewLoading ? (
-                      <Clock className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <AlertTriangle className="h-4 w-4" />
-                    )}
-                    <span className="ml-2">Suspender</span>
-                  </Button>
-                </div>
-                
-                {/* Acción crítica: Marcar como Peligroso */}
-                <div className="pt-3 border-t border-slate-200">
-                  <Button 
-                    size="sm"
-                    onClick={handleMarkAsDangerous}
-                    disabled={reviewLoading}
-                    className="w-full h-10 bg-gradient-to-r from-red-700 to-red-900 hover:from-red-800 hover:to-red-950 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
-                    title="Contenido prohibido - Producto OCULTO completamente"
-                  >
-                    {reviewLoading ? (
-                      <Clock className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <AlertTriangle className="h-4 w-4" />
-                    )}
-                    <span className="ml-2">🚫 Marcar como Peligroso</span>
-                  </Button>
-                </div>
+                  return (
+                    <>
+                      {/* Botones principales: Aprobar, Rechazar, Suspender */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
+                        <Button 
+                          size="sm"
+                          onClick={handleApproveProduct}
+                          disabled={isApproveDisabled}
+                          className={`h-10 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 ${
+                            isApproveDisabled
+                              ? 'bg-gray-400 text-gray-200 cursor-not-allowed opacity-60'
+                              : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white'
+                          }`}
+                          title={isApproved ? "El producto ya está aprobado" : "Aprobar producto"}
+                        >
+                          {reviewLoading ? (
+                            <Clock className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <CheckCircle className="h-4 w-4" />
+                          )}
+                          <span className="ml-2">Aprobar</span>
+                        </Button>
+                        
+                        <Button 
+                          size="sm"
+                          onClick={handleRejectProduct}
+                          disabled={isRejectDisabled}
+                          className={`h-10 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 ${
+                            isRejectDisabled
+                              ? 'bg-gray-400 text-gray-200 cursor-not-allowed opacity-60'
+                              : 'bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white'
+                          }`}
+                          title={isRejected ? "El producto ya está rechazado" : "Rechazar por errores corregibles (vendedor puede editar)"}
+                        >
+                          {reviewLoading ? (
+                            <Clock className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <XCircle className="h-4 w-4" />
+                          )}
+                          <span className="ml-2">Rechazar</span>
+                        </Button>
+                        
+                        <Button 
+                          size="sm"
+                          onClick={handleSuspendProduct}
+                          disabled={isSuspendDisabled}
+                          className={`h-10 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 ${
+                            isSuspendDisabled
+                              ? 'bg-gray-400 text-gray-200 cursor-not-allowed opacity-60'
+                              : 'bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white'
+                          }`}
+                          title={isSuspended ? "El producto ya está suspendido" : "Suspender por violación grave (vendedor NO puede editar)"}
+                        >
+                          {reviewLoading ? (
+                            <Clock className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <AlertTriangle className="h-4 w-4" />
+                          )}
+                          <span className="ml-2">Suspender</span>
+                        </Button>
+                      </div>
+                      
+                      {/* Acción crítica: Marcar como Peligroso */}
+                      <div className="pt-3 border-t border-slate-200">
+                        <Button 
+                          size="sm"
+                          onClick={handleMarkAsDangerous}
+                          disabled={isDangerousDisabled}
+                          className={`w-full h-10 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 ${
+                            isDangerousDisabled
+                              ? 'bg-gray-400 text-gray-200 cursor-not-allowed opacity-60'
+                              : 'bg-gradient-to-r from-red-700 to-red-900 hover:from-red-800 hover:to-red-950 text-white'
+                          }`}
+                          title={isDangerous ? "El producto ya está marcado como peligroso" : "Contenido prohibido - Producto OCULTO completamente"}
+                        >
+                          {reviewLoading ? (
+                            <Clock className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <AlertTriangle className="h-4 w-4" />
+                          )}
+                          <span className="ml-2">🚫 Marcar como Peligroso</span>
+                        </Button>
+                      </div>
+                    </>
+                  );
+                })()}
 
                 {/* Nota informativa */}
                 <div className="mt-3 p-2 bg-slate-100 border border-slate-200 rounded text-xs text-slate-700">
-                  <strong>Nota:</strong> Todas las acciones son permanentes y quedan registradas en el historial de moderación.
+                  <strong>Nota:</strong> Los botones se deshabilitan automáticamente según el estado actual del producto. Todas las acciones son permanentes y quedan registradas en el historial de moderación.
                 </div>
               </div>
             )}

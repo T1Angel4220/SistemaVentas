@@ -723,8 +723,9 @@ class ProductsController {
 
       const producto = productoExistente.rows[0];
 
-      // Verificar permisos (solo el vendedor propietario o admin)
-      if (req.user.id !== producto.vendedor_id && req.user.tipo_usuario !== 'administrador') {
+      // Verificar permisos (solo el vendedor propietario o moderador)
+      // Los administradores NO pueden editar productos de vendedores, solo moderar
+      if (req.user.id !== producto.vendedor_id && req.user.tipo_usuario !== 'moderador') {
         return res.status(403).json({
           success: false,
           message: 'No tienes permisos para editar este producto'
@@ -1100,8 +1101,9 @@ class ProductsController {
 
       const producto = productoExistente.rows[0];
 
-      // Verificar permisos (solo el vendedor propietario o admin)
-      if (req.user.id !== producto.vendedor_id && req.user.tipo_usuario !== 'administrador') {
+      // Verificar permisos (solo el vendedor propietario o moderador)
+      // Los administradores NO pueden eliminar productos de vendedores, solo moderar
+      if (req.user.id !== producto.vendedor_id && req.user.tipo_usuario !== 'moderador') {
         return res.status(403).json({
           success: false,
           message: 'No tienes permisos para eliminar este producto'

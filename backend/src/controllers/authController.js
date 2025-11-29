@@ -443,7 +443,7 @@ const resendVerificationCode = async (req, res) => {
  */
 const getUsers = async (req, res) => {
   try {
-    const { page = 1, limit = 10, search = '', role = 'all', status = 'all' } = req.query;
+    const { page = 1, limit = 1000, search = '', role = 'all', status = 'all' } = req.query;
     const offset = (page - 1) * limit;
     
     // Construir query base
