@@ -274,6 +274,12 @@ export const ProductsPage: React.FC = () => {
   };
 
   const handleReportProduct = (product: Product) => {
+    // Verificar que el usuario no sea el vendedor del producto
+    if (user && user.id === product.vendedor_id) {
+      showError('Error', 'No puedes reportar tu propio producto');
+      return;
+    }
+    
     setSelectedProductForReport({
       id: product.id,
       nombre: product.nombre
@@ -1007,16 +1013,21 @@ export const ProductsPage: React.FC = () => {
                                   <Heart className={`h-4 w-4 ${savedProducts.includes(product.id) ? 'fill-current' : ''}`} />
                                 )}
                               </Button>
-                              <Link to={`/products/contact/${product.id}`}>
-                                <Button className="w-11 h-11 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl">
-                                  <ShoppingCart className="h-4 w-4" />
-                                </Button>
-                              </Link>
+                              {/* Solo mostrar botón de contactar si el usuario no es el vendedor del producto */}
+                              {user?.id !== product.vendedor_id && (
+                                <Link to={`/products/contact/${product.id}`}>
+                                  <Button className="w-11 h-11 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl">
+                                    <ShoppingCart className="h-4 w-4" />
+                                  </Button>
+                                </Link>
+                              )}
                             </>
                           )}
                           
-                          {/* Botón de Reportar - Solo para moderadores y administradores */}
-                          {(user?.tipo_usuario === 'moderador' || user?.tipo_usuario === 'administrador') && (
+                          {/* Botón de Reportar - Solo para moderadores, administradores, compradores y vendedores (pero no para el vendedor dueño) */}
+                          {((user?.tipo_usuario === 'moderador' || user?.tipo_usuario === 'administrador' || 
+                             user?.tipo_usuario === 'comprador' || 
+                             (user?.tipo_usuario === 'vendedor' && user.id !== product.vendedor_id)) && (
                             <Button 
                               onClick={() => handleReportProduct(product)}
                               className="w-11 h-11 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
@@ -1024,7 +1035,7 @@ export const ProductsPage: React.FC = () => {
                             >
                               <Flag className="h-4 w-4" />
                             </Button>
-                          )}
+                          ))}
                         </div>
                 </CardContent>
               </Card>

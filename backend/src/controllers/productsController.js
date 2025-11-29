@@ -1118,6 +1118,7 @@ class ProductsController {
       }
 
       // Verificar que no esté marcado como peligroso (solo admins pueden eliminar)
+      // Esta es la ÚNICA restricción explícita según los requisitos
       if (producto.es_peligroso && req.user.tipo_usuario !== 'administrador') {
         return res.status(400).json({
           success: false,
@@ -1133,12 +1134,24 @@ class ProductsController {
         });
       }
 
-      // Verificar que no esté suspendido (solo admins pueden eliminar productos suspendidos)
-      if (producto.estado === 'suspendido' && req.user.tipo_usuario !== 'administrador') {
-        return res.status(400).json({
-          success: false,
-          message: 'No se puede eliminar un producto que ha sido suspendido. Contacta con los moderadores para más información.'
-        });
+      // Los productos suspendidos o en apelación (que NO son peligrosos) SÍ pueden ser eliminados por el vendedor
+      // Si el producto tiene una apelación activa, se cancelará automáticamente al eliminar el producto
+      const apelacionesActivas = await query(
+        'SELECT id FROM apelaciones WHERE item_id = $1 AND estado IN ($2, $3)',
+        [id, 'en_apelacion', 'pendiente']
+      );
+
+      if (apelacionesActivas.rows.length > 0) {
+        // Cancelar todas las apelaciones activas
+        await query(
+          `UPDATE apelaciones 
+           SET estado = 'rechazado', 
+               fecha_resolucion_apelacion = CURRENT_TIMESTAMP,
+               decision_apelacion = 'Apelación cancelada: El producto fue eliminado por el vendedor'
+           WHERE item_id = $1 AND estado IN ($2, $3)`,
+          [id, 'en_apelacion', 'pendiente']
+        );
+        console.log(`📝 ${apelacionesActivas.rows.length} apelación(es) cancelada(s) al eliminar el producto`);
       }
 
       const imagenesProducto = await query(

@@ -300,7 +300,15 @@ export const ReportsManagementPage: React.FC = () => {
     return labels[tipo] || tipo;
   };
 
-  const getEstadoBadge = (estado: string) => {
+  const getEstadoBadge = (estado: string | undefined) => {
+    if (!estado) {
+      return (
+        <Badge className="bg-gray-100 text-gray-800 border">
+          SIN ESTADO
+        </Badge>
+      );
+    }
+    
     const colors: Record<string, string> = {
       'pendiente': 'bg-yellow-100 text-yellow-800 border-yellow-300',
       'en_revision': 'bg-blue-100 text-blue-800 border-blue-300',

@@ -186,6 +186,12 @@ export const ProductViewPage: React.FC = () => {
       showError('Error', 'Debes iniciar sesión para reportar productos');
       return;
     }
+    
+    // Verificar que el usuario no sea el vendedor del producto
+    if (product && user.id === product.vendedor_id) {
+      showError('Error', 'No puedes reportar tu propio producto');
+      return;
+    }
 
     showWarning(
       '¿Reportar producto?',
@@ -429,8 +435,8 @@ export const ProductViewPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Acciones para compradores y vendedores */}
-            {(user?.tipo_usuario === 'comprador' || user?.tipo_usuario === 'vendedor') && (
+            {/* Acciones para compradores y vendedores (pero no para el vendedor dueño del producto) */}
+            {(user?.tipo_usuario === 'comprador' || (user?.tipo_usuario === 'vendedor' && user.id !== product.vendedor_id)) && (
               <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
                 <h3 className="font-medium text-gray-900 mb-3">Acciones disponibles</h3>
                 <div className="space-y-3">

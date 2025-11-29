@@ -454,6 +454,7 @@ class AppealsController {
           i.tipo as producto_tipo,
           i.estado as producto_estado,
           i.motivo_rechazo,
+          i.moderador_revision_id,
           u_apelante.nombre as apelante_nombre,
           u_apelante.apellido as apelante_apellido,
           u_apelante.correo as apelante_correo,
@@ -463,6 +464,8 @@ class AppealsController {
           u_vendedor.correo as vendedor_correo,
           u_revisor.nombre as revisor_nombre,
           u_revisor.apellido as revisor_apellido,
+          u_moderador_original.nombre as moderador_original_nombre,
+          u_moderador_original.apellido as moderador_original_apellido,
           cat.nombre as categoria_nombre,
           (SELECT url_imagen FROM item_imagenes WHERE item_id = i.id ORDER BY es_principal DESC, orden ASC LIMIT 1) as primera_imagen,
           (SELECT COUNT(*) FROM item_imagenes WHERE item_id = i.id) as total_imagenes
@@ -471,6 +474,7 @@ class AppealsController {
         INNER JOIN usuarios u_apelante ON a.usuario_apelante_id = u_apelante.id
         INNER JOIN usuarios u_vendedor ON i.vendedor_id = u_vendedor.id
         LEFT JOIN usuarios u_revisor ON a.moderador_revisor_id = u_revisor.id
+        LEFT JOIN usuarios u_moderador_original ON i.moderador_revision_id = u_moderador_original.id
         LEFT JOIN categorias cat ON i.categoria_id = cat.id
         WHERE 1=1
       `;

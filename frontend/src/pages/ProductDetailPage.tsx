@@ -64,6 +64,18 @@ export const ProductDetailPage: React.FC = () => {
   } | null>(null);
 
   const handleReportProduct = () => {
+    if (!user) {
+      showError('Error', 'Debes iniciar sesión para reportar productos');
+      navigate('/login', { state: { from: `/products/${product.id}`, message: 'Inicia sesión para reportar productos' } });
+      return;
+    }
+    
+    // Verificar que el usuario no sea el vendedor del producto
+    if (user.id === product.vendedor_id) {
+      showError('Error', 'No puedes reportar tu propio producto');
+      return;
+    }
+    
     setReportModalOpen(true);
   };
 
@@ -733,8 +745,8 @@ export const ProductDetailPage: React.FC = () => {
             {/* Solo compradores y vendedores pueden contactar. Admin/moderador NO pueden. Visitantes son redirigidos al login */}
             {product.estado === 'activo' && product.disponibilidad && (
               <div className={`space-y-3 transition-all duration-300 ${isScrolled ? 'sticky top-20 z-40 bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-lg' : ''}`}>
-                {/* Usuario autenticado como comprador o vendedor */}
-                {(user?.tipo_usuario === 'comprador' || user?.tipo_usuario === 'vendedor') && (
+                {/* Usuario autenticado como comprador o vendedor (pero no el vendedor dueño del producto) */}
+                {(user?.tipo_usuario === 'comprador' || (user?.tipo_usuario === 'vendedor' && user.id !== product.vendedor_id)) && (
                   <>
                     <Button 
                       onClick={() => navigate(`/products/contact/${product.id}`)}
@@ -801,7 +813,7 @@ export const ProductDetailPage: React.FC = () => {
                     </Button>
                   )}
                     
-                  {canDeleteProduct(product.vendedor_id) && !product.es_peligroso && product.estado !== 'pendiente_revision' && product.estado !== 'suspendido' && (
+                  {canDeleteProduct(product.vendedor_id) && !product.es_peligroso && product.estado !== 'pendiente_revision' && (
                       <Button 
                       onClick={handleDeleteProduct}
                       className="w-full h-11 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 text-sm font-semibold"
@@ -822,9 +834,18 @@ export const ProductDetailPage: React.FC = () => {
                   
                   {/* Mensaje informativo si el producto está suspendido */}
                   {product.estado === 'suspendido' && (
-                    <div className="bg-red-50 border-l-4 border-red-400 p-3 rounded">
-                      <p className="text-sm text-red-800">
-                        <strong>🚫 Suspendido:</strong> Este producto ha sido suspendido por los moderadores. No puedes editarlo ni eliminarlo. Contacta con los moderadores para más información.
+                    <div className="bg-orange-50 border-l-4 border-orange-400 p-3 rounded">
+                      <p className="text-sm text-orange-800">
+                        <strong>🚫 Suspendido:</strong> Este producto ha sido suspendido por los moderadores. Puedes eliminarlo si lo deseas, o apelar la decisión para que sea revisado por otro moderador.
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* Mensaje informativo si el producto está en apelación */}
+                  {product.estado === 'en_apelacion' && (
+                    <div className="bg-purple-50 border-l-4 border-purple-400 p-3 rounded">
+                      <p className="text-sm text-purple-800">
+                        <strong>📋 En Apelación:</strong> Este producto está siendo revisado por un moderador diferente. Puedes eliminarlo si lo deseas, lo cual cancelará automáticamente la apelación.
                       </p>
                     </div>
                   )}
@@ -928,8 +949,8 @@ export const ProductDetailPage: React.FC = () => {
                   <div className="font-medium text-gray-900 text-lg">{product.vendedor_nombre}</div>
                     <div className="text-sm text-gray-600">{product.vendedor_email}</div>
                   </div>
-                {/* Solo compradores y vendedores pueden contactar. Admin/moderador NO pueden */}
-                {(user?.tipo_usuario === 'comprador' || user?.tipo_usuario === 'vendedor') && (
+                {/* Solo compradores y vendedores pueden contactar. Admin/moderador NO pueden. Vendedores NO pueden contactar sobre sus propios productos */}
+                {(user?.tipo_usuario === 'comprador' || (user?.tipo_usuario === 'vendedor' && user.id !== product.vendedor_id)) && (
                   <Button 
                     onClick={() => navigate(`/products/contact/${product.id}`)}
                     className="w-full bg-orange-500 hover:bg-orange-600 text-white h-10 rounded-lg text-sm font-medium shadow-lg hover:shadow-xl transition-all"

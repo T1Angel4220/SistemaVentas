@@ -45,6 +45,9 @@ interface Appeal {
   vendedor_apellido: string;
   vendedor_correo: string;
   motivo_rechazo_original?: string;
+  moderador_revision_id?: number; // ID del moderador que hizo la suspensión/rechazo original
+  moderador_original_nombre?: string; // Nombre del moderador original
+  moderador_original_apellido?: string; // Apellido del moderador original
   primera_imagen?: string;
   total_imagenes?: number;
 }
@@ -384,6 +387,16 @@ export const AppealsManagementPage: React.FC = () => {
                         <div className="flex items-center space-x-2 text-sm">
                           <span className="text-gray-600 text-xs">{appeal.vendedor_correo}</span>
                         </div>
+                        {appeal.moderador_original_nombre && appeal.moderador_original_apellido && (
+                          <div className="flex items-center space-x-2 text-sm">
+                            <Shield className="h-4 w-4 text-gray-400" />
+                            <span className="text-gray-600">
+                              Moderador original: <span className="font-medium text-gray-900">
+                                {appeal.moderador_original_nombre} {appeal.moderador_original_apellido}
+                              </span>
+                            </span>
+                          </div>
+                        )}
                       </div>
 
                       {appeal.motivo_rechazo_original && (
@@ -466,32 +479,72 @@ export const AppealsManagementPage: React.FC = () => {
                      <div className="space-y-3 xl:border-l xl:border-gray-200 xl:pl-6 border-t border-gray-200 pt-4 xl:pt-0 xl:border-t-0">
                       <div className="text-sm font-semibold text-gray-700 mb-4">Acciones de Moderación</div>
                       
-                      <Button
-                        size="sm"
-                        onClick={() => openResolveDialog(appeal, 'aprobar')}
-                        disabled={actionLoading === appeal.id}
-                        className="w-full h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-medium shadow-lg"
-                      >
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        Aceptar Apelación
-                      </Button>
+                      {/* Verificar si el usuario actual es el mismo que hizo la suspensión/rechazo */}
+                      {user && appeal.moderador_revision_id && user.id === appeal.moderador_revision_id ? (
+                        <div className="space-y-3">
+                          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
+                            <div className="flex items-start">
+                              <Shield className="h-5 w-5 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" />
+                              <div>
+                                <p className="text-sm font-semibold text-yellow-800 mb-1">
+                                  Modo Solo Lectura
+                                </p>
+                                <p className="text-xs text-yellow-700 leading-relaxed">
+                                  No puedes resolver esta apelación porque tú fuiste el moderador que rechazó o suspendió este producto originalmente. 
+                                  La apelación debe ser revisada por un moderador diferente para garantizar imparcialidad.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <Button
+                            size="sm"
+                            disabled={true}
+                            className="w-full h-10 bg-gray-300 text-gray-500 cursor-not-allowed rounded-xl font-medium shadow-lg opacity-60"
+                          >
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Aceptar Apelación
+                          </Button>
 
-                      <Button
-                        size="sm"
-                        onClick={() => openResolveDialog(appeal, 'rechazar')}
-                        disabled={actionLoading === appeal.id}
-                        className="w-full h-10 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl font-medium shadow-lg"
-                      >
-                        <XCircle className="h-4 w-4 mr-2" />
-                        Rechazar Apelación
-                      </Button>
+                          <Button
+                            size="sm"
+                            disabled={true}
+                            className="w-full h-10 bg-gray-300 text-gray-500 cursor-not-allowed rounded-xl font-medium shadow-lg opacity-60"
+                          >
+                            <XCircle className="h-4 w-4 mr-2" />
+                            Rechazar Apelación
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <Button
+                            size="sm"
+                            onClick={() => openResolveDialog(appeal, 'aprobar')}
+                            disabled={actionLoading === appeal.id}
+                            className="w-full h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-medium shadow-lg"
+                          >
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Aceptar Apelación
+                          </Button>
 
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
-                        <p className="text-xs text-blue-800">
-                          <strong>Aceptar:</strong> El producto será reactivado<br />
-                          <strong>Rechazar:</strong> El producto mantiene su estado actual
-                        </p>
-                      </div>
+                          <Button
+                            size="sm"
+                            onClick={() => openResolveDialog(appeal, 'rechazar')}
+                            disabled={actionLoading === appeal.id}
+                            className="w-full h-10 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl font-medium shadow-lg"
+                          >
+                            <XCircle className="h-4 w-4 mr-2" />
+                            Rechazar Apelación
+                          </Button>
+
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
+                            <p className="text-xs text-blue-800">
+                              <strong>Aceptar:</strong> El producto será reactivado<br />
+                              <strong>Rechazar:</strong> El producto mantiene su estado actual
+                            </p>
+                          </div>
+                        </>
+                      )}
                     </div>
                     )}
                   </div>

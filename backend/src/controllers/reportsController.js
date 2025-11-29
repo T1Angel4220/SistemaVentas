@@ -48,8 +48,8 @@ class ReportsController {
 
       const producto = productoResult.rows[0];
 
-      // Verificar que el usuario no está reportando su propio producto (solo si es comprador)
-      if (producto.vendedor_id === usuario_reportador_id && req.user.tipo_usuario === 'comprador') {
+      // Verificar que el usuario no está reportando su propio producto
+      if (producto.vendedor_id === usuario_reportador_id) {
         return res.status(400).json({
           success: false,
           message: 'No puedes reportar tu propio producto'

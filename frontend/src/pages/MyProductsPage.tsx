@@ -183,14 +183,8 @@ export const MyProductsPage: React.FC = () => {
       return;
     }
 
-    // Verificar si el producto está suspendido
-    if (productEstado === 'suspendido' && user?.tipo_usuario !== 'administrador') {
-      showError(
-        '🚫 Producto Suspendido',
-        'No puedes eliminar este producto porque ha sido suspendido por los moderadores. Contacta con ellos para más información.'
-      );
-      return;
-    }
+    // Los productos suspendidos o en apelación (que NO son peligrosos) SÍ pueden ser eliminados
+    // La única restricción es para productos peligrosos (manejada por el backend)
 
     showWarning(
       '¿Eliminar producto?',
@@ -794,17 +788,20 @@ export const MyProductsPage: React.FC = () => {
                     )}
                     
                     {/* Botón de eliminar - Uniformado con estilo de ProductsPage */}
+                    {/* Los productos suspendidos o en apelación (que NO son peligrosos) SÍ pueden ser eliminados */}
                     <Button
                       onClick={() => handleDeleteProduct(product.id, product.nombre, product.estado)}
-                      disabled={product.es_peligroso || product.estado === 'peligroso' || product.estado === 'pendiente_revision' || product.estado === 'suspendido'}
+                      disabled={product.es_peligroso || product.estado === 'peligroso' || product.estado === 'pendiente_revision'}
                       className={`h-10 w-10 sm:h-11 sm:w-11 border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl flex-shrink-0 ${
-                        product.es_peligroso || product.estado === 'peligroso' || product.estado === 'pendiente_revision' || product.estado === 'suspendido'
+                        product.es_peligroso || product.estado === 'peligroso' || product.estado === 'pendiente_revision'
                           ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-50'
                           : 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white'
                       }`}
                       title={
+                        product.es_peligroso || product.estado === 'peligroso' ? 'No puedes eliminar un producto peligroso' :
                         product.estado === 'pendiente_revision' ? 'No puedes eliminar un producto en revisión' :
-                        product.estado === 'suspendido' ? 'No puedes eliminar un producto suspendido' :
+                        product.estado === 'suspendido' ? 'Eliminar producto suspendido (cancelará cualquier apelación activa)' :
+                        product.estado === 'en_apelacion' ? 'Eliminar producto (cancelará la apelación activa)' :
                         'Eliminar producto'
                       }
                     >
