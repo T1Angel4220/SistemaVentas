@@ -51,6 +51,19 @@ interface Report {
   vendedor_correo: string;
   categoria_nombre: string;
   total_reportes_producto: number;
+  origen_deteccion?: string; // 'sistema' o 'comprador'
+  moderador_nombre?: string;
+  moderador_apellido?: string;
+  fecha_deteccion_peligroso?: string;
+  es_peligroso?: boolean;
+  moderador_resolutor_nombre?: string;
+  moderador_resolutor_apellido?: string;
+  moderador_producto_nombre?: string;
+  moderador_producto_apellido?: string;
+  decision_final?: string;
+  fecha_resolucion?: string;
+  motivo_rechazo?: string;
+  fecha_revision?: string;
 }
 
 export const ReportsManagementPage: React.FC = () => {
@@ -60,6 +73,7 @@ export const ReportsManagementPage: React.FC = () => {
   const { alert, showSuccess, showError, hideAlert } = useAlert();
   
   const [reports, setReports] = useState<Report[]>([]);
+  const [systemDetected, setSystemDetected] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
@@ -67,10 +81,13 @@ export const ReportsManagementPage: React.FC = () => {
   const [resolveAction, setResolveAction] = useState<'aprobar' | 'rechazar' | 'suspender' | 'eliminar'>('aprobar');
   const [decisionFinal, setDecisionFinal] = useState('');
   const [marcarPeligroso, setMarcarPeligroso] = useState(false);
+  const [activeTab, setActiveTab] = useState<'buyer-reports' | 'system-detected'>('buyer-reports');
 
   const [filters, setFilters] = useState({
     tipo_reporte: '',
-    estado: ''
+    estado: '',
+    fecha_desde: '',
+    fecha_hasta: ''
   });
 
   const loadReports = useCallback(async () => {
@@ -80,6 +97,8 @@ export const ReportsManagementPage: React.FC = () => {
       const queryParams = new URLSearchParams();
       if (filters.tipo_reporte) queryParams.append('tipo_reporte', filters.tipo_reporte);
       if (filters.estado) queryParams.append('estado', filters.estado);
+      if (filters.fecha_desde) queryParams.append('fecha_desde', filters.fecha_desde);
+      if (filters.fecha_hasta) queryParams.append('fecha_hasta', filters.fecha_hasta);
 
       const response = await fetch(`http://localhost:3001/api/reports/pending?${queryParams}`, {
         headers: {
@@ -103,12 +122,47 @@ export const ReportsManagementPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
-  useEffect(() => {
-    if (user && canModerateProduct()) {
-      loadReports();
+  const loadSystemDetected = useCallback(async () => {
+    try {
+      setLoading(true);
+      
+      const queryParams = new URLSearchParams();
+      if (filters.estado) queryParams.append('estado', filters.estado);
+      if (filters.fecha_desde) queryParams.append('fecha_desde', filters.fecha_desde);
+      if (filters.fecha_hasta) queryParams.append('fecha_hasta', filters.fecha_hasta);
+
+      const response = await fetch(`http://localhost:3001/api/reports/system-detected?${queryParams}`, {
+        headers: {
+          'Authorization': `Bearer ${apiService.getToken()}`
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setSystemDetected(data.data);
+      } else {
+        showError('Error', 'No se pudieron cargar los productos detectados');
+      }
+    } catch (error) {
+      console.error('Error al cargar productos detectados:', error);
+      showError('Error', 'Error de conexión al cargar productos detectados');
+    } finally {
+      setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
+
+  useEffect(() => {
+    if (user && canModerateProduct()) {
+      if (activeTab === 'buyer-reports') {
+        loadReports();
+      } else {
+        loadSystemDetected();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters, activeTab]);
 
   const handleResolveReport = async () => {
     if (!selectedReport) return;
@@ -119,48 +173,98 @@ export const ReportsManagementPage: React.FC = () => {
     }
 
     try {
-      setActionLoading(selectedReport.id);
+      const loadingId = activeTab === 'system-detected' ? selectedReport.item_id : selectedReport.id;
+      setActionLoading(loadingId);
       
-      const response = await fetch(`http://localhost:3001/api/reports/${selectedReport.id}/resolve`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiService.getToken()}`
-        },
-        body: JSON.stringify({
-          accion: resolveAction,
-          decision_final: decisionFinal,
-          marcar_peligroso: marcarPeligroso
-        })
-      });
-
-      const data = await response.json();
-      
-      if (data.success) {
-        const actionText = {
-          'aprobar': 'Reporte rechazado (producto válido)',
-          'rechazar': 'Producto rechazado',
-          'suspender': 'Producto suspendido',
-          'eliminar': 'Producto marcado como peligroso'
+      // Si es un producto detectado por el sistema, usar el endpoint de moderación
+      if (activeTab === 'system-detected') {
+        const accionMap: Record<string, string> = {
+          'aprobar': 'aprobar',
+          'rechazar': 'rechazar',
+          'suspender': 'suspender',
+          'eliminar': 'marcar_peligroso'
         };
+
+        const response = await fetch(`http://localhost:3001/api/products/${selectedReport.item_id}/moderate`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiService.getToken()}`
+          },
+          body: JSON.stringify({
+            accion: accionMap[resolveAction],
+            motivo: decisionFinal,
+            decision_final: decisionFinal
+          })
+        });
+
+        const data = await response.json();
         
-        showSuccess(
-          '✅ Reporte procesado',
-          actionText[resolveAction],
-          () => {
-            setShowResolveDialog(false);
-            setSelectedReport(null);
-            setDecisionFinal('');
-            setMarcarPeligroso(false);
-            loadReports();
-          }
-        );
+        if (data.success) {
+          const actionText = {
+            'aprobar': 'Producto activado (no es peligroso)',
+            'rechazar': 'Producto rechazado',
+            'suspender': 'Producto suspendido',
+            'eliminar': 'Producto marcado como peligroso'
+          };
+          
+          showSuccess(
+            '✅ Estado actualizado',
+            actionText[resolveAction],
+            () => {
+              setShowResolveDialog(false);
+              setSelectedReport(null);
+              setDecisionFinal('');
+              setMarcarPeligroso(false);
+              loadSystemDetected();
+            }
+          );
+        } else {
+          showError('Error', data.message || 'Error al actualizar el estado del producto');
+        }
       } else {
-        showError('Error', data.message || 'Error al procesar el reporte');
+        // Si es un reporte de comprador, usar el endpoint de reportes
+        const response = await fetch(`http://localhost:3001/api/reports/${selectedReport.id}/resolve`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiService.getToken()}`
+          },
+          body: JSON.stringify({
+            accion: resolveAction,
+            decision_final: decisionFinal,
+            marcar_peligroso: marcarPeligroso
+          })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          const actionText = {
+            'aprobar': 'Reporte rechazado (producto válido)',
+            'rechazar': 'Producto rechazado',
+            'suspender': 'Producto suspendido',
+            'eliminar': 'Producto marcado como peligroso'
+          };
+          
+          showSuccess(
+            '✅ Reporte procesado',
+            actionText[resolveAction],
+            () => {
+              setShowResolveDialog(false);
+              setSelectedReport(null);
+              setDecisionFinal('');
+              setMarcarPeligroso(false);
+              loadReports();
+            }
+          );
+        } else {
+          showError('Error', data.message || 'Error al procesar el reporte');
+        }
       }
     } catch (error) {
-      console.error('Error al resolver reporte:', error);
-      showError('Error', 'Error de conexión al procesar el reporte');
+      console.error('Error al procesar:', error);
+      showError('Error', 'Error de conexión al procesar');
     } finally {
       setActionLoading(null);
     }
@@ -170,6 +274,8 @@ export const ReportsManagementPage: React.FC = () => {
     setSelectedReport(report);
     setResolveAction(action);
     setShowResolveDialog(true);
+    setDecisionFinal('');
+    setMarcarPeligroso(false);
   };
 
   const formatDate = (dateString: string) => {
@@ -254,6 +360,34 @@ export const ReportsManagementPage: React.FC = () => {
       </div>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 -mt-6 sm:-mt-8 relative z-10">
+        {/* Pestañas - Reportes de Compradores y Detectados por Sistema */}
+        <div className="mb-6 sm:mb-8">
+          <div className="flex space-x-2 border-b border-gray-200">
+            <button
+              onClick={() => setActiveTab('buyer-reports')}
+              className={`px-4 py-2 font-medium text-sm transition-colors ${
+                activeTab === 'buyer-reports'
+                  ? 'text-red-600 border-b-2 border-red-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Flag className="h-4 w-4 inline mr-2" />
+              Reportes de Compradores
+            </button>
+            <button
+              onClick={() => setActiveTab('system-detected')}
+              className={`px-4 py-2 font-medium text-sm transition-colors ${
+                activeTab === 'system-detected'
+                  ? 'text-red-600 border-b-2 border-red-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <AlertTriangle className="h-4 w-4 inline mr-2" />
+              Detectados por Sistema
+            </button>
+          </div>
+        </div>
+
         {/* Estadísticas - Optimizado para móvil */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200 shadow-lg hover:shadow-xl transition-all duration-300">
@@ -262,7 +396,9 @@ export const ReportsManagementPage: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-yellow-700">Pendientes</p>
                   <p className="text-3xl font-bold text-yellow-900 mt-1">
-                    {reports.filter(r => r.estado === 'pendiente').length}
+                    {activeTab === 'buyer-reports' 
+                      ? reports.filter(r => r.estado === 'pendiente').length
+                      : systemDetected.filter(r => r.producto_estado === 'peligroso' || r.es_peligroso).length}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-yellow-500 rounded-xl flex items-center justify-center shadow-lg">
@@ -278,7 +414,9 @@ export const ReportsManagementPage: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-blue-700">En Revisión</p>
                   <p className="text-3xl font-bold text-blue-900 mt-1">
-                    {reports.filter(r => r.estado === 'en_revision').length}
+                    {activeTab === 'buyer-reports' 
+                      ? reports.filter(r => r.estado === 'en_revision').length
+                      : 0}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg">
@@ -294,7 +432,9 @@ export const ReportsManagementPage: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-green-700">Resueltos</p>
                   <p className="text-3xl font-bold text-green-900 mt-1">
-                    {reports.filter(r => r.estado === 'resuelto').length}
+                    {activeTab === 'buyer-reports' 
+                      ? reports.filter(r => r.estado === 'resuelto').length
+                      : 0}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center shadow-lg">
@@ -310,7 +450,7 @@ export const ReportsManagementPage: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-red-700">Total</p>
                   <p className="text-3xl font-bold text-red-900 mt-1">
-                    {reports.length}
+                    {activeTab === 'buyer-reports' ? reports.length : systemDetected.length}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-red-500 rounded-xl flex items-center justify-center shadow-lg">
@@ -335,24 +475,26 @@ export const ReportsManagementPage: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 sm:p-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Tipo de Reporte
-                </label>
-                <select
-                  value={filters.tipo_reporte}
-                  onChange={(e) => setFilters(prev => ({ ...prev, tipo_reporte: e.target.value }))}
-                  className="w-full flex h-12 items-center justify-between rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm hover:border-gray-300 transition-colors"
-                >
-                  <option value="">Todos</option>
-                  <option value="contenido_inapropiado">⚠️ Contenido Inapropiado</option>
-                  <option value="producto_prohibido">🚫 Producto Prohibido</option>
-                  <option value="informacion_falsa">❌ Información Falsa</option>
-                  <option value="spam">📧 Spam</option>
-                  <option value="otro">🔖 Otro</option>
-                </select>
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              {activeTab === 'buyer-reports' && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Tipo de Reporte
+                  </label>
+                  <select
+                    value={filters.tipo_reporte}
+                    onChange={(e) => setFilters(prev => ({ ...prev, tipo_reporte: e.target.value }))}
+                    className="w-full flex h-12 items-center justify-between rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm hover:border-gray-300 transition-colors"
+                  >
+                    <option value="">Todos</option>
+                    <option value="contenido_inapropiado">⚠️ Contenido Inapropiado</option>
+                    <option value="producto_prohibido">🚫 Producto Prohibido</option>
+                    <option value="informacion_falsa">❌ Información Falsa</option>
+                    <option value="spam">📧 Spam</option>
+                    <option value="otro">🔖 Otro</option>
+                  </select>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -364,38 +506,74 @@ export const ReportsManagementPage: React.FC = () => {
                   className="w-full flex h-12 items-center justify-between rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm hover:border-gray-300 transition-colors"
                 >
                   <option value="">Todos</option>
-                  <option value="pendiente">Pendiente</option>
-                  <option value="en_revision">En Revisión</option>
-                  <option value="resuelto">Resuelto</option>
+                  {activeTab === 'buyer-reports' ? (
+                    <>
+                      <option value="pendiente">Pendiente</option>
+                      <option value="en_revision">En Revisión</option>
+                      <option value="resuelto">Resuelto</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="peligroso">Peligroso</option>
+                      <option value="suspendido">Suspendido</option>
+                      <option value="rechazado">Rechazado</option>
+                    </>
+                  )}
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Fecha Desde
+                </label>
+                <input
+                  type="date"
+                  value={filters.fecha_desde}
+                  onChange={(e) => setFilters(prev => ({ ...prev, fecha_desde: e.target.value }))}
+                  className="w-full flex h-12 items-center justify-between rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm hover:border-gray-300 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Fecha Hasta
+                </label>
+                <input
+                  type="date"
+                  value={filters.fecha_hasta}
+                  onChange={(e) => setFilters(prev => ({ ...prev, fecha_hasta: e.target.value }))}
+                  className="w-full flex h-12 items-center justify-between rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm hover:border-gray-300 transition-colors"
+                />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Lista de reportes */}
+        {/* Lista de reportes o productos detectados */}
         {loading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Cargando reportes...</p>
+            <p className="text-gray-600">Cargando {activeTab === 'buyer-reports' ? 'reportes' : 'productos detectados'}...</p>
           </div>
-        ) : reports.length === 0 ? (
+        ) : (activeTab === 'buyer-reports' ? reports.length === 0 : systemDetected.length === 0) ? (
           <Card className="bg-white/90 backdrop-blur-sm shadow-xl border-0 rounded-2xl">
             <CardContent className="text-center py-16">
               <div className="w-24 h-24 bg-gradient-to-br from-red-100 to-orange-100 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg">
                 <Flag className="h-12 w-12 text-red-600" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                No hay reportes
+                {activeTab === 'buyer-reports' 
+                  ? 'No hay reportes pendientes'
+                  : 'No hay productos detectados por el sistema'}
               </h3>
               <p className="text-gray-600 text-lg max-w-md mx-auto">
-                No se encontraron reportes con los filtros seleccionados
+                {activeTab === 'buyer-reports'
+                  ? 'No se encontraron reportes con los filtros seleccionados'
+                  : 'No se encontraron productos detectados automáticamente por el sistema'}
               </p>
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-6">
-            {reports.map((report) => (
+            {(activeTab === 'buyer-reports' ? reports : systemDetected).map((report) => (
                <Card key={report.id} className="bg-white/95 backdrop-blur-sm shadow-lg hover:shadow-2xl transition-all duration-300 border-0 rounded-2xl overflow-hidden">
                  <CardContent className="p-4 sm:p-6">
                    <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
@@ -464,46 +642,127 @@ export const ReportsManagementPage: React.FC = () => {
                       </Button>
                     </div>
 
-                     {/* Columna 2: Info del Reporte - Optimizado para móvil */}
+                     {/* Columna 2: Info del Reporte o Producto Detectado - Optimizado para móvil */}
                      <div className="space-y-4 xl:border-l xl:border-gray-200 xl:pl-6 border-t border-gray-200 pt-4 xl:pt-0 xl:border-t-0">
-                      <div>
-                        <div className="text-sm font-semibold text-gray-700 mb-2">Tipo de Reporte</div>
-                        <Badge className="bg-red-100 text-red-800 border-red-300 border">
-                          {getTipoReporteLabel(report.tipo_reporte)}
-                        </Badge>
-                      </div>
+                      {activeTab === 'buyer-reports' ? (
+                        <>
+                          <div>
+                            <div className="text-sm font-semibold text-gray-700 mb-2">Tipo de Reporte</div>
+                            <Badge className="bg-red-100 text-red-800 border-red-300 border">
+                              {getTipoReporteLabel(report.tipo_reporte)}
+                            </Badge>
+                          </div>
 
-                      <div>
-                        <div className="text-sm font-semibold text-gray-700 mb-2">Motivo</div>
-                        <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-200">
-                          {report.descripcion}
-                        </p>
-                      </div>
+                          <div>
+                            <div className="text-sm font-semibold text-gray-700 mb-2">Motivo</div>
+                            <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                              {report.descripcion}
+                            </p>
+                          </div>
 
-                      {report.comentario_opcional && (
-                        <div>
-                          <div className="text-sm font-semibold text-gray-700 mb-2">Información Adicional</div>
-                          <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
-                            {report.comentario_opcional}
-                          </p>
-                        </div>
+                          {report.comentario_opcional && (
+                            <div>
+                              <div className="text-sm font-semibold text-gray-700 mb-2">Información Adicional</div>
+                              <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
+                                {report.comentario_opcional}
+                              </p>
+                            </div>
+                          )}
+
+                          <div className="space-y-2 text-sm">
+                            <div className="flex items-center space-x-2">
+                              <User className="h-4 w-4 text-gray-400" />
+                              <span className="text-gray-600">Reportado por: <span className="font-medium text-gray-900">{report.reportante_nombre} {report.reportante_apellido}</span></span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Badge className={`${report.reportante_tipo === 'moderador' || report.reportante_tipo === 'administrador' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'} border`}>
+                                {report.reportante_tipo}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Clock className="h-4 w-4 text-gray-400" />
+                              <span className="text-gray-600">Reportado: {formatDate(report.fecha_reporte)}</span>
+                            </div>
+                            {report.estado === 'resuelto' && (
+                              <>
+                                {report.moderador_resolutor_nombre && (
+                                  <div className="flex items-center space-x-2 mt-2">
+                                    <User className="h-4 w-4 text-green-500" />
+                                    <span className="text-gray-600">
+                                      Reporte resuelto por: <span className="font-medium text-green-700">{report.moderador_resolutor_nombre} {report.moderador_resolutor_apellido}</span>
+                                    </span>
+                                  </div>
+                                )}
+                                {report.moderador_producto_nombre && (
+                                  <div className="flex items-center space-x-2 mt-2">
+                                    <User className="h-4 w-4 text-blue-500" />
+                                    <span className="text-gray-600">
+                                      Estado cambiado por: <span className="font-medium text-blue-700">{report.moderador_producto_nombre} {report.moderador_producto_apellido}</span>
+                                      <span className="text-xs text-gray-500 ml-2">
+                                        ({report.producto_estado === 'rechazado' ? 'Rechazó' : report.producto_estado === 'suspendido' ? 'Suspendió' : report.producto_estado === 'peligroso' ? 'Marcó como peligroso' : 'Aprobó'})
+                                      </span>
+                                    </span>
+                                  </div>
+                                )}
+                                {report.fecha_resolucion && (
+                                  <div className="flex items-center space-x-2 mt-2">
+                                    <Clock className="h-4 w-4 text-gray-400" />
+                                    <span className="text-gray-600">Resuelto: {formatDate(report.fecha_resolucion)}</span>
+                                  </div>
+                                )}
+                                {report.decision_final && (
+                                  <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                    <div className="text-sm font-semibold text-gray-700 mb-1">Decisión del Moderador:</div>
+                                    <p className="text-sm text-gray-600">{report.decision_final}</p>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div>
+                            <div className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                              <AlertTriangle className="h-4 w-4 mr-2 text-red-600" />
+                              Detectado por el Sistema
+                            </div>
+                            <Badge className="bg-red-100 text-red-800 border-red-300 border">
+                              🚨 Producto Peligroso
+                            </Badge>
+                          </div>
+
+                          {report.motivo_rechazo && (
+                            <div>
+                              <div className="text-sm font-semibold text-gray-700 mb-2">Motivo de Detección</div>
+                              <p className="text-sm text-gray-600 bg-red-50 p-3 rounded-lg border border-red-200">
+                                {report.motivo_rechazo}
+                              </p>
+                            </div>
+                          )}
+
+                          <div className="space-y-2 text-sm">
+                            {report.moderador_nombre && (
+                              <div className="flex items-center space-x-2">
+                                <User className="h-4 w-4 text-gray-400" />
+                                <span className="text-gray-600">Revisado por: <span className="font-medium text-gray-900">{report.moderador_nombre} {report.moderador_apellido}</span></span>
+                              </div>
+                            )}
+                            {report.fecha_deteccion_peligroso && (
+                              <div className="flex items-center space-x-2">
+                                <Clock className="h-4 w-4 text-gray-400" />
+                                <span className="text-gray-600">Detectado: {formatDate(report.fecha_deteccion_peligroso)}</span>
+                              </div>
+                            )}
+                            {report.fecha_revision && (
+                              <div className="flex items-center space-x-2">
+                                <Clock className="h-4 w-4 text-gray-400" />
+                                <span className="text-gray-600">Revisado: {formatDate(report.fecha_revision)}</span>
+                              </div>
+                            )}
+                          </div>
+                        </>
                       )}
-
-                      <div className="space-y-2 text-sm">
-                        <div className="flex items-center space-x-2">
-                          <User className="h-4 w-4 text-gray-400" />
-                          <span className="text-gray-600">Reportado por: <span className="font-medium text-gray-900">{report.reportante_nombre} {report.reportante_apellido}</span></span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Badge className={`${report.reportante_tipo === 'moderador' || report.reportante_tipo === 'administrador' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'} border`}>
-                            {report.reportante_tipo}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Clock className="h-4 w-4 text-gray-400" />
-                          <span className="text-gray-600">{formatDate(report.fecha_reporte)}</span>
-                        </div>
-                      </div>
 
                       {report.total_reportes_producto > 1 && (
                         <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
@@ -518,45 +777,88 @@ export const ReportsManagementPage: React.FC = () => {
                      <div className="space-y-3 xl:border-l xl:border-gray-200 xl:pl-6 border-t border-gray-200 pt-4 xl:pt-0 xl:border-t-0">
                       <div className="text-sm font-semibold text-gray-700 mb-4">Acciones de Moderación</div>
                       
-                      <Button
-                        size="sm"
-                        onClick={() => openResolveDialog(report, 'aprobar')}
-                        disabled={actionLoading === report.id}
-                        className="w-full h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-medium shadow-lg"
-                      >
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        Producto Válido
-                      </Button>
+                      {/* Botón para cambiar estado de visualización (solo para productos detectados) */}
+                      {activeTab === 'system-detected' && (
+                        <Button
+                          size="sm"
+                          onClick={() => openResolveDialog(report, 'aprobar')}
+                          disabled={actionLoading === report.item_id || (report.producto_estado === 'activo' && !report.es_peligroso)}
+                          className="w-full h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-medium shadow-lg"
+                        >
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          No es Peligroso (Activar)
+                        </Button>
+                      )}
 
-                      <Button
-                        size="sm"
-                        onClick={() => openResolveDialog(report, 'rechazar')}
-                        disabled={actionLoading === report.id}
-                        className="w-full h-10 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white rounded-xl font-medium shadow-lg"
-                      >
-                        <XCircle className="h-4 w-4 mr-2" />
-                        Rechazar Producto
-                      </Button>
+                      {/* Botones para reportes de compradores */}
+                      {activeTab === 'buyer-reports' && (
+                        <>
+                          <Button
+                            size="sm"
+                            onClick={() => openResolveDialog(report, 'aprobar')}
+                            disabled={actionLoading === report.id}
+                            className="w-full h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-medium shadow-lg"
+                          >
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Producto Válido
+                          </Button>
 
-                      <Button
-                        size="sm"
-                        onClick={() => openResolveDialog(report, 'suspender')}
-                        disabled={actionLoading === report.id}
-                        className="w-full h-10 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-xl font-medium shadow-lg"
-                      >
-                        <AlertTriangle className="h-4 w-4 mr-2" />
-                        Suspender
-                      </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => openResolveDialog(report, 'rechazar')}
+                            disabled={actionLoading === report.id}
+                            className="w-full h-10 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white rounded-xl font-medium shadow-lg"
+                          >
+                            <XCircle className="h-4 w-4 mr-2" />
+                            Rechazar Producto
+                          </Button>
 
-                      <Button
-                        size="sm"
-                        onClick={() => openResolveDialog(report, 'eliminar')}
-                        disabled={actionLoading === report.id}
-                        className="w-full h-10 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl font-medium shadow-lg"
-                      >
-                        <AlertTriangle className="h-4 w-4 mr-2" />
-                        Marcar Peligroso
-                      </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => openResolveDialog(report, 'suspender')}
+                            disabled={actionLoading === report.id}
+                            className="w-full h-10 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-xl font-medium shadow-lg"
+                          >
+                            <AlertTriangle className="h-4 w-4 mr-2" />
+                            Suspender
+                          </Button>
+
+                          <Button
+                            size="sm"
+                            onClick={() => openResolveDialog(report, 'eliminar')}
+                            disabled={actionLoading === report.id}
+                            className="w-full h-10 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl font-medium shadow-lg"
+                          >
+                            <AlertTriangle className="h-4 w-4 mr-2" />
+                            Marcar Peligroso
+                          </Button>
+                        </>
+                      )}
+
+                      {/* Botones adicionales para productos detectados */}
+                      {activeTab === 'system-detected' && (
+                        <>
+                          <Button
+                            size="sm"
+                            onClick={() => openResolveDialog(report, 'suspender')}
+                            disabled={actionLoading === report.item_id || report.producto_estado === 'suspendido'}
+                            className="w-full h-10 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-xl font-medium shadow-lg"
+                          >
+                            <AlertTriangle className="h-4 w-4 mr-2" />
+                            Suspender
+                          </Button>
+
+                          <Button
+                            size="sm"
+                            onClick={() => openResolveDialog(report, 'rechazar')}
+                            disabled={actionLoading === report.item_id || report.producto_estado === 'rechazado'}
+                            className="w-full h-10 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white rounded-xl font-medium shadow-lg"
+                          >
+                            <XCircle className="h-4 w-4 mr-2" />
+                            Rechazar
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -571,7 +873,9 @@ export const ReportsManagementPage: React.FC = () => {
          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto m-4">
             <div className="sticky top-0 bg-gradient-to-r from-red-600 to-orange-600 text-white p-6 rounded-t-2xl">
-              <h2 className="text-2xl font-bold">Resolver Reporte</h2>
+              <h2 className="text-2xl font-bold">
+                {activeTab === 'buyer-reports' ? 'Resolver Reporte' : 'Cambiar Estado de Visualización'}
+              </h2>
               <p className="text-red-100 text-sm mt-1">Producto: {selectedReport.producto_nombre}</p>
             </div>
 
@@ -580,10 +884,21 @@ export const ReportsManagementPage: React.FC = () => {
                 <Label className="text-base font-semibold text-gray-900 mb-2">Acción seleccionada</Label>
                 <div className="bg-gray-50 border-2 border-gray-200 rounded-xl p-4">
                   <p className="font-semibold text-gray-900">
-                    {resolveAction === 'aprobar' && '✅ Producto Válido - Reporte Rechazado'}
-                    {resolveAction === 'rechazar' && '❌ Rechazar Producto'}
-                    {resolveAction === 'suspender' && '⏸️ Suspender Producto'}
-                    {resolveAction === 'eliminar' && '🚨 Marcar como Peligroso'}
+                    {activeTab === 'buyer-reports' ? (
+                      <>
+                        {resolveAction === 'aprobar' && '✅ Producto Válido - Reporte Rechazado'}
+                        {resolveAction === 'rechazar' && '❌ Rechazar Producto'}
+                        {resolveAction === 'suspender' && '⏸️ Suspender Producto'}
+                        {resolveAction === 'eliminar' && '🚨 Marcar como Peligroso'}
+                      </>
+                    ) : (
+                      <>
+                        {resolveAction === 'aprobar' && '✅ No es Peligroso - Activar Producto'}
+                        {resolveAction === 'rechazar' && '❌ Rechazar Producto'}
+                        {resolveAction === 'suspender' && '⏸️ Suspender Producto'}
+                        {resolveAction === 'eliminar' && '🚨 Mantener como Peligroso'}
+                      </>
+                    )}
                   </p>
                 </div>
               </div>
@@ -591,13 +906,15 @@ export const ReportsManagementPage: React.FC = () => {
               <div>
                 <Label htmlFor="decision" className="text-base font-semibold text-gray-900 mb-2 flex items-center">
                   <FileText className="h-4 w-4 mr-2 text-red-600" />
-                  Explicación de la Decisión *
+                  {activeTab === 'buyer-reports' ? 'Explicación de la Decisión *' : 'Motivo del Cambio de Estado *'}
                 </Label>
                 <Textarea
                   id="decision"
                   value={decisionFinal}
                   onChange={(e) => setDecisionFinal(e.target.value)}
-                  placeholder="Explica detalladamente por qué tomaste esta decisión (mínimo 10 caracteres)..."
+                  placeholder={activeTab === 'buyer-reports' 
+                    ? "Explica detalladamente por qué tomaste esta decisión (mínimo 10 caracteres)..."
+                    : "Explica por qué cambias el estado de visualización de este producto (mínimo 10 caracteres)..."}
                   rows={5}
                   className="w-full border-2 border-gray-200 focus:border-red-500 focus:ring-red-500 rounded-xl"
                   required
@@ -610,7 +927,7 @@ export const ReportsManagementPage: React.FC = () => {
                 </div>
               </div>
 
-              {(resolveAction === 'eliminar' || resolveAction === 'rechazar' || resolveAction === 'suspender') && (
+              {activeTab === 'buyer-reports' && (resolveAction === 'eliminar' || resolveAction === 'rechazar' || resolveAction === 'suspender') && (
                 <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4">
                   <label className="flex items-center space-x-3 cursor-pointer">
                     <input

@@ -50,10 +50,31 @@ class AppealsController {
         });
       }
 
-      if (producto.estado !== 'rechazado' && producto.estado !== 'suspendido') {
+      // Verificar si el producto puede ser apelado
+      // Puede ser apelado si está rechazado, suspendido, o si hay un reporte resuelto que resultó en rechazo/suspensión
+      let puedeApelar = producto.estado === 'rechazado' || producto.estado === 'suspendido';
+      
+      // Verificar si hay reportes resueltos que resultaron en rechazo/suspensión
+      if (!puedeApelar) {
+        const reportesResueltos = await query(
+          `SELECT * FROM reportes 
+           WHERE item_id = $1 
+           AND estado = 'resuelto' 
+           AND (decision_final LIKE '%rechazado%' OR decision_final LIKE '%suspendido%' OR decision_final LIKE '%peligroso%')
+           ORDER BY fecha_resolucion DESC
+           LIMIT 1`,
+          [item_id]
+        );
+        
+        if (reportesResueltos.rows.length > 0) {
+          puedeApelar = true;
+        }
+      }
+
+      if (!puedeApelar) {
         return res.status(400).json({
           success: false,
-          message: 'Solo se pueden apelar productos rechazados o suspendidos'
+          message: 'Solo se pueden apelar productos rechazados, suspendidos o decisiones de reportes que resultaron en rechazo/suspensión'
         });
       }
 
@@ -70,13 +91,26 @@ class AppealsController {
         });
       }
 
-      // Crear la apelación
+      // Buscar el reporte más reciente resuelto que resultó en rechazo/suspensión (si aplica)
+      const reporteReciente = await query(
+        `SELECT id FROM reportes 
+         WHERE item_id = $1 
+         AND estado = 'resuelto' 
+         AND (decision_final LIKE '%rechazado%' OR decision_final LIKE '%suspendido%' OR decision_final LIKE '%peligroso%')
+         ORDER BY fecha_resolucion DESC
+         LIMIT 1`,
+        [item_id]
+      );
+
+      const reporte_id = reporteReciente.rows.length > 0 ? reporteReciente.rows[0].id : null;
+
+      // Crear la apelación (puede estar asociada a un reporte o directamente al producto)
       const result = await query(
         `INSERT INTO apelaciones 
-        (item_id, usuario_apelante_id, motivo_apelacion, informacion_adicional, estado, fecha_apelacion)
-        VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+        (item_id, reporte_id, usuario_apelante_id, motivo_apelacion, informacion_adicional, estado, fecha_apelacion)
+        VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
         RETURNING *`,
-        [item_id, usuario_apelante_id, motivo_apelacion, informacion_adicional || null, 'en_apelacion']
+        [item_id, reporte_id, usuario_apelante_id, motivo_apelacion, informacion_adicional || null, 'en_apelacion']
       );
 
       // Actualizar el estado del producto a "en_apelacion" si estaba rechazado o suspendido
@@ -179,7 +213,7 @@ class AppealsController {
   static async getPendingAppeals(req, res) {
     try {
       const result = await query(
-        `SELECT 
+        `        SELECT 
           a.*,
           i.nombre as producto_nombre,
           i.descripcion as producto_descripcion,
@@ -187,6 +221,7 @@ class AppealsController {
           i.tipo as producto_tipo,
           i.estado as producto_estado,
           i.motivo_rechazo,
+          i.moderador_revision_id,
           u_apelante.nombre as apelante_nombre,
           u_apelante.apellido as apelante_apellido,
           u_apelante.correo as apelante_correo,
@@ -194,6 +229,8 @@ class AppealsController {
           u_vendedor.nombre as vendedor_nombre,
           u_vendedor.apellido as vendedor_apellido,
           u_vendedor.correo as vendedor_correo,
+          u_moderador_original.nombre as moderador_original_nombre,
+          u_moderador_original.apellido as moderador_original_apellido,
           cat.nombre as categoria_nombre,
           (SELECT url_imagen FROM item_imagenes WHERE item_id = i.id ORDER BY es_principal DESC, orden ASC LIMIT 1) as primera_imagen,
           (SELECT COUNT(*) FROM item_imagenes WHERE item_id = i.id) as total_imagenes
@@ -201,6 +238,7 @@ class AppealsController {
         INNER JOIN items i ON a.item_id = i.id
         INNER JOIN usuarios u_apelante ON a.usuario_apelante_id = u_apelante.id
         INNER JOIN usuarios u_vendedor ON i.vendedor_id = u_vendedor.id
+        LEFT JOIN usuarios u_moderador_original ON i.moderador_revision_id = u_moderador_original.id
         LEFT JOIN categorias cat ON i.categoria_id = cat.id
         WHERE a.estado IN ('en_apelacion', 'pendiente')
         ORDER BY a.fecha_apelacion ASC`
@@ -265,6 +303,26 @@ class AppealsController {
           success: false,
           message: 'Esta apelación ya fue resuelta'
         });
+      }
+
+      // ✅ VALIDACIÓN CRÍTICA: Verificar que el moderador que revisa NO sea el mismo que rechazó/suspendió el producto
+      // Obtener información del producto para ver quién lo rechazó/suspendió originalmente
+      const productoResult = await query(
+        'SELECT moderador_revision_id FROM items WHERE id = $1',
+        [apelacion.item_id]
+      );
+
+      if (productoResult.rows.length > 0) {
+        const producto = productoResult.rows[0];
+        const moderador_original_id = producto.moderador_revision_id;
+
+        // Si hay un moderador que rechazó/suspendió originalmente, verificar que NO sea el mismo
+        if (moderador_original_id && moderador_original_id === moderador_revisor_id) {
+          return res.status(403).json({
+            success: false,
+            message: 'No puedes revisar una apelación de un producto que tú mismo rechazaste o suspendiste. La apelación debe ser revisada por un moderador diferente.'
+          });
+        }
       }
 
       // Determinar nuevo estado

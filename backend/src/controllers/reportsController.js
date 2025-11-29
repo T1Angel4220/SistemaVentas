@@ -166,11 +166,22 @@ class ReportsController {
   // Obtener todos los reportes pendientes (para moderadores)
   static async getPendingReports(req, res) {
     try {
-      const { tipo_reporte, estado } = req.query;
+      const { tipo_reporte, estado, fecha_desde, fecha_hasta } = req.query;
 
-      let whereConditions = ["r.estado IN ('pendiente', 'en_revision')"];
+      // Construir condiciones WHERE
+      let whereConditions = [];
       let queryParams = [];
       let paramIndex = 1;
+
+      // Filtro de estado
+      if (estado && estado !== '') {
+        whereConditions.push(`r.estado = $${paramIndex}`);
+        queryParams.push(estado);
+        paramIndex++;
+      } else {
+        // Si no hay filtro de estado, mostrar todos (pendientes, en revisión y resueltos)
+        whereConditions.push("r.estado IN ('pendiente', 'en_revision', 'resuelto')");
+      }
 
       if (tipo_reporte) {
         whereConditions.push(`r.tipo_reporte = $${paramIndex}`);
@@ -178,9 +189,16 @@ class ReportsController {
         paramIndex++;
       }
 
-      if (estado) {
-        whereConditions.push(`r.estado = $${paramIndex}`);
-        queryParams.push(estado);
+      // Filtros por fechas
+      if (fecha_desde) {
+        whereConditions.push(`r.fecha_reporte >= $${paramIndex}`);
+        queryParams.push(fecha_desde);
+        paramIndex++;
+      }
+
+      if (fecha_hasta) {
+        whereConditions.push(`r.fecha_reporte <= $${paramIndex}`);
+        queryParams.push(fecha_hasta);
         paramIndex++;
       }
 
@@ -195,6 +213,7 @@ class ReportsController {
           i.tipo as producto_tipo,
           i.estado as producto_estado,
           i.precio as producto_precio,
+          i.moderador_revision_id as producto_moderador_id,
           u_reportante.nombre as reportante_nombre,
           u_reportante.apellido as reportante_apellido,
           u_reportante.correo as reportante_correo,
@@ -202,6 +221,10 @@ class ReportsController {
           u_vendedor.nombre as vendedor_nombre,
           u_vendedor.apellido as vendedor_apellido,
           u_vendedor.correo as vendedor_correo,
+          u_resolutor.nombre as moderador_resolutor_nombre,
+          u_resolutor.apellido as moderador_resolutor_apellido,
+          u_moderador_producto.nombre as moderador_producto_nombre,
+          u_moderador_producto.apellido as moderador_producto_apellido,
           cat.nombre as categoria_nombre,
           (SELECT COUNT(*) FROM reportes WHERE item_id = r.item_id) as total_reportes_producto,
           (SELECT url_imagen FROM item_imagenes WHERE item_id = i.id ORDER BY orden ASC LIMIT 1) as primera_imagen,
@@ -210,6 +233,8 @@ class ReportsController {
         INNER JOIN items i ON r.item_id = i.id
         INNER JOIN usuarios u_reportante ON r.usuario_reportador_id = u_reportante.id
         INNER JOIN usuarios u_vendedor ON i.vendedor_id = u_vendedor.id
+        LEFT JOIN usuarios u_resolutor ON r.moderador_resolutor_id = u_resolutor.id
+        LEFT JOIN usuarios u_moderador_producto ON i.moderador_revision_id = u_moderador_producto.id
         LEFT JOIN categorias cat ON i.categoria_id = cat.id
         WHERE ${whereClause}
         ORDER BY r.fecha_reporte ASC`,
@@ -421,11 +446,15 @@ class ReportsController {
           i.codigo as producto_codigo,
           i.tipo as producto_tipo,
           i.estado as producto_estado,
+          i.moderador_revision_id as producto_moderador_id,
           u_revisor.nombre as revisor_nombre,
-          u_revisor.apellido as revisor_apellido
+          u_revisor.apellido as revisor_apellido,
+          u_moderador_producto.nombre as moderador_producto_nombre,
+          u_moderador_producto.apellido as moderador_producto_apellido
         FROM reportes r
         INNER JOIN items i ON r.item_id = i.id
         LEFT JOIN usuarios u_revisor ON r.moderador_resolutor_id = u_revisor.id
+        LEFT JOIN usuarios u_moderador_producto ON i.moderador_revision_id = u_moderador_producto.id
         WHERE r.usuario_reportador_id = $1
         ORDER BY r.fecha_reporte DESC`,
         [usuario_id]
@@ -442,6 +471,86 @@ class ReportsController {
       res.status(500).json({
         success: false,
         message: 'Error al obtener tus reportes',
+        error: error.message
+      });
+    }
+  }
+
+  // Obtener productos detectados automáticamente por el sistema (peligrosos)
+  static async getSystemDetectedProducts(req, res) {
+    try {
+      const { fecha_desde, fecha_hasta, estado } = req.query;
+
+      let whereConditions = ["i.es_peligroso = TRUE OR i.estado = 'peligroso'"];
+      let queryParams = [];
+      let paramIndex = 1;
+
+      // Filtro por fecha de detección
+      if (fecha_desde) {
+        whereConditions.push(`COALESCE(i.fecha_deteccion_peligroso, i.fecha_revision) >= $${paramIndex}`);
+        queryParams.push(fecha_desde);
+        paramIndex++;
+      }
+
+      if (fecha_hasta) {
+        whereConditions.push(`COALESCE(i.fecha_deteccion_peligroso, i.fecha_revision) <= $${paramIndex}`);
+        queryParams.push(fecha_hasta);
+        paramIndex++;
+      }
+
+      // Filtro por estado del producto
+      if (estado) {
+        whereConditions.push(`i.estado = $${paramIndex}`);
+        queryParams.push(estado);
+        paramIndex++;
+      }
+
+      const whereClause = whereConditions.join(' AND ');
+
+      const result = await query(
+        `SELECT 
+          i.id as item_id,
+          i.nombre as producto_nombre,
+          i.descripcion as producto_descripcion,
+          i.codigo as producto_codigo,
+          i.tipo as producto_tipo,
+          i.estado as producto_estado,
+          i.precio as producto_precio,
+          i.es_peligroso,
+          i.motivo_rechazo,
+          i.fecha_deteccion_peligroso,
+          i.fecha_revision,
+          i.moderador_revision_id,
+          u_vendedor.nombre as vendedor_nombre,
+          u_vendedor.apellido as vendedor_apellido,
+          u_vendedor.correo as vendedor_correo,
+          u_moderador.nombre as moderador_nombre,
+          u_moderador.apellido as moderador_apellido,
+          cat.nombre as categoria_nombre,
+          (SELECT url_imagen FROM item_imagenes WHERE item_id = i.id ORDER BY orden ASC LIMIT 1) as primera_imagen,
+          (SELECT COUNT(*) FROM item_imagenes WHERE item_id = i.id) as total_imagenes,
+          (SELECT COUNT(*) FROM reportes WHERE item_id = i.id) as total_reportes_producto,
+          'sistema' as origen_deteccion
+        FROM items i
+        INNER JOIN usuarios u_vendedor ON i.vendedor_id = u_vendedor.id
+        LEFT JOIN usuarios u_moderador ON i.moderador_revision_id = u_moderador.id
+        LEFT JOIN categorias cat ON i.categoria_id = cat.id
+        WHERE ${whereClause}
+        ORDER BY COALESCE(i.fecha_deteccion_peligroso, i.fecha_revision) DESC`,
+        queryParams
+      );
+
+      res.json({
+        success: true,
+        data: result.rows,
+        count: result.rows.length
+      });
+
+    } catch (error) {
+      console.error('Error al obtener productos detectados por el sistema:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error al obtener los productos detectados por el sistema',
         error: error.message
       });
     }
