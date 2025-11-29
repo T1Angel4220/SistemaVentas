@@ -59,6 +59,7 @@ export const AppealsManagementPage: React.FC = () => {
   const { alert, showSuccess, showError, hideAlert } = useAlert();
   
   const [appeals, setAppeals] = useState<Appeal[]>([]);
+  const [allAppeals, setAllAppeals] = useState<Appeal[]>([]); // Todas las apelaciones para estadísticas
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [selectedAppeal, setSelectedAppeal] = useState<Appeal | null>(null);
@@ -97,9 +98,29 @@ export const AppealsManagementPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Cargar todas las apelaciones para estadísticas
+  const loadAllAppealsForStats = useCallback(async () => {
+    try {
+      const response = await fetch('http://localhost:3001/api/appeals/history', {
+        headers: {
+          'Authorization': `Bearer ${apiService.getToken()}`
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setAllAppeals(data.data);
+      }
+    } catch (error) {
+      console.error('Error al cargar todas las apelaciones para estadísticas:', error);
+    }
+  }, []);
+
   useEffect(() => {
     if (user && canModerateProduct()) {
       loadAppeals(activeTab);
+      loadAllAppealsForStats(); // Cargar todas las apelaciones para estadísticas
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
@@ -141,7 +162,8 @@ export const AppealsManagementPage: React.FC = () => {
             setShowResolveDialog(false);
             setSelectedAppeal(null);
             setDecisionApelacion('');
-            loadAppeals();
+            loadAppeals(activeTab);
+            loadAllAppealsForStats(); // Actualizar estadísticas
           }
         );
       } else {
@@ -162,24 +184,40 @@ export const AppealsManagementPage: React.FC = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
+    if (!dateString) return 'N/A';
+    // Formatear fecha usando la zona horaria de Ecuador (America/Guayaquil)
+    return new Date(dateString).toLocaleString('es-EC', {
+      timeZone: 'America/Guayaquil',
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      second: '2-digit'
     });
   };
 
   const getEstadoBadge = (estado: string) => {
     const colors: Record<string, string> = {
       'en_apelacion': 'bg-purple-100 text-purple-800 border-purple-300',
-      'aprobado': 'bg-green-100 text-green-800 border-green-300',
+      'pendiente': 'bg-yellow-100 text-yellow-800 border-yellow-300',
+      'resuelto': 'bg-green-100 text-green-800 border-green-300',
+      'aprobado': 'bg-green-100 text-green-800 border-green-300', // Compatibilidad
       'rechazado': 'bg-red-100 text-red-800 border-red-300'
     };
+    
+    // Mapear estados para mostrar texto más amigable
+    const estadoLabels: Record<string, string> = {
+      'en_apelacion': 'EN APELACIÓN',
+      'pendiente': 'PENDIENTE',
+      'resuelto': 'APROBADA',
+      'aprobado': 'APROBADA',
+      'rechazado': 'RECHAZADA'
+    };
+    
     return (
       <Badge className={`${colors[estado] || 'bg-gray-100 text-gray-800'} border`}>
-        {estado.replace('_', ' ').toUpperCase()}
+        {estadoLabels[estado] || estado.replace('_', ' ').toUpperCase()}
       </Badge>
     );
   };
@@ -266,7 +304,7 @@ export const AppealsManagementPage: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-purple-700">Pendientes</p>
                   <p className="text-3xl font-bold text-purple-900 mt-1">
-                    {appeals.filter(a => a.estado === 'en_apelacion').length}
+                    {allAppeals.filter(a => a.estado === 'en_apelacion' || a.estado === 'pendiente').length}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center shadow-lg">
@@ -282,7 +320,7 @@ export const AppealsManagementPage: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-green-700">Aprobadas</p>
                   <p className="text-3xl font-bold text-green-900 mt-1">
-                    {appeals.filter(a => a.estado === 'aprobado').length}
+                    {allAppeals.filter(a => a.estado === 'resuelto' || a.estado === 'aprobado').length}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center shadow-lg">
@@ -298,7 +336,7 @@ export const AppealsManagementPage: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-red-700">Rechazadas</p>
                   <p className="text-3xl font-bold text-red-900 mt-1">
-                    {appeals.filter(a => a.estado === 'rechazado').length}
+                    {allAppeals.filter(a => a.estado === 'rechazado').length}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-red-500 rounded-xl flex items-center justify-center shadow-lg">
