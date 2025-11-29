@@ -793,19 +793,6 @@ export const ReportsManagementPage: React.FC = () => {
                      <div className="space-y-3 xl:border-l xl:border-gray-200 xl:pl-6 border-t border-gray-200 pt-4 xl:pt-0 xl:border-t-0">
                       <div className="text-sm font-semibold text-gray-700 mb-4">Acciones de Moderación</div>
                       
-                      {/* Botón para cambiar estado de visualización (solo para productos detectados) */}
-                      {activeTab === 'system-detected' && (
-                        <Button
-                          size="sm"
-                          onClick={() => openResolveDialog(report, 'aprobar')}
-                          disabled={actionLoading === report.item_id || (report.producto_estado === 'activo' && !report.es_peligroso)}
-                          className="w-full h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-medium shadow-lg"
-                        >
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                          No es Peligroso (Activar)
-                        </Button>
-                      )}
-
                       {/* Botones para reportes de compradores */}
                       {activeTab === 'buyer-reports' && (
                         <>

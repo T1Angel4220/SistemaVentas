@@ -39,6 +39,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   onModerate,
   isSaved = false
 }) => {
+  const { user } = useAuth();
   const { canModifyProduct, canDeleteProduct, canModerateProduct, isOwner } = usePermissions();
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-CR', {
@@ -164,7 +165,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   <Heart className={`h-4 w-4 ${isSaved ? 'fill-red-500 text-red-500' : ''}`} />
                 </Button>
               )}
-              {onAddToCart && (
+              {/* Solo mostrar botón de comprar si el producto NO es del usuario actual */}
+              {onAddToCart && user && user.id !== product.vendedor_id && (
                 <Button 
                   variant="outline" 
                   size="sm"

@@ -488,14 +488,17 @@ class ReportsController {
       // Filtro por fecha de detección
       // Las fechas vienen en formato YYYY-MM-DD, necesitamos convertirlas a date para comparar correctamente
       if (fecha_desde) {
-        whereConditions.push(`DATE(COALESCE(i.fecha_deteccion_peligroso, i.fecha_revision)) >= $${paramIndex}::date`);
+        // Usar CAST para asegurar que la comparación sea correcta
+        // Solo incluir productos que tengan al menos una fecha válida
+        whereConditions.push(`COALESCE(i.fecha_deteccion_peligroso, i.fecha_revision) IS NOT NULL AND CAST(COALESCE(i.fecha_deteccion_peligroso, i.fecha_revision) AS DATE) >= CAST($${paramIndex} AS DATE)`);
         queryParams.push(fecha_desde);
         paramIndex++;
       }
 
       if (fecha_hasta) {
         // Incluir todo el día hasta la fecha especificada
-        whereConditions.push(`DATE(COALESCE(i.fecha_deteccion_peligroso, i.fecha_revision)) <= $${paramIndex}::date`);
+        // Solo incluir productos que tengan al menos una fecha válida
+        whereConditions.push(`COALESCE(i.fecha_deteccion_peligroso, i.fecha_revision) IS NOT NULL AND CAST(COALESCE(i.fecha_deteccion_peligroso, i.fecha_revision) AS DATE) <= CAST($${paramIndex} AS DATE)`);
         queryParams.push(fecha_hasta);
         paramIndex++;
       }
