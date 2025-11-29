@@ -50,4 +50,3 @@ jobs:
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_DELIGHTFUL_ISLAND_0AB835B0F }}
           action: "close"
-
