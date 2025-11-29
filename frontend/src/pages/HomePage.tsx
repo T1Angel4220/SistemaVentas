@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { 
   ShoppingCart, 
   Package, 
-  MessageSquare, 
   Shield, 
   Users, 
   Star,
@@ -100,20 +99,6 @@ export const HomePage: React.FC = () => {
               <CardContent>
                 <CardDescription>
                   Publica tus productos y servicios con total seguridad
-                </CardDescription>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center">
-              <CardHeader>
-                <div className="mx-auto w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-4">
-                  <MessageSquare className="h-6 w-6 text-purple-600" />
-                </div>
-                <CardTitle>Comunicación Directa</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription>
-                  Chatea directamente con compradores y vendedores
                 </CardDescription>
               </CardContent>
             </Card>

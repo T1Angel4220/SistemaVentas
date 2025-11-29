@@ -184,9 +184,9 @@ const requireProductPermission = (action) => {
       administrador: {
         read: true,         // Pueden ver todos los productos
         create: true,       // Pueden crear productos
-        update: true,       // Pueden actualizar cualquier producto
-        delete: true,       // Pueden eliminar cualquier producto
-        moderate: true      // Pueden moderar productos
+        update: 'own',     // Solo pueden actualizar sus propios productos (NO pueden editar productos de vendedores)
+        delete: 'own',     // Solo pueden eliminar sus propios productos (NO pueden eliminar productos de vendedores)
+        moderate: true      // Pueden moderar productos (aprobar/rechazar/suspender)
       }
     };
 

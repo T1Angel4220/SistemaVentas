@@ -54,6 +54,14 @@ export const ContactVendorPage: React.FC = () => {
       
       if (data.success) {
         const productData = data.data as ProductDetail;
+        
+        // Validar que el usuario no sea el vendedor del producto
+        if (user && productData.vendedor_id && user.id === productData.vendedor_id) {
+          showError('Error', 'No puedes contactar sobre tus propios productos');
+          navigate('/products');
+          return;
+        }
+        
         setProduct(productData);
         // Extraer información del vendedor
         setVendorInfo({
@@ -103,40 +111,8 @@ export const ContactVendorPage: React.FC = () => {
     }));
   };
 
-  const handleWhatsAppContact = () => {
-    if (!vendorInfo?.telefono) {
-      showError('Error', 'El vendedor no tiene número de teléfono disponible');
-      return;
-    }
 
-    const message = `¡Hola! Me interesa tu producto "${product?.nombre}" por ${formatPrice(product?.precio || 0)}. ¿Está disponible?`;
-    const whatsappUrl = `https://wa.me/506${vendorInfo.telefono.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
-  };
-
-  const handleEmailContact = () => {
-    if (!vendorInfo?.correo) {
-      showError('Error', 'El vendedor no tiene email disponible');
-      return;
-    }
-
-    const subject = `Interés en tu producto: ${product?.nombre}`;
-    const body = `Hola ${vendorInfo.nombre},\n\nMe interesa tu producto "${product?.nombre}" por ${formatPrice(product?.precio || 0)}.\n\n¿Está disponible? ¿Podríamos coordinar para verlo?\n\nGracias!`;
-    const mailtoUrl = `mailto:${vendorInfo.correo}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    window.location.href = mailtoUrl;
-  };
-
-  const handlePhoneContact = () => {
-    if (!vendorInfo?.telefono) {
-      showError('Error', 'El vendedor no tiene número de teléfono disponible');
-      return;
-    }
-
-    const phoneUrl = `tel:${vendorInfo.telefono}`;
-    window.location.href = phoneUrl;
-  };
-
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!formData.nombre.trim()) {
       showError('Error', 'El nombre es requerido');
       return;
@@ -152,26 +128,50 @@ export const ContactVendorPage: React.FC = () => {
       return;
     }
 
+    if (!product || !vendorInfo) {
+      showError('Error', 'Información del producto o vendedor no disponible');
+      return;
+    }
+
     showWarning(
       '¿Enviar mensaje?',
       `¿Estás seguro de que quieres enviar este mensaje al vendedor ${vendorInfo?.nombre}?`,
       async () => {
         setSendingMessage(true);
         try {
-          // Simular envío de mensaje
-          await new Promise(resolve => setTimeout(resolve, 1500));
-          
-          showSuccess(
-            '¡Mensaje enviado!', 
-            'Tu mensaje ha sido enviado al vendedor. Te responderá pronto.'
-          );
-          
-          // Limpiar formulario
-          setFormData(prev => ({
-            ...prev,
-            mensaje: ''
-          }));
-        } catch {
+          const token = localStorage.getItem('accessToken');
+          const response = await fetch(`http://localhost:3001/api/products/${id}/contact`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              nombre: formData.nombre,
+              telefono: formData.telefono,
+              email: formData.email,
+              mensaje: formData.mensaje
+            })
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            showSuccess(
+              '¡Mensaje enviado!', 
+              'Tu mensaje ha sido enviado al vendedor por email. Te responderá pronto.'
+            );
+            
+            // Limpiar formulario
+            setFormData(prev => ({
+              ...prev,
+              mensaje: ''
+            }));
+          } else {
+            showError('Error', data.message || 'Hubo un problema al enviar tu mensaje');
+          }
+        } catch (error) {
+          console.error('Error al enviar mensaje:', error);
           showError('Error', 'Hubo un problema al enviar tu mensaje');
         } finally {
           setSendingMessage(false);
@@ -362,77 +362,39 @@ export const ContactVendorPage: React.FC = () => {
                   Información del Vendedor
                 </h3>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                  <div className="space-y-3 sm:space-y-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center">
-                        <User className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <h4 className="font-semibold text-gray-900 truncate">
-                          {vendorInfo.nombre} {vendorInfo.apellido}
-                        </h4>
-                        <p className="text-sm text-gray-500">Vendedor</p>
-                      </div>
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center">
+                      <User className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
                     </div>
-                    
-                    {vendorInfo.telefono && (
-                      <div className="flex items-center space-x-3 text-gray-600">
-                        <Phone className="h-4 w-4 text-green-600 flex-shrink-0" />
-                        <span className="text-sm break-all">{vendorInfo.telefono}</span>
-                      </div>
-                    )}
-                    
-                    {vendorInfo.correo && (
-                      <div className="flex items-center space-x-3 text-gray-600">
-                        <Mail className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                        <span className="text-sm break-all">{vendorInfo.correo}</span>
-                      </div>
-                    )}
-                    
-                    {vendorInfo.direccion && (
-                      <div className="flex items-center space-x-3 text-gray-600">
-                        <MapPin className="h-4 w-4 text-red-600 flex-shrink-0" />
-                        <span className="text-sm break-all">{vendorInfo.direccion}</span>
-                      </div>
-                    )}
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-semibold text-gray-900 truncate">
+                        {vendorInfo.nombre} {vendorInfo.apellido}
+                      </h4>
+                      <p className="text-sm text-gray-500">Vendedor</p>
+                    </div>
                   </div>
                   
-                  <div className="space-y-3">
-                    <h4 className="font-semibold text-gray-900 mb-3">Opciones de contacto rápido</h4>
-                    
-                    {vendorInfo.telefono && (
-                      <Button
-                        onClick={handleWhatsAppContact}
-                        className="w-full bg-green-600 hover:bg-green-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl text-sm sm:text-base"
-                      >
-                        <MessageCircle className="h-4 w-4 mr-2" />
-                        WhatsApp
-                      </Button>
-                    )}
-                    
-                    {vendorInfo.telefono && (
-                      <Button
-                        onClick={handlePhoneContact}
-                        variant="outline"
-                        className="w-full border-green-600 text-green-600 hover:bg-green-50 transition-all duration-300 rounded-xl text-sm sm:text-base"
-                      >
-                        <Phone className="h-4 w-4 mr-2" />
-                        Llamar
-                      </Button>
-                    )}
-                    
-                    {vendorInfo.correo && (
-                      <Button
-                        onClick={handleEmailContact}
-                        variant="outline"
-                        className="w-full border-blue-600 text-blue-600 hover:bg-blue-50 transition-all duration-300 rounded-xl text-sm sm:text-base"
-                      >
-                        <Mail className="h-4 w-4 mr-2" />
-                        Email
-                      </Button>
-                    )}
-                  </div>
+                  {vendorInfo.telefono && (
+                    <div className="flex items-center space-x-3 text-gray-600">
+                      <Phone className="h-4 w-4 text-green-600 flex-shrink-0" />
+                      <span className="text-sm break-all">{vendorInfo.telefono}</span>
+                    </div>
+                  )}
+                  
+                  {vendorInfo.correo && (
+                    <div className="flex items-center space-x-3 text-gray-600">
+                      <Mail className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                      <span className="text-sm break-all">{vendorInfo.correo}</span>
+                    </div>
+                  )}
+                  
+                  {vendorInfo.direccion && (
+                    <div className="flex items-center space-x-3 text-gray-600">
+                      <MapPin className="h-4 w-4 text-red-600 flex-shrink-0" />
+                      <span className="text-sm break-all">{vendorInfo.direccion}</span>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

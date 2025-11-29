@@ -72,7 +72,8 @@ export const UserManagementPage: React.FC = () => {
       const response = await apiService.getUsers({
         search: searchTerm,
         role: filterRole,
-        status: filterStatus
+        status: filterStatus,
+        limit: 10000 // Límite alto para mostrar todos los usuarios
       });
       
       if (response.success && response.data) {

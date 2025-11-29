@@ -583,18 +583,6 @@ export const DashboardPage: React.FC = () => {
               </div>
             )}
 
-            <div 
-              onClick={() => navigate('/chat')}
-              className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 cursor-pointer group hover:-translate-y-1"
-            >
-              <div className="p-6">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                  <MessageSquare className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Chat</h3>
-                <p className="text-sm text-gray-600">Comunícate con otros usuarios</p>
-              </div>
-            </div>
 
 
 

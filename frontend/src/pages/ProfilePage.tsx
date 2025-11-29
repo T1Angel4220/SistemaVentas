@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
+import { PasswordChangeModal } from '../components/ui/PasswordChangeModal';
 import { API_BASE_URL } from '../services/api';
 import { 
   User, 
@@ -20,7 +21,7 @@ import {
 } from 'lucide-react';
 
 export const ProfilePage: React.FC = () => {
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, logout } = useAuth();
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingPassword, setIsEditingPassword] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -30,6 +31,7 @@ export const ProfilePage: React.FC = () => {
   const [loadingPassword, setLoadingPassword] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [showPasswordChangeModal, setShowPasswordChangeModal] = useState(false);
 
   // Datos del perfil
   const [profileData, setProfileData] = useState({
@@ -211,14 +213,14 @@ export const ProfilePage: React.FC = () => {
       const data = await response.json();
 
       if (data.success) {
-        setSuccessMessage('Contraseña actualizada exitosamente');
         setIsEditingPassword(false);
         setPasswordData({
           currentPassword: '',
           newPassword: '',
           confirmPassword: ''
         });
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // Mostrar modal de cambio de contraseña exitoso
+        setShowPasswordChangeModal(true);
       } else {
         setErrorMessage(data.message || 'Error al cambiar la contraseña');
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -655,6 +657,13 @@ export const ProfilePage: React.FC = () => {
           </div>
         </Card>
       </div>
+
+      {/* Modal de cambio de contraseña exitoso */}
+      <PasswordChangeModal
+        isOpen={showPasswordChangeModal}
+        onConfirm={() => setShowPasswordChangeModal(false)}
+        onLogout={logout}
+      />
     </div>
   );
 };

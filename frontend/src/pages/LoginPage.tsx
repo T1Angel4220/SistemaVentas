@@ -2,7 +2,7 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { LoginForm } from '../components/auth/LoginForm';
-import { ShoppingCart, Shield, MessageCircle } from 'lucide-react';
+import { ShoppingCart, Shield } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -54,15 +54,6 @@ export const LoginPage: React.FC = () => {
               </div>
             </div>
             
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center mr-4">
-                <MessageCircle className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-white">Comunicación Directa</h3>
-                <p className="text-blue-100">Chatea directamente con compradores y vendedores</p>
-              </div>
-            </div>
           </div>
         </div>
       </div>

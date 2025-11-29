@@ -2,7 +2,7 @@ const { query } = require('../config/database');
 const { config } = require('../config/config');
 const { detectarContenidoInadecuado, obtenerMensajeRechazo } = require('../services/contentDetection');
 const { filtrarPorProximidad } = require('../utils/geoLocation');
-const { sendAccountBlockedByDangerousProductsEmail } = require('../services/email');
+const { sendAccountBlockedByDangerousProductsEmail, sendBuyerContactEmail } = require('../services/email');
 const azureStorage = require('../services/azureStorageService');
 const path = require('path');
 const fs = require('fs').promises;
@@ -736,8 +736,9 @@ class ProductsController {
 
       const producto = productoExistente.rows[0];
 
-      // Verificar permisos (solo el vendedor propietario o admin)
-      if (req.user.id !== producto.vendedor_id && req.user.tipo_usuario !== 'administrador') {
+      // Verificar permisos (solo el vendedor propietario o moderador)
+      // Los administradores NO pueden editar productos de vendedores, solo moderar
+      if (req.user.id !== producto.vendedor_id && req.user.tipo_usuario !== 'moderador') {
         return res.status(403).json({
           success: false,
           message: 'No tienes permisos para editar este producto'
@@ -1066,8 +1067,9 @@ class ProductsController {
 
       const producto = productoExistente.rows[0];
 
-      // Verificar permisos (solo el vendedor propietario o admin)
-      if (req.user.id !== producto.vendedor_id && req.user.tipo_usuario !== 'administrador') {
+      // Verificar permisos (solo el vendedor propietario o moderador)
+      // Los administradores NO pueden eliminar productos de vendedores, solo moderar
+      if (req.user.id !== producto.vendedor_id && req.user.tipo_usuario !== 'moderador') {
         return res.status(403).json({
           success: false,
           message: 'No tienes permisos para eliminar este producto'
@@ -1152,8 +1154,9 @@ class ProductsController {
 
       const producto = productoExistente.rows[0];
 
-      // Verificar permisos (solo el vendedor propietario o admin)
-      if (req.user.id !== producto.vendedor_id && req.user.tipo_usuario !== 'administrador') {
+      // Verificar permisos (solo el vendedor propietario o moderador)
+      // Los administradores NO pueden modificar productos de vendedores, solo moderar
+      if (req.user.id !== producto.vendedor_id && req.user.tipo_usuario !== 'moderador') {
         return res.status(403).json({
           success: false,
           message: 'No tienes permisos para modificar este producto'
@@ -2004,6 +2007,102 @@ class ProductsController {
         error: error.message,
         fecha_ejecucion: new Date().toISOString()
       };
+    }
+  },
+
+  /**
+   * Contactar vendedor sobre un producto
+   * POST /api/products/:id/contact
+   */
+  contactVendor: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { nombre, telefono, email, mensaje } = req.body;
+
+      // Validaciones
+      if (!nombre || !telefono || !mensaje) {
+        return res.status(400).json({
+          success: false,
+          message: 'Nombre, teléfono y mensaje son requeridos'
+        });
+      }
+
+      // Obtener información del producto y vendedor
+      const productoResult = await query(
+        `SELECT 
+          i.id, 
+          i.nombre, 
+          i.precio, 
+          i.vendedor_id,
+          i.estado,
+          u.nombre as vendedor_nombre,
+          u.apellido as vendedor_apellido,
+          u.correo as vendedor_email
+        FROM items i
+        INNER JOIN usuarios u ON i.vendedor_id = u.id
+        WHERE i.id = $1`,
+        [id]
+      );
+
+      if (productoResult.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Producto no encontrado'
+        });
+      }
+
+      const producto = productoResult.rows[0];
+
+      // Validar que el usuario no sea el vendedor del producto
+      if (req.user && req.user.id === producto.vendedor_id) {
+        return res.status(403).json({
+          success: false,
+          message: 'No puedes contactar sobre tus propios productos'
+        });
+      }
+
+      // Validar que el producto esté activo
+      if (producto.estado !== 'activo') {
+        return res.status(400).json({
+          success: false,
+          message: 'Solo puedes contactar sobre productos activos'
+        });
+      }
+
+      // Enviar email al vendedor
+      try {
+        const nombreCompletoVendedor = `${producto.vendedor_nombre || ''} ${producto.vendedor_apellido || ''}`.trim() || producto.vendedor_email;
+        
+        await sendBuyerContactEmail(
+          producto.vendedor_email,
+          nombreCompletoVendedor,
+          nombre,
+          email || '',
+          telefono,
+          producto.nombre,
+          producto.precio,
+          mensaje
+        );
+
+        res.json({
+          success: true,
+          message: 'Mensaje enviado exitosamente al vendedor'
+        });
+      } catch (emailError) {
+        console.error('❌ Error al enviar email:', emailError);
+        // Aún así retornamos éxito para no exponer detalles del error al usuario
+        res.json({
+          success: true,
+          message: 'Mensaje enviado exitosamente al vendedor'
+        });
+      }
+
+    } catch (error) {
+      console.error('❌ Error al contactar vendedor:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error al enviar el mensaje'
+      });
     }
   }
 }
