@@ -104,29 +104,31 @@ export const usePermissions = () => {
   };
 
   const canModifyProduct = (productOwnerId?: number): boolean => {
-    if (!user) return false;
+    if (!user || !productOwnerId) return false;
 
     const permissions = getProductPermissions();
 
     // Solo moderadores pueden modificar cualquier producto
     if (permissions.canUpdate && user.tipo_usuario === 'moderador') return true;
 
-    // Vendedores y administradores solo pueden modificar sus propios productos
-    if (permissions.canUpdateOwn && productOwnerId === user.id) return true;
+    // Vendedores solo pueden modificar sus propios productos
+    // Administradores NO pueden modificar productos (solo moderar)
+    if (user.tipo_usuario === 'vendedor' && permissions.canUpdateOwn && productOwnerId === user.id) return true;
 
     return false;
   };
 
   const canDeleteProduct = (productOwnerId?: number): boolean => {
-    if (!user) return false;
+    if (!user || !productOwnerId) return false;
 
     const permissions = getProductPermissions();
 
     // Solo moderadores pueden eliminar cualquier producto
     if (permissions.canDelete && user.tipo_usuario === 'moderador') return true;
 
-    // Vendedores y administradores solo pueden eliminar sus propios productos
-    if (permissions.canDeleteOwn && productOwnerId === user.id) return true;
+    // Vendedores solo pueden eliminar sus propios productos
+    // Administradores NO pueden eliminar productos (solo moderar)
+    if (user.tipo_usuario === 'vendedor' && permissions.canDeleteOwn && productOwnerId === user.id) return true;
 
     return false;
   };

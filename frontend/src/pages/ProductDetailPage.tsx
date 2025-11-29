@@ -766,7 +766,8 @@ export const ProductDetailPage: React.FC = () => {
             {/* Acciones de Moderación - MEJORADO: Con profundidad + RESPONSIVE */}
 
             {/* Acciones de Gestión - MEJORADO: Con profundidad + RESPONSIVE */}
-            {(canModifyProduct(product.vendedor_id) || canDeleteProduct(product.vendedor_id)) && user?.tipo_usuario !== 'moderador' && (
+            {/* Solo vendedores pueden gestionar sus propios productos. Administradores y moderadores NO pueden editar/eliminar productos ajenos */}
+            {(canModifyProduct(product.vendedor_id) || canDeleteProduct(product.vendedor_id)) && user?.tipo_usuario !== 'moderador' && user?.tipo_usuario !== 'administrador' && (
               <div className="border-l-4 border-gray-500 bg-gradient-to-br from-gray-50 to-slate-100 rounded-lg p-4 shadow-lg hover:shadow-xl transition-shadow duration-300">
                 <h3 className="font-semibold text-gray-900 mb-4 flex items-center text-base">
                   <Shield className="h-5 w-5 mr-2 text-gray-600" />
@@ -794,7 +795,7 @@ export const ProductDetailPage: React.FC = () => {
                     )}
                     
                   {/* Mensaje informativo si el producto está en revisión */}
-                  {product.estado === 'pendiente_revision' && user?.tipo_usuario !== 'administrador' && (
+                  {product.estado === 'pendiente_revision' && (
                     <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded">
                       <p className="text-sm text-yellow-800">
                         <strong>⏳ En revisión:</strong> No puedes editar ni eliminar este producto hasta que los moderadores lo revisen.
@@ -803,7 +804,7 @@ export const ProductDetailPage: React.FC = () => {
                   )}
                   
                   {/* Mensaje informativo si el producto está suspendido */}
-                  {product.estado === 'suspendido' && user?.tipo_usuario !== 'administrador' && (
+                  {product.estado === 'suspendido' && (
                     <div className="bg-red-50 border-l-4 border-red-400 p-3 rounded">
                       <p className="text-sm text-red-800">
                         <strong>🚫 Suspendido:</strong> Este producto ha sido suspendido por los moderadores. No puedes editarlo ni eliminarlo. Contacta con los moderadores para más información.
