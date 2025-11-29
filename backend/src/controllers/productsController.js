@@ -1372,6 +1372,22 @@ class ProductsController {
 
       const producto = productoExistente.rows[0];
 
+      // ✅ VALIDACIÓN CRÍTICA: Si el producto está rechazado o suspendido, solo se puede aprobar si tiene una apelación pendiente
+      if (accion === 'aprobar' && (producto.estado === 'rechazado' || producto.estado === 'suspendido')) {
+        // Verificar si tiene apelación pendiente
+        const apelacionPendiente = await query(
+          'SELECT id FROM apelaciones WHERE item_id = $1 AND estado IN ($2, $3)',
+          [id, 'en_apelacion', 'pendiente']
+        );
+
+        if (apelacionPendiente.rows.length === 0) {
+          return res.status(400).json({
+            success: false,
+            message: 'No se puede aprobar un producto rechazado o suspendido sin una apelación pendiente. Debes esperar a que el vendedor apelé la decisión antes de poder aprobarlo nuevamente.'
+          });
+        }
+      }
+
       // Determinar nuevo estado según la acción
       let nuevoEstado;
       let esPeligroso = producto.es_peligroso;
@@ -1507,7 +1523,8 @@ class ProductsController {
           u.nombre || ' ' || u.apellido as vendedor_nombre,
           ub.nombre as ubicacion_nombre,
           COUNT(ii.id) as total_imagenes,
-          (SELECT ii2.url_imagen FROM item_imagenes ii2 WHERE ii2.item_id = i.id ORDER BY ii2.orden LIMIT 1) as primera_imagen
+          (SELECT ii2.url_imagen FROM item_imagenes ii2 WHERE ii2.item_id = i.id ORDER BY ii2.orden LIMIT 1) as primera_imagen,
+          (SELECT COUNT(*) FROM apelaciones WHERE item_id = i.id AND estado IN ('en_apelacion', 'pendiente')) > 0 as tiene_apelacion_pendiente
         FROM items i
         JOIN categorias c ON i.categoria_id = c.id
         JOIN usuarios u ON i.vendedor_id = u.id

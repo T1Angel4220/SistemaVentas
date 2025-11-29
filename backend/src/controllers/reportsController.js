@@ -481,24 +481,30 @@ class ReportsController {
     try {
       const { fecha_desde, fecha_hasta, estado } = req.query;
 
-      let whereConditions = ["i.es_peligroso = TRUE OR i.estado = 'peligroso'"];
+      // Solo mostrar productos que fueron detectados por el sistema
+      // Un producto fue detectado por el sistema si tiene fecha_deteccion_peligroso
+      // O si fue marcado como peligroso automáticamente (es_peligroso = TRUE)
+      let whereConditions = ["(i.fecha_deteccion_peligroso IS NOT NULL OR i.es_peligroso = TRUE OR i.estado = 'peligroso')"];
       let queryParams = [];
       let paramIndex = 1;
 
       // Filtro por fecha de detección
       // Las fechas vienen en formato YYYY-MM-DD, necesitamos convertirlas a date para comparar correctamente
+      // Solo verificar que haya al menos una fecha válida una vez, no en cada condición
+      if (fecha_desde || fecha_hasta) {
+        whereConditions.push(`COALESCE(i.fecha_deteccion_peligroso, i.fecha_revision) IS NOT NULL`);
+      }
+
       if (fecha_desde) {
-        // Usar CAST para asegurar que la comparación sea correcta
-        // Solo incluir productos que tengan al menos una fecha válida
-        whereConditions.push(`COALESCE(i.fecha_deteccion_peligroso, i.fecha_revision) IS NOT NULL AND CAST(COALESCE(i.fecha_deteccion_peligroso, i.fecha_revision) AS DATE) >= CAST($${paramIndex} AS DATE)`);
+        // Usar DATE() para comparar solo la parte de fecha, similar a getPendingReports
+        whereConditions.push(`DATE(COALESCE(i.fecha_deteccion_peligroso, i.fecha_revision)) >= $${paramIndex}::date`);
         queryParams.push(fecha_desde);
         paramIndex++;
       }
 
       if (fecha_hasta) {
         // Incluir todo el día hasta la fecha especificada
-        // Solo incluir productos que tengan al menos una fecha válida
-        whereConditions.push(`COALESCE(i.fecha_deteccion_peligroso, i.fecha_revision) IS NOT NULL AND CAST(COALESCE(i.fecha_deteccion_peligroso, i.fecha_revision) AS DATE) <= CAST($${paramIndex} AS DATE)`);
+        whereConditions.push(`DATE(COALESCE(i.fecha_deteccion_peligroso, i.fecha_revision)) <= $${paramIndex}::date`);
         queryParams.push(fecha_hasta);
         paramIndex++;
       }

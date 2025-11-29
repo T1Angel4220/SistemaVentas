@@ -919,14 +919,15 @@ export const ReportsManagementPage: React.FC = () => {
                       )}
 
                       {/* Botones para productos detectados por el sistema - Solo 2 opciones válidas */}
-                      {activeTab === 'system-detected' && (
+                      {/* Solo mostrar botones si el producto fue detectado por el sistema (tiene fecha_deteccion_peligroso) */}
+                      {activeTab === 'system-detected' && report.fecha_deteccion_peligroso && (
                         <>
                           <Button
                             size="sm"
                             onClick={() => openResolveDialog(report, 'aprobar')}
-                            disabled={actionLoading === report.item_id || (report.producto_estado === 'activo' && !report.es_peligroso) || (report.es_peligroso && report.producto_estado === 'peligroso')}
+                            disabled={actionLoading === report.item_id || (report.producto_estado === 'activo' && !report.es_peligroso)}
                             className={`w-full h-10 rounded-xl font-medium shadow-lg ${
-                              ((report.producto_estado === 'activo' && !report.es_peligroso) || (report.es_peligroso && report.producto_estado === 'peligroso') || actionLoading === report.item_id)
+                              ((report.producto_estado === 'activo' && !report.es_peligroso) || actionLoading === report.item_id)
                                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60' 
                                 : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white'
                             }`}
@@ -949,6 +950,16 @@ export const ReportsManagementPage: React.FC = () => {
                             Marcar como Peligroso
                           </Button>
                         </>
+                      )}
+                      
+                      {/* Mensaje si el producto no fue detectado por el sistema */}
+                      {activeTab === 'system-detected' && !report.fecha_deteccion_peligroso && (
+                        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded-lg">
+                          <p className="text-sm text-yellow-800">
+                            <strong>⚠️ Nota:</strong> Este producto no fue detectado automáticamente por el sistema. 
+                            Para cambiar su estado, usa la sección de "Reportes de Compradores" o la página de moderación de productos.
+                          </p>
+                        </div>
                       )}
                     </div>
                   </div>

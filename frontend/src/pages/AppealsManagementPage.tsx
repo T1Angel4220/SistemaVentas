@@ -50,6 +50,7 @@ interface Appeal {
   moderador_original_apellido?: string; // Apellido del moderador original
   primera_imagen?: string;
   total_imagenes?: number;
+  tipo_registro?: string; // 'apelacion_existente' o 'producto_pendiente_apelacion'
 }
 
 export const AppealsManagementPage: React.FC = () => {
@@ -490,30 +491,47 @@ export const AppealsManagementPage: React.FC = () => {
 
                      {/* Columna 2: Info de la Apelación - Optimizado para móvil */}
                      <div className="space-y-4 xl:border-l xl:border-gray-200 xl:pl-6 border-t border-gray-200 pt-4 xl:pt-0 xl:border-t-0">
-                      <div>
-                        <div className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                          <MessageSquare className="h-4 w-4 mr-2 text-purple-600" />
-                          Motivo de Apelación
-                        </div>
-                        <p className="text-sm text-gray-600 bg-purple-50 p-3 rounded-lg border border-purple-200">
-                          {appeal.motivo_apelacion}
-                        </p>
-                      </div>
-
-                      {appeal.informacion_adicional && (
-                        <div>
-                          <div className="text-sm font-semibold text-gray-700 mb-2">Información Adicional</div>
-                          <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
-                            {appeal.informacion_adicional}
+                      {appeal.tipo_registro === 'producto_pendiente_apelacion' ? (
+                        <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <Clock className="h-5 w-5 text-yellow-600" />
+                            <div className="text-sm font-semibold text-yellow-800">Esperando Apelación del Vendedor</div>
+                          </div>
+                          <p className="text-sm text-yellow-700">
+                            Este producto fue {appeal.producto_estado === 'rechazado' ? 'rechazado' : 'suspendido'} pero el vendedor aún no ha presentado una apelación. 
+                            Debes esperar a que el vendedor apelé la decisión antes de poder tomar acciones adicionales.
                           </p>
                         </div>
+                      ) : (
+                        <>
+                          <div>
+                            <div className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                              <MessageSquare className="h-4 w-4 mr-2 text-purple-600" />
+                              Motivo de Apelación
+                            </div>
+                            <p className="text-sm text-gray-600 bg-purple-50 p-3 rounded-lg border border-purple-200">
+                              {appeal.motivo_apelacion}
+                            </p>
+                          </div>
+
+                          {appeal.informacion_adicional && (
+                            <div>
+                              <div className="text-sm font-semibold text-gray-700 mb-2">Información Adicional</div>
+                              <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
+                                {appeal.informacion_adicional}
+                              </p>
+                            </div>
+                          )}
+                        </>
                       )}
 
                       <div className="space-y-2 text-sm">
-                        <div className="flex items-center space-x-2">
-                          <Clock className="h-4 w-4 text-gray-400" />
-                          <span className="text-gray-600">Apelado: {formatDate(appeal.fecha_apelacion)}</span>
-                        </div>
+                        {appeal.fecha_apelacion && (
+                          <div className="flex items-center space-x-2">
+                            <Clock className="h-4 w-4 text-gray-400" />
+                            <span className="text-gray-600">Apelado: {formatDate(appeal.fecha_apelacion)}</span>
+                          </div>
+                        )}
                         {appeal.moderador_original_nombre && appeal.moderador_original_apellido && (
                           <div className="flex items-center space-x-2">
                             <Shield className="h-4 w-4 text-orange-500" />
@@ -560,8 +578,43 @@ export const AppealsManagementPage: React.FC = () => {
                      <div className="space-y-3 xl:border-l xl:border-gray-200 xl:pl-6 border-t border-gray-200 pt-4 xl:pt-0 xl:border-t-0">
                       <div className="text-sm font-semibold text-gray-700 mb-4">Acciones de Moderación</div>
                       
-                      {/* Verificar si el usuario actual es el mismo que hizo la suspensión/rechazo */}
-                      {user && appeal.moderador_revision_id && user.id === appeal.moderador_revision_id ? (
+                      {/* Si el producto aún no tiene apelación, deshabilitar acciones */}
+                      {appeal.tipo_registro === 'producto_pendiente_apelacion' ? (
+                        <div className="space-y-3">
+                          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
+                            <div className="flex items-start">
+                              <Clock className="h-5 w-5 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" />
+                              <div>
+                                <p className="text-sm font-semibold text-yellow-800 mb-1">
+                                  Esperando Apelación del Vendedor
+                                </p>
+                                <p className="text-xs text-yellow-700 leading-relaxed">
+                                  El vendedor aún no ha presentado una apelación para este producto. 
+                                  No puedes tomar acciones hasta que el vendedor apelé la decisión.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <Button
+                            size="sm"
+                            disabled={true}
+                            className="w-full h-10 bg-gray-300 text-gray-500 cursor-not-allowed rounded-xl font-medium shadow-lg opacity-60"
+                          >
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Aceptar Apelación
+                          </Button>
+
+                          <Button
+                            size="sm"
+                            disabled={true}
+                            className="w-full h-10 bg-gray-300 text-gray-500 cursor-not-allowed rounded-xl font-medium shadow-lg opacity-60"
+                          >
+                            <XCircle className="h-4 w-4 mr-2" />
+                            Rechazar Apelación
+                          </Button>
+                        </div>
+                      ) : user && appeal.moderador_revision_id && user.id === appeal.moderador_revision_id ? (
                         <div className="space-y-3">
                           <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
                             <div className="flex items-start">
