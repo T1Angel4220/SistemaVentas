@@ -2008,13 +2008,13 @@ class ProductsController {
         fecha_ejecucion: new Date().toISOString()
       };
     }
-  },
+  }
 
   /**
    * Contactar vendedor sobre un producto
    * POST /api/products/:id/contact
    */
-  contactVendor: async (req, res) => {
+  static async contactVendor(req, res) {
     try {
       const { id } = req.params;
       const { nombre, telefono, email, mensaje } = req.body;
