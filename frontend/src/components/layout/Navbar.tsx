@@ -125,12 +125,6 @@ export const Navbar: React.FC = () => {
                   </span>
                 </Link>
               )}
-              <Link
-                to="/chat"
-                className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 hover:scale-105 hover:shadow-sm"
-              >
-                Chat
-              </Link>
               {user.tipo_usuario === 'moderador' && (
                 <>
                   <div className="h-6 w-px bg-gray-300 mx-2"></div>
