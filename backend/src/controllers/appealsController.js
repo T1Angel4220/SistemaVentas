@@ -10,8 +10,19 @@ class AppealsController {
       const { motivo_apelacion, informacion_adicional } = req.body;
       const usuario_apelante_id = req.user.id;
 
+      console.log('🔍 [APELACIÓN] Iniciando creación de apelación:', {
+        item_id,
+        usuario_apelante_id,
+        motivo_length: motivo_apelacion?.length || 0,
+        tiene_informacion_adicional: !!informacion_adicional
+      });
+
       // Validar datos requeridos
       if (!motivo_apelacion || motivo_apelacion.trim().length < 20) {
+        console.log('❌ [APELACIÓN] Motivo de apelación inválido:', {
+          tiene_motivo: !!motivo_apelacion,
+          length: motivo_apelacion?.length || 0
+        });
         return res.status(400).json({
           success: false,
           message: 'El motivo de la apelación debe tener al menos 20 caracteres'
@@ -25,6 +36,7 @@ class AppealsController {
       );
 
       if (productoResult.rows.length === 0) {
+        console.log('❌ [APELACIÓN] Producto no encontrado:', item_id);
         return res.status(404).json({
           success: false,
           message: 'Producto no encontrado'
@@ -32,6 +44,14 @@ class AppealsController {
       }
 
       const producto = productoResult.rows[0];
+      console.log('📦 [APELACIÓN] Producto encontrado:', {
+        id: producto.id,
+        nombre: producto.nombre,
+        estado: producto.estado,
+        es_peligroso: producto.es_peligroso,
+        vendedor_id: producto.vendedor_id,
+        usuario_apelante_id
+      });
 
       // Verificar que el usuario es el propietario del producto
       if (producto.vendedor_id !== usuario_apelante_id && req.user.tipo_usuario !== 'administrador') {
@@ -50,10 +70,16 @@ class AppealsController {
         });
       }
 
-      if (producto.estado !== 'rechazado' && producto.estado !== 'suspendido') {
+      // Permitir apelar productos rechazados, suspendidos o que ya están en apelación
+      // (el estado 'en_apelacion' puede ocurrir si el producto fue actualizado después de ser rechazado)
+      if (producto.estado !== 'rechazado' && producto.estado !== 'suspendido' && producto.estado !== 'en_apelacion') {
+        console.log('❌ [APELACIÓN] Estado del producto no permite apelación:', {
+          estado: producto.estado,
+          estados_permitidos: ['rechazado', 'suspendido', 'en_apelacion']
+        });
         return res.status(400).json({
           success: false,
-          message: 'Solo se pueden apelar productos rechazados o suspendidos'
+          message: 'Solo se pueden apelar productos rechazados, suspendidos o en apelación'
         });
       }
 
@@ -71,6 +97,7 @@ class AppealsController {
       }
 
       // Crear la apelación
+      console.log('📝 [APELACIÓN] Creando apelación en base de datos...');
       const result = await query(
         `INSERT INTO apelaciones 
         (item_id, usuario_apelante_id, motivo_apelacion, informacion_adicional, estado, fecha_apelacion)
@@ -79,14 +106,24 @@ class AppealsController {
         [item_id, usuario_apelante_id, motivo_apelacion, informacion_adicional || null, 'en_apelacion']
       );
 
-      // Actualizar el estado del producto a "en_apelacion" si estaba rechazado o suspendido
-      if (producto.estado === 'rechazado' || producto.estado === 'suspendido') {
+      console.log('✅ [APELACIÓN] Apelación creada:', {
+        apelacion_id: result.rows[0].id,
+        item_id: result.rows[0].item_id,
+        estado: result.rows[0].estado
+      });
+
+      // Actualizar el estado del producto a "en_apelacion" si estaba rechazado, suspendido o en_apelacion
+      // (si ya está en_apelacion, mantenerlo así)
+      if (producto.estado === 'rechazado' || producto.estado === 'suspendido' || producto.estado === 'en_apelacion') {
+        console.log('🔄 [APELACIÓN] Actualizando estado del producto de', producto.estado, 'a en_apelacion');
         await query(
           'UPDATE items SET estado = $1 WHERE id = $2',
           ['en_apelacion', item_id]
         );
+        console.log('✅ [APELACIÓN] Estado del producto actualizado');
       }
 
+      console.log('✅ [APELACIÓN] Apelación creada exitosamente');
       res.status(201).json({
         success: true,
         message: 'Apelación creada exitosamente. Será revisada por un moderador.',

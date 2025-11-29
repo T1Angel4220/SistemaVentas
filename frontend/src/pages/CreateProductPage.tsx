@@ -836,8 +836,26 @@ export const CreateProductPage: React.FC = () => {
         setSuccess(true);
         const actionText = isEditMode ? 'actualizado' : 'creado';
         
-        // Si el producto estaba rechazado y el vendedor escribió una respuesta, crear apelación
-        if (isEditMode && form.estado === 'rechazado' && respuestaRechazo.trim()) {
+        // Si el producto estaba rechazado o suspendido y el vendedor escribió una respuesta, crear apelación
+        // Verificar el estado ANTES de actualizar (form.estado) para saber si estaba rechazado/suspendido
+        // y el estado DESPUÉS de actualizar (data.data.estado) para verificar que aún es apelable
+        const estadoAnterior = form.estado;
+        const estadoActual = data.data?.estado || form.estado;
+        const puedeApelar = (estadoAnterior === 'rechazado' || estadoAnterior === 'suspendido') && 
+                            (estadoActual === 'rechazado' || estadoActual === 'suspendido' || estadoActual === 'en_apelacion');
+        
+        console.log('🔍 Verificando creación de apelación:', {
+          isEditMode,
+          estadoAnterior,
+          estadoActual,
+          puedeApelar,
+          tieneRespuesta: !!respuestaRechazo.trim(),
+          respuestaLength: respuestaRechazo.trim().length,
+          productId: id
+        });
+        
+        if (isEditMode && puedeApelar && respuestaRechazo.trim()) {
+          console.log('📝 Intentando crear apelación para producto ID:', id);
           try {
             const appealResponse = await fetch(`${apiUrl}/products/${id}/appeal`, {
               method: 'POST',
@@ -853,19 +871,37 @@ export const CreateProductPage: React.FC = () => {
             
             const appealData = await appealResponse.json();
             
+            console.log('📨 Respuesta de creación de apelación:', {
+              success: appealData.success,
+              message: appealData.message,
+              data: appealData.data,
+              status: appealResponse.status
+            });
+            
             if (!appealData.success) {
-              console.error('Error al crear apelación:', appealData.message);
+              console.error('❌ Error al crear apelación:', appealData.message);
+              // Mostrar error al usuario
+              showError('Error al crear apelación', appealData.message || 'No se pudo crear la apelación. Por favor, inténtalo de nuevo.');
+            } else {
+              console.log('✅ Apelación creada exitosamente:', appealData.data);
             }
           } catch (error) {
-            console.error('Error al crear apelación automática:', error);
+            console.error('❌ Error al crear apelación automática:', error);
+            showError('Error de conexión', 'No se pudo conectar con el servidor para crear la apelación. Por favor, verifica tu conexión.');
           }
+        } else {
+          console.log('⏸️ No se creará apelación:', {
+            razon: !isEditMode ? 'No es modo edición' : 
+                   !puedeApelar ? 'No se puede apelar (estado anterior: ' + estadoAnterior + ', estado actual: ' + estadoActual + ')' :
+                   !respuestaRechazo.trim() ? 'No hay respuesta del vendedor' : 'Desconocido'
+          });
         }
         
         // Construir mensaje basado en información adicional
         let mensajeExito = `El producto ha sido ${actionText} correctamente.`;
         
-        // Si se envió una respuesta al moderador, agregar al mensaje
-        if (isEditMode && form.estado === 'rechazado' && respuestaRechazo.trim()) {
+        // Si se envió una respuesta al moderador, agregar al mensaje (reutilizar variables ya declaradas)
+        if (isEditMode && puedeApelar && respuestaRechazo.trim()) {
           mensajeExito += `\n\n✅ Tu respuesta al moderador ha sido enviada. El producto será revisado nuevamente.`;
         }
         
@@ -888,7 +924,8 @@ export const CreateProductPage: React.FC = () => {
         }
         
         // Determinar si se envió una apelación desde producto rechazado
-        const seEnvioApelacion = isEditMode && form.estado === 'rechazado' && respuestaRechazo.trim();
+        // Verificar si se envió una apelación (reutilizar variables ya declaradas arriba)
+        const seEnvioApelacion = isEditMode && puedeApelar && respuestaRechazo.trim();
         
         // Limpiar campo de respuesta después de enviar
         if (respuestaRechazo.trim()) {

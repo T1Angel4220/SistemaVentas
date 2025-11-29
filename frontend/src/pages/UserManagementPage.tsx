@@ -46,7 +46,7 @@ export const UserManagementPage: React.FC = () => {
   const [isErrorFadingOut, setIsErrorFadingOut] = useState(false);
   const [isSuccessFadingOut, setIsSuccessFadingOut] = useState(false);
 
-  // Cargar usuarios
+  // Cargar usuarios - sin límite para mostrar todos
   const loadUsers = async () => {
     try {
       setLoading(true);
@@ -54,6 +54,7 @@ export const UserManagementPage: React.FC = () => {
         search: searchTerm,
         role: filterRole,
         status: filterStatus
+        // No pasamos limit para obtener todos los usuarios
       });
       
       if (response.success && response.data) {

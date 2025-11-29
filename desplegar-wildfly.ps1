@@ -108,6 +108,24 @@ $webXmlContent = @"
         <location>/index.html</location>
     </error-page>
     
+    <!-- También configurar para otros códigos de error comunes -->
+    <error-page>
+        <error-code>403</error-code>
+        <location>/index.html</location>
+    </error-page>
+    
+    <!-- Configurar para manejar errores de servlet (500) - esto es crítico para SPA -->
+    <error-page>
+        <error-code>500</error-code>
+        <location>/index.html</location>
+    </error-page>
+    
+    <!-- Configurar para manejar excepciones de servlet matching -->
+    <error-page>
+        <exception-type>java.lang.IllegalArgumentException</exception-type>
+        <location>/index.html</location>
+    </error-page>
+    
     <!-- Configuración de MIME types para archivos estáticos -->
     <mime-mapping>
         <extension>js</extension>
@@ -136,11 +154,27 @@ $webXmlContent = @"
 </web-app>
 "@
 
-# Escribir sin BOM
+# Crear archivo jboss-web.xml para configuración específica de WildFly
+$jbossWebContent = @"
+<?xml version="1.0" encoding="UTF-8"?>
+<jboss-web xmlns="http://www.jboss.com/xml/ns/javaee"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://www.jboss.com/xml/ns/javaee
+           http://www.jboss.com/xml/ns/javaee/jboss-web_10_0.xsd"
+           version="10.0">
+    <context-root>/SistemaVentas</context-root>
+</jboss-web>
+"@
+
+# Escribir web.xml sin BOM
 $webXmlPath = Join-Path $tempPath "WEB-INF\web.xml"
 [System.IO.File]::WriteAllText($webXmlPath, $webXmlContent, [System.Text.UTF8Encoding]::new($false))
 
-Write-Host "[OK] WEB-INF y web.xml creados" -ForegroundColor Green
+# Escribir jboss-web.xml
+$jbossWebPath = Join-Path $tempPath "WEB-INF\jboss-web.xml"
+[System.IO.File]::WriteAllText($jbossWebPath, $jbossWebContent, [System.Text.UTF8Encoding]::new($false))
+
+Write-Host "[OK] WEB-INF, web.xml y jboss-web.xml creados" -ForegroundColor Green
 Write-Host ""
 
 # ===== ELIMINAR DESPLIEGUE ANTERIOR =====
