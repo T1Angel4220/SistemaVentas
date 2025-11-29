@@ -35,6 +35,7 @@ const corsOrigins = [
     'http://localhost:5173',
     'http://localhost:3000',
     'http://localhost:3001',
+    'https://delightful-island-0ab835b0f.3.azurestaticapps.net',
     'https://red-mud-057f2d60f.3.azurestaticapps.net' // 🔥 tu frontend en Azure
 ];
 // Agregar URL de producción si está configurada
