@@ -31,7 +31,7 @@ interface VendorContact {
 
 export const ContactVendorPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { alert, showSuccess, showError, showWarning, hideAlert } = useAlert();
   const [product, setProduct] = useState<ProductDetail | null>(null);
@@ -45,6 +45,30 @@ export const ContactVendorPage: React.FC = () => {
     mensaje: '',
     tipoContacto: 'whatsapp'
   });
+
+  // Validar acceso: solo compradores y vendedores pueden contactar
+  useEffect(() => {
+    if (!isAuthenticated || !user) {
+      // Usuario no autenticado - redirigir al login
+      showWarning('Acceso restringido', 'Debes iniciar sesión para contactar al vendedor');
+      navigate('/login', { state: { from: `/products/contact/${id}`, message: 'Inicia sesión para contactar al vendedor' } });
+      return;
+    }
+
+    // Administradores y moderadores NO pueden contactar vendedores
+    if (user.tipo_usuario === 'administrador' || user.tipo_usuario === 'moderador') {
+      showError('Acceso restringido', 'Los administradores y moderadores no pueden contactar a los vendedores');
+      navigate('/products');
+      return;
+    }
+
+    // Solo compradores y vendedores pueden continuar
+    if (user.tipo_usuario !== 'comprador' && user.tipo_usuario !== 'vendedor') {
+      showError('Acceso restringido', 'Solo compradores y vendedores pueden contactar a otros vendedores');
+      navigate('/products');
+      return;
+    }
+  }, [isAuthenticated, user, navigate, id, showError, showWarning]);
 
   const loadProduct = React.useCallback(async () => {
     try {
@@ -94,14 +118,43 @@ export const ContactVendorPage: React.FC = () => {
     }
   }, [id, showError, navigate, user]);
 
+  // Validar acceso: solo compradores y vendedores pueden contactar
   useEffect(() => {
+    if (!isAuthenticated || !user) {
+      // Usuario no autenticado - redirigir al login
+      showWarning('Acceso restringido', 'Debes iniciar sesión para contactar al vendedor');
+      navigate('/login', { state: { from: `/products/contact/${id}`, message: 'Inicia sesión para contactar al vendedor' } });
+      return;
+    }
+
+    // Administradores y moderadores NO pueden contactar vendedores
+    if (user.tipo_usuario === 'administrador' || user.tipo_usuario === 'moderador') {
+      showError('Acceso restringido', 'Los administradores y moderadores no pueden contactar a los vendedores');
+      navigate('/products');
+      return;
+    }
+
+    // Solo compradores y vendedores pueden continuar
+    if (user.tipo_usuario !== 'comprador' && user.tipo_usuario !== 'vendedor') {
+      showError('Acceso restringido', 'Solo compradores y vendedores pueden contactar a otros vendedores');
+      navigate('/products');
+      return;
+    }
+  }, [isAuthenticated, user, navigate, id, showError, showWarning]);
+
+  useEffect(() => {
+    // Solo cargar producto si el usuario tiene acceso válido
+    if (!isAuthenticated || !user) return;
+    if (user.tipo_usuario === 'administrador' || user.tipo_usuario === 'moderador') return;
+    if (user.tipo_usuario !== 'comprador' && user.tipo_usuario !== 'vendedor') return;
+
     // Forzar scroll al inicio
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     
     if (id) {
       loadProduct();
     }
-  }, [id, loadProduct]);
+  }, [id, loadProduct, isAuthenticated, user]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;

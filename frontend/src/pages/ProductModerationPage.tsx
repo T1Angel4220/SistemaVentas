@@ -777,37 +777,6 @@ export const ProductModerationPage: React.FC = () => {
                       </div>
                     </>
                   )}
-                  
-                  {product.estado === 'activo' && (
-                    <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-100">
-                      <Button 
-                        size="sm"
-                        onClick={() => handleSuspendProduct(product.id, product.nombre)}
-                        disabled={actionLoading === product.id}
-                        className="h-10 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
-                      >
-                        {actionLoading === product.id ? (
-                          <Clock className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <AlertTriangle className="h-4 w-4" />
-                        )}
-                        <span className="ml-2">Suspender</span>
-                      </Button>
-                      <Button 
-                        size="sm"
-                        onClick={() => handleMarkAsDangerous(product.id, product.nombre)}
-                        disabled={actionLoading === product.id}
-                        className="h-10 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
-                      >
-                        {actionLoading === product.id ? (
-                          <Clock className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <AlertTriangle className="h-4 w-4" />
-                        )}
-                        <span className="ml-2">Peligroso</span>
-                      </Button>
-                    </div>
-                  )}
                 </div>
               </CardContent>
             </Card>

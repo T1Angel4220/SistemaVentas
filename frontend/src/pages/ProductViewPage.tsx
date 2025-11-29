@@ -505,13 +505,24 @@ export const ProductViewPage: React.FC = () => {
                   </div>
                 </div>
                 
-                <Button 
-                  onClick={() => navigate(`/products/contact/${product.id}`)}
-                  className="w-full bg-orange-500 hover:bg-orange-600 text-white h-10 rounded-md text-sm font-medium"
-                >
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  Contactar vendedor
-                </Button>
+                {/* Solo compradores y vendedores pueden contactar. Admin/moderador NO pueden. Visitantes son redirigidos al login */}
+                {(user?.tipo_usuario === 'comprador' || user?.tipo_usuario === 'vendedor') ? (
+                  <Button 
+                    onClick={() => navigate(`/products/contact/${product.id}`)}
+                    className="w-full bg-orange-500 hover:bg-orange-600 text-white h-10 rounded-md text-sm font-medium"
+                  >
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Contactar vendedor
+                  </Button>
+                ) : !user ? (
+                  <Button 
+                    onClick={() => navigate('/login', { state: { from: `/products/view/${product.id}`, message: 'Inicia sesión para contactar al vendedor' } })}
+                    className="w-full bg-orange-500 hover:bg-orange-600 text-white h-10 rounded-md text-sm font-medium"
+                  >
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Inicia sesión para contactar
+                  </Button>
+                ) : null}
               </div>
             </div>
 

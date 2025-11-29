@@ -132,7 +132,11 @@ function App() {
               <Route path="/products/view/:id" element={<ProductViewPage />} />
               <Route 
                 path="/products/contact/:id" 
-                element={<ContactVendorPage />}
+                element={
+                  <ProtectedRoute allowedRoles={['comprador', 'vendedor']}>
+                    <ContactVendorPage />
+                  </ProtectedRoute>
+                }
               />
               <Route path="/products/:id" element={<ProductDetailPage />} />
               <Route 
