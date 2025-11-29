@@ -481,6 +481,14 @@ export const AppealsManagementPage: React.FC = () => {
                           <Clock className="h-4 w-4 text-gray-400" />
                           <span className="text-gray-600">Apelado: {formatDate(appeal.fecha_apelacion)}</span>
                         </div>
+                        {appeal.moderador_original_nombre && appeal.moderador_original_apellido && (
+                          <div className="flex items-center space-x-2">
+                            <Shield className="h-4 w-4 text-orange-500" />
+                            <span className="text-gray-600">
+                              Rechazado/Suspendido por: <span className="font-medium text-orange-700">{appeal.moderador_original_nombre} {appeal.moderador_original_apellido}</span>
+                            </span>
+                          </div>
+                        )}
                         {appeal.fecha_resolucion_apelacion && (
                           <div className="flex items-center space-x-2">
                             <CheckCircle className="h-4 w-4 text-gray-400" />
@@ -489,8 +497,10 @@ export const AppealsManagementPage: React.FC = () => {
                         )}
                         {appeal.revisor_nombre && (
                           <div className="flex items-center space-x-2">
-                            <User className="h-4 w-4 text-gray-400" />
-                            <span className="text-gray-600">Revisado por: {appeal.revisor_nombre} {appeal.revisor_apellido}</span>
+                            <User className="h-4 w-4 text-green-500" />
+                            <span className="text-gray-600">
+                              Revisado por: <span className="font-medium text-green-700">{appeal.revisor_nombre} {appeal.revisor_apellido}</span>
+                            </span>
                           </div>
                         )}
                         {appeal.decision_apelacion && (

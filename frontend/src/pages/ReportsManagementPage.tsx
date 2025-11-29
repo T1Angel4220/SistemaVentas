@@ -178,12 +178,18 @@ export const ReportsManagementPage: React.FC = () => {
       
       // Si es un producto detectado por el sistema, usar el endpoint de moderación
       if (activeTab === 'system-detected') {
+        // Solo permitir 'aprobar' (activar) o 'eliminar' (marcar peligroso)
         const accionMap: Record<string, string> = {
           'aprobar': 'aprobar',
-          'rechazar': 'rechazar',
-          'suspender': 'suspender',
           'eliminar': 'marcar_peligroso'
         };
+
+        // Si la acción no es válida para system-detected, mostrar error
+        if (!accionMap[resolveAction]) {
+          showError('Error', 'Acción no válida para productos detectados por el sistema');
+          setActionLoading(null);
+          return;
+        }
 
         const response = await fetch(`http://localhost:3001/api/products/${selectedReport.item_id}/moderate`, {
           method: 'PATCH',
@@ -203,14 +209,12 @@ export const ReportsManagementPage: React.FC = () => {
         if (data.success) {
           const actionText = {
             'aprobar': 'Producto activado (no es peligroso)',
-            'rechazar': 'Producto rechazado',
-            'suspender': 'Producto suspendido',
             'eliminar': 'Producto marcado como peligroso'
           };
           
           showSuccess(
             '✅ Estado actualizado',
-            actionText[resolveAction],
+            actionText[resolveAction] || 'Estado actualizado',
             () => {
               setShowResolveDialog(false);
               setSelectedReport(null);
@@ -279,12 +283,16 @@ export const ReportsManagementPage: React.FC = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
+    if (!dateString) return 'N/A';
+    // Formatear fecha usando la zona horaria de Ecuador (America/Guayaquil)
+    return new Date(dateString).toLocaleString('es-EC', {
+      timeZone: 'America/Guayaquil',
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      second: '2-digit'
     });
   };
 
@@ -804,8 +812,12 @@ export const ReportsManagementPage: React.FC = () => {
                           <Button
                             size="sm"
                             onClick={() => openResolveDialog(report, 'aprobar')}
-                            disabled={actionLoading === report.id}
-                            className="w-full h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-medium shadow-lg"
+                            disabled={actionLoading === report.id || report.estado === 'resuelto'}
+                            className={`w-full h-10 rounded-xl font-medium shadow-lg ${
+                              report.estado === 'resuelto' 
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60' 
+                                : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white'
+                            }`}
                           >
                             <CheckCircle className="h-4 w-4 mr-2" />
                             Producto Válido
@@ -814,8 +826,12 @@ export const ReportsManagementPage: React.FC = () => {
                           <Button
                             size="sm"
                             onClick={() => openResolveDialog(report, 'rechazar')}
-                            disabled={actionLoading === report.id}
-                            className="w-full h-10 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white rounded-xl font-medium shadow-lg"
+                            disabled={actionLoading === report.id || report.estado === 'resuelto'}
+                            className={`w-full h-10 rounded-xl font-medium shadow-lg ${
+                              report.estado === 'resuelto' 
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60' 
+                                : 'bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white'
+                            }`}
                           >
                             <XCircle className="h-4 w-4 mr-2" />
                             Rechazar Producto
@@ -824,8 +840,12 @@ export const ReportsManagementPage: React.FC = () => {
                           <Button
                             size="sm"
                             onClick={() => openResolveDialog(report, 'suspender')}
-                            disabled={actionLoading === report.id}
-                            className="w-full h-10 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-xl font-medium shadow-lg"
+                            disabled={actionLoading === report.id || report.estado === 'resuelto'}
+                            className={`w-full h-10 rounded-xl font-medium shadow-lg ${
+                              report.estado === 'resuelto' 
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60' 
+                                : 'bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white'
+                            }`}
                           >
                             <AlertTriangle className="h-4 w-4 mr-2" />
                             Suspender
@@ -834,8 +854,12 @@ export const ReportsManagementPage: React.FC = () => {
                           <Button
                             size="sm"
                             onClick={() => openResolveDialog(report, 'eliminar')}
-                            disabled={actionLoading === report.id}
-                            className="w-full h-10 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl font-medium shadow-lg"
+                            disabled={actionLoading === report.id || report.estado === 'resuelto'}
+                            className={`w-full h-10 rounded-xl font-medium shadow-lg ${
+                              report.estado === 'resuelto' 
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60' 
+                                : 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white'
+                            }`}
                           >
                             <AlertTriangle className="h-4 w-4 mr-2" />
                             Marcar Peligroso
@@ -843,27 +867,35 @@ export const ReportsManagementPage: React.FC = () => {
                         </>
                       )}
 
-                      {/* Botones adicionales para productos detectados */}
+                      {/* Botones para productos detectados por el sistema - Solo 2 opciones válidas */}
                       {activeTab === 'system-detected' && (
                         <>
                           <Button
                             size="sm"
-                            onClick={() => openResolveDialog(report, 'suspender')}
-                            disabled={actionLoading === report.item_id || report.producto_estado === 'suspendido'}
-                            className="w-full h-10 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-xl font-medium shadow-lg"
+                            onClick={() => openResolveDialog(report, 'aprobar')}
+                            disabled={actionLoading === report.item_id || (report.producto_estado === 'activo' && !report.es_peligroso)}
+                            className={`w-full h-10 rounded-xl font-medium shadow-lg ${
+                              (report.producto_estado === 'activo' && !report.es_peligroso) || actionLoading === report.item_id
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60' 
+                                : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white'
+                            }`}
                           >
-                            <AlertTriangle className="h-4 w-4 mr-2" />
-                            Suspender
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            No es Peligroso (Activar)
                           </Button>
 
                           <Button
                             size="sm"
-                            onClick={() => openResolveDialog(report, 'rechazar')}
-                            disabled={actionLoading === report.item_id || report.producto_estado === 'rechazado'}
-                            className="w-full h-10 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white rounded-xl font-medium shadow-lg"
+                            onClick={() => openResolveDialog(report, 'eliminar')}
+                            disabled={actionLoading === report.item_id || (report.es_peligroso && report.producto_estado === 'peligroso')}
+                            className={`w-full h-10 rounded-xl font-medium shadow-lg ${
+                              (report.es_peligroso && report.producto_estado === 'peligroso') || actionLoading === report.item_id
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60' 
+                                : 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white'
+                            }`}
                           >
-                            <XCircle className="h-4 w-4 mr-2" />
-                            Rechazar
+                            <AlertTriangle className="h-4 w-4 mr-2" />
+                            Marcar como Peligroso
                           </Button>
                         </>
                       )}
@@ -902,9 +934,7 @@ export const ReportsManagementPage: React.FC = () => {
                     ) : (
                       <>
                         {resolveAction === 'aprobar' && '✅ No es Peligroso - Activar Producto'}
-                        {resolveAction === 'rechazar' && '❌ Rechazar Producto'}
-                        {resolveAction === 'suspender' && '⏸️ Suspender Producto'}
-                        {resolveAction === 'eliminar' && '🚨 Mantener como Peligroso'}
+                        {resolveAction === 'eliminar' && '🚨 Marcar como Peligroso'}
                       </>
                     )}
                   </p>

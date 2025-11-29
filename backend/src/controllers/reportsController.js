@@ -191,13 +191,13 @@ class ReportsController {
 
       // Filtros por fechas
       if (fecha_desde) {
-        whereConditions.push(`r.fecha_reporte >= $${paramIndex}`);
+        whereConditions.push(`DATE(r.fecha_reporte) >= $${paramIndex}::date`);
         queryParams.push(fecha_desde);
         paramIndex++;
       }
 
       if (fecha_hasta) {
-        whereConditions.push(`r.fecha_reporte <= $${paramIndex}`);
+        whereConditions.push(`DATE(r.fecha_reporte) <= $${paramIndex}::date`);
         queryParams.push(fecha_hasta);
         paramIndex++;
       }
@@ -486,14 +486,16 @@ class ReportsController {
       let paramIndex = 1;
 
       // Filtro por fecha de detección
+      // Las fechas vienen en formato YYYY-MM-DD, necesitamos convertirlas a date para comparar correctamente
       if (fecha_desde) {
-        whereConditions.push(`COALESCE(i.fecha_deteccion_peligroso, i.fecha_revision) >= $${paramIndex}`);
+        whereConditions.push(`DATE(COALESCE(i.fecha_deteccion_peligroso, i.fecha_revision)) >= $${paramIndex}::date`);
         queryParams.push(fecha_desde);
         paramIndex++;
       }
 
       if (fecha_hasta) {
-        whereConditions.push(`COALESCE(i.fecha_deteccion_peligroso, i.fecha_revision) <= $${paramIndex}`);
+        // Incluir todo el día hasta la fecha especificada
+        whereConditions.push(`DATE(COALESCE(i.fecha_deteccion_peligroso, i.fecha_revision)) <= $${paramIndex}::date`);
         queryParams.push(fecha_hasta);
         paramIndex++;
       }

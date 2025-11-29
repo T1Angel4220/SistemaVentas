@@ -992,7 +992,8 @@ export const ProductsPage: React.FC = () => {
                           </Link>
                           
                           {/* Botones de favoritos y carrito - Solo para compradores y vendedores (NO admin o moderador) */}
-                          {(user?.tipo_usuario === 'comprador' || user?.tipo_usuario === 'vendedor') && (
+                          {/* NO mostrar si el producto es del usuario actual */}
+                          {(user?.tipo_usuario === 'comprador' || (user?.tipo_usuario === 'vendedor' && user.id !== product.vendedor_id)) && (
                             <>
                               <Button 
                                 onClick={() => 
@@ -1024,7 +1025,8 @@ export const ProductsPage: React.FC = () => {
                             </>
                           )}
                           
-                          {/* Botón de Reportar - Solo para moderadores, administradores, compradores y vendedores (pero no para el vendedor dueño) */}
+                          {/* Botón de Reportar - Solo para moderadores, administradores, compradores y vendedores (pero NO para el vendedor dueño) */}
+                          {/* NO mostrar si el producto es del usuario actual */}
                           {((user?.tipo_usuario === 'moderador' || user?.tipo_usuario === 'administrador' || 
                              user?.tipo_usuario === 'comprador' || 
                              (user?.tipo_usuario === 'vendedor' && user.id !== product.vendedor_id)) && (
