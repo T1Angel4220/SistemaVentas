@@ -192,7 +192,7 @@ export const AppealsManagementPage: React.FC = () => {
     let dateStr = dateString.trim();
     
     // Si ya tiene información de zona horaria, usarla directamente
-    if (dateStr.includes('Z') || dateStr.includes('+') || dateStr.includes('-05') || dateStr.includes('-04')) {
+    if (dateStr.includes('Z') || dateStr.includes('+') || (dateStr.includes('-05') && dateStr.length > 19) || (dateStr.includes('-04') && dateStr.length > 19)) {
       return new Date(dateStr).toLocaleString('es-EC', {
         timeZone: 'America/Guayaquil',
         year: 'numeric',
@@ -207,16 +207,26 @@ export const AppealsManagementPage: React.FC = () => {
     
     // Si no tiene zona horaria, asumir que es hora de Ecuador y agregar el offset
     // Formato esperado: '2025-11-29 17:09:42.147637' o '2025-11-29 17:09:42'
-    // Agregamos '-05:00' para indicar que es hora de Ecuador
+    // Convertir a formato ISO antes de agregar el offset
     if (dateStr.includes('T')) {
-      // Formato ISO con T
-      dateStr = dateStr.replace('T', ' ') + '-05:00';
+      // Formato ISO con T: '2025-11-29T17:09:42.147637'
+      // Agregar el offset correctamente
+      if (!dateStr.includes('Z') && !dateStr.includes('+') && !dateStr.includes('-05') && !dateStr.includes('-04')) {
+        dateStr = dateStr + '-05:00';
+      }
     } else {
-      // Formato sin T, agregar el offset
-      dateStr = dateStr + '-05:00';
+      // Formato sin T: '2025-11-29 17:09:42.147637'
+      // Convertir espacio a T y agregar offset
+      dateStr = dateStr.replace(' ', 'T') + '-05:00';
     }
     
     const date = new Date(dateStr);
+    
+    // Verificar que la fecha es válida
+    if (isNaN(date.getTime())) {
+      console.error('Fecha inválida:', dateString, '->', dateStr);
+      return 'Fecha inválida';
+    }
     
     // Formatear fecha usando la zona horaria de Ecuador
     return date.toLocaleString('es-EC', {

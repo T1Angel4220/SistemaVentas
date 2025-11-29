@@ -267,8 +267,6 @@ const verifyEmail = async (req, res) => {
   try {
     const { code } = req.body;
     
-    console.log('🔍 Código recibido:', code);
-    
     if (!code) {
       return res.status(400).json({
         success: false,
@@ -276,20 +274,24 @@ const verifyEmail = async (req, res) => {
       });
     }
 
+    const cleanCode = code.trim(); // Limpiar espacios en blanco del código recibido
+    
+    console.log('🔍 Código recibido:', cleanCode);
+    
     // Verificar el formato del código
-    if (!/^\d{6}$/.test(code)) {
+    if (!/^\d{6}$/.test(cleanCode)) {
       return res.status(400).json({
         success: false,
         message: 'Código debe tener 6 dígitos'
       });
     }
     
-    // Buscar usuario por código de verificación
+    // Buscar usuario por código de verificación (usar TRIM para asegurar consistencia)
     const userResult = await query(`
       SELECT id, correo, estado, email_verificado, token_verificacion, fecha_registro
       FROM usuarios 
-      WHERE token_verificacion = $1
-    `, [code]);
+      WHERE TRIM(token_verificacion) = $1
+    `, [cleanCode]);
     
     console.log('🔍 Usuarios encontrados por código:', userResult.rows.length);
     
@@ -317,12 +319,31 @@ const verifyEmail = async (req, res) => {
     }
 
     // Verificar que el código no haya expirado (10 minutos)
-    const now = new Date();
-    const registrationTime = new Date(user.fecha_registro);
-    const timeDiff = (now - registrationTime) / 1000 / 60; // diferencia en minutos
+    // Usar la zona horaria de Ecuador para la comparación
+    // Comparar directamente en la base de datos usando EXTRACT para evitar problemas de zona horaria
+    const expirationCheck = await query(
+      `SELECT 
+        EXTRACT(EPOCH FROM (NOW() - fecha_registro)) / 60 as minutos_transcurridos
+       FROM usuarios 
+       WHERE id = $1`,
+      [user.id]
+    );
+
+    const minutosTranscurridos = parseFloat(expirationCheck.rows[0].minutos_transcurridos);
+
+    console.log('🔍 Verificación de código de verificación:');
+    console.log('   → Código recibido:', code);
+    console.log('   → Código en BD:', user.token_verificacion);
+    console.log('   → Fecha registro:', user.fecha_registro);
+    console.log('   → Tiempo transcurrido (calculado en BD):', minutosTranscurridos.toFixed(2), 'minutos');
     
-    if (timeDiff > 10) {
-      console.log('❌ Código expirado. Tiempo transcurrido:', timeDiff, 'minutos');
+    if (minutosTranscurridos > 10) {
+      console.log('❌ Código expirado. Tiempo transcurrido:', minutosTranscurridos.toFixed(2), 'minutos');
+      // Limpiar código expirado
+      await query(
+        'UPDATE usuarios SET token_verificacion = NULL WHERE id = $1',
+        [user.id]
+      );
       return res.status(400).json({
         success: false,
         message: 'Código de verificación expirado. Solicita uno nuevo.'
