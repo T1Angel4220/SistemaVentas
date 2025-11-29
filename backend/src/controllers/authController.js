@@ -689,11 +689,18 @@ const requestPasswordReset = async (req, res) => {
     // Generar código de recuperación de 6 dígitos
     const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
     
-    // Guardar código en la base de datos
+    console.log('🔐 Generando código de recuperación:');
+    console.log('   → Usuario:', user.correo);
+    console.log('   → Código generado:', resetCode);
+    console.log('   → Longitud del código:', resetCode.length);
+    
+    // Guardar código en la base de datos (asegurar que no tenga espacios)
     await query(
       'UPDATE usuarios SET token_recuperacion = $1, fecha_actualizacion = CURRENT_TIMESTAMP WHERE id = $2',
-      [resetCode, user.id]
+      [resetCode.trim(), user.id]
     );
+    
+    console.log('✅ Código guardado en BD para usuario:', user.id);
     
     // Enviar email de recuperación
     try {
@@ -732,8 +739,11 @@ const resetPassword = async (req, res) => {
       });
     }
     
+    // Limpiar y normalizar el código (eliminar espacios)
+    const cleanCode = code.toString().trim();
+    
     // Verificar formato del código
-    if (!/^\d{6}$/.test(code)) {
+    if (!/^\d{6}$/.test(cleanCode)) {
       return res.status(400).json({
         success: false,
         message: 'Código debe tener 6 dígitos'
@@ -748,12 +758,30 @@ const resetPassword = async (req, res) => {
     }
     
     // Buscar usuario por código de recuperación (incluir password_hash para comparación)
+    // Usar TRIM y CAST para asegurar que la comparación sea correcta
+    // También verificar que el token no sea NULL
     const userResult = await query(
-      'SELECT id, correo, nombre, apellido, password_hash, token_recuperacion, fecha_actualizacion FROM usuarios WHERE token_recuperacion = $1',
-      [code]
+      `SELECT id, correo, nombre, apellido, password_hash, token_recuperacion, fecha_actualizacion 
+       FROM usuarios 
+       WHERE token_recuperacion IS NOT NULL 
+       AND TRIM(CAST(token_recuperacion AS VARCHAR)) = $1`,
+      [cleanCode]
     );
     
+    console.log('🔍 Búsqueda de código de recuperación:');
+    console.log('   → Código buscado:', cleanCode);
+    console.log('   → Usuarios encontrados:', userResult.rows.length);
+    
     if (userResult.rows.length === 0) {
+      // Intentar buscar sin TRIM para debug
+      const debugResult = await query(
+        'SELECT id, correo, token_recuperacion, LENGTH(token_recuperacion) as code_length FROM usuarios WHERE token_recuperacion IS NOT NULL LIMIT 5'
+      );
+      console.log('🔍 Debug - Primeros 5 códigos en BD:');
+      debugResult.rows.forEach(row => {
+        console.log(`   → Usuario ${row.id}: código="${row.token_recuperacion}", longitud=${row.code_length}`);
+      });
+      
       return res.status(400).json({
         success: false,
         message: 'Código de recuperación inválido o expirado'
@@ -763,11 +791,25 @@ const resetPassword = async (req, res) => {
     const user = userResult.rows[0];
     
     // Verificar que el código no haya expirado (10 minutos)
-    const now = new Date();
-    const codeTime = new Date(user.fecha_actualizacion);
-    const timeDiff = (now - codeTime) / 1000 / 60; // diferencia en minutos
+    // Usar la zona horaria de Ecuador para la comparación
+    // Comparar directamente en la base de datos usando EXTRACT para evitar problemas de zona horaria
+    const expirationCheck = await query(
+      `SELECT 
+        EXTRACT(EPOCH FROM (NOW() - fecha_actualizacion)) / 60 as minutos_transcurridos
+       FROM usuarios 
+       WHERE id = $1`,
+      [user.id]
+    );
     
-    if (timeDiff > 10) {
+    const minutosTranscurridos = parseFloat(expirationCheck.rows[0].minutos_transcurridos);
+    
+    console.log('🔍 Verificación de código de recuperación:');
+    console.log('   → Código recibido:', cleanCode);
+    console.log('   → Código en BD:', user.token_recuperacion);
+    console.log('   → Fecha actualización:', user.fecha_actualizacion);
+    console.log('   → Tiempo transcurrido (calculado en BD):', minutosTranscurridos.toFixed(2), 'minutos');
+    
+    if (minutosTranscurridos > 10) {
       // Limpiar código expirado
       await query(
         'UPDATE usuarios SET token_recuperacion = NULL WHERE id = $1',
