@@ -506,7 +506,7 @@ export const ProductViewPage: React.FC = () => {
                 </div>
                 
                 {/* Solo compradores y vendedores pueden contactar. Admin/moderador NO pueden. Visitantes son redirigidos al login */}
-                {(user?.tipo_usuario === 'comprador' || user?.tipo_usuario === 'vendedor') ? (
+                {(user?.tipo_usuario === 'comprador' || user?.tipo_usuario === 'vendedor') && user.id !== product.vendedor_id && (
                   <Button 
                     onClick={() => navigate(`/products/contact/${product.id}`)}
                     className="w-full bg-orange-500 hover:bg-orange-600 text-white h-10 rounded-md text-sm font-medium"
@@ -514,7 +514,8 @@ export const ProductViewPage: React.FC = () => {
                     <MessageCircle className="h-4 w-4 mr-2" />
                     Contactar vendedor
                   </Button>
-                ) : !user ? (
+                )}
+                {!user && (
                   <Button 
                     onClick={() => navigate('/login', { state: { from: `/products/view/${product.id}`, message: 'Inicia sesión para contactar al vendedor' } })}
                     className="w-full bg-orange-500 hover:bg-orange-600 text-white h-10 rounded-md text-sm font-medium"
@@ -522,7 +523,12 @@ export const ProductViewPage: React.FC = () => {
                     <MessageCircle className="h-4 w-4 mr-2" />
                     Inicia sesión para contactar
                   </Button>
-                ) : null}
+                )}
+                {(user?.tipo_usuario === 'administrador' || user?.tipo_usuario === 'moderador') && (
+                  <p className="text-sm text-gray-500 text-center mt-2">
+                    Los administradores y moderadores no pueden contactar a los vendedores.
+                  </p>
+                )}
               </div>
             </div>
 

@@ -804,10 +804,10 @@ class ProductsController {
       let esPeligroso = producto.es_peligroso;
       let motivoRechazo = producto.motivo_rechazo;
 
-      // ✅ Si el producto está rechazado y se está actualizando, cambiar a pendiente_revision
-      // (Esto indica que el vendedor corrigió el producto y debe ser revisado nuevamente)
+      // ✅ Si el producto está rechazado y se está actualizando, cambiar a en_apelacion
+      // (Esto indica que el vendedor está apelando el rechazo corrigiendo el producto)
       if (producto.estado === 'rechazado') {
-        nuevoEstado = 'pendiente_revision';
+        nuevoEstado = 'en_apelacion';
         // Limpiar el motivo de rechazo ya que se está corrigiendo
         motivoRechazo = null;
       }
@@ -1005,6 +1005,36 @@ class ProductsController {
         }
       }
 
+      // Si el producto cambió de rechazado a en_apelacion, crear apelación automáticamente
+      if (producto.estado === 'rechazado' && nuevoEstado === 'en_apelacion') {
+        try {
+          // Verificar si ya existe una apelación pendiente
+          const apelacionExistente = await query(
+            'SELECT * FROM apelaciones WHERE item_id = $1 AND estado IN ($2, $3)',
+            [id, 'en_apelacion', 'pendiente']
+          );
+
+          // Solo crear apelación si no existe una pendiente
+          if (apelacionExistente.rows.length === 0) {
+            const motivoApelacion = req.body.motivo_apelacion || req.body.respuesta_rechazo || 
+              'Producto corregido y actualizado según las observaciones del moderador.';
+            const informacionAdicional = req.body.informacion_adicional || 
+              'El vendedor ha realizado correcciones al producto rechazado.';
+
+            await query(
+              `INSERT INTO apelaciones (item_id, usuario_apelante_id, motivo_apelacion, informacion_adicional, estado)
+               VALUES ($1, $2, $3, $4, $5)`,
+              [id, req.user.id, motivoApelacion, informacionAdicional, 'pendiente']
+            );
+
+            console.log(`✅ Apelación creada automáticamente para producto ${id} al ser corregido`);
+          }
+        } catch (error) {
+          console.error('⚠️ Error al crear apelación automática:', error);
+          // No fallar la actualización del producto si falla la creación de la apelación
+        }
+      }
+
       // Determinar mensaje de respuesta basado en cambios de estado
       let mensajeRespuesta = 'Producto actualizado exitosamente';
       let informacionAdicional = null;
@@ -1028,6 +1058,17 @@ class ProductsController {
             motivo: motivoRechazo
           };
         }
+      }
+
+      // Si cambió a en_apelacion, agregar información adicional
+      if (producto.estado === 'rechazado' && nuevoEstado === 'en_apelacion') {
+        mensajeRespuesta = 'Producto actualizado y apelación creada. Será revisado por un moderador diferente.';
+        informacionAdicional = {
+          estado_anterior: producto.estado,
+          estado_nuevo: 'en_apelacion',
+          requiere_revision: true,
+          motivo: 'El producto ha sido corregido y está en proceso de apelación'
+        };
       }
 
       res.json({

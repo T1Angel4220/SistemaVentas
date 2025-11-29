@@ -31,6 +31,12 @@ interface Appeal {
   informacion_adicional?: string;
   estado: string;
   fecha_apelacion: string;
+  fecha_revision_apelacion?: string;
+  fecha_resolucion_apelacion?: string;
+  decision_apelacion?: string;
+  moderador_revisor_id?: number;
+  revisor_nombre?: string;
+  revisor_apellido?: string;
   producto_nombre: string;
   producto_codigo: string;
   producto_tipo: string;
@@ -56,12 +62,17 @@ export const AppealsManagementPage: React.FC = () => {
   const [showResolveDialog, setShowResolveDialog] = useState(false);
   const [resolveAction, setResolveAction] = useState<'aprobar' | 'rechazar'>('aprobar');
   const [decisionApelacion, setDecisionApelacion] = useState('');
+  const [activeTab, setActiveTab] = useState<'pending' | 'history'>('pending');
 
-  const loadAppeals = useCallback(async () => {
+  const loadAppeals = useCallback(async (tab: 'pending' | 'history' = 'pending') => {
     try {
       setLoading(true);
       
-      const response = await fetch(`http://localhost:3001/api/appeals/pending`, {
+      const endpoint = tab === 'pending' 
+        ? 'http://localhost:3001/api/appeals/pending'
+        : 'http://localhost:3001/api/appeals/history';
+      
+      const response = await fetch(endpoint, {
         headers: {
           'Authorization': `Bearer ${apiService.getToken()}`
         }
@@ -85,10 +96,10 @@ export const AppealsManagementPage: React.FC = () => {
 
   useEffect(() => {
     if (user && canModerateProduct()) {
-      loadAppeals();
+      loadAppeals(activeTab);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [activeTab]);
 
   const handleResolveAppeal = async () => {
     if (!selectedAppeal) return;
@@ -216,6 +227,34 @@ export const AppealsManagementPage: React.FC = () => {
       </div>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 -mt-6 sm:-mt-8 relative z-10">
+        {/* Pestañas - Pendientes e Historial */}
+        <div className="mb-6 sm:mb-8">
+          <div className="flex space-x-2 border-b border-gray-200">
+            <button
+              onClick={() => setActiveTab('pending')}
+              className={`px-4 py-2 font-medium text-sm transition-colors ${
+                activeTab === 'pending'
+                  ? 'text-purple-600 border-b-2 border-purple-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Clock className="h-4 w-4 inline mr-2" />
+              Pendientes
+            </button>
+            <button
+              onClick={() => setActiveTab('history')}
+              className={`px-4 py-2 font-medium text-sm transition-colors ${
+                activeTab === 'history'
+                  ? 'text-purple-600 border-b-2 border-purple-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <FileText className="h-4 w-4 inline mr-2" />
+              Historial Completo
+            </button>
+          </div>
+        </div>
+
         {/* Estadísticas - Optimizado para móvil */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-lg hover:shadow-xl transition-all duration-300">
@@ -280,10 +319,12 @@ export const AppealsManagementPage: React.FC = () => {
                 <FileText className="h-12 w-12 text-purple-600" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                No hay apelaciones pendientes
+                {activeTab === 'pending' ? 'No hay apelaciones pendientes' : 'No hay historial de apelaciones'}
               </h3>
               <p className="text-gray-600 text-lg max-w-md mx-auto">
-                No se encontraron apelaciones que requieran revisión
+                {activeTab === 'pending' 
+                  ? 'No se encontraron apelaciones que requieran revisión'
+                  : 'Aún no se han procesado apelaciones en el sistema'}
               </p>
             </CardContent>
           </Card>
@@ -292,7 +333,7 @@ export const AppealsManagementPage: React.FC = () => {
             {appeals.map((appeal) => (
                <Card key={appeal.id} className="bg-white/95 backdrop-blur-sm shadow-lg hover:shadow-2xl transition-all duration-300 border-0 rounded-2xl overflow-hidden">
                  <CardContent className="p-4 sm:p-6">
-                   <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
+                   <div className={`grid grid-cols-1 ${activeTab === 'pending' ? 'xl:grid-cols-3' : 'xl:grid-cols-2'} gap-4 sm:gap-6`}>
                     {/* Columna 1: Info del Producto */}
                     <div className="space-y-4">
                       {/* Imagen del producto */}
@@ -389,16 +430,39 @@ export const AppealsManagementPage: React.FC = () => {
                           <Clock className="h-4 w-4 text-gray-400" />
                           <span className="text-gray-600">Apelado: {formatDate(appeal.fecha_apelacion)}</span>
                         </div>
+                        {appeal.fecha_resolucion_apelacion && (
+                          <div className="flex items-center space-x-2">
+                            <CheckCircle className="h-4 w-4 text-gray-400" />
+                            <span className="text-gray-600">Resuelto: {formatDate(appeal.fecha_resolucion_apelacion)}</span>
+                          </div>
+                        )}
+                        {appeal.revisor_nombre && (
+                          <div className="flex items-center space-x-2">
+                            <User className="h-4 w-4 text-gray-400" />
+                            <span className="text-gray-600">Revisado por: {appeal.revisor_nombre} {appeal.revisor_apellido}</span>
+                          </div>
+                        )}
+                        {appeal.decision_apelacion && (
+                          <div className="mt-3">
+                            <div className="text-sm font-semibold text-gray-700 mb-1">Decisión del Moderador:</div>
+                            <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                              {appeal.decision_apelacion}
+                            </p>
+                          </div>
+                        )}
                       </div>
 
-                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                        <p className="text-sm text-amber-800">
-                          💡 <strong>Recuerda:</strong> Revisa cuidadosamente la apelación del vendedor antes de tomar una decisión.
-                        </p>
-                      </div>
+                      {activeTab === 'pending' && (
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                          <p className="text-sm text-amber-800">
+                            💡 <strong>Recuerda:</strong> Revisa cuidadosamente la apelación del vendedor antes de tomar una decisión.
+                          </p>
+                        </div>
+                      )}
                     </div>
 
-                     {/* Columna 3: Acciones - Optimizado para móvil */}
+                     {/* Columna 3: Acciones - Solo para pendientes */}
+                     {activeTab === 'pending' && (
                      <div className="space-y-3 xl:border-l xl:border-gray-200 xl:pl-6 border-t border-gray-200 pt-4 xl:pt-0 xl:border-t-0">
                       <div className="text-sm font-semibold text-gray-700 mb-4">Acciones de Moderación</div>
                       
@@ -429,6 +493,7 @@ export const AppealsManagementPage: React.FC = () => {
                         </p>
                       </div>
                     </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

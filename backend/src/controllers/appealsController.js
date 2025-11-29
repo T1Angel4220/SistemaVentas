@@ -381,6 +381,85 @@ class AppealsController {
       });
     }
   }
+
+  // Obtener historial completo de apelaciones (para moderadores - todas las apelaciones)
+  static async getAllAppeals(req, res) {
+    try {
+      const { estado, fecha_desde, fecha_hasta } = req.query;
+      
+      let queryText = `
+        SELECT 
+          a.*,
+          i.nombre as producto_nombre,
+          i.descripcion as producto_descripcion,
+          i.codigo as producto_codigo,
+          i.tipo as producto_tipo,
+          i.estado as producto_estado,
+          i.motivo_rechazo,
+          u_apelante.nombre as apelante_nombre,
+          u_apelante.apellido as apelante_apellido,
+          u_apelante.correo as apelante_correo,
+          u_apelante.telefono as apelante_telefono,
+          u_vendedor.nombre as vendedor_nombre,
+          u_vendedor.apellido as vendedor_apellido,
+          u_vendedor.correo as vendedor_correo,
+          u_revisor.nombre as revisor_nombre,
+          u_revisor.apellido as revisor_apellido,
+          cat.nombre as categoria_nombre,
+          (SELECT url_imagen FROM item_imagenes WHERE item_id = i.id ORDER BY es_principal DESC, orden ASC LIMIT 1) as primera_imagen,
+          (SELECT COUNT(*) FROM item_imagenes WHERE item_id = i.id) as total_imagenes
+        FROM apelaciones a
+        INNER JOIN items i ON a.item_id = i.id
+        INNER JOIN usuarios u_apelante ON a.usuario_apelante_id = u_apelante.id
+        INNER JOIN usuarios u_vendedor ON i.vendedor_id = u_vendedor.id
+        LEFT JOIN usuarios u_revisor ON a.moderador_revisor_id = u_revisor.id
+        LEFT JOIN categorias cat ON i.categoria_id = cat.id
+        WHERE 1=1
+      `;
+      
+      const params = [];
+      let paramCount = 1;
+
+      // Filtrar por estado si se proporciona
+      if (estado) {
+        queryText += ` AND a.estado = $${paramCount}`;
+        params.push(estado);
+        paramCount++;
+      }
+
+      // Filtrar por fecha desde
+      if (fecha_desde) {
+        queryText += ` AND a.fecha_apelacion >= $${paramCount}`;
+        params.push(fecha_desde);
+        paramCount++;
+      }
+
+      // Filtrar por fecha hasta
+      if (fecha_hasta) {
+        queryText += ` AND a.fecha_apelacion <= $${paramCount}`;
+        params.push(fecha_hasta);
+        paramCount++;
+      }
+
+      queryText += ` ORDER BY a.fecha_apelacion DESC`;
+
+      const result = await query(queryText, params);
+
+      res.json({
+        success: true,
+        data: result.rows,
+        count: result.rows.length
+      });
+
+    } catch (error) {
+      console.error('Error al obtener historial de apelaciones:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error al obtener el historial de apelaciones',
+        error: error.message
+      });
+    }
+  }
 }
 
 module.exports = AppealsController;

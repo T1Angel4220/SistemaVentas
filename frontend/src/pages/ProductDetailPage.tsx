@@ -928,13 +928,22 @@ export const ProductDetailPage: React.FC = () => {
                   <div className="font-medium text-gray-900 text-lg">{product.vendedor_nombre}</div>
                     <div className="text-sm text-gray-600">{product.vendedor_email}</div>
                   </div>
-                {user?.tipo_usuario !== 'comprador' && user?.tipo_usuario !== 'vendedor' && (
-                <Button 
-                  onClick={() => navigate(`/products/contact/${product.id}`)}
+                {/* Solo compradores y vendedores pueden contactar. Admin/moderador NO pueden */}
+                {(user?.tipo_usuario === 'comprador' || user?.tipo_usuario === 'vendedor') && (
+                  <Button 
+                    onClick={() => navigate(`/products/contact/${product.id}`)}
                     className="w-full bg-orange-500 hover:bg-orange-600 text-white h-10 rounded-lg text-sm font-medium shadow-lg hover:shadow-xl transition-all"
-                >
-                  Contactar vendedor
-                </Button>
+                  >
+                    Contactar vendedor
+                  </Button>
+                )}
+                {!user && (
+                  <Button 
+                    onClick={() => navigate('/login', { state: { from: `/products/${product.id}`, message: 'Inicia sesión para contactar al vendedor' } })}
+                    className="w-full bg-orange-500 hover:bg-orange-600 text-white h-10 rounded-lg text-sm font-medium shadow-lg hover:shadow-xl transition-all"
+                  >
+                    Inicia sesión para contactar
+                  </Button>
                 )}
               </div>
             )}
