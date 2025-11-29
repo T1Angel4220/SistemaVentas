@@ -185,15 +185,48 @@ export const AppealsManagementPage: React.FC = () => {
 
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
-    // Formatear fecha usando la zona horaria de Ecuador (America/Guayaquil)
-    return new Date(dateString).toLocaleString('es-EC', {
+    // PostgreSQL devuelve fechas sin zona horaria en formato: '2025-11-29 17:09:42.147637'
+    // Estas fechas están en hora de Ecuador, pero JavaScript las interpreta como hora local del navegador
+    // Solución: agregar el offset de Ecuador (-05:00) para que JavaScript las interprete correctamente
+    let dateStr = dateString.trim();
+    
+    // Si ya tiene información de zona horaria, usarla directamente
+    if (dateStr.includes('Z') || dateStr.includes('+') || dateStr.includes('-05') || dateStr.includes('-04')) {
+      return new Date(dateStr).toLocaleString('es-EC', {
+        timeZone: 'America/Guayaquil',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      });
+    }
+    
+    // Si no tiene zona horaria, asumir que es hora de Ecuador y agregar el offset
+    // Formato esperado: '2025-11-29 17:09:42.147637' o '2025-11-29 17:09:42'
+    // Agregamos '-05:00' para indicar que es hora de Ecuador
+    if (dateStr.includes('T')) {
+      // Formato ISO con T
+      dateStr = dateStr.replace('T', ' ') + '-05:00';
+    } else {
+      // Formato sin T, agregar el offset
+      dateStr = dateStr + '-05:00';
+    }
+    
+    const date = new Date(dateStr);
+    
+    // Formatear fecha usando la zona horaria de Ecuador
+    return date.toLocaleString('es-EC', {
       timeZone: 'America/Guayaquil',
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-      second: '2-digit'
+      second: '2-digit',
+      hour12: true
     });
   };
 

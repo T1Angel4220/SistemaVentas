@@ -748,24 +748,24 @@ export const ProductDetailPage: React.FC = () => {
                 {/* Usuario autenticado como comprador o vendedor (pero no el vendedor dueño del producto) */}
                 {(user?.tipo_usuario === 'comprador' || (user?.tipo_usuario === 'vendedor' && user.id !== product.vendedor_id)) && (
                   <>
-                    <Button 
-                      onClick={() => navigate(`/products/contact/${product.id}`)}
-                      className="w-full h-12 sm:h-14 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-base sm:text-lg font-bold shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
-                    >
-                      <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" />
-                      <span>Contactar Vendedor</span>
-                    </Button>
-                    <Button 
-                      onClick={handleReportProduct}
-                      variant="outline"
-                      className="w-full h-10 sm:h-11 border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 bg-white text-sm sm:text-base font-semibold shadow-sm hover:shadow-md transition-all duration-300 rounded-xl"
-                    >
-                      <Flag className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                      <span>Reportar producto</span>
-                    </Button>
-                    <p className="text-xs text-center text-gray-500 mt-2">
-                      ✓ Disponible para compra inmediata
-                    </p>
+                <Button 
+                  onClick={() => navigate(`/products/contact/${product.id}`)}
+                  className="w-full h-12 sm:h-14 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-base sm:text-lg font-bold shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
+                >
+                  <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" />
+                  <span>Contactar Vendedor</span>
+                </Button>
+                <Button 
+                  onClick={handleReportProduct}
+                  variant="outline"
+                  className="w-full h-10 sm:h-11 border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 bg-white text-sm sm:text-base font-semibold shadow-sm hover:shadow-md transition-all duration-300 rounded-xl"
+                >
+                  <Flag className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                  <span>Reportar producto</span>
+                </Button>
+                <p className="text-xs text-center text-gray-500 mt-2">
+                  ✓ Disponible para compra inmediata
+                </p>
                   </>
                 )}
                 
@@ -951,12 +951,12 @@ export const ProductDetailPage: React.FC = () => {
                   </div>
                 {/* Solo compradores y vendedores pueden contactar. Admin/moderador NO pueden. Vendedores NO pueden contactar sobre sus propios productos */}
                 {(user?.tipo_usuario === 'comprador' || (user?.tipo_usuario === 'vendedor' && user.id !== product.vendedor_id)) && (
-                  <Button 
-                    onClick={() => navigate(`/products/contact/${product.id}`)}
+                <Button 
+                  onClick={() => navigate(`/products/contact/${product.id}`)}
                     className="w-full bg-orange-500 hover:bg-orange-600 text-white h-10 rounded-lg text-sm font-medium shadow-lg hover:shadow-xl transition-all"
-                  >
-                    Contactar vendedor
-                  </Button>
+                >
+                  Contactar vendedor
+                </Button>
                 )}
                 {!user && (
                   <Button 

@@ -284,15 +284,48 @@ export const ReportsManagementPage: React.FC = () => {
 
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
-    // Formatear fecha usando la zona horaria de Ecuador (America/Guayaquil)
-    return new Date(dateString).toLocaleString('es-EC', {
+    // PostgreSQL devuelve fechas sin zona horaria en formato: '2025-11-29 17:09:42.147637'
+    // Estas fechas están en hora de Ecuador, pero JavaScript las interpreta como hora local del navegador
+    // Solución: agregar el offset de Ecuador (-05:00) para que JavaScript las interprete correctamente
+    let dateStr = dateString.trim();
+    
+    // Si ya tiene información de zona horaria, usarla directamente
+    if (dateStr.includes('Z') || dateStr.includes('+') || dateStr.includes('-05') || dateStr.includes('-04')) {
+      return new Date(dateStr).toLocaleString('es-EC', {
+        timeZone: 'America/Guayaquil',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      });
+    }
+    
+    // Si no tiene zona horaria, asumir que es hora de Ecuador y agregar el offset
+    // Formato esperado: '2025-11-29 17:09:42.147637' o '2025-11-29 17:09:42'
+    // Agregamos '-05:00' para indicar que es hora de Ecuador
+    if (dateStr.includes('T')) {
+      // Formato ISO con T
+      dateStr = dateStr.replace('T', ' ') + '-05:00';
+    } else {
+      // Formato sin T, agregar el offset
+      dateStr = dateStr + '-05:00';
+    }
+    
+    const date = new Date(dateStr);
+    
+    // Formatear fecha usando la zona horaria de Ecuador
+    return date.toLocaleString('es-EC', {
       timeZone: 'America/Guayaquil',
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-      second: '2-digit'
+      second: '2-digit',
+      hour12: true
     });
   };
 
@@ -308,7 +341,38 @@ export const ReportsManagementPage: React.FC = () => {
     return labels[tipo] || tipo;
   };
 
-  const getEstadoBadge = (estado: string | undefined) => {
+  const getEstadoBadge = (estado: string | undefined, productoEstado?: string, esPeligroso?: boolean) => {
+    // Si es un producto detectado por el sistema, usar el estado del producto
+    if (activeTab === 'system-detected') {
+      if (esPeligroso || productoEstado === 'peligroso') {
+        return (
+          <Badge className="bg-red-100 text-red-800 border-red-300 border">
+            PELIGROSO
+          </Badge>
+        );
+      }
+      if (productoEstado) {
+        const colors: Record<string, string> = {
+          'activo': 'bg-green-100 text-green-800 border-green-300',
+          'suspendido': 'bg-orange-100 text-orange-800 border-orange-300',
+          'rechazado': 'bg-gray-100 text-gray-800 border-gray-300',
+          'peligroso': 'bg-red-100 text-red-800 border-red-300',
+          'pendiente_revision': 'bg-yellow-100 text-yellow-800 border-yellow-300'
+        };
+        return (
+          <Badge className={`${colors[productoEstado] || 'bg-gray-100 text-gray-800'} border`}>
+            {productoEstado.replace('_', ' ').toUpperCase()}
+          </Badge>
+        );
+      }
+      return (
+        <Badge className="bg-gray-100 text-gray-800 border">
+          SIN ESTADO
+        </Badge>
+      );
+    }
+    
+    // Para reportes de compradores, usar el estado del reporte
     if (!estado) {
       return (
         <Badge className="bg-gray-100 text-gray-800 border">
@@ -602,7 +666,7 @@ export const ReportsManagementPage: React.FC = () => {
                           </h3>
                           <p className="text-sm text-gray-500">Código: {report.producto_codigo}</p>
                         </div>
-                        {getEstadoBadge(report.estado)}
+                        {getEstadoBadge(report.estado, report.producto_estado, report.es_peligroso)}
                       </div>
 
                       {/* Imagen del producto */}
@@ -860,9 +924,9 @@ export const ReportsManagementPage: React.FC = () => {
                           <Button
                             size="sm"
                             onClick={() => openResolveDialog(report, 'aprobar')}
-                            disabled={actionLoading === report.item_id || (report.producto_estado === 'activo' && !report.es_peligroso)}
+                            disabled={actionLoading === report.item_id || (report.producto_estado === 'activo' && !report.es_peligroso) || (report.es_peligroso && report.producto_estado === 'peligroso')}
                             className={`w-full h-10 rounded-xl font-medium shadow-lg ${
-                              (report.producto_estado === 'activo' && !report.es_peligroso) || actionLoading === report.item_id
+                              ((report.producto_estado === 'activo' && !report.es_peligroso) || (report.es_peligroso && report.producto_estado === 'peligroso') || actionLoading === report.item_id)
                                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60' 
                                 : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white'
                             }`}

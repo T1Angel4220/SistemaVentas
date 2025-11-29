@@ -347,26 +347,26 @@ class AppealsController {
       
       if (decision === 'aprobar') {
         // Al aprobar: cambiar estado, limpiar errores, y activar disponibilidad
+        // NO actualizar moderador_revision_id - debe mantener al moderador original que rechazó/suspendió
         await query(
           `UPDATE items 
           SET estado = $1, 
-              moderador_revision_id = $2, 
               fecha_revision = CURRENT_TIMESTAMP,
               motivo_rechazo = NULL,
               es_peligroso = FALSE,
               disponibilidad = TRUE
-          WHERE id = $3`,
-          [nuevoEstadoProducto, moderador_revisor_id, apelacion.item_id]
+          WHERE id = $2`,
+          [nuevoEstadoProducto, apelacion.item_id]
         );
       } else {
         // Al rechazar: solo cambiar estado
+        // NO actualizar moderador_revision_id - debe mantener al moderador original que rechazó/suspendió
         await query(
           `UPDATE items 
           SET estado = $1, 
-              moderador_revision_id = $2, 
               fecha_revision = CURRENT_TIMESTAMP
-          WHERE id = $3`,
-          [nuevoEstadoProducto, moderador_revisor_id, apelacion.item_id]
+          WHERE id = $2`,
+          [nuevoEstadoProducto, apelacion.item_id]
         );
       }
 

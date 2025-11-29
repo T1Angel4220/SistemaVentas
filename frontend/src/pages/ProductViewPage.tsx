@@ -186,7 +186,7 @@ export const ProductViewPage: React.FC = () => {
       showError('Error', 'Debes iniciar sesión para reportar productos');
       return;
     }
-    
+
     // Verificar que el usuario no sea el vendedor del producto
     if (product && user.id === product.vendedor_id) {
       showError('Error', 'No puedes reportar tu propio producto');
@@ -513,13 +513,13 @@ export const ProductViewPage: React.FC = () => {
                 
                 {/* Solo compradores y vendedores pueden contactar. Admin/moderador NO pueden. Visitantes son redirigidos al login */}
                 {(user?.tipo_usuario === 'comprador' || user?.tipo_usuario === 'vendedor') && user.id !== product.vendedor_id && (
-                  <Button 
-                    onClick={() => navigate(`/products/contact/${product.id}`)}
-                    className="w-full bg-orange-500 hover:bg-orange-600 text-white h-10 rounded-md text-sm font-medium"
-                  >
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    Contactar vendedor
-                  </Button>
+                <Button 
+                  onClick={() => navigate(`/products/contact/${product.id}`)}
+                  className="w-full bg-orange-500 hover:bg-orange-600 text-white h-10 rounded-md text-sm font-medium"
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Contactar vendedor
+                </Button>
                 )}
                 {!user && (
                   <Button 
