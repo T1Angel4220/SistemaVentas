@@ -1,0 +1,139 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - navigation [ref=e4]:
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - link "Sistema de Ventas" [ref=e8] [cursor=pointer]:
+          - /url: /dashboard
+        - generic [ref=e9]:
+          - link "Dashboard" [ref=e10] [cursor=pointer]:
+            - /url: /dashboard
+          - link "Productos" [ref=e11] [cursor=pointer]:
+            - /url: /products
+          - link "Chat" [ref=e12] [cursor=pointer]:
+            - /url: /chat
+          - link "Moderación" [ref=e14] [cursor=pointer]:
+            - /url: /products/moderation
+            - img [ref=e15]
+            - text: Moderación
+          - link "Reportes" [ref=e17] [cursor=pointer]:
+            - /url: /moderation/reports
+            - img [ref=e18]
+            - text: Reportes
+          - link "Apelaciones" [ref=e20] [cursor=pointer]:
+            - /url: /moderation/appeals
+            - img [ref=e21]
+            - text: Apelaciones
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - paragraph [ref=e26]: Test Moderador
+          - paragraph [ref=e27]: Moderador
+        - link "Mi Perfil" [ref=e28] [cursor=pointer]:
+          - /url: /profile
+          - button [ref=e29]:
+            - img [ref=e30]
+          - generic: Mi Perfil
+        - button "Salir" [ref=e33]:
+          - img [ref=e34]
+          - generic [ref=e37]: Salir
+  - main [ref=e38]:
+    - generic [ref=e39]:
+      - generic [ref=e44]:
+        - link "Regresar" [ref=e45] [cursor=pointer]:
+          - /url: /products/moderation
+          - button "Regresar" [ref=e46]:
+            - img [ref=e47]
+            - generic [ref=e49]: Regresar
+        - generic [ref=e50]:
+          - link "Moderación" [ref=e51] [cursor=pointer]:
+            - /url: /products/moderation
+          - generic [ref=e52]: /
+          - generic [ref=e53]: Revisión de producto
+      - main [ref=e54]:
+        - generic [ref=e55]:
+          - generic [ref=e56]:
+            - generic [ref=e58]:
+              - img "iPhone 13 Pro Max" [ref=e60]
+              - button "Imagen anterior" [ref=e61]:
+                - img [ref=e62]
+              - button "Imagen siguiente" [ref=e64]:
+                - img [ref=e65]
+              - generic [ref=e68]: 1 de 3
+              - generic [ref=e70]:
+                - img [ref=e71]
+                - generic [ref=e74]: Pasa el cursor para hacer zoom
+              - generic [ref=e76]:
+                - img [ref=e77]
+                - generic [ref=e80]: 3 fotos
+            - generic [ref=e81]:
+              - button "iPhone 13 Pro Max 1" [ref=e82]:
+                - img "iPhone 13 Pro Max 1" [ref=e83]
+              - button "iPhone 13 Pro Max 2" [ref=e84]:
+                - img "iPhone 13 Pro Max 2" [ref=e85]
+              - button "iPhone 13 Pro Max 3" [ref=e86]:
+                - img "iPhone 13 Pro Max 3" [ref=e87]
+            - generic [ref=e88]:
+              - heading "Información del producto" [level=3] [ref=e89]:
+                - img [ref=e90]
+                - text: Información del producto
+              - generic [ref=e93]:
+                - generic [ref=e94]:
+                  - generic [ref=e95]: Categoría
+                  - text: Hogar y Jardín
+                - generic [ref=e97]:
+                  - img [ref=e98]
+                  - generic [ref=e101]: Categoría principal de hogar y jardín
+                - generic [ref=e102]:
+                  - generic [ref=e103]: Publicado
+                  - text: 29 de noviembre de 2025
+                - generic [ref=e104]:
+                  - generic [ref=e105]: Tipo
+                  - text: 📦 Producto
+          - generic [ref=e106]:
+            - generic [ref=e107]:
+              - heading "iPhone 13 Pro Max" [level=1] [ref=e108]
+              - generic [ref=e109]:
+                - generic [ref=e110]: "Código:"
+                - generic [ref=e111]: ELEC001
+              - generic [ref=e112]:
+                - generic [ref=e113]:
+                  - img [ref=e114]
+                  - text: Precio
+                - generic [ref=e116]: $850000.00
+              - generic [ref=e118]: activo
+            - generic [ref=e119]:
+              - heading "Acciones de Moderación" [level=3] [ref=e120]:
+                - img [ref=e121]
+                - text: Acciones de Moderación
+              - generic [ref=e123]:
+                - button "Aprobar" [disabled]:
+                  - img
+                  - generic: Aprobar
+                - button "Rechazar" [ref=e124]:
+                  - img [ref=e125]
+                  - generic [ref=e129]: Rechazar
+                - button "Suspender" [ref=e130]:
+                  - img [ref=e131]
+                  - generic [ref=e133]: Suspender
+              - button "🚫 Marcar como Peligroso" [ref=e135]:
+                - img [ref=e136]
+                - generic [ref=e138]: 🚫 Marcar como Peligroso
+              - generic [ref=e139]:
+                - strong [ref=e140]: "Nota:"
+                - text: Todas las acciones son permanentes y quedan registradas en el historial de moderación.
+            - generic [ref=e141]:
+              - heading "A Vendedor" [level=3] [ref=e142]:
+                - generic [ref=e144]: A
+                - text: Vendedor
+              - generic [ref=e145]:
+                - generic [ref=e146]: Ana
+                - generic [ref=e147]: ana.vendedor@sistemaventas.com
+              - button "Contactar vendedor" [ref=e148]
+        - generic [ref=e149]:
+          - heading "Descripción detallada" [level=2] [ref=e150]:
+            - img [ref=e152]
+            - generic [ref=e155]: Descripción detallada
+          - paragraph [ref=e159]: iPhone 13 Pro Max 256GB en excelente estado, incluye cargador y funda protectora
+```

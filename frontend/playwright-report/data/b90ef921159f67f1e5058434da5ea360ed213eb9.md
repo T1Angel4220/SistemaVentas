@@ -1,0 +1,91 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - navigation [ref=e4]:
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - link "Sistema de Ventas" [ref=e8] [cursor=pointer]:
+          - /url: /dashboard
+        - generic [ref=e9]:
+          - link "Dashboard" [ref=e10] [cursor=pointer]:
+            - /url: /dashboard
+          - link "Productos" [ref=e11] [cursor=pointer]:
+            - /url: /products
+          - link "Chat" [ref=e12] [cursor=pointer]:
+            - /url: /chat
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - paragraph [ref=e15]: Test Comprador
+          - paragraph [ref=e16]: Comprador
+        - link "Mi Perfil" [ref=e17] [cursor=pointer]:
+          - /url: /profile
+          - button [ref=e18]:
+            - img [ref=e19]
+          - generic: Mi Perfil
+        - button "Salir" [ref=e22]:
+          - img [ref=e23]
+          - generic [ref=e26]: Salir
+  - main [ref=e27]:
+    - generic [ref=e28]:
+      - generic [ref=e32]:
+        - generic [ref=e34]: TC
+        - generic [ref=e35]:
+          - heading "¡Hola, Test!" [level=1] [ref=e36]
+          - paragraph [ref=e37]: Sistema de Ventas Multiempresa
+      - main [ref=e38]:
+        - generic [ref=e40]:
+          - heading "Mi Perfil" [level=2] [ref=e42]:
+            - img [ref=e43]
+            - generic [ref=e46]: Mi Perfil
+          - generic [ref=e47]:
+            - generic [ref=e48]:
+              - generic [ref=e49]:
+                - generic [ref=e50]:
+                  - text: Nombre completo
+                  - paragraph [ref=e51]: Test Comprador
+                - generic [ref=e52]:
+                  - text: Correo electrónico
+                  - paragraph [ref=e53]: comprador@test.com
+                - generic [ref=e54]:
+                  - text: Cédula
+                  - paragraph [ref=e55]: "1000000001"
+              - generic [ref=e56]:
+                - generic [ref=e57]:
+                  - text: Teléfono
+                  - paragraph [ref=e58]: "0999000001"
+                - generic [ref=e59]:
+                  - text: Dirección
+                  - paragraph [ref=e60]: Dirección de Prueba
+                - generic [ref=e61]:
+                  - text: Género
+                  - paragraph [ref=e62]: masculino
+              - generic [ref=e63]:
+                - generic [ref=e64]:
+                  - text: Rol
+                  - generic [ref=e65]: comprador
+                - generic [ref=e66]:
+                  - text: Estado
+                  - generic [ref=e67]: ACTIVO
+                - generic [ref=e68]:
+                  - text: Email verificado
+                  - generic [ref=e69]: ✓ SÍ
+            - generic [ref=e71]:
+              - generic [ref=e72]:
+                - text: Miembro desde
+                - paragraph [ref=e73]: 29 de noviembre de 2025
+              - generic [ref=e74]:
+                - text: Último acceso
+                - paragraph [ref=e75]: 30 de noviembre de 2025, 12:53
+        - generic [ref=e76]:
+          - heading "Acciones Rápidas" [level=2] [ref=e77]
+          - generic [ref=e78]:
+            - generic [ref=e80] [cursor=pointer]:
+              - img [ref=e82]
+              - heading "Comprar" [level=3] [ref=e86]
+              - paragraph [ref=e87]: Explora productos y servicios disponibles
+            - generic [ref=e89] [cursor=pointer]:
+              - img [ref=e91]
+              - heading "Chat" [level=3] [ref=e93]
+              - paragraph [ref=e94]: Comunícate con otros usuarios
+```

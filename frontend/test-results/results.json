@@ -1,7 +1,7 @@
 {
   "config": {
-    "configFile": "E:\\Gestion de Pruebas e Implantación de Software\\PruebasSistemaVentas\\SistemaVentas\\frontend\\playwright.config.ts",
-    "rootDir": "E:/Gestion de Pruebas e Implantación de Software/PruebasSistemaVentas/SistemaVentas/frontend/e2e",
+    "configFile": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\playwright.config.ts",
+    "rootDir": "C:/Users/johan/OneDrive/Documentos/SistemaVenta/SistemaVentas/frontend/e2e",
     "forbidOnly": false,
     "fullyParallel": false,
     "globalSetup": null,
@@ -39,7 +39,7 @@
     "quiet": false,
     "projects": [
       {
-        "outputDir": "E:/Gestion de Pruebas e Implantación de Software/PruebasSistemaVentas/SistemaVentas/frontend/test-results",
+        "outputDir": "C:/Users/johan/OneDrive/Documentos/SistemaVenta/SistemaVentas/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -47,7 +47,7 @@
         },
         "id": "chromium",
         "name": "chromium",
-        "testDir": "E:/Gestion de Pruebas e Implantación de Software/PruebasSistemaVentas/SistemaVentas/frontend/e2e",
+        "testDir": "C:/Users/johan/OneDrive/Documentos/SistemaVenta/SistemaVentas/frontend/e2e",
         "testIgnore": [],
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
@@ -71,51 +71,1058 @@
   },
   "suites": [
     {
-      "title": "flows\\users\\register-moderator.spec.ts",
-      "file": "flows/users/register-moderator.spec.ts",
+      "title": "flows\\reports\\reports.spec.ts",
+      "file": "flows/reports/reports.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "Registro de Moderadores - Admin",
-          "file": "flows/users/register-moderator.spec.ts",
-          "line": 6,
+          "title": "Módulo de Moderación/Reportes",
+          "file": "flows/reports/reports.spec.ts",
+          "line": 15,
           "column": 6,
-          "specs": [
+          "specs": [],
+          "suites": [
             {
-              "title": "debería registrar un nuevo moderador exitosamente",
-              "ok": true,
-              "tags": [],
-              "tests": [
+              "title": "Creación de Reportes",
+              "file": "flows/reports/reports.spec.ts",
+              "line": 23,
+              "column": 8,
+              "specs": [
                 {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
+                  "title": "PRUEBA 1: Crear Reporte Exitoso - Comprador",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
                     {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 8051,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-11-24T04:57:52.631Z",
+                      "timeout": 30000,
                       "annotations": [],
-                      "attachments": []
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 31484,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-11-30T17:49:23.828Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
                     }
                   ],
-                  "status": "expected"
+                  "id": "dd3863aafd298a73d93f-3835d018ffffcd0e203c",
+                  "file": "flows/reports/reports.spec.ts",
+                  "line": 38,
+                  "column": 5
+                },
+                {
+                  "title": "PRUEBA 2: Crear Reporte - Validación de Motivo Mínimo",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 20954,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-11-30T17:49:56.136Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "dd3863aafd298a73d93f-da84dff49a5a30a2a7f8",
+                  "file": "flows/reports/reports.spec.ts",
+                  "line": 55,
+                  "column": 5
+                },
+                {
+                  "title": "PRUEBA 3: Crear Reporte - Tipo de Reporte Inválido",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 10823,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-11-30T17:50:17.179Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "dd3863aafd298a73d93f-015205e3a5ceca7a479d",
+                  "file": "flows/reports/reports.spec.ts",
+                  "line": 102,
+                  "column": 5
+                },
+                {
+                  "title": "PRUEBA 4: Crear Reporte - Producto No Encontrado",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 11054,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-11-30T17:50:28.108Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "dd3863aafd298a73d93f-ec965cb8b95219880d06",
+                  "file": "flows/reports/reports.spec.ts",
+                  "line": 115,
+                  "column": 5
+                },
+                {
+                  "title": "PRUEBA 5: Crear Reporte - Auto-Reporte (Comprador)",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "location": {
+                            "file": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\flows\\reports\\reports.spec.ts",
+                            "line": 130,
+                            "column": 10
+                          }
+                        }
+                      ],
+                      "expectedStatus": "skipped",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "skipped",
+                          "duration": 0,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-11-30T17:50:39.242Z",
+                          "annotations": [
+                            {
+                              "type": "skip",
+                              "location": {
+                                "file": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\flows\\reports\\reports.spec.ts",
+                                "line": 130,
+                                "column": 10
+                              }
+                            }
+                          ],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "dd3863aafd298a73d93f-e16b566dad0f31cdead6",
+                  "file": "flows/reports/reports.spec.ts",
+                  "line": 129,
+                  "column": 10
+                },
+                {
+                  "title": "PRUEBA 6: Crear Reporte - Reporte Duplicado",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "failed",
+                          "duration": 23153,
+                          "error": {
+                            "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"correo\"]') to be visible\u001b[22m\n",
+                            "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"correo\"]') to be visible\u001b[22m\n\n    at AuthHelper.loginAs (C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\fixtures\\auth.ts:46:22)\n    at C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\flows\\reports\\reports.spec.ts:142:7",
+                            "location": {
+                              "file": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\fixtures\\auth.ts",
+                              "column": 22,
+                              "line": 46
+                            },
+                            "snippet": "\u001b[90m   at \u001b[39mfixtures\\auth.ts:46\n\n\u001b[0m \u001b[90m 44 |\u001b[39m\n \u001b[90m 45 |\u001b[39m     \u001b[36mconst\u001b[39m emailInput \u001b[33m=\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mpage\u001b[33m.\u001b[39mlocator(\u001b[32m'input[name=\"correo\"]'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 46 |\u001b[39m     \u001b[36mawait\u001b[39m emailInput\u001b[33m.\u001b[39mwaitFor({ state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m\u001b[33m,\u001b[39m timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                      \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 47 |\u001b[39m     \u001b[36mawait\u001b[39m emailInput\u001b[33m.\u001b[39mfill(credentials[role]\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m 48 |\u001b[39m     \u001b[36mawait\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mwaitForVisualization(\u001b[35m800\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 49 |\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\fixtures\\auth.ts",
+                                "column": 22,
+                                "line": 46
+                              },
+                              "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[name=\"correo\"]') to be visible\u001b[22m\n\n\n\u001b[90m   at \u001b[39mfixtures\\auth.ts:46\n\n\u001b[0m \u001b[90m 44 |\u001b[39m\n \u001b[90m 45 |\u001b[39m     \u001b[36mconst\u001b[39m emailInput \u001b[33m=\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mpage\u001b[33m.\u001b[39mlocator(\u001b[32m'input[name=\"correo\"]'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 46 |\u001b[39m     \u001b[36mawait\u001b[39m emailInput\u001b[33m.\u001b[39mwaitFor({ state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m\u001b[33m,\u001b[39m timeout\u001b[33m:\u001b[39m \u001b[35m10000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                      \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 47 |\u001b[39m     \u001b[36mawait\u001b[39m emailInput\u001b[33m.\u001b[39mfill(credentials[role]\u001b[33m.\u001b[39memail)\u001b[33m;\u001b[39m\n \u001b[90m 48 |\u001b[39m     \u001b[36mawait\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mwaitForVisualization(\u001b[35m800\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 49 |\u001b[39m\u001b[0m\n\u001b[2m    at AuthHelper.loginAs (C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\fixtures\\auth.ts:46:22)\u001b[22m\n\u001b[2m    at C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\flows\\reports\\reports.spec.ts:142:7\u001b[22m"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-11-30T17:50:39.244Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\test-results\\flows-reports-reports-Módu-530f8-Reporte---Reporte-Duplicado-chromium\\test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\test-results\\flows-reports-reports-Módu-530f8-Reporte---Reporte-Duplicado-chromium\\video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\test-results\\flows-reports-reports-Módu-530f8-Reporte---Reporte-Duplicado-chromium\\error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\fixtures\\auth.ts",
+                            "column": 22,
+                            "line": 46
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "dd3863aafd298a73d93f-f86246752c532b7beb41",
+                  "file": "flows/reports/reports.spec.ts",
+                  "line": 141,
+                  "column": 5
+                },
+                {
+                  "title": "PRUEBA 7: Crear Reporte - Moderador Reporta Producto",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 1,
+                          "parallelIndex": 0,
+                          "status": "timedOut",
+                          "duration": 31661,
+                          "error": {
+                            "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m",
+                            "stack": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                          },
+                          "errors": [
+                            {
+                              "message": "\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m"
+                            },
+                            {
+                              "location": {
+                                "file": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\pages\\ProductDetailPage.ts",
+                                "column": 24,
+                                "line": 111
+                              },
+                              "message": "Error: locator.waitFor: Test timeout of 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\"Reportar producto\")').or(locator('button:has-text(\"Reportar\")')).first() to be visible\u001b[22m\n\n\n\u001b[90m   at \u001b[39mpages\\ProductDetailPage.ts:111\n\n\u001b[0m \u001b[90m 109 |\u001b[39m       \u001b[33m.\u001b[39mfirst()\u001b[33m;\u001b[39m\n \u001b[90m 110 |\u001b[39m     \n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 111 |\u001b[39m     \u001b[36mawait\u001b[39m reportButton\u001b[33m.\u001b[39mwaitFor({ state\u001b[33m:\u001b[39m \u001b[32m'visible'\u001b[39m\u001b[33m,\u001b[39m timeout\u001b[33m:\u001b[39m \u001b[35m15000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                        \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 112 |\u001b[39m     \u001b[36mawait\u001b[39m reportButton\u001b[33m.\u001b[39mscrollIntoViewIfNeeded()\u001b[33m;\u001b[39m\n \u001b[90m 113 |\u001b[39m     \u001b[36mawait\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mpage\u001b[33m.\u001b[39mwaitForTimeout(\u001b[35m300\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 114 |\u001b[39m     \u001b[36mawait\u001b[39m reportButton\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at ProductDetailPage.openReportDialog (C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\pages\\ProductDetailPage.ts:111:24)\u001b[22m\n\u001b[2m    at ProductDetailPage.createReport (C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\pages\\ProductDetailPage.ts:132:5)\u001b[22m\n\u001b[2m    at C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\flows\\reports\\reports.spec.ts:179:7\u001b[22m"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-11-30T17:51:07.289Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\test-results\\flows-reports-reports-Módu-8bdab--Moderador-Reporta-Producto-chromium\\test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\test-results\\flows-reports-reports-Módu-8bdab--Moderador-Reporta-Producto-chromium\\video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\test-results\\flows-reports-reports-Módu-8bdab--Moderador-Reporta-Producto-chromium\\error-context.md"
+                            }
+                          ]
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "dd3863aafd298a73d93f-fb96fa374baa3e99202e",
+                  "file": "flows/reports/reports.spec.ts",
+                  "line": 157,
+                  "column": 5
                 }
-              ],
-              "id": "e76bd05726a4731c436e-c5a9a1853c7efefc996c",
-              "file": "flows/users/register-moderator.spec.ts",
-              "line": 22,
-              "column": 3
+              ]
+            },
+            {
+              "title": "Visualización de Reportes",
+              "file": "flows/reports/reports.spec.ts",
+              "line": 181,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "PRUEBA 8: Ver Reportes Pendientes - Moderador",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 2,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 21093,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-11-30T17:51:44.595Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "dd3863aafd298a73d93f-ea55ddf47b80b1a22e39",
+                  "file": "flows/reports/reports.spec.ts",
+                  "line": 192,
+                  "column": 5
+                },
+                {
+                  "title": "PRUEBA 9: Ver Reportes Pendientes - Sin Permisos",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 2,
+                          "parallelIndex": 0,
+                          "status": "failed",
+                          "duration": 13809,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m\n    at C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\flows\\reports\\reports.spec.ts:240:48",
+                            "location": {
+                              "file": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\flows\\reports\\reports.spec.ts",
+                              "column": 48,
+                              "line": 240
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 238 |\u001b[39m       \u001b[36mconst\u001b[39m isRedirected \u001b[33m=\u001b[39m \u001b[33m!\u001b[39mcurrentUrl\u001b[33m.\u001b[39mincludes(\u001b[32m'/moderation/reports'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 239 |\u001b[39m       \n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 240 |\u001b[39m       expect(hasDeniedMessage \u001b[33m||\u001b[39m isRedirected)\u001b[33m.\u001b[39mtoBeTruthy()\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 241 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 242 |\u001b[39m\n \u001b[90m 243 |\u001b[39m     test(\u001b[32m'PRUEBA 10: Filtrar Reportes por Tipo'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\flows\\reports\\reports.spec.ts",
+                                "column": 48,
+                                "line": 240
+                              },
+                              "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m\n\n\u001b[0m \u001b[90m 238 |\u001b[39m       \u001b[36mconst\u001b[39m isRedirected \u001b[33m=\u001b[39m \u001b[33m!\u001b[39mcurrentUrl\u001b[33m.\u001b[39mincludes(\u001b[32m'/moderation/reports'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 239 |\u001b[39m       \n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 240 |\u001b[39m       expect(hasDeniedMessage \u001b[33m||\u001b[39m isRedirected)\u001b[33m.\u001b[39mtoBeTruthy()\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 241 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 242 |\u001b[39m\n \u001b[90m 243 |\u001b[39m     test(\u001b[32m'PRUEBA 10: Filtrar Reportes por Tipo'\u001b[39m\u001b[33m,\u001b[39m \u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\u001b[0m\n\u001b[2m    at C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\flows\\reports\\reports.spec.ts:240:48\u001b[22m"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-11-30T17:52:06.611Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\test-results\\flows-reports-reports-Módu-26393-s-Pendientes---Sin-Permisos-chromium\\test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\test-results\\flows-reports-reports-Módu-26393-s-Pendientes---Sin-Permisos-chromium\\video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\test-results\\flows-reports-reports-Módu-26393-s-Pendientes---Sin-Permisos-chromium\\error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\flows\\reports\\reports.spec.ts",
+                            "column": 48,
+                            "line": 240
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "dd3863aafd298a73d93f-dbb22b71201aea3abf0b",
+                  "file": "flows/reports/reports.spec.ts",
+                  "line": 213,
+                  "column": 5
+                },
+                {
+                  "title": "PRUEBA 10: Filtrar Reportes por Tipo",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 3,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 24881,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-11-30T17:52:28.088Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "dd3863aafd298a73d93f-c153f5987a27d6888369",
+                  "file": "flows/reports/reports.spec.ts",
+                  "line": 235,
+                  "column": 5
+                },
+                {
+                  "title": "PRUEBA 11: Filtrar Reportes por Estado",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 3,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 20641,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-11-30T17:52:54.055Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "dd3863aafd298a73d93f-929b1cc3fc318ad8c94e",
+                  "file": "flows/reports/reports.spec.ts",
+                  "line": 253,
+                  "column": 5
+                },
+                {
+                  "title": "PRUEBA 18: Ver Mis Reportes - Usuario",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 3,
+                          "parallelIndex": 0,
+                          "status": "failed",
+                          "duration": 9015,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m\n    at C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\flows\\reports\\reports.spec.ts:285:32",
+                            "location": {
+                              "file": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\flows\\reports\\reports.spec.ts",
+                              "column": 32,
+                              "line": 285
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 283 |\u001b[39m       \u001b[36mconst\u001b[39m response \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m reportsApiHelper\u001b[33m.\u001b[39mgetMyReports(page)\u001b[33m;\u001b[39m\n \u001b[90m 284 |\u001b[39m       \n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 285 |\u001b[39m       expect(response\u001b[33m.\u001b[39msuccess)\u001b[33m.\u001b[39mtoBeTruthy()\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 286 |\u001b[39m       expect(\u001b[33mArray\u001b[39m\u001b[33m.\u001b[39misArray(response\u001b[33m.\u001b[39mdata))\u001b[33m.\u001b[39mtoBeTruthy()\u001b[33m;\u001b[39m\n \u001b[90m 287 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 288 |\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\flows\\reports\\reports.spec.ts",
+                                "column": 32,
+                                "line": 285
+                              },
+                              "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m\n\n\u001b[0m \u001b[90m 283 |\u001b[39m       \u001b[36mconst\u001b[39m response \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m reportsApiHelper\u001b[33m.\u001b[39mgetMyReports(page)\u001b[33m;\u001b[39m\n \u001b[90m 284 |\u001b[39m       \n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 285 |\u001b[39m       expect(response\u001b[33m.\u001b[39msuccess)\u001b[33m.\u001b[39mtoBeTruthy()\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 286 |\u001b[39m       expect(\u001b[33mArray\u001b[39m\u001b[33m.\u001b[39misArray(response\u001b[33m.\u001b[39mdata))\u001b[33m.\u001b[39mtoBeTruthy()\u001b[33m;\u001b[39m\n \u001b[90m 287 |\u001b[39m     })\u001b[33m;\u001b[39m\n \u001b[90m 288 |\u001b[39m\u001b[0m\n\u001b[2m    at C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\flows\\reports\\reports.spec.ts:285:32\u001b[22m"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-11-30T17:53:14.794Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\test-results\\flows-reports-reports-Módu-0b7d8--Ver-Mis-Reportes---Usuario-chromium\\test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\test-results\\flows-reports-reports-Módu-0b7d8--Ver-Mis-Reportes---Usuario-chromium\\video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\test-results\\flows-reports-reports-Módu-0b7d8--Ver-Mis-Reportes---Usuario-chromium\\error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\flows\\reports\\reports.spec.ts",
+                            "column": 32,
+                            "line": 285
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "dd3863aafd298a73d93f-76cb1c350d7e9f4acc17",
+                  "file": "flows/reports/reports.spec.ts",
+                  "line": 269,
+                  "column": 5
+                },
+                {
+                  "title": "PRUEBA 19: Ver Reportes de Producto - Propietario",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 4,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 10901,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-11-30T17:53:29.307Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "dd3863aafd298a73d93f-4fb20605fb42f9a0a69e",
+                  "file": "flows/reports/reports.spec.ts",
+                  "line": 280,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Resolución de Reportes",
+              "file": "flows/reports/reports.spec.ts",
+              "line": 300,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "PRUEBA 12: Resolver Reporte - Aprobar (Producto Válido)",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "location": {
+                            "file": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\flows\\reports\\reports.spec.ts",
+                            "line": 340,
+                            "column": 10
+                          }
+                        }
+                      ],
+                      "expectedStatus": "skipped",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 4,
+                          "parallelIndex": 0,
+                          "status": "skipped",
+                          "duration": 0,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-11-30T17:53:40.982Z",
+                          "annotations": [
+                            {
+                              "type": "skip",
+                              "location": {
+                                "file": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\flows\\reports\\reports.spec.ts",
+                                "line": 340,
+                                "column": 10
+                              }
+                            }
+                          ],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "dd3863aafd298a73d93f-a66a99e7256d3cfc9ed6",
+                  "file": "flows/reports/reports.spec.ts",
+                  "line": 328,
+                  "column": 10
+                },
+                {
+                  "title": "PRUEBA 13: Resolver Reporte - Rechazar Producto",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "location": {
+                            "file": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\flows\\reports\\reports.spec.ts",
+                            "line": 352,
+                            "column": 10
+                          }
+                        }
+                      ],
+                      "expectedStatus": "skipped",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 4,
+                          "parallelIndex": 0,
+                          "status": "skipped",
+                          "duration": 0,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-11-30T17:53:40.984Z",
+                          "annotations": [
+                            {
+                              "type": "skip",
+                              "location": {
+                                "file": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\flows\\reports\\reports.spec.ts",
+                                "line": 352,
+                                "column": 10
+                              }
+                            }
+                          ],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "dd3863aafd298a73d93f-8637a245910074b20f7f",
+                  "file": "flows/reports/reports.spec.ts",
+                  "line": 341,
+                  "column": 10
+                },
+                {
+                  "title": "PRUEBA 14: Resolver Reporte - Suspender Producto",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "location": {
+                            "file": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\flows\\reports\\reports.spec.ts",
+                            "line": 356,
+                            "column": 10
+                          }
+                        }
+                      ],
+                      "expectedStatus": "skipped",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 4,
+                          "parallelIndex": 0,
+                          "status": "skipped",
+                          "duration": 0,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-11-30T17:53:40.985Z",
+                          "annotations": [
+                            {
+                              "type": "skip",
+                              "location": {
+                                "file": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\flows\\reports\\reports.spec.ts",
+                                "line": 356,
+                                "column": 10
+                              }
+                            }
+                          ],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "dd3863aafd298a73d93f-f88e59bd68e591579ace",
+                  "file": "flows/reports/reports.spec.ts",
+                  "line": 346,
+                  "column": 10
+                },
+                {
+                  "title": "PRUEBA 15: Resolver Reporte - Marcar como Peligroso",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "location": {
+                            "file": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\flows\\reports\\reports.spec.ts",
+                            "line": 360,
+                            "column": 10
+                          }
+                        }
+                      ],
+                      "expectedStatus": "skipped",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 4,
+                          "parallelIndex": 0,
+                          "status": "skipped",
+                          "duration": 0,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-11-30T17:53:40.986Z",
+                          "annotations": [
+                            {
+                              "type": "skip",
+                              "location": {
+                                "file": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\flows\\reports\\reports.spec.ts",
+                                "line": 360,
+                                "column": 10
+                              }
+                            }
+                          ],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "dd3863aafd298a73d93f-b4c084cf8292451e041f",
+                  "file": "flows/reports/reports.spec.ts",
+                  "line": 351,
+                  "column": 10
+                },
+                {
+                  "title": "PRUEBA 16: Resolver Reporte - Validación Explicación Mínima",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "location": {
+                            "file": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\flows\\reports\\reports.spec.ts",
+                            "line": 364,
+                            "column": 10
+                          }
+                        }
+                      ],
+                      "expectedStatus": "skipped",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 4,
+                          "parallelIndex": 0,
+                          "status": "skipped",
+                          "duration": 0,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-11-30T17:53:40.987Z",
+                          "annotations": [
+                            {
+                              "type": "skip",
+                              "location": {
+                                "file": "C:\\Users\\johan\\OneDrive\\Documentos\\SistemaVenta\\SistemaVentas\\frontend\\e2e\\flows\\reports\\reports.spec.ts",
+                                "line": 364,
+                                "column": 10
+                              }
+                            }
+                          ],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "dd3863aafd298a73d93f-67af04b60757c9613f8b",
+                  "file": "flows/reports/reports.spec.ts",
+                  "line": 356,
+                  "column": 10
+                },
+                {
+                  "title": "PRUEBA 17: Resolver Reporte - Reporte Ya Resuelto",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 4,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 19935,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-11-30T17:53:40.988Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "dd3863aafd298a73d93f-409aad781a0e5f9a74e2",
+                  "file": "flows/reports/reports.spec.ts",
+                  "line": 373,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Estadísticas y Otros",
+              "file": "flows/reports/reports.spec.ts",
+              "line": 404,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "PRUEBA 20: Estadísticas de Reportes",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 4,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 7779,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-11-30T17:54:01.034Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "dd3863aafd298a73d93f-97dc151b7cc98de55a37",
+                  "file": "flows/reports/reports.spec.ts",
+                  "line": 415,
+                  "column": 5
+                },
+                {
+                  "title": "PRUEBA 21: Interfaz Usuario - Visualización Reportes",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 4,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 15971,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-11-30T17:54:08.919Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "dd3863aafd298a73d93f-9117d9be7138d15d61a8",
+                  "file": "flows/reports/reports.spec.ts",
+                  "line": 428,
+                  "column": 5
+                },
+                {
+                  "title": "PRUEBA 22: Acceso No Autenticado",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 4,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 3975,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2025-11-30T17:54:24.977Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "dd3863aafd298a73d93f-60773659148b53ebe045",
+                  "file": "flows/reports/reports.spec.ts",
+                  "line": 448,
+                  "column": 5
+                }
+              ]
             }
           ]
         }
@@ -124,11 +1131,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2025-11-24T04:57:51.398Z",
-    "duration": 9898.656,
-    "expected": 1,
-    "skipped": 0,
-    "unexpected": 0,
+    "startTime": "2025-11-30T17:49:18.601Z",
+    "duration": 311078.603,
+    "expected": 12,
+    "skipped": 6,
+    "unexpected": 4,
     "flaky": 0
   }
 }
