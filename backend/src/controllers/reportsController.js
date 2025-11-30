@@ -356,6 +356,33 @@ class ReportsController {
         [nuevoEstadoProducto, esPeligroso, moderador_resolutor_id, accion !== 'aprobar' ? decision_final : null, reporte.item_id]
       );
 
+      // Registrar la acción de moderación en acciones_moderacion para poder asociar apelaciones con reportes
+      let accionModeracion = '';
+      if (accion === 'rechazar') {
+        accionModeracion = 'moderar_producto_rechazar';
+      } else if (accion === 'suspender') {
+        accionModeracion = 'moderar_producto_suspender';
+      } else if (accion === 'eliminar' || esPeligroso) {
+        accionModeracion = 'moderar_producto_marcar_peligroso';
+      } else if (accion === 'aprobar') {
+        accionModeracion = 'moderar_producto_aprobar';
+      }
+
+      if (accionModeracion) {
+        await query(
+          `INSERT INTO acciones_moderacion (moderador_id, accion, tabla_afectada, registro_id, detalles)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [
+            moderador_resolutor_id,
+            accionModeracion,
+            'items',
+            reporte.item_id,
+            `Reporte ${report_id} resuelto: ${decision_final}`
+          ]
+        );
+        console.log(`📝 Acción de moderación registrada: ${accionModeracion} para producto ${reporte.item_id} (reporte ${report_id})`);
+      }
+
       // Obtener información del producto para obtener el vendedor_id
       const productoResult = await query(
         'SELECT vendedor_id FROM items WHERE id = $1',

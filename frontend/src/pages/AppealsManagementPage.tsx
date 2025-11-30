@@ -86,7 +86,16 @@ export const AppealsManagementPage: React.FC = () => {
       const data = await response.json();
       
       if (data.success) {
-        setAppeals(data.data);
+        // Asegurar que no haya duplicados usando un Map con item_id como clave
+        // Para apelaciones existentes, usar id; para productos pendientes, usar item_id
+        const uniqueAppeals = new Map();
+        data.data.forEach((appeal: Appeal) => {
+          const key = appeal.id || `pending_${appeal.item_id}`;
+          if (!uniqueAppeals.has(key)) {
+            uniqueAppeals.set(key, appeal);
+          }
+        });
+        setAppeals(Array.from(uniqueAppeals.values()));
       } else {
         showError('Error', 'No se pudieron cargar las apelaciones');
       }
@@ -111,7 +120,14 @@ export const AppealsManagementPage: React.FC = () => {
       const data = await response.json();
       
       if (data.success) {
-        setAllAppeals(data.data);
+        // Asegurar que no haya duplicados usando un Map con id como clave
+        const uniqueAppeals = new Map();
+        data.data.forEach((appeal: Appeal) => {
+          if (appeal.id && !uniqueAppeals.has(appeal.id)) {
+            uniqueAppeals.set(appeal.id, appeal);
+          }
+        });
+        setAllAppeals(Array.from(uniqueAppeals.values()));
       }
     } catch (error) {
       console.error('Error al cargar todas las apelaciones para estadísticas:', error);
@@ -124,7 +140,7 @@ export const AppealsManagementPage: React.FC = () => {
       loadAllAppealsForStats(); // Cargar todas las apelaciones para estadísticas
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
+  }, [activeTab, user]);
 
   const handleResolveAppeal = async () => {
     if (!selectedAppeal) return;

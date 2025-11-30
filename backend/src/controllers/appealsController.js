@@ -91,57 +91,134 @@ class AppealsController {
         });
       }
 
-      // Buscar el reporte más reciente resuelto que resultó en rechazo/suspensión (si aplica)
-      // Si el producto está rechazado o suspendido, buscar el reporte más reciente resuelto para ese producto
-      // que haya sido resuelto antes de la fecha actual (para asegurar que fue el que causó el cambio de estado)
+      // Buscar el reporte más reciente resuelto que resultó en rechazo/suspensión/peligroso (si aplica)
+      // La estrategia es buscar reportes resueltos que:
+      // 1. Tengan una acción de moderación asociada que cambió el estado del producto
+      // 2. O que coincidan con el estado actual del producto por fecha y decisión
       let reporte_id = null;
       
       if (producto.estado === 'rechazado' || producto.estado === 'suspendido' || producto.estado === 'peligroso') {
-        // Buscar reportes resueltos para este producto, ordenados por fecha de resolución descendente
-        // Tomar el más reciente que haya sido resuelto
-        const reporteReciente = await query(
-          `SELECT id, fecha_resolucion 
-           FROM reportes 
-           WHERE item_id = $1 
-           AND estado = 'resuelto'
-           ORDER BY fecha_resolucion DESC
+        // Primero, buscar reportes resueltos que tienen una acción de moderación asociada
+        // y que coincidan con el estado actual del producto
+        const reporteConAccion = await query(
+          `SELECT DISTINCT r.id, r.fecha_resolucion
+           FROM reportes r
+           INNER JOIN acciones_moderacion am ON am.registro_id = r.item_id 
+           WHERE r.item_id = $1 
+           AND r.estado = 'resuelto'
+           AND am.tabla_afectada = 'items'
+           AND (
+             ($2 = 'rechazado' AND am.accion = 'moderar_producto_rechazar') OR
+             ($2 = 'suspendido' AND am.accion = 'moderar_producto_suspender') OR
+             ($2 = 'peligroso' AND am.accion = 'moderar_producto_marcar_peligroso')
+           )
+           AND am.fecha_accion >= r.fecha_resolucion - INTERVAL '1 hour'
+           AND am.fecha_accion <= r.fecha_resolucion + INTERVAL '1 hour'
+           ORDER BY r.fecha_resolucion DESC
            LIMIT 1`,
-          [item_id]
+          [item_id, producto.estado]
         );
-        
-        if (reporteReciente.rows.length > 0) {
-          reporte_id = reporteReciente.rows[0].id;
-          console.log(`📝 Apelación asociada al reporte ${reporte_id} para el producto ${item_id}`);
-        }
-      }
-      
-      // Si no se encontró un reporte pero el producto puede ser apelado por otras razones,
-      // también buscar reportes resueltos que puedan estar relacionados
-      if (!reporte_id) {
-        const reportesResueltos = await query(
-          `SELECT id FROM reportes 
-           WHERE item_id = $1 
-           AND estado = 'resuelto' 
-           AND (decision_final LIKE '%rechazado%' OR decision_final LIKE '%suspendido%' OR decision_final LIKE '%peligroso%')
-           ORDER BY fecha_resolucion DESC
-           LIMIT 1`,
-          [item_id]
-        );
-        
-        if (reportesResueltos.rows.length > 0) {
-          reporte_id = reportesResueltos.rows[0].id;
-          console.log(`📝 Apelación asociada al reporte ${reporte_id} (por contenido de decision_final) para el producto ${item_id}`);
+
+        if (reporteConAccion.rows.length > 0) {
+          reporte_id = reporteConAccion.rows[0].id;
+          console.log(`📝 Apelación asociada al reporte ID: ${reporte_id} (por acción de moderación con coincidencia de fecha)`);
+        } else {
+          // Si no se encuentra con fecha exacta, buscar el reporte más reciente resuelto
+          // que tenga el mismo moderador_resolutor_id que el moderador_revision_id del producto
+          // y que sea anterior o cercano a la fecha_revision del producto
+          const reportePorModerador = await query(
+            `SELECT r.id 
+             FROM reportes r
+             WHERE r.item_id = $1 
+             AND r.estado = 'resuelto'
+             AND r.moderador_resolutor_id = $2
+             AND (r.fecha_resolucion <= COALESCE($3, CURRENT_TIMESTAMP))
+             ORDER BY r.fecha_resolucion DESC
+             LIMIT 1`,
+            [item_id, producto.moderador_revision_id, producto.fecha_revision]
+          );
+
+          if (reportePorModerador.rows.length > 0) {
+            reporte_id = reportePorModerador.rows[0].id;
+            console.log(`📝 Apelación asociada al reporte ID: ${reporte_id} (por moderador y fecha)`);
+          } else {
+            // Buscar el reporte más reciente resuelto que tenga una decisión relacionada
+            const reportePorDecision = await query(
+              `SELECT id 
+               FROM reportes 
+               WHERE item_id = $1 
+               AND estado = 'resuelto'
+               AND (
+                 decision_final ILIKE '%rechazado%' OR 
+                 decision_final ILIKE '%suspendido%' OR 
+                 decision_final ILIKE '%peligroso%'
+               )
+               ORDER BY fecha_resolucion DESC
+               LIMIT 1`,
+              [item_id]
+            );
+            
+            if (reportePorDecision.rows.length > 0) {
+              reporte_id = reportePorDecision.rows[0].id;
+              console.log(`📝 Apelación asociada al reporte ID: ${reporte_id} (por contenido de decision_final)`);
+            } else {
+              // Como último recurso, buscar cualquier reporte resuelto para este producto
+              // que haya sido resuelto antes o cerca de la fecha de revisión del producto
+              const reporteCualquiera = await query(
+                `SELECT id 
+                 FROM reportes 
+                 WHERE item_id = $1 
+                 AND estado = 'resuelto'
+                 AND (fecha_resolucion <= COALESCE($2, CURRENT_TIMESTAMP) OR fecha_resolucion <= CURRENT_TIMESTAMP)
+                 ORDER BY fecha_resolucion DESC
+                 LIMIT 1`,
+                [item_id, producto.fecha_revision]
+              );
+              
+              if (reporteCualquiera.rows.length > 0) {
+                reporte_id = reporteCualquiera.rows[0].id;
+                console.log(`📝 Apelación asociada al reporte ID: ${reporte_id} (último reporte resuelto antes/cerca de fecha_revision)`);
+              } else {
+                // Última opción: cualquier reporte resuelto para este producto
+                const ultimoReporte = await query(
+                  `SELECT id 
+                   FROM reportes 
+                   WHERE item_id = $1 
+                   AND estado = 'resuelto'
+                   ORDER BY fecha_resolucion DESC
+                   LIMIT 1`,
+                  [item_id]
+                );
+                
+                if (ultimoReporte.rows.length > 0) {
+                  reporte_id = ultimoReporte.rows[0].id;
+                  console.log(`📝 Apelación asociada al reporte ID: ${reporte_id} (último reporte resuelto en general)`);
+                }
+              }
+            }
+          }
         }
       }
 
       // Crear la apelación (puede estar asociada a un reporte o directamente al producto)
+      // Asegurar que reporte_id sea null si no se encontró ningún reporte
+      const reporteIdFinal = reporte_id || null;
+      
+      console.log(`📝 Creando apelación para producto ${item_id}:`);
+      console.log(`   → reporte_id: ${reporteIdFinal} ${reporteIdFinal ? '(asociado a reporte)' : '(sin reporte asociado)'}`);
+      console.log(`   → usuario_apelante_id: ${usuario_apelante_id}`);
+      console.log(`   → motivo_apelacion: ${motivo_apelacion.substring(0, 50)}...`);
+      
       const result = await query(
         `INSERT INTO apelaciones 
         (item_id, reporte_id, usuario_apelante_id, motivo_apelacion, informacion_adicional, estado, fecha_apelacion)
         VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
         RETURNING *`,
-        [item_id, reporte_id, usuario_apelante_id, motivo_apelacion, informacion_adicional || null, 'en_apelacion']
+        [item_id, reporteIdFinal, usuario_apelante_id, motivo_apelacion, informacion_adicional || null, 'en_apelacion']
       );
+      
+      console.log(`✅ Apelación creada exitosamente con ID: ${result.rows[0].id}`);
+      console.log(`   → reporte_id guardado: ${result.rows[0].reporte_id || 'NULL'}`);
 
       // Actualizar el estado del producto a "en_apelacion" si estaba rechazado o suspendido
       if (producto.estado === 'rechazado' || producto.estado === 'suspendido') {

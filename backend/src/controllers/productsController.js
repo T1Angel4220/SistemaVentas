@@ -1135,7 +1135,8 @@ class ProductsController {
       }
 
       // Los productos suspendidos o en apelación (que NO son peligrosos) SÍ pueden ser eliminados por el vendedor
-      // Si el producto tiene una apelación activa, se cancelará automáticamente al eliminar el producto
+      // Si el producto tiene apelaciones, se deben eliminar todas antes de eliminar el producto
+      // Primero, cancelar las apelaciones activas (si las hay)
       const apelacionesActivas = await query(
         'SELECT id FROM apelaciones WHERE item_id = $1 AND estado IN ($2, $3)',
         [id, 'en_apelacion', 'pendiente']
@@ -1152,6 +1153,63 @@ class ProductsController {
           [id, 'en_apelacion', 'pendiente']
         );
         console.log(`📝 ${apelacionesActivas.rows.length} apelación(es) cancelada(s) al eliminar el producto`);
+      }
+
+      // Eliminar TODAS las apelaciones relacionadas con el producto (activas, resueltas, rechazadas, etc.)
+      // Esto es necesario para evitar violaciones de clave foránea
+      const todasLasApelaciones = await query(
+        'SELECT COUNT(*) as total FROM apelaciones WHERE item_id = $1',
+        [id]
+      );
+
+      if (parseInt(todasLasApelaciones.rows[0].total) > 0) {
+        await query(
+          'DELETE FROM apelaciones WHERE item_id = $1',
+          [id]
+        );
+        console.log(`🗑️ ${todasLasApelaciones.rows[0].total} apelación(es) eliminada(s) al eliminar el producto`);
+      }
+
+      // Eliminar reportes relacionados con el producto (para evitar violaciones de clave foránea)
+      const reportesRelacionados = await query(
+        'SELECT COUNT(*) as total FROM reportes WHERE item_id = $1',
+        [id]
+      );
+
+      if (parseInt(reportesRelacionados.rows[0].total) > 0) {
+        await query(
+          'DELETE FROM reportes WHERE item_id = $1',
+          [id]
+        );
+        console.log(`🗑️ ${reportesRelacionados.rows[0].total} reporte(s) eliminado(s) al eliminar el producto`);
+      }
+
+      // Eliminar chats relacionados con el producto (para evitar violaciones de clave foránea)
+      const chatsRelacionados = await query(
+        'SELECT COUNT(*) as total FROM chats WHERE item_id = $1',
+        [id]
+      );
+
+      if (parseInt(chatsRelacionados.rows[0].total) > 0) {
+        await query(
+          'DELETE FROM chats WHERE item_id = $1',
+          [id]
+        );
+        console.log(`🗑️ ${chatsRelacionados.rows[0].total} chat(s) eliminado(s) al eliminar el producto`);
+      }
+
+      // Eliminar valoraciones relacionadas con el producto (para evitar violaciones de clave foránea)
+      const valoracionesRelacionadas = await query(
+        'SELECT COUNT(*) as total FROM valoraciones WHERE item_id = $1',
+        [id]
+      );
+
+      if (parseInt(valoracionesRelacionadas.rows[0].total) > 0) {
+        await query(
+          'DELETE FROM valoraciones WHERE item_id = $1',
+          [id]
+        );
+        console.log(`🗑️ ${valoracionesRelacionadas.rows[0].total} valoración(es) eliminada(s) al eliminar el producto`);
       }
 
       const imagenesProducto = await query(

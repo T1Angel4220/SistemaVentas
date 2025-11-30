@@ -287,8 +287,12 @@ const verifyEmail = async (req, res) => {
     }
     
     // Buscar usuario por código de verificación (usar TRIM para asegurar consistencia)
+    // IMPORTANTE: Cuando se registra un usuario, tanto fecha_registro como fecha_actualizacion se establecen iguales
+    // Cuando se reenvía el código, fecha_actualizacion se actualiza
+    // Por lo tanto, debemos usar fecha_actualizacion si existe y fue actualizada después del registro,
+    // o fecha_registro si fecha_actualizacion es igual a fecha_registro (registro inicial)
     const userResult = await query(`
-      SELECT id, correo, estado, email_verificado, token_verificacion, fecha_registro
+      SELECT id, correo, estado, email_verificado, token_verificacion, fecha_registro, fecha_actualizacion
       FROM usuarios 
       WHERE TRIM(token_verificacion) = $1
     `, [cleanCode]);
@@ -319,22 +323,37 @@ const verifyEmail = async (req, res) => {
     }
 
     // Verificar que el código no haya expirado (10 minutos)
+    // IMPORTANTE: Cuando se registra un usuario, tanto fecha_registro como fecha_actualizacion se establecen iguales
+    // Cuando se reenvía el código, fecha_actualizacion se actualiza
+    // Por lo tanto, debemos usar fecha_actualizacion si existe y fue actualizada después del registro,
+    // o fecha_registro si fecha_actualizacion es igual a fecha_registro (registro inicial)
     // Usar la zona horaria de Ecuador para la comparación
     // Comparar directamente en la base de datos usando EXTRACT para evitar problemas de zona horaria
     const expirationCheck = await query(
       `SELECT 
-        EXTRACT(EPOCH FROM (NOW() - fecha_registro)) / 60 as minutos_transcurridos
+        CASE 
+          WHEN fecha_actualizacion > fecha_registro THEN EXTRACT(EPOCH FROM (NOW() - fecha_actualizacion)) / 60
+          ELSE EXTRACT(EPOCH FROM (NOW() - fecha_registro)) / 60
+        END as minutos_transcurridos,
+        fecha_actualizacion,
+        fecha_registro,
+        (fecha_actualizacion > fecha_registro) as token_actualizado
        FROM usuarios 
        WHERE id = $1`,
       [user.id]
     );
 
     const minutosTranscurridos = parseFloat(expirationCheck.rows[0].minutos_transcurridos);
+    const fechaReferencia = expirationCheck.rows[0].token_actualizado 
+      ? expirationCheck.rows[0].fecha_actualizacion 
+      : expirationCheck.rows[0].fecha_registro;
 
     console.log('🔍 Verificación de código de verificación:');
-    console.log('   → Código recibido:', code);
+    console.log('   → Código recibido:', cleanCode);
     console.log('   → Código en BD:', user.token_verificacion);
     console.log('   → Fecha registro:', user.fecha_registro);
+    console.log('   → Fecha actualización (último código):', user.fecha_actualizacion || 'N/A (usando fecha_registro)');
+    console.log('   → Fecha referencia usada:', fechaReferencia);
     console.log('   → Tiempo transcurrido (calculado en BD):', minutosTranscurridos.toFixed(2), 'minutos');
     
     if (minutosTranscurridos > 10) {
