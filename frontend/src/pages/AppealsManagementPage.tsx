@@ -205,7 +205,7 @@ export const AppealsManagementPage: React.FC = () => {
     
     let dateStr = dateString.trim();
     
-    // Si ya tiene información de zona horaria completa (Z, +HH:MM, -HH:MM), usarla directamente
+    // Si ya tiene información de zona horaria completa, usarla directamente
     if (dateStr.includes('Z') || /[+-]\d{2}:\d{2}$/.test(dateStr)) {
       return new Date(dateStr).toLocaleString('es-EC', {
         timeZone: 'America/Guayaquil',
@@ -220,45 +220,74 @@ export const AppealsManagementPage: React.FC = () => {
     }
     
     // PostgreSQL devuelve fechas sin zona horaria: '2025-11-29 19:56:58.84055'
-    // Estas fechas están en hora de Ecuador (UTC-5). Necesitamos interpretarlas como tal.
-    // Convertir a formato ISO y agregar el offset de Ecuador
+    // IMPORTANTE: Estas fechas están almacenadas en hora de Ecuador (UTC-5)
+    // El problema: JavaScript interpreta fechas sin zona horaria como hora local del navegador
+    // Solución: Agregar explícitamente el offset de Ecuador (-05:00) al crear el Date
     
-    // Primero, normalizar el formato: reemplazar espacio por 'T' si no tiene 'T'
+    // Normalizar: reemplazar espacio por 'T' para formato ISO
     if (!dateStr.includes('T')) {
       dateStr = dateStr.replace(' ', 'T');
     }
     
-    // Eliminar microsegundos si existen (mantener solo hasta segundos o milisegundos)
-    // Formato: '2025-11-29T19:56:58.84055' -> '2025-11-29T19:56:58'
+    // Eliminar microsegundos (mantener solo hasta segundos)
     if (dateStr.includes('.')) {
       const parts = dateStr.split('.');
-      dateStr = parts[0]; // Mantener solo la parte antes del punto
+      dateStr = parts[0];
     }
     
-    // Agregar el offset de Ecuador (UTC-5, que es -05:00)
-    // Ecuador está siempre en UTC-5 (no tiene horario de verano)
-    dateStr = dateStr + '-05:00';
-    
-    const date = new Date(dateStr);
-    
-    // Verificar que la fecha es válida
-    if (isNaN(date.getTime())) {
-      console.error('Fecha inválida:', dateString, '->', dateStr);
+    // Extraer componentes de la fecha
+    const match = dateStr.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/);
+    if (!match) {
+      console.error('Formato de fecha no reconocido:', dateString);
       return 'Fecha inválida';
     }
     
-    // Formatear fecha usando la zona horaria de Ecuador
-    // toLocaleString con timeZone ya convierte correctamente
-    return date.toLocaleString('es-EC', {
-      timeZone: 'America/Guayaquil',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: true
-    });
+    // Extraer componentes de la fecha (que ya están en hora de Ecuador)
+    const year = parseInt(match[1]);
+    const month = parseInt(match[2]) - 1; // JavaScript months are 0-indexed
+    const day = parseInt(match[3]);
+    const hour = parseInt(match[4]);
+    const minute = parseInt(match[5]);
+    const second = parseInt(match[6]);
+    
+    // IMPORTANTE: Los valores ya están en hora de Ecuador
+    // JavaScript necesita interpretarlos como hora local, no como UTC
+    // Solución: Crear el Date directamente con los valores como hora local
+    // Pero como estamos en el navegador del usuario, necesitamos ajustar
+    
+    // Crear string ISO con el offset de Ecuador explícitamente
+    // Esto le dice a JavaScript que interprete la hora como UTC-5 (Ecuador)
+    const isoString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}-05:00`;
+    
+    const date = new Date(isoString);
+    
+    // Verificar que la fecha es válida
+    if (isNaN(date.getTime())) {
+      console.error('Fecha inválida:', dateString, '->', isoString);
+      return 'Fecha inválida';
+    }
+    
+    // Formatear directamente mostrando los valores tal como están
+    // Los valores hora, minuto, segundo ya están en hora de Ecuador
+    // Solo necesitamos formatearlos correctamente
+    const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    const mes = meses[month];
+    
+    // Determinar AM/PM
+    let hora12 = hour;
+    let periodo = 'a. m.';
+    if (hour === 0) {
+      hora12 = 12;
+    } else if (hour === 12) {
+      periodo = 'p. m.';
+    } else if (hour > 12) {
+      hora12 = hour - 12;
+      periodo = 'p. m.';
+    }
+    
+    // Formatear con los valores directos (ya están en hora de Ecuador)
+    // Nota: Los valores hora, minuto, segundo vienen directamente de la BD en hora de Ecuador
+    return `${day} ${mes} ${year}, ${String(hora12).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')} ${periodo}`;
   };
 
   const getEstadoBadge = (estado: string) => {

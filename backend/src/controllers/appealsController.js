@@ -287,7 +287,18 @@ class AppealsController {
       // Obtener apelaciones del producto con información del apelante y revisor
       const result = await query(
         `SELECT 
-          a.*,
+          a.id,
+          a.reporte_id,
+          a.item_id,
+          a.usuario_apelante_id,
+          a.motivo_apelacion,
+          a.informacion_adicional,
+          a.estado,
+          TO_CHAR(a.fecha_apelacion, 'YYYY-MM-DD HH24:MI:SS.MS') as fecha_apelacion,
+          CASE WHEN a.fecha_revision_apelacion IS NOT NULL THEN TO_CHAR(a.fecha_revision_apelacion, 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_revision_apelacion,
+          a.moderador_revisor_id,
+          a.decision_apelacion,
+          CASE WHEN a.fecha_resolucion_apelacion IS NOT NULL THEN TO_CHAR(a.fecha_resolucion_apelacion, 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_resolucion_apelacion,
           u_apelante.nombre as apelante_nombre,
           u_apelante.apellido as apelante_apellido,
           u_apelante.correo as apelante_correo,
@@ -323,7 +334,18 @@ class AppealsController {
       // Primero obtener apelaciones existentes
       const apelacionesExistentes = await query(
         `        SELECT 
-          a.*,
+          a.id,
+          a.reporte_id,
+          a.item_id,
+          a.usuario_apelante_id,
+          a.motivo_apelacion,
+          a.informacion_adicional,
+          a.estado,
+          TO_CHAR(a.fecha_apelacion, 'YYYY-MM-DD HH24:MI:SS.MS') as fecha_apelacion,
+          CASE WHEN a.fecha_revision_apelacion IS NOT NULL THEN TO_CHAR(a.fecha_revision_apelacion, 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_revision_apelacion,
+          a.moderador_revisor_id,
+          a.decision_apelacion,
+          CASE WHEN a.fecha_resolucion_apelacion IS NOT NULL THEN TO_CHAR(a.fecha_resolucion_apelacion, 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_resolucion_apelacion,
           i.nombre as producto_nombre,
           i.descripcion as producto_descripcion,
           i.codigo as producto_codigo,
@@ -575,7 +597,18 @@ class AppealsController {
 
       const result = await query(
         `SELECT 
-          a.*,
+          a.id,
+          a.reporte_id,
+          a.item_id,
+          a.usuario_apelante_id,
+          a.motivo_apelacion,
+          a.informacion_adicional,
+          a.estado,
+          TO_CHAR(a.fecha_apelacion, 'YYYY-MM-DD HH24:MI:SS.MS') as fecha_apelacion,
+          CASE WHEN a.fecha_revision_apelacion IS NOT NULL THEN TO_CHAR(a.fecha_revision_apelacion, 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_revision_apelacion,
+          a.moderador_revisor_id,
+          a.decision_apelacion,
+          CASE WHEN a.fecha_resolucion_apelacion IS NOT NULL THEN TO_CHAR(a.fecha_resolucion_apelacion, 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_resolucion_apelacion,
           i.nombre as producto_nombre,
           i.codigo as producto_codigo,
           i.tipo as producto_tipo,
@@ -613,7 +646,18 @@ class AppealsController {
       
       let queryText = `
         SELECT 
-          a.*,
+          a.id,
+          a.reporte_id,
+          a.item_id,
+          a.usuario_apelante_id,
+          a.motivo_apelacion,
+          a.informacion_adicional,
+          a.estado,
+          TO_CHAR(a.fecha_apelacion, 'YYYY-MM-DD HH24:MI:SS.MS') as fecha_apelacion,
+          CASE WHEN a.fecha_revision_apelacion IS NOT NULL THEN TO_CHAR(a.fecha_revision_apelacion, 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_revision_apelacion,
+          a.moderador_revisor_id,
+          a.decision_apelacion,
+          CASE WHEN a.fecha_resolucion_apelacion IS NOT NULL THEN TO_CHAR(a.fecha_resolucion_apelacion, 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_resolucion_apelacion,
           i.nombre as producto_nombre,
           i.descripcion as producto_descripcion,
           i.codigo as producto_codigo,
