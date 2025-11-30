@@ -165,7 +165,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onToggl
       icon: Package,
       description: 'Gestiona tus productos publicados',
       onClick: () => {
-        navigate('/products/my');
+        navigate('/my-products');
         onClose();
       },
       color: 'from-green-500 to-emerald-600'
@@ -280,11 +280,13 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onToggl
       
       {/* Menú lateral */}
       <div className={`
-        fixed top-0 right-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out lg:hidden
-        ${isOpen ? 'translate-x-0' : 'translate-x-full'}
-      `}>
+        fixed top-0 left-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out lg:hidden
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}
+      style={{ backgroundColor: '#ffffff' }}
+      >
         {/* Header del menú */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6">
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 shadow-lg">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
@@ -317,7 +319,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onToggl
         </div>
         
         {/* Opciones del menú */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-4 bg-white">
           <div className="space-y-2">
             {menuItems.map((item, index) => (
               <button
@@ -419,7 +421,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onToggl
         </div>
         
         {/* Footer del menú */}
-        <div className="border-t border-gray-200 p-4">
+        <div className="border-t border-gray-200 p-4 bg-white">
           <button
             onClick={handleLogoutClick}
             className="w-full flex items-center justify-center space-x-2 p-3 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition-colors duration-200"

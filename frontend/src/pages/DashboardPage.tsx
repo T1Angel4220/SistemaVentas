@@ -157,7 +157,7 @@ export const DashboardPage: React.FC = () => {
       icon: Package,
       description: 'Gestiona tus productos publicados',
       onClick: () => {
-        navigate('/products/my');
+        navigate('/my-products');
         setIsMenuOpen(false);
       },
       color: 'from-green-500 to-emerald-600'
