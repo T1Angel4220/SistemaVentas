@@ -90,12 +90,6 @@ export const HomePage: React.FC = () => {
                   <CardDescription>
                     Encuentra productos y servicios de calidad con solo unos clics
                   </CardDescription>
-                  {!isAuthenticated && (
-                    <Button className="mt-4 w-full bg-blue-600 hover:bg-blue-700">
-                      Comenzar Ahora
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  )}
                 </CardContent>
               </Card>
             </Link>
@@ -115,12 +109,6 @@ export const HomePage: React.FC = () => {
                   <CardDescription>
                     Publica tus productos y servicios con total seguridad
                   </CardDescription>
-                  {!isAuthenticated && (
-                    <Button className="mt-4 w-full bg-green-600 hover:bg-green-700">
-                      Crear Cuenta
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  )}
                 </CardContent>
               </Card>
             </Link>
@@ -140,12 +128,6 @@ export const HomePage: React.FC = () => {
                   <CardDescription>
                     Sistema de moderación automática para contenido seguro
                   </CardDescription>
-                  {!isAuthenticated && (
-                    <Button className="mt-4 w-full bg-yellow-600 hover:bg-yellow-700 text-white">
-                      Únete Ahora
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  )}
                 </CardContent>
               </Card>
             </Link>
@@ -165,12 +147,6 @@ export const HomePage: React.FC = () => {
                   <CardDescription>
                     Sistema de valoraciones y reputación para usuarios
                   </CardDescription>
-                  {!isAuthenticated && (
-                    <Button className="mt-4 w-full bg-red-600 hover:bg-red-700">
-                      Ser Parte
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  )}
                 </CardContent>
               </Card>
             </Link>
@@ -190,12 +166,6 @@ export const HomePage: React.FC = () => {
                   <CardDescription>
                     Interfaz intuitiva y fácil de usar para todos
                   </CardDescription>
-                  {!isAuthenticated && (
-                    <Button className="mt-4 w-full bg-indigo-600 hover:bg-indigo-700">
-                      Descubre Más
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  )}
                 </CardContent>
               </Card>
             </Link>

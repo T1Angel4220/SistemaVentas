@@ -67,12 +67,19 @@ export const Navbar: React.FC = () => {
                 Sistema de Ventas
               </Link>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
               <Link to="/login">
-                <Button variant="outline">Iniciar Sesión</Button>
+                <Button 
+                  variant="outline" 
+                  className="border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 font-medium"
+                >
+                  Iniciar Sesión
+                </Button>
               </Link>
               <Link to="/register">
-                <Button>Registrarse</Button>
+                <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg transition-all duration-300 font-medium">
+                  Registrarse
+                </Button>
               </Link>
             </div>
           </div>
