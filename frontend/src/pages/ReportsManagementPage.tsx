@@ -23,7 +23,8 @@ import {
   FileText,
   Shield,
   Camera,
-  DollarSign
+  DollarSign,
+  X
 } from 'lucide-react';
 
 interface Report {
@@ -280,6 +281,15 @@ export const ReportsManagementPage: React.FC = () => {
     setShowResolveDialog(true);
     setDecisionFinal('');
     setMarcarPeligroso(false);
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      tipo_reporte: '',
+      estado: '',
+      fecha_desde: '',
+      fecha_hasta: ''
+    });
   };
 
   const formatDate = (dateString: string) => {
@@ -623,6 +633,18 @@ export const ReportsManagementPage: React.FC = () => {
                   className="w-full flex h-12 items-center justify-between rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm hover:border-gray-300 transition-colors"
                 />
               </div>
+            </div>
+            {/* Botón para limpiar filtros */}
+            <div className="mt-4 sm:mt-6 flex justify-end">
+              <Button
+                onClick={clearFilters}
+                variant="outline"
+                className="h-10 px-4 rounded-xl border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors"
+                disabled={!filters.tipo_reporte && !filters.estado && !filters.fecha_desde && !filters.fecha_hasta}
+              >
+                <X className="h-4 w-4 mr-2" />
+                Limpiar Filtros
+              </Button>
             </div>
           </CardContent>
         </Card>
