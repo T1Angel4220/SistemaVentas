@@ -86,6 +86,12 @@ export const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center h-16 gap-8">
           <div className="flex items-center space-x-8 flex-1">
+            {/* Menú móvil - Botón hamburguesa a la izquierda */}
+            <MobileMenu 
+              isOpen={isMobileMenuOpen}
+              onClose={() => setIsMobileMenuOpen(false)}
+              onToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            />
             <Link to="/dashboard" className="text-xl font-bold text-gray-900 whitespace-nowrap">
               Sistema de Ventas
             </Link>
@@ -215,13 +221,6 @@ export const Navbar: React.FC = () => {
               <LogOut className="h-4 w-4 transition-transform duration-300 group-hover:-rotate-12" />
               <span className="text-sm font-medium">Salir</span>
             </Button>
-
-            {/* Menú móvil */}
-            <MobileMenu 
-              isOpen={isMobileMenuOpen}
-              onClose={() => setIsMobileMenuOpen(false)}
-              onToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            />
           </div>
         </div>
       </div>

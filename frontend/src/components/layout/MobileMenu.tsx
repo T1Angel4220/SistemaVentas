@@ -280,10 +280,10 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onToggl
       
       {/* Menú lateral */}
       <div className={`
-        fixed top-0 left-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out lg:hidden
+        fixed top-0 left-0 h-screen w-80 max-w-[85vw] bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out lg:hidden
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       `}
-      style={{ backgroundColor: '#ffffff' }}
+      style={{ backgroundColor: '#ffffff', height: '100vh' }}
       >
         {/* Header del menú */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 shadow-lg">
