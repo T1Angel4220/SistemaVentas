@@ -52,51 +52,147 @@ export class SessionManagementPage {
    */
   async closeSession(sessionIndex: number = 0, motivo?: string) {
     // Las sesiones activas están en divs con clases emerald-50 o green-50
-    // Pero el botón puede estar en un contenedor diferente
-    // Buscar todas las sesiones activas primero
+    // Buscar todas las sesiones activas primero - buscar por el badge "Activa"
     const sessions = this.page.locator('div[class*="emerald-50"], div[class*="green-50"]').filter({ 
-      has: this.page.locator('text=/Activa|Iniciada|Expira/') 
+      has: this.page.locator('text=/Activa/i') 
     });
-    await sessions.first().waitFor({ state: 'visible', timeout: 10000 });
     
-    const sessionCount = await sessions.count();
-    console.log(`[DEBUG] Total de sesiones activas encontradas: ${sessionCount}`);
+    // Si no se encuentran con ese filtro, buscar por cualquier div que contenga "Activa"
+    let sessionCount = await sessions.count();
+    let targetSession;
     
-    if (sessionIndex >= sessionCount) {
-      throw new Error(`Índice de sesión ${sessionIndex} fuera de rango. Solo hay ${sessionCount} sesiones activas.`);
-    }
-    
-    // En lugar de buscar dentro de la sesión, buscar el botón de cerrar asociado a cada sesión
-    // El botón está en el mismo nivel que la sesión o en un contenedor padre
-    // Buscar todos los botones con clase text-red-600 en la página
-    const allRedButtons = this.page.locator('button[class*="text-red-600"], button[class*="border-red-300"]');
-    const redButtonCount = await allRedButtons.count();
-    console.log(`[DEBUG] Total de botones rojos encontrados en la página: ${redButtonCount}`);
-    
-    if (redButtonCount === 0) {
-      // Si no hay botones rojos, buscar cualquier botón que contenga SVG
-      const allButtonsWithSvg = this.page.locator('button').filter({ has: this.page.locator('svg') });
-      const svgButtonCount = await allButtonsWithSvg.count();
-      console.log(`[DEBUG] Total de botones con SVG encontrados: ${svgButtonCount}`);
+    if (sessionCount === 0) {
+      // Buscar de forma más amplia
+      const allSessions = this.page.locator('div[class*="emerald"], div[class*="green-50"]').filter({
+        has: this.page.locator('text=/Activa|Iniciada|Expira/i')
+      });
+      await allSessions.first().waitFor({ state: 'visible', timeout: 10000 });
+      sessionCount = await allSessions.count();
+      console.log(`[DEBUG] Sesiones encontradas (búsqueda amplia): ${sessionCount}`);
       
-      if (svgButtonCount === 0) {
-        throw new Error('No se encontró ningún botón de cerrar sesión. Verifica que haya sesiones activas.');
+      if (sessionCount === 0) {
+        throw new Error('No se encontraron sesiones activas en la página');
       }
-      
-      // Usar el botón con SVG en el índice correspondiente a la sesión
-      const closeBtn = allButtonsWithSvg.nth(sessionIndex);
-      await closeBtn.waitFor({ state: 'visible', timeout: 15000 });
-      await closeBtn.scrollIntoViewIfNeeded();
-      await this.page.waitForTimeout(500);
-      await closeBtn.click();
+      if (sessionIndex >= sessionCount) {
+        throw new Error(`Índice de sesión ${sessionIndex} fuera de rango. Solo hay ${sessionCount} sesiones activas.`);
+      }
+      targetSession = allSessions.nth(sessionIndex);
     } else {
-      // Usar el botón rojo en el índice correspondiente a la sesión
-      const closeBtn = allRedButtons.nth(sessionIndex);
-      await closeBtn.waitFor({ state: 'visible', timeout: 15000 });
-      await closeBtn.scrollIntoViewIfNeeded();
-      await this.page.waitForTimeout(500);
-      await closeBtn.click();
+      await sessions.first().waitFor({ state: 'visible', timeout: 10000 });
+      console.log(`[DEBUG] Total de sesiones activas encontradas: ${sessionCount}`);
+      
+      if (sessionIndex >= sessionCount) {
+        throw new Error(`Índice de sesión ${sessionIndex} fuera de rango. Solo hay ${sessionCount} sesiones activas.`);
+      }
+      targetSession = sessions.nth(sessionIndex);
     }
+    await targetSession.waitFor({ state: 'visible', timeout: 15000 });
+    await targetSession.scrollIntoViewIfNeeded();
+    await this.page.waitForTimeout(1000);
+    
+    // ESTRATEGIA DEFINITIVA: Buscar botones con icono X que NO tienen texto
+    // El botón "Cerrar Todas las Sesiones" tiene texto, el botón de sesión individual solo tiene el icono
+    const allButtonsWithX = this.page.locator('button').filter({ 
+      has: this.page.locator('svg.lucide-x, svg[class*="lucide-x"]')
+    });
+    const xButtonCount = await allButtonsWithX.count();
+    console.log(`[DEBUG] Total botones con icono X encontrados: ${xButtonCount}`);
+    
+    let closeBtn = null;
+    let closeBtnVisible = false;
+    
+    if (xButtonCount > 0) {
+      // Obtener el bounding box de la sesión objetivo
+      const sessionBox = await targetSession.boundingBox();
+      console.log(`[DEBUG] Bounding box de sesión ${sessionIndex}:`, sessionBox);
+      
+      // Iterar sobre todos los botones con X y encontrar el que está dentro de la sesión
+      for (let i = 0; i < xButtonCount; i++) {
+        const btn = allButtonsWithX.nth(i);
+        const isVisible = await btn.isVisible({ timeout: 1000 }).catch(() => false);
+        
+        if (isVisible) {
+          // Verificar que NO tiene texto (para excluir "Cerrar Todas las Sesiones")
+          const btnText = await btn.textContent().catch(() => '');
+          const hasText = btnText && btnText.trim().length > 0 && !btnText.trim().match(/^\s*$/);
+          
+          const btnBox = await btn.boundingBox();
+          const btnClasses = await btn.getAttribute('class').catch(() => '');
+          const hasRedClasses = btnClasses?.includes('text-red-600') || btnClasses?.includes('border-red-300');
+          
+          console.log(`[DEBUG] Botón X ${i}: visible=${isVisible}, tieneTexto=${hasText}, texto="${btnText}", clasesRojas=${hasRedClasses}, box=`, btnBox);
+          
+          // El botón correcto NO tiene texto y tiene clases rojas
+          if (sessionBox && btnBox && hasRedClasses && !hasText) {
+            // Verificar si el botón está en la misma fila vertical que la sesión
+            // El botón puede estar a la derecha de la sesión, así que verificamos principalmente la altura Y
+            const verticalMargin = 20; // margen vertical
+            const horizontalMargin = 500; // margen horizontal más amplio (el botón puede estar a la derecha)
+            
+            const isInSameRow = 
+              btnBox.y >= (sessionBox.y - verticalMargin) &&
+              btnBox.y <= (sessionBox.y + sessionBox.height + verticalMargin);
+            
+            // También verificar que esté a la derecha de la sesión (no antes)
+            const isToTheRight = btnBox.x >= sessionBox.x - horizontalMargin;
+            
+            console.log(`[DEBUG] Botón X ${i} - mismaFila=${isInSameRow}, aLaDerecha=${isToTheRight}`);
+            
+            if (isInSameRow && isToTheRight) {
+              closeBtn = btn;
+              closeBtnVisible = true;
+              console.log(`[DEBUG] ✅ Botón correcto encontrado en índice ${i} (sin texto, misma fila)`);
+              break;
+            }
+          }
+        }
+      }
+    }
+    
+    // Si no se encontró, buscar botones sin texto dentro de las sesiones activas
+    if (!closeBtnVisible) {
+      console.log(`[DEBUG] Estrategia alternativa: buscar botones sin texto en sesiones activas`);
+      const allSessions = this.page.locator('div[class*="emerald-50"], div[class*="green-50"]').filter({ 
+        has: this.page.locator('text=/Activa/i') 
+      });
+      const sessionCount = await allSessions.count();
+      
+      if (sessionCount > sessionIndex) {
+        const targetSessionAlt = allSessions.nth(sessionIndex);
+        // Buscar botones dentro de esta sesión que tengan X pero no texto
+        const buttonsInSession = targetSessionAlt.locator('button').filter({ 
+          has: this.page.locator('svg.lucide-x, svg[class*="lucide-x"]')
+        });
+        const buttonsCount = await buttonsInSession.count();
+        console.log(`[DEBUG] Botones con X en sesión ${sessionIndex}: ${buttonsCount}`);
+        
+        for (let i = 0; i < buttonsCount; i++) {
+          const btn = buttonsInSession.nth(i);
+          const btnText = await btn.textContent().catch(() => '');
+          const hasText = btnText && btnText.trim().length > 0 && !btnText.trim().match(/^\s*$/);
+          
+          if (!hasText) {
+            closeBtn = btn;
+            closeBtnVisible = await btn.isVisible({ timeout: 2000 }).catch(() => false);
+            console.log(`[DEBUG] Botón sin texto encontrado en sesión ${sessionIndex}, botón ${i}: ${closeBtnVisible}`);
+            if (closeBtnVisible) break;
+          }
+        }
+      }
+    }
+    
+    if (!closeBtnVisible || !closeBtn) {
+      // Debug: obtener información de la sesión
+      const sessionHtml = await targetSession.innerHTML().catch(() => 'No se pudo obtener HTML');
+      console.log(`[DEBUG] HTML de la sesión ${sessionIndex}: ${sessionHtml.substring(0, 500)}`);
+      throw new Error(`No se encontró el botón de cerrar sesión en la sesión del índice ${sessionIndex}.`);
+    }
+    
+    await closeBtn.waitFor({ state: 'visible', timeout: 15000 });
+    await closeBtn.scrollIntoViewIfNeeded();
+    await this.page.waitForTimeout(500);
+    console.log(`[DEBUG] Haciendo clic en el botón de cerrar sesión ${sessionIndex}`);
+    await closeBtn.click();
     // await this.page.waitForTimeout(1500); // COMENTADO
     
     if (motivo && await this.modalReasonInput.isVisible({ timeout: 5000 }).catch(() => false)) {

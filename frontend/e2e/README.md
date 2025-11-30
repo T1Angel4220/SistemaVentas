@@ -41,6 +41,13 @@ e2e/
 Crea un archivo `.env` en la raíz del proyecto `frontend/` con las siguientes variables:
 
 ```env
+# Base de Datos (requerido para tests que acceden a la BD)
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=sistema_ventas
+DB_USER=postgres
+DB_PASSWORD=tu_contraseña_postgres
+
 # Usuarios de prueba para E2E
 E2E_COMPRADOR_EMAIL=comprador@test.com
 E2E_VENDEDOR_EMAIL=vendedor@test.com
@@ -48,6 +55,8 @@ E2E_MODERADOR_EMAIL=moderador@test.com
 E2E_ADMIN_EMAIL=admin@test.com
 E2E_PASSWORD=password123
 ```
+
+**Nota importante**: Las variables de base de datos (`DB_*`) son necesarias para tests que requieren acceso directo a la base de datos, como los tests de recuperación de contraseña que obtienen códigos de reset desde la BD.
 
 ### Preparar Base de Datos
 

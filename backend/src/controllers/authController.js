@@ -443,8 +443,7 @@ const resendVerificationCode = async (req, res) => {
  */
 const getUsers = async (req, res) => {
   try {
-    const { page = 1, limit = 10, search = '', role = 'all', status = 'all' } = req.query;
-    const offset = (page - 1) * limit;
+    const { search = '', role = 'all', status = 'all' } = req.query;
     
     // Construir query base
     let whereConditions = [];
@@ -474,17 +473,14 @@ const getUsers = async (req, res) => {
     
     const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
     
-    // Query para obtener usuarios
+    // Query para obtener usuarios (sin límite - trae todos)
     const usersQuery = `
       SELECT id, cedula, nombre, apellido, correo, telefono, direccion, genero,
              tipo_usuario, estado, email_verificado, fecha_registro, fecha_ultimo_acceso
       FROM usuarios 
       ${whereClause}
       ORDER BY fecha_registro DESC
-      LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}
     `;
-    
-    queryParams.push(parseInt(limit), offset);
     
     const usersResult = await query(usersQuery, queryParams);
     
@@ -495,7 +491,7 @@ const getUsers = async (req, res) => {
       ${whereClause}
     `;
     
-    const countResult = await query(countQuery, queryParams.slice(0, -2));
+    const countResult = await query(countQuery, queryParams);
     const total = parseInt(countResult.rows[0].total);
     
     res.json({
@@ -503,10 +499,8 @@ const getUsers = async (req, res) => {
       data: {
         users: usersResult.rows,
         pagination: {
-          page: parseInt(page),
-          limit: parseInt(limit),
           total,
-          pages: Math.ceil(total / limit)
+          pages: 1
         }
       }
     });

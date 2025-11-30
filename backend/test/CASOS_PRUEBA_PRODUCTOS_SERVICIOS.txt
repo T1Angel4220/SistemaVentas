@@ -1,0 +1,917 @@
+================================================================================
+CASOS DE PRUEBA - MÓDULO DE PRODUCTOS/SERVICIOS
+Sistema de Ventas Multiempresa
+================================================================================
+
+TABLA RESUMEN DE CASOS DE PRUEBA
+================================================================================
+
+Número del Caso de Prueba | Componente | Descripción de lo que se Probará | Prerrequisitos
+--------------------------|------------|-----------------------------------|------------------
+CF-063 | CRUD - Crear Producto | Crear producto válido como vendedor | Base de datos limpia, Usuario vendedor activo, Categoría y ubicación válidas
+CF-064 | CRUD - Crear Servicio | Crear servicio válido como vendedor | Base de datos limpia, Usuario vendedor activo, Categoría y ubicación válidas
+CF-065 | CRUD - Crear Producto | Intentar crear producto como comprador (debe fallar) | Base de datos limpia, Usuario comprador activo
+CF-066 | CRUD - Crear Producto | Intentar crear producto sin autenticación (debe fallar) | Base de datos limpia, Servidor Express activo
+CF-067 | CRUD - Crear Producto | Intentar crear producto con datos inválidos (debe fallar) | Base de datos limpia, Usuario vendedor activo
+CF-068 | CRUD - Crear Producto | Crear producto con contenido peligroso (marcado automáticamente) | Base de datos limpia, Usuario vendedor activo, Contenido de alto riesgo
+CF-069 | CRUD - Obtener Producto | Obtener producto por ID (público) | Producto activo creado en base de datos
+CF-070 | CRUD - Obtener Servicio | Obtener servicio con información adicional | Servicio activo creado en base de datos
+CF-071 | CRUD - Obtener Producto | Intentar obtener producto inexistente (debe retornar 404) | Base de datos limpia, ID de producto inexistente
+CF-072 | CRUD - Obtener Producto | Comprador NO puede ver producto peligroso | Producto peligroso creado, Usuario comprador activo
+CF-073 | CRUD - Actualizar Producto | Actualizar producto propio como vendedor | Producto activo creado por vendedor, Usuario vendedor autenticado
+CF-074 | CRUD - Actualizar Producto | Intentar actualizar producto de otro vendedor (debe fallar) | Producto creado por vendedor A, Usuario vendedor B autenticado
+CF-075 | CRUD - Actualizar Producto | Intentar actualizar producto peligroso (debe fallar) | Producto peligroso creado, Usuario vendedor propietario autenticado
+CF-076 | CRUD - Actualizar Producto | Actualizar producto y detectar contenido inadecuado | Producto activo creado, Contenido inadecuado para actualización
+CF-077 | CRUD - Eliminar Producto | Eliminar producto propio como vendedor | Producto activo creado por vendedor, Usuario vendedor autenticado
+CF-078 | CRUD - Eliminar Producto | Intentar eliminar producto de otro vendedor (debe fallar) | Producto creado por vendedor A, Usuario vendedor B autenticado
+CF-079 | CRUD - Eliminar Producto | Intentar eliminar producto peligroso como vendedor (debe fallar) | Producto peligroso creado, Usuario vendedor propietario autenticado
+CF-080 | CRUD - Eliminar Producto | Administrador puede eliminar producto peligroso | Producto peligroso creado, Usuario administrador autenticado
+CF-081 | CRUD - Cambiar Disponibilidad | Cambiar disponibilidad de producto activo | Producto activo creado, Usuario vendedor propietario autenticado
+CF-082 | CRUD - Cambiar Disponibilidad | Intentar cambiar disponibilidad de producto pendiente (debe fallar) | Producto con estado pendiente_revision, Usuario vendedor propietario autenticado
+CF-083 | Visualización - Listar | Listar productos públicos (sin autenticación) | Múltiples productos activos creados en base de datos
+CF-084 | Visualización - Listar | Listar productos con paginación | Múltiples productos activos creados (más de 10), Parámetros de paginación
+CF-085 | Visualización - Listar | Productos peligrosos NO aparecen en listado público | Productos activos y peligrosos creados en base de datos
+CF-086 | Visualización - Listar | Vendedor puede ver sus productos (NO ve peligrosos) | Productos activos y peligrosos del vendedor, Usuario vendedor autenticado
+CF-087 | Filtros - Categoría | Filtrar productos por categoría | Múltiples productos activos en diferentes categorías
+CF-088 | Filtros - Precio | Filtrar productos por rango de precio | Múltiples productos activos con diferentes precios
+CF-089 | Filtros - Búsqueda | Buscar productos por nombre/descripción | Múltiples productos activos con diferentes nombres/descripciones
+CF-090 | Filtros - Tipo | Filtrar productos por tipo (producto/servicio) | Productos y servicios activos creados en base de datos
+CF-091 | Detección Contenido - Crear | Crear producto con contenido de alto riesgo (marcado como peligroso) | Base de datos limpia, Usuario vendedor activo, Contenido de alto riesgo
+CF-092 | Detección Contenido - Crear | Crear producto con contenido de medio riesgo (pendiente_revision) | Base de datos limpia, Usuario vendedor activo, Contenido de medio riesgo
+CF-093 | Detección Contenido - Crear | Verificar que producto peligroso tiene motivo_rechazo | Producto peligroso creado
+CF-094 | Detección Contenido - Actualizar | Actualizar producto y detectar contenido peligroso | Producto activo creado, Contenido peligroso para actualización
+CF-095 | Apelaciones - Crear | Vendedor crea apelación para producto rechazado | Producto rechazado creado, Usuario vendedor propietario autenticado
+CF-096 | Apelaciones - Crear | Intentar crear apelación para producto peligroso (debe fallar) | Producto peligroso creado, Usuario vendedor propietario autenticado
+CF-097 | Apelaciones - Crear | Intentar crear apelación sin ser propietario (debe fallar) | Producto rechazado creado por vendedor A, Usuario vendedor B autenticado
+CF-098 | Apelaciones - Crear | Verificar que producto cambia a estado "en_apelacion" | Producto rechazado creado, Apelación creada exitosamente
+CF-099 | Apelaciones - Resolver | Moderador aprueba apelación (producto pasa a activo) | Apelación creada y pendiente, Usuario moderador autenticado
+CF-100 | Apelaciones - Resolver | Moderador rechaza apelación (producto permanece rechazado) | Apelación creada y pendiente, Usuario moderador autenticado
+CF-101 | Productos Peligrosos - Restricciones | Producto peligroso NO aparece en listado público | Producto peligroso creado en base de datos
+CF-102 | Productos Peligrosos - Restricciones | Vendedor NO puede eliminar producto peligroso | Producto peligroso creado, Usuario vendedor propietario autenticado
+CF-103 | Productos Peligrosos - Restricciones | Vendedor NO puede editar producto peligroso | Producto peligroso creado, Usuario vendedor propietario autenticado
+CF-104 | Productos Peligrosos - Restricciones | Moderador puede ver productos peligrosos | Productos peligrosos creados, Usuario moderador autenticado
+CF-105 | Productos Peligrosos - Bloqueo | Vendedor con 3 productos peligrosos se bloquea automáticamente | Base de datos limpia, Usuario vendedor activo, 3 productos peligrosos
+CF-106 | Productos Peligrosos - Bloqueo | Verificar que cuenta bloqueada tiene estado "suspendido" | Vendedor con 3 productos peligrosos, Bloqueo automático ejecutado
+CF-107 | Reportes - Crear | Comprador reporta producto | Producto activo creado, Usuario comprador autenticado
+CF-108 | Reportes - Crear | Comprador NO puede reportar su propio producto | Producto activo creado por comprador, Usuario comprador autenticado
+CF-109 | Reportes - Crear | Reporte NO desactiva producto automáticamente | Producto activo creado, Reporte creado exitosamente
+CF-110 | Reportes - Resolver | Moderador aprueba reporte (producto OK) | Reporte creado y pendiente, Usuario moderador autenticado
+CF-111 | Reportes - Resolver | Moderador marca producto como peligroso por reporte | Reporte creado y pendiente, Usuario moderador autenticado
+CF-112 | Productos Guardados - Guardar | Comprador guarda producto activo | Producto activo creado, Usuario comprador autenticado
+CF-113 | Productos Guardados - Guardar | Intentar guardar producto ya guardado (debe fallar) | Producto activo guardado previamente, Usuario comprador autenticado
+CF-114 | Productos Guardados - Retirar | Comprador retira producto guardado | Producto guardado previamente, Usuario comprador autenticado
+CF-115 | Productos Guardados - Listar | Listar productos guardados del usuario | Múltiples productos guardados, Usuario comprador autenticado
+CF-116 | Moderación - Moderar | Moderador aprueba producto (pasa a activo) | Producto pendiente_revision, Usuario moderador autenticado
+CF-117 | Moderación - Moderar | Moderador rechaza producto (pasa a rechazado) | Producto pendiente_revision, Usuario moderador autenticado
+CF-118 | Moderación - Moderar | Moderador suspende producto | Producto activo, Usuario moderador autenticado
+CF-119 | Moderación - Moderar | Moderador marca producto como peligroso | Producto activo, Usuario moderador autenticado
+CF-120 | Moderación - Moderar | Comprador NO puede moderar (debe fallar) | Producto pendiente_revision, Usuario comprador autenticado
+CF-121 | Servicios - Crear | Crear servicio con información adicional (horario, días, duración) | Base de datos limpia, Usuario vendedor activo, Datos de servicio completos
+CF-122 | Servicios - Actualizar | Actualizar información de servicio | Servicio activo creado, Usuario vendedor propietario autenticado
+CF-123 | Validaciones - Crear | Crear producto sin campos requeridos (debe fallar) | Base de datos limpia, Usuario vendedor activo, Datos incompletos
+CF-124 | Validaciones - Crear | Crear producto con precio negativo (debe fallar) | Base de datos limpia, Usuario vendedor activo, Precio negativo
+CF-125 | Validaciones - Crear | Usuario suspendido NO puede crear productos | Usuario vendedor con estado suspendido, Datos de producto válidos
+CF-126 | Validaciones - Actualizar | Producto en revisión NO puede ser editado por vendedor | Producto con estado pendiente_revision, Usuario vendedor propietario autenticado
+
+
+================================================================================
+DETALLE DE CASOS DE PRUEBA
+================================================================================
+
+
+--------------------------------------------------------------------------------
+CF-063: Crear producto válido como vendedor
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Limpiar base de datos y crear usuario vendedor activo | Base de datos limpia | Base de datos sin datos previos | Base de datos limpiada exitosamente, usuario vendedor creado con estado "activo"
+2 | Obtener o crear categoría y ubicación de prueba | | Categoría y ubicación válidas disponibles | Categoría y ubicación obtenidas/creadas correctamente
+3 | Preparar datos del producto válido | codigo, nombre, descripcion, precio, tipo, categoria_id, ubicacion_provincia, ubicacion_canton | Objeto con datos válidos del producto | Objeto de producto preparado con todos los campos requeridos
+4 | Enviar petición POST /api/products con token de vendedor | Headers: Authorization token, Body: datos del producto | Status 201, success: true, data con id del producto | Status 201 recibido, success: true, data contiene id del producto creado
+5 | Verificar respuesta exitosa | Respuesta del servidor | success: true, data.id existe, estado: "pendiente_revision" | success: true confirmado, data.id existe, estado es "pendiente_revision"
+6 | Verificar que producto se guardó en base de datos | ID del producto creado | Producto existe en base de datos con datos correctos | Producto encontrado en base de datos con todos los datos correctos 
+
+
+--------------------------------------------------------------------------------
+CF-064: Crear servicio válido como vendedor
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Limpiar base de datos y crear usuario vendedor activo | Base de datos limpia | Base de datos sin datos previos | Base de datos limpiada exitosamente, usuario vendedor creado con estado "activo"
+2 | Obtener o crear categoría y ubicación de prueba | | Categoría y ubicación válidas disponibles | Categoría y ubicación obtenidas/creadas correctamente
+3 | Preparar datos del servicio válido con información adicional | tipo: "servicio", horario, dias_disponibles, duracion_estimada | Objeto con datos válidos del servicio | Objeto de servicio preparado con información adicional completa
+4 | Enviar petición POST /api/products con token de vendedor | Headers: Authorization token, Body: datos del servicio | Status 201, success: true, data con id del servicio | Status 201 recibido, success: true, data contiene id del servicio creado
+5 | Verificar respuesta exitosa | Respuesta del servidor | success: true, data.id existe, tipo: "servicio", información adicional guardada | success: true confirmado, data.id existe, tipo es "servicio", información adicional presente
+6 | Verificar que servicio se guardó en base de datos | ID del servicio creado | Servicio existe en base de datos con datos correctos | Servicio encontrado en base de datos con todos los datos e información adicional correctos 
+
+
+--------------------------------------------------------------------------------
+CF-065: Intentar crear producto como comprador (debe fallar)
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Limpiar base de datos y crear usuario comprador activo | Base de datos limpia | Base de datos sin datos previos | Base de datos limpiada exitosamente, usuario comprador creado con estado "activo"
+2 | Preparar datos del producto válido | codigo, nombre, descripcion, precio, tipo, categoria_id, ubicacion_provincia, ubicacion_canton | Objeto con datos válidos del producto | Objeto de producto preparado con todos los campos requeridos
+3 | Enviar petición POST /api/products con token de comprador | Headers: Authorization token de comprador, Body: datos del producto | Status 403, error indicando falta de permisos | Status 403 recibido, mensaje de error indica falta de permisos para comprador
+4 | Verificar que se rechazó la petición | Respuesta del servidor | Status 403, mensaje de error apropiado | Status 403 confirmado, mensaje de error apropiado recibido
+5 | Verificar que NO se creó producto en base de datos | | No existe producto creado por comprador | No se encontró producto creado por comprador en base de datos 
+
+
+--------------------------------------------------------------------------------
+CF-066: Intentar crear producto sin autenticación (debe fallar)
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Limpiar base de datos | Base de datos limpia | Base de datos sin datos previos | Base de datos limpiada exitosamente
+2 | Preparar datos del producto válido | codigo, nombre, descripcion, precio, tipo, categoria_id, ubicacion_provincia, ubicacion_canton | Objeto con datos válidos del producto | Objeto de producto preparado con todos los campos requeridos
+3 | Enviar petición POST /api/products sin token de autenticación | Headers: sin Authorization, Body: datos del producto | Status 401, error indicando falta de autenticación | Status 401 recibido, mensaje de error indica falta de autenticación
+4 | Verificar que se rechazó la petición | Respuesta del servidor | Status 401, mensaje de error apropiado | Status 401 confirmado, mensaje de error apropiado recibido
+5 | Verificar que NO se creó producto en base de datos | | No existe producto creado | No se encontró producto creado en base de datos 
+
+
+--------------------------------------------------------------------------------
+CF-067: Intentar crear producto con datos inválidos (debe fallar)
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Limpiar base de datos y crear usuario vendedor activo | Base de datos limpia | Base de datos sin datos previos | Base de datos limpiada exitosamente, usuario vendedor creado con estado "activo"
+2 | Preparar datos del producto inválidos | Datos faltantes o inválidos (sin nombre, precio negativo, etc.) | Objeto con datos inválidos | Objeto de producto preparado con datos inválidos o faltantes
+3 | Enviar petición POST /api/products con token de vendedor | Headers: Authorization token, Body: datos inválidos | Status 400, error de validación | Status 400 recibido, mensaje de error de validación recibido
+4 | Verificar que se rechazó la petición | Respuesta del servidor | Status 400, mensaje de error de validación descriptivo | Status 400 confirmado, mensaje de error de validación descriptivo recibido
+5 | Verificar que NO se creó producto en base de datos | | No existe producto creado | No se encontró producto creado en base de datos 
+
+
+--------------------------------------------------------------------------------
+CF-068: Crear producto con contenido peligroso (marcado automáticamente)
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Limpiar base de datos y crear usuario vendedor activo | Base de datos limpia | Base de datos sin datos previos | Base de datos limpiada exitosamente, usuario vendedor creado con estado "activo"
+2 | Preparar datos del producto con contenido de alto riesgo | nombre o descripcion con palabras clave peligrosas | Objeto con contenido peligroso | Objeto de producto preparado con contenido de alto riesgo
+3 | Enviar petición POST /api/products con token de vendedor | Headers: Authorization token, Body: datos con contenido peligroso | Status 201, success: true | Status 201 recibido, success: true, data contiene id del producto
+4 | Verificar respuesta exitosa | Respuesta del servidor | success: true, data.id existe | success: true confirmado, data.id existe
+5 | Verificar que producto se marcó como peligroso | ID del producto creado | estado: "peligroso", motivo_rechazo existe | estado es "peligroso", motivo_rechazo existe y no está vacío
+6 | Verificar que producto NO aparece en listado público | | Producto peligroso no visible públicamente | Producto peligroso no aparece en listado público de productos 
+
+
+--------------------------------------------------------------------------------
+CF-069: Obtener producto por ID (público)
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto activo en base de datos | Producto con estado "activo" | Producto válido creado | Producto activo creado exitosamente en base de datos
+2 | Enviar petición GET /api/products/:id sin autenticación | ID del producto creado | Status 200, datos completos del producto | Status 200 recibido, datos completos del producto retornados
+3 | Verificar respuesta exitosa | Respuesta del servidor | Status 200, success: true, data con información del producto | Status 200 confirmado, success: true, data contiene información completa del producto
+4 | Verificar estructura de datos | Datos del producto | Todos los campos requeridos presentes (nombre, precio, descripcion, etc.) | Todos los campos requeridos están presentes en la respuesta 
+
+
+--------------------------------------------------------------------------------
+CF-070: Obtener servicio con información adicional
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear servicio activo con información adicional | Servicio con horario, dias_disponibles, duracion_estimada | Servicio válido creado | Servicio activo creado exitosamente con información adicional
+2 | Enviar petición GET /api/products/:id sin autenticación | ID del servicio creado | Status 200, datos completos del servicio | Status 200 recibido, datos completos del servicio retornados
+3 | Verificar respuesta exitosa | Respuesta del servidor | Status 200, success: true, data con información del servicio | Status 200 confirmado, success: true, data contiene información completa del servicio
+4 | Verificar información adicional del servicio | Datos del servicio | Campos horario, dias_disponibles, duracion_estimada presentes | Campos horario, dias_disponibles y duracion_estimada están presentes en la respuesta 
+
+
+--------------------------------------------------------------------------------
+CF-071: Intentar obtener producto inexistente (debe retornar 404)
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Limpiar base de datos | Base de datos limpia | Base de datos sin productos | Base de datos limpiada exitosamente, sin productos
+2 | Generar ID de producto inexistente | ID que no existe en base de datos | ID válido pero inexistente | ID generado correctamente (válido pero no existe en BD)
+3 | Enviar petición GET /api/products/:id | ID inexistente | Status 404, error indicando producto no encontrado | Status 404 recibido, mensaje de error indica producto no encontrado
+4 | Verificar respuesta de error | Respuesta del servidor | Status 404, mensaje de error apropiado | Status 404 confirmado, mensaje de error apropiado recibido 
+
+
+--------------------------------------------------------------------------------
+CF-072: Comprador NO puede ver producto peligroso
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto peligroso en base de datos | Producto con estado "peligroso" | Producto peligroso creado | Producto peligroso creado exitosamente en base de datos
+2 | Crear usuario comprador activo | | Usuario comprador autenticado | Usuario comprador creado con estado "activo" y autenticado
+3 | Enviar petición GET /api/products/:id con token de comprador | ID del producto peligroso, Headers: Authorization token | Status 403 o 404, error indicando acceso denegado | Status 403 o 404 recibido, mensaje de error indica acceso denegado
+4 | Verificar que se rechazó el acceso | Respuesta del servidor | Status 403 o 404, mensaje de error apropiado | Status 403 o 404 confirmado, mensaje de error apropiado recibido 
+
+
+--------------------------------------------------------------------------------
+CF-073: Actualizar producto propio como vendedor
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto activo por vendedor | Producto con estado "activo" | Producto válido creado | Producto activo creado exitosamente por vendedor
+2 | Preparar datos de actualización | Nuevos valores para nombre, precio, descripcion, etc. | Objeto con datos actualizados | Objeto con datos de actualización preparado correctamente
+3 | Enviar petición PUT /api/products/:id con token del vendedor propietario | ID del producto, Headers: Authorization token, Body: datos actualizados | Status 200, success: true, data con datos actualizados | Status 200 recibido, success: true, data contiene datos actualizados
+4 | Verificar respuesta exitosa | Respuesta del servidor | Status 200, success: true, datos actualizados correctamente | Status 200 confirmado, success: true, datos actualizados correctamente
+5 | Verificar que producto se actualizó en base de datos | ID del producto | Producto actualizado con nuevos valores | Producto encontrado en base de datos con nuevos valores actualizados 
+
+
+--------------------------------------------------------------------------------
+CF-074: Intentar actualizar producto de otro vendedor (debe fallar)
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto activo por vendedor A | Producto creado por vendedor A | Producto válido creado | Producto activo creado exitosamente por vendedor A
+2 | Crear usuario vendedor B activo | | Usuario vendedor B autenticado | Usuario vendedor B creado con estado "activo" y autenticado
+3 | Preparar datos de actualización | Nuevos valores para nombre, precio, descripcion | Objeto con datos actualizados | Objeto con datos de actualización preparado correctamente
+4 | Enviar petición PUT /api/products/:id con token de vendedor B | ID del producto de vendedor A, Headers: Authorization token vendedor B, Body: datos actualizados | Status 403, error indicando falta de permisos | Status 403 recibido, mensaje de error indica falta de permisos
+5 | Verificar que se rechazó la petición | Respuesta del servidor | Status 403, mensaje de error apropiado | Status 403 confirmado, mensaje de error apropiado recibido
+6 | Verificar que producto NO se actualizó | ID del producto | Producto mantiene valores originales | Producto encontrado en base de datos mantiene valores originales 
+
+
+--------------------------------------------------------------------------------
+CF-075: Intentar actualizar producto peligroso (debe fallar)
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto peligroso por vendedor | Producto con estado "peligroso" | Producto peligroso creado | 
+2 | Preparar datos de actualización | Nuevos valores para nombre, precio, descripcion | Objeto con datos actualizados | 
+3 | Enviar petición PUT /api/products/:id con token del vendedor propietario | ID del producto peligroso, Headers: Authorization token, Body: datos actualizados | Status 403, error indicando que producto peligroso no puede editarse | 
+4 | Verificar que se rechazó la petición | Respuesta del servidor | Status 403, mensaje de error apropiado | 
+5 | Verificar que producto NO se actualizó | ID del producto | Producto mantiene valores originales | 
+
+
+--------------------------------------------------------------------------------
+CF-076: Actualizar producto y detectar contenido inadecuado
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto activo por vendedor | Producto con estado "activo" | Producto válido creado | Producto activo creado exitosamente por vendedor
+2 | Preparar datos de actualización con contenido inadecuado | Nuevos valores con contenido peligroso o de riesgo | Objeto con contenido inadecuado | Objeto con datos de actualización que contienen contenido inadecuado
+3 | Enviar petición PUT /api/products/:id con token del vendedor | ID del producto, Headers: Authorization token, Body: datos con contenido inadecuado | Status 200, success: true | Status 200 recibido, success: true, data contiene id del producto
+4 | Verificar respuesta exitosa | Respuesta del servidor | success: true, data.id existe | success: true confirmado, data.id existe
+5 | Verificar que producto cambió de estado | ID del producto | estado: "peligroso" o "pendiente_revision", motivo_rechazo existe | estado cambió a "peligroso" o "pendiente_revision", motivo_rechazo existe 
+
+
+--------------------------------------------------------------------------------
+CF-077: Eliminar producto propio como vendedor
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto activo por vendedor | Producto con estado "activo" | Producto válido creado | Producto activo creado exitosamente por vendedor
+2 | Enviar petición DELETE /api/products/:id con token del vendedor propietario | ID del producto, Headers: Authorization token | Status 200, success: true, mensaje de eliminación exitosa | Status 200 recibido, success: true, mensaje de eliminación exitosa recibido
+3 | Verificar respuesta exitosa | Respuesta del servidor | Status 200, success: true | Status 200 confirmado, success: true
+4 | Verificar que producto se eliminó de base de datos | ID del producto | Producto no existe en base de datos | Producto no encontrado en base de datos (eliminado correctamente) 
+
+
+--------------------------------------------------------------------------------
+CF-078: Intentar eliminar producto de otro vendedor (debe fallar)
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto activo por vendedor A | Producto creado por vendedor A | Producto válido creado | Producto activo creado exitosamente por vendedor A
+2 | Crear usuario vendedor B activo | | Usuario vendedor B autenticado | Usuario vendedor B creado con estado "activo" y autenticado
+3 | Enviar petición DELETE /api/products/:id con token de vendedor B | ID del producto de vendedor A, Headers: Authorization token vendedor B | Status 403, error indicando falta de permisos | Status 403 recibido, mensaje de error indica falta de permisos
+4 | Verificar que se rechazó la petición | Respuesta del servidor | Status 403, mensaje de error apropiado | Status 403 confirmado, mensaje de error apropiado recibido
+5 | Verificar que producto NO se eliminó | ID del producto | Producto sigue existiendo en base de datos | Producto encontrado en base de datos (no fue eliminado) 
+
+
+--------------------------------------------------------------------------------
+CF-079: Intentar eliminar producto peligroso como vendedor (debe fallar)
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto peligroso por vendedor | Producto con estado "peligroso" | Producto peligroso creado | 
+2 | Enviar petición DELETE /api/products/:id con token del vendedor propietario | ID del producto peligroso, Headers: Authorization token | Status 403, error indicando que producto peligroso no puede eliminarse | 
+3 | Verificar que se rechazó la petición | Respuesta del servidor | Status 403, mensaje de error apropiado | 
+4 | Verificar que producto NO se eliminó | ID del producto | Producto sigue existiendo en base de datos | 
+
+
+--------------------------------------------------------------------------------
+CF-080: Administrador puede eliminar producto peligroso
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto peligroso | Producto con estado "peligroso" | Producto peligroso creado | Producto peligroso creado exitosamente
+2 | Crear usuario administrador activo | | Usuario administrador autenticado | Usuario administrador creado con estado "activo" y autenticado
+3 | Enviar petición DELETE /api/products/:id con token de administrador | ID del producto peligroso, Headers: Authorization token administrador | Status 200, success: true, mensaje de eliminación exitosa | Status 200 recibido, success: true, mensaje de eliminación exitosa recibido
+4 | Verificar respuesta exitosa | Respuesta del servidor | Status 200, success: true | Status 200 confirmado, success: true
+5 | Verificar que producto se eliminó de base de datos | ID del producto | Producto no existe en base de datos | Producto no encontrado en base de datos (eliminado correctamente) 
+
+
+--------------------------------------------------------------------------------
+CF-081: Cambiar disponibilidad de producto activo
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto activo por vendedor | Producto con estado "activo", disponible: true | Producto válido creado | Producto activo creado exitosamente con disponible: true
+2 | Enviar petición PATCH /api/products/:id/availability con token del vendedor | ID del producto, Headers: Authorization token, Body: { disponible: false } | Status 200, success: true, data con disponible: false | Status 200 recibido, success: true, data contiene disponible: false
+3 | Verificar respuesta exitosa | Respuesta del servidor | Status 200, success: true, disponible actualizado | Status 200 confirmado, success: true, disponible actualizado correctamente
+4 | Verificar que disponibilidad cambió en base de datos | ID del producto | Producto tiene disponible: false | Producto encontrado en base de datos con disponible: false 
+
+
+--------------------------------------------------------------------------------
+CF-082: Intentar cambiar disponibilidad de producto pendiente (debe fallar)
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto pendiente_revision por vendedor | Producto con estado "pendiente_revision" | Producto pendiente creado | Producto pendiente_revision creado exitosamente por vendedor
+2 | Enviar petición PATCH /api/products/:id/availability con token del vendedor | ID del producto, Headers: Authorization token, Body: { disponible: false } | Status 400 o 403, error indicando que producto pendiente no puede cambiar disponibilidad | Status 400 o 403 recibido, mensaje de error indica que producto pendiente no puede cambiar disponibilidad
+3 | Verificar que se rechazó la petición | Respuesta del servidor | Status 400 o 403, mensaje de error apropiado | Status 400 o 403 confirmado, mensaje de error apropiado recibido
+4 | Verificar que disponibilidad NO cambió | ID del producto | Producto mantiene disponibilidad original | Producto encontrado en base de datos mantiene disponibilidad original 
+
+
+--------------------------------------------------------------------------------
+CF-083: Listar productos públicos (sin autenticación)
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear múltiples productos activos en base de datos | Al menos 5 productos activos | Productos válidos creados | Múltiples productos activos creados exitosamente en base de datos
+2 | Enviar petición GET /api/products sin autenticación | Sin headers de Authorization | Status 200, success: true, array de productos | Status 200 recibido, success: true, data es un array de productos
+3 | Verificar respuesta exitosa | Respuesta del servidor | Status 200, success: true, data es un array | Status 200 confirmado, success: true, data es un array
+4 | Verificar que se retornan productos activos | Array de productos | Todos los productos tienen estado "activo" | Todos los productos en el array tienen estado "activo"
+5 | Verificar que NO se retornan productos peligrosos | Array de productos | Ningún producto tiene estado "peligroso" | Ningún producto en el array tiene estado "peligroso" 
+
+
+--------------------------------------------------------------------------------
+CF-084: Listar productos con paginación
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear más de 10 productos activos en base de datos | Al menos 15 productos activos | Productos válidos creados | Más de 10 productos activos creados exitosamente en base de datos
+2 | Enviar petición GET /api/products?page=1&limit=10 | Parámetros: page=1, limit=10 | Status 200, success: true, array con máximo 10 productos | Status 200 recibido, success: true, array con máximo 10 productos
+3 | Verificar respuesta exitosa | Respuesta del servidor | Status 200, success: true, data es un array | Status 200 confirmado, success: true, data es un array
+4 | Verificar cantidad de productos retornados | Array de productos | Máximo 10 productos en la respuesta | Array contiene máximo 10 productos
+5 | Enviar petición GET /api/products?page=2&limit=10 | Parámetros: page=2, limit=10 | Status 200, success: true, array con productos diferentes | Status 200 recibido, success: true, array con productos diferentes
+6 | Verificar que segunda página tiene productos diferentes | Array de productos página 2 | Productos diferentes a la página 1 | Productos de página 2 son diferentes a los de página 1 
+
+
+--------------------------------------------------------------------------------
+CF-085: Productos peligrosos NO aparecen en listado público
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear productos activos y peligrosos en base de datos | Al menos 3 productos activos y 2 peligrosos | Productos válidos creados | 
+2 | Enviar petición GET /api/products sin autenticación | Sin headers de Authorization | Status 200, success: true, array de productos | 
+3 | Verificar respuesta exitosa | Respuesta del servidor | Status 200, success: true, data es un array | 
+4 | Verificar que NO se retornan productos peligrosos | Array de productos | Ningún producto tiene estado "peligroso" | 
+5 | Verificar que solo se retornan productos activos | Array de productos | Todos los productos tienen estado "activo" | 
+
+
+--------------------------------------------------------------------------------
+CF-086: Vendedor puede ver sus productos (NO ve peligrosos)
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear productos activos y peligrosos del vendedor | Al menos 3 productos activos y 2 peligrosos del mismo vendedor | Productos válidos creados | Productos activos y peligrosos del vendedor creados exitosamente
+2 | Enviar petición GET /api/products con token del vendedor | Headers: Authorization token del vendedor | Status 200, success: true, array de productos | Status 200 recibido, success: true, array de productos
+3 | Verificar respuesta exitosa | Respuesta del servidor | Status 200, success: true, data es un array | Status 200 confirmado, success: true, data es un array
+4 | Verificar que se retornan productos del vendedor | Array de productos | Todos los productos pertenecen al vendedor | Todos los productos en el array pertenecen al vendedor
+5 | Verificar que NO se retornan productos peligrosos | Array de productos | Ningún producto tiene estado "peligroso" | Ningún producto en el array tiene estado "peligroso" 
+
+
+--------------------------------------------------------------------------------
+CF-087: Filtrar productos por categoría
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear productos activos en diferentes categorías | Al menos 5 productos en categoría A y 5 en categoría B | Productos válidos creados | Productos activos creados exitosamente en diferentes categorías
+2 | Enviar petición GET /api/products?categoria_id=X | Parámetro: categoria_id de categoría A | Status 200, success: true, array de productos | Status 200 recibido, success: true, array de productos
+3 | Verificar respuesta exitosa | Respuesta del servidor | Status 200, success: true, data es un array | Status 200 confirmado, success: true, data es un array
+4 | Verificar que todos los productos son de la categoría filtrada | Array de productos | Todos los productos tienen categoria_id igual al filtro | Todos los productos en el array tienen categoria_id igual al filtro aplicado 
+
+
+--------------------------------------------------------------------------------
+CF-088: Filtrar productos por rango de precio
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear productos activos con diferentes precios | Productos con precios: 10, 50, 100, 200, 500 | Productos válidos creados | Productos activos creados exitosamente con diferentes precios
+2 | Enviar petición GET /api/products?precio_min=50&precio_max=200 | Parámetros: precio_min=50, precio_max=200 | Status 200, success: true, array de productos | Status 200 recibido, success: true, array de productos
+3 | Verificar respuesta exitosa | Respuesta del servidor | Status 200, success: true, data es un array | Status 200 confirmado, success: true, data es un array
+4 | Verificar que todos los productos están en el rango | Array de productos | Todos los productos tienen precio entre 50 y 200 | Todos los productos en el array tienen precio entre 50 y 200 
+
+
+--------------------------------------------------------------------------------
+CF-089: Buscar productos por nombre/descripción
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear productos activos con diferentes nombres | Productos con nombres: "Laptop", "Mouse", "Teclado", "Monitor" | Productos válidos creados | Productos activos creados exitosamente con diferentes nombres
+2 | Enviar petición GET /api/products?busqueda=Laptop | Parámetro: busqueda="Laptop" | Status 200, success: true, array de productos | Status 200 recibido, success: true, array de productos
+3 | Verificar respuesta exitosa | Respuesta del servidor | Status 200, success: true, data es un array | Status 200 confirmado, success: true, data es un array
+4 | Verificar que productos retornados contienen el término de búsqueda | Array de productos | Todos los productos tienen "Laptop" en nombre o descripción | Todos los productos en el array contienen "Laptop" en nombre o descripción 
+
+
+--------------------------------------------------------------------------------
+CF-090: Filtrar productos por tipo (producto/servicio)
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear productos y servicios activos | Al menos 5 productos y 5 servicios activos | Productos y servicios válidos creados | Productos y servicios activos creados exitosamente
+2 | Enviar petición GET /api/products?tipo=producto | Parámetro: tipo="producto" | Status 200, success: true, array de productos | Status 200 recibido, success: true, array de productos
+3 | Verificar respuesta exitosa | Respuesta del servidor | Status 200, success: true, data es un array | Status 200 confirmado, success: true, data es un array
+4 | Verificar que todos son productos | Array de productos | Todos los items tienen tipo="producto" | Todos los items en el array tienen tipo="producto"
+5 | Enviar petición GET /api/products?tipo=servicio | Parámetro: tipo="servicio" | Status 200, success: true, array de servicios | Status 200 recibido, success: true, array de servicios
+6 | Verificar que todos son servicios | Array de servicios | Todos los items tienen tipo="servicio" | Todos los items en el array tienen tipo="servicio" 
+
+
+--------------------------------------------------------------------------------
+CF-091: Crear producto con contenido de alto riesgo (marcado como peligroso)
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Limpiar base de datos y crear usuario vendedor activo | Base de datos limpia | Base de datos sin datos previos | Base de datos limpiada exitosamente, usuario vendedor creado con estado "activo"
+2 | Preparar datos del producto con contenido de alto riesgo | nombre o descripcion con palabras clave de alto riesgo | Objeto con contenido de alto riesgo | Objeto de producto preparado con contenido de alto riesgo
+3 | Enviar petición POST /api/products con token de vendedor | Headers: Authorization token, Body: datos con contenido de alto riesgo | Status 201, success: true | Status 201 recibido, success: true, data contiene id del producto
+4 | Verificar respuesta exitosa | Respuesta del servidor | success: true, data.id existe | success: true confirmado, data.id existe
+5 | Verificar que producto se marcó como peligroso | ID del producto creado | estado: "peligroso", motivo_rechazo existe | estado es "peligroso", motivo_rechazo existe y no está vacío
+6 | Verificar que producto NO aparece en listado público | | Producto peligroso no visible públicamente | Producto peligroso no aparece en listado público de productos 
+
+
+--------------------------------------------------------------------------------
+CF-092: Crear producto con contenido de medio riesgo (pendiente_revision)
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Limpiar base de datos y crear usuario vendedor activo | Base de datos limpia | Base de datos sin datos previos | Base de datos limpiada exitosamente, usuario vendedor creado con estado "activo"
+2 | Preparar datos del producto con contenido de medio riesgo | nombre o descripcion con palabras clave de medio riesgo | Objeto con contenido de medio riesgo | Objeto de producto preparado con contenido de medio riesgo
+3 | Enviar petición POST /api/products con token de vendedor | Headers: Authorization token, Body: datos con contenido de medio riesgo | Status 201, success: true | Status 201 recibido, success: true, data contiene id del producto
+4 | Verificar respuesta exitosa | Respuesta del servidor | success: true, data.id existe | success: true confirmado, data.id existe
+5 | Verificar que producto se marcó como pendiente_revision | ID del producto creado | estado: "pendiente_revision" | estado es "pendiente_revision" 
+
+
+--------------------------------------------------------------------------------
+CF-093: Verificar que producto peligroso tiene motivo_rechazo
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto peligroso | Producto con estado "peligroso" | Producto peligroso creado | Producto peligroso creado exitosamente
+2 | Obtener producto peligroso de base de datos | ID del producto peligroso | Datos del producto | Datos del producto peligroso obtenidos de base de datos
+3 | Verificar que tiene motivo_rechazo | Datos del producto | motivo_rechazo existe y no está vacío | motivo_rechazo existe en los datos y no está vacío
+4 | Verificar que motivo_rechazo es descriptivo | motivo_rechazo | motivo_rechazo contiene descripción del problema | motivo_rechazo contiene descripción clara del problema detectado 
+
+
+--------------------------------------------------------------------------------
+CF-094: Actualizar producto y detectar contenido peligroso
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto activo por vendedor | Producto con estado "activo" | Producto válido creado | Producto activo creado exitosamente por vendedor
+2 | Preparar datos de actualización con contenido peligroso | Nuevos valores con contenido de alto riesgo | Objeto con contenido peligroso | Objeto con datos de actualización que contienen contenido peligroso
+3 | Enviar petición PUT /api/products/:id con token del vendedor | ID del producto, Headers: Authorization token, Body: datos con contenido peligroso | Status 200, success: true | Status 200 recibido, success: true, data contiene id del producto
+4 | Verificar respuesta exitosa | Respuesta del servidor | success: true, data.id existe | success: true confirmado, data.id existe
+5 | Verificar que producto cambió a peligroso | ID del producto | estado: "peligroso", motivo_rechazo existe | estado cambió a "peligroso", motivo_rechazo existe y no está vacío 
+
+
+--------------------------------------------------------------------------------
+CF-095: Vendedor crea apelación para producto rechazado
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto rechazado por vendedor | Producto con estado "rechazado" | Producto rechazado creado | Producto rechazado creado exitosamente por vendedor
+2 | Preparar datos de la apelación | mensaje, informacion_adicional | Objeto con datos de apelación | Objeto con datos de apelación preparado correctamente
+3 | Enviar petición POST /api/appeals con token del vendedor | Headers: Authorization token, Body: { producto_id, mensaje, informacion_adicional } | Status 201, success: true, data con id de apelación | Status 201 recibido, success: true, data contiene id de apelación
+4 | Verificar respuesta exitosa | Respuesta del servidor | Status 201, success: true, data.id existe | Status 201 confirmado, success: true, data.id existe
+5 | Verificar que producto cambió a en_apelacion | ID del producto | estado: "en_apelacion" | estado del producto cambió a "en_apelacion"
+6 | Verificar que apelación se guardó en base de datos | ID de la apelación | Apelación existe en base de datos | Apelación encontrada en base de datos con datos correctos 
+
+
+--------------------------------------------------------------------------------
+CF-096: Intentar crear apelación para producto peligroso (debe fallar)
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto peligroso por vendedor | Producto con estado "peligroso" | Producto peligroso creado | Producto peligroso creado exitosamente por vendedor
+2 | Preparar datos de la apelación | mensaje, informacion_adicional | Objeto con datos de apelación | Objeto con datos de apelación preparado correctamente
+3 | Enviar petición POST /api/appeals con token del vendedor | Headers: Authorization token, Body: { producto_id del peligroso, mensaje, informacion_adicional } | Status 400 o 403, error indicando que producto peligroso no puede apelarse | Status 400 o 403 recibido, mensaje de error indica que producto peligroso no puede apelarse
+4 | Verificar que se rechazó la petición | Respuesta del servidor | Status 400 o 403, mensaje de error apropiado | Status 400 o 403 confirmado, mensaje de error apropiado recibido
+5 | Verificar que NO se creó apelación | | Apelación no existe en base de datos | No se encontró apelación creada en base de datos 
+
+
+--------------------------------------------------------------------------------
+CF-097: Intentar crear apelación sin ser propietario (debe fallar)
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto rechazado por vendedor A | Producto con estado "rechazado" | Producto rechazado creado | Producto rechazado creado exitosamente por vendedor A
+2 | Crear usuario vendedor B activo | | Usuario vendedor B autenticado | Usuario vendedor B creado con estado "activo" y autenticado
+3 | Preparar datos de la apelación | mensaje, informacion_adicional | Objeto con datos de apelación | Objeto con datos de apelación preparado correctamente
+4 | Enviar petición POST /api/appeals con token de vendedor B | Headers: Authorization token vendedor B, Body: { producto_id del vendedor A, mensaje, informacion_adicional } | Status 403, error indicando falta de permisos | Status 403 recibido, mensaje de error indica falta de permisos
+5 | Verificar que se rechazó la petición | Respuesta del servidor | Status 403, mensaje de error apropiado | Status 403 confirmado, mensaje de error apropiado recibido
+6 | Verificar que NO se creó apelación | | Apelación no existe en base de datos | No se encontró apelación creada en base de datos 
+
+
+--------------------------------------------------------------------------------
+CF-098: Verificar que producto cambia a estado "en_apelacion"
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto rechazado por vendedor | Producto con estado "rechazado" | Producto rechazado creado | Producto rechazado creado exitosamente por vendedor
+2 | Crear apelación para el producto | Apelación creada exitosamente | Apelación válida creada | Apelación creada exitosamente para el producto
+3 | Obtener producto de base de datos | ID del producto | Datos del producto | Datos del producto obtenidos de base de datos
+4 | Verificar que estado cambió a en_apelacion | Datos del producto | estado: "en_apelacion" | estado del producto es "en_apelacion" 
+
+
+--------------------------------------------------------------------------------
+CF-099: Moderador aprueba apelación (producto pasa a activo)
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear apelación pendiente | Apelación con estado "pendiente" | Apelación válida creada | Apelación pendiente creada exitosamente
+2 | Crear usuario moderador activo | | Usuario moderador autenticado | Usuario moderador creado con estado "activo" y autenticado
+3 | Enviar petición PATCH /api/appeals/:id/resolve con token de moderador | ID de la apelación, Headers: Authorization token moderador, Body: { resolucion: "aprobada" } | Status 200, success: true, data con apelación resuelta | Status 200 recibido, success: true, data contiene apelación resuelta
+4 | Verificar respuesta exitosa | Respuesta del servidor | Status 200, success: true | Status 200 confirmado, success: true
+5 | Verificar que producto cambió a activo | ID del producto | estado: "activo" | estado del producto cambió a "activo"
+6 | Verificar que apelación se marcó como resuelta | ID de la apelación | estado: "resuelta", resolucion: "aprobada" | estado de apelación es "resuelta", resolucion es "aprobada" 
+
+
+--------------------------------------------------------------------------------
+CF-100: Moderador rechaza apelación (producto permanece rechazado)
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear apelación pendiente | Apelación con estado "pendiente" | Apelación válida creada | Apelación pendiente creada exitosamente
+2 | Crear usuario moderador activo | | Usuario moderador autenticado | Usuario moderador creado con estado "activo" y autenticado
+3 | Enviar petición PATCH /api/appeals/:id/resolve con token de moderador | ID de la apelación, Headers: Authorization token moderador, Body: { resolucion: "rechazada" } | Status 200, success: true, data con apelación resuelta | Status 200 recibido, success: true, data contiene apelación resuelta
+4 | Verificar respuesta exitosa | Respuesta del servidor | Status 200, success: true | Status 200 confirmado, success: true
+5 | Verificar que producto permanece rechazado | ID del producto | estado: "rechazado" | estado del producto permanece "rechazado"
+6 | Verificar que apelación se marcó como resuelta | ID de la apelación | estado: "resuelta", resolucion: "rechazada" | estado de apelación es "resuelta", resolucion es "rechazada" 
+
+
+--------------------------------------------------------------------------------
+CF-101: Producto peligroso NO aparece en listado público
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear productos activos y peligrosos en base de datos | Al menos 3 productos activos y 2 peligrosos | Productos válidos creados | Productos activos y peligrosos creados exitosamente en base de datos
+2 | Enviar petición GET /api/products sin autenticación | Sin headers de Authorization | Status 200, success: true, array de productos | Status 200 recibido, success: true, array de productos
+3 | Verificar respuesta exitosa | Respuesta del servidor | Status 200, success: true, data es un array | Status 200 confirmado, success: true, data es un array
+4 | Verificar que NO se retornan productos peligrosos | Array de productos | Ningún producto tiene estado "peligroso" | Ningún producto en el array tiene estado "peligroso"
+5 | Verificar que solo se retornan productos activos | Array de productos | Todos los productos tienen estado "activo" | Todos los productos en el array tienen estado "activo" 
+
+
+--------------------------------------------------------------------------------
+CF-102: Vendedor NO puede eliminar producto peligroso
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto peligroso por vendedor | Producto con estado "peligroso" | Producto peligroso creado | Producto peligroso creado exitosamente por vendedor
+2 | Enviar petición DELETE /api/products/:id con token del vendedor propietario | ID del producto peligroso, Headers: Authorization token | Status 403, error indicando que producto peligroso no puede eliminarse | Status 403 recibido, mensaje de error indica que producto peligroso no puede eliminarse
+3 | Verificar que se rechazó la petición | Respuesta del servidor | Status 403, mensaje de error apropiado | Status 403 confirmado, mensaje de error apropiado recibido
+4 | Verificar que producto NO se eliminó | ID del producto | Producto sigue existiendo en base de datos | Producto encontrado en base de datos (no fue eliminado) 
+
+
+--------------------------------------------------------------------------------
+CF-103: Vendedor NO puede editar producto peligroso
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto peligroso por vendedor | Producto con estado "peligroso" | Producto peligroso creado | Producto peligroso creado exitosamente por vendedor
+2 | Preparar datos de actualización | Nuevos valores para nombre, precio, descripcion | Objeto con datos actualizados | Objeto con datos de actualización preparado correctamente
+3 | Enviar petición PUT /api/products/:id con token del vendedor propietario | ID del producto peligroso, Headers: Authorization token, Body: datos actualizados | Status 403, error indicando que producto peligroso no puede editarse | Status 403 recibido, mensaje de error indica que producto peligroso no puede editarse
+4 | Verificar que se rechazó la petición | Respuesta del servidor | Status 403, mensaje de error apropiado | Status 403 confirmado, mensaje de error apropiado recibido
+5 | Verificar que producto NO se actualizó | ID del producto | Producto mantiene valores originales | Producto encontrado en base de datos mantiene valores originales 
+
+
+--------------------------------------------------------------------------------
+CF-104: Moderador puede ver productos peligrosos
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear productos peligrosos en base de datos | Al menos 3 productos peligrosos | Productos peligrosos creados | Productos peligrosos creados exitosamente en base de datos
+2 | Crear usuario moderador activo | | Usuario moderador autenticado | Usuario moderador creado con estado "activo" y autenticado
+3 | Enviar petición GET /api/products/dangerous con token de moderador | Headers: Authorization token moderador | Status 200, success: true, array de productos peligrosos | Status 200 recibido, success: true, array de productos peligrosos
+4 | Verificar respuesta exitosa | Respuesta del servidor | Status 200, success: true, data es un array | Status 200 confirmado, success: true, data es un array
+5 | Verificar que se retornan productos peligrosos | Array de productos | Todos los productos tienen estado "peligroso" | Todos los productos en el array tienen estado "peligroso" 
+
+
+--------------------------------------------------------------------------------
+CF-105: Vendedor con 3 productos peligrosos se bloquea automáticamente
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Limpiar base de datos y crear usuario vendedor activo | Base de datos limpia | Base de datos sin datos previos | Base de datos limpiada exitosamente, usuario vendedor creado con estado "activo"
+2 | Crear primer producto peligroso | Producto con contenido de alto riesgo | Producto peligroso creado, estado vendedor: "activo" | Primer producto peligroso creado exitosamente, estado vendedor sigue "activo"
+3 | Crear segundo producto peligroso | Producto con contenido de alto riesgo | Producto peligroso creado, estado vendedor: "activo" | Segundo producto peligroso creado exitosamente, estado vendedor sigue "activo"
+4 | Crear tercer producto peligroso | Producto con contenido de alto riesgo | Producto peligroso creado | Tercer producto peligroso creado exitosamente
+5 | Verificar que vendedor se bloqueó automáticamente | ID del vendedor | estado: "suspendido" | estado del vendedor cambió a "suspendido" automáticamente
+6 | Verificar que se ejecutó bloqueo automático | | Función de bloqueo automático ejecutada | Función de bloqueo automático se ejecutó correctamente 
+
+
+--------------------------------------------------------------------------------
+CF-106: Verificar que cuenta bloqueada tiene estado "suspendido"
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Vendedor con 3 productos peligrosos | Vendedor con bloqueo automático ejecutado | Vendedor con 3 productos peligrosos | Vendedor tiene 3 productos peligrosos, bloqueo automático ejecutado
+2 | Obtener datos del vendedor de base de datos | ID del vendedor | Datos del vendedor | Datos del vendedor obtenidos de base de datos
+3 | Verificar que estado es suspendido | Datos del vendedor | estado: "suspendido" | estado del vendedor es "suspendido"
+4 | Verificar que tiene motivo de suspensión | Datos del vendedor | motivo_suspension existe y no está vacío | motivo_suspension existe en los datos y no está vacío 
+
+
+--------------------------------------------------------------------------------
+CF-107: Comprador reporta producto
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto activo | Producto con estado "activo" | Producto válido creado | Producto activo creado exitosamente
+2 | Crear usuario comprador activo | | Usuario comprador autenticado | Usuario comprador creado con estado "activo" y autenticado
+3 | Preparar datos del reporte | motivo, descripcion | Objeto con datos del reporte | Objeto con datos del reporte preparado correctamente
+4 | Enviar petición POST /api/reports con token de comprador | Headers: Authorization token comprador, Body: { producto_id, motivo, descripcion } | Status 201, success: true, data con id de reporte | Status 201 recibido, success: true, data contiene id de reporte
+5 | Verificar respuesta exitosa | Respuesta del servidor | Status 201, success: true, data.id existe | Status 201 confirmado, success: true, data.id existe
+6 | Verificar que reporte se guardó en base de datos | ID del reporte | Reporte existe en base de datos | Reporte encontrado en base de datos con datos correctos 
+
+
+--------------------------------------------------------------------------------
+CF-108: Comprador NO puede reportar su propio producto
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto activo por comprador (si tiene rol vendedor) | Producto con estado "activo" | Producto válido creado | Producto activo creado exitosamente por comprador
+2 | Preparar datos del reporte | motivo, descripcion | Objeto con datos del reporte | Objeto con datos del reporte preparado correctamente
+3 | Enviar petición POST /api/reports con token del comprador propietario | Headers: Authorization token comprador, Body: { producto_id propio, motivo, descripcion } | Status 400 o 403, error indicando que no puede reportar su propio producto | Status 400 o 403 recibido, mensaje de error indica que no puede reportar su propio producto
+4 | Verificar que se rechazó la petición | Respuesta del servidor | Status 400 o 403, mensaje de error apropiado | Status 400 o 403 confirmado, mensaje de error apropiado recibido
+5 | Verificar que NO se creó reporte | | Reporte no existe en base de datos | No se encontró reporte creado en base de datos 
+
+
+--------------------------------------------------------------------------------
+CF-109: Reporte NO desactiva producto automáticamente
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto activo | Producto con estado "activo" | Producto válido creado | Producto activo creado exitosamente
+2 | Crear reporte para el producto | Reporte creado exitosamente | Reporte válido creado | Reporte creado exitosamente para el producto
+3 | Obtener producto de base de datos | ID del producto | Datos del producto | Datos del producto obtenidos de base de datos
+4 | Verificar que producto sigue activo | Datos del producto | estado: "activo", disponible: true | estado del producto es "activo", disponible es true
+5 | Verificar que reporte está pendiente | ID del reporte | estado: "pendiente" | estado del reporte es "pendiente" 
+
+
+--------------------------------------------------------------------------------
+CF-110: Moderador aprueba reporte (producto OK)
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear reporte pendiente | Reporte con estado "pendiente" | Reporte válido creado | Reporte pendiente creado exitosamente
+2 | Crear usuario moderador activo | | Usuario moderador autenticado | Usuario moderador creado con estado "activo" y autenticado
+3 | Enviar petición PATCH /api/reports/:id/resolve con token de moderador | ID del reporte, Headers: Authorization token moderador, Body: { resolucion: "aprobado", accion: "sin_accion" } | Status 200, success: true, data con reporte resuelto | Status 200 recibido, success: true, data contiene reporte resuelto
+4 | Verificar respuesta exitosa | Respuesta del servidor | Status 200, success: true | Status 200 confirmado, success: true
+5 | Verificar que producto sigue activo | ID del producto | estado: "activo" | estado del producto sigue "activo"
+6 | Verificar que reporte se marcó como resuelto | ID del reporte | estado: "resuelto", resolucion: "aprobado" | estado del reporte es "resuelto", resolucion es "aprobado" 
+
+
+--------------------------------------------------------------------------------
+CF-111: Moderador marca producto como peligroso por reporte
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear reporte pendiente | Reporte con estado "pendiente" | Reporte válido creado | Reporte pendiente creado exitosamente
+2 | Crear usuario moderador activo | | Usuario moderador autenticado | Usuario moderador creado con estado "activo" y autenticado
+3 | Enviar petición PATCH /api/reports/:id/resolve con token de moderador | ID del reporte, Headers: Authorization token moderador, Body: { resolucion: "aprobado", accion: "marcar_peligroso" } | Status 200, success: true, data con reporte resuelto | Status 200 recibido, success: true, data contiene reporte resuelto
+4 | Verificar respuesta exitosa | Respuesta del servidor | Status 200, success: true | Status 200 confirmado, success: true
+5 | Verificar que producto cambió a peligroso | ID del producto | estado: "peligroso" | estado del producto cambió a "peligroso"
+6 | Verificar que reporte se marcó como resuelto | ID del reporte | estado: "resuelto", resolucion: "aprobado" | estado del reporte es "resuelto", resolucion es "aprobado" 
+
+
+--------------------------------------------------------------------------------
+CF-112: Comprador guarda producto activo
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto activo | Producto con estado "activo" | Producto válido creado | Producto activo creado exitosamente
+2 | Crear usuario comprador activo | | Usuario comprador autenticado | Usuario comprador creado con estado "activo" y autenticado
+3 | Enviar petición POST /api/products/:id/save con token de comprador | ID del producto, Headers: Authorization token comprador | Status 200, success: true, mensaje de guardado exitoso | Status 200 recibido, success: true, mensaje de guardado exitoso recibido
+4 | Verificar respuesta exitosa | Respuesta del servidor | Status 200, success: true | Status 200 confirmado, success: true
+5 | Verificar que producto se guardó en favoritos | ID del producto, ID del comprador | Producto existe en tabla productos_guardados | Producto encontrado en tabla productos_guardados con relación correcta 
+
+
+--------------------------------------------------------------------------------
+CF-113: Intentar guardar producto ya guardado (debe fallar)
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto activo | Producto con estado "activo" | Producto válido creado | Producto activo creado exitosamente
+2 | Guardar producto previamente | Producto guardado exitosamente | Producto guardado en favoritos | Producto guardado exitosamente en favoritos
+3 | Enviar petición POST /api/products/:id/save con token de comprador | ID del producto ya guardado, Headers: Authorization token comprador | Status 400, error indicando que producto ya está guardado | Status 400 recibido, mensaje de error indica que producto ya está guardado
+4 | Verificar que se rechazó la petición | Respuesta del servidor | Status 400, mensaje de error apropiado | Status 400 confirmado, mensaje de error apropiado recibido 
+
+
+--------------------------------------------------------------------------------
+CF-114: Comprador retira producto guardado
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto activo | Producto con estado "activo" | Producto válido creado | Producto activo creado exitosamente
+2 | Guardar producto previamente | Producto guardado exitosamente | Producto guardado en favoritos | Producto guardado exitosamente en favoritos
+3 | Enviar petición DELETE /api/products/:id/unsave con token de comprador | ID del producto guardado, Headers: Authorization token comprador | Status 200, success: true, mensaje de retiro exitoso | Status 200 recibido, success: true, mensaje de retiro exitoso recibido
+4 | Verificar respuesta exitosa | Respuesta del servidor | Status 200, success: true | Status 200 confirmado, success: true
+5 | Verificar que producto se retiró de favoritos | ID del producto, ID del comprador | Producto NO existe en tabla productos_guardados | Producto no encontrado en tabla productos_guardados (retirado correctamente) 
+
+
+--------------------------------------------------------------------------------
+CF-115: Listar productos guardados del usuario
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear múltiples productos activos | Al menos 5 productos activos | Productos válidos creados | Múltiples productos activos creados exitosamente
+2 | Guardar varios productos como favoritos | Productos guardados exitosamente | Al menos 3 productos guardados | Al menos 3 productos guardados exitosamente como favoritos
+3 | Enviar petición GET /api/products/saved con token de comprador | Headers: Authorization token comprador | Status 200, success: true, array de productos guardados | Status 200 recibido, success: true, array de productos guardados
+4 | Verificar respuesta exitosa | Respuesta del servidor | Status 200, success: true, data es un array | Status 200 confirmado, success: true, data es un array
+5 | Verificar que se retornan productos guardados | Array de productos | Todos los productos pertenecen al comprador | Todos los productos en el array pertenecen al comprador
+6 | Verificar cantidad de productos | Array de productos | Cantidad coincide con productos guardados | Cantidad de productos en el array coincide con productos guardados 
+
+
+--------------------------------------------------------------------------------
+CF-116: Moderador aprueba producto (pasa a activo)
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto pendiente_revision | Producto con estado "pendiente_revision" | Producto pendiente creado | Producto pendiente_revision creado exitosamente
+2 | Crear usuario moderador activo | | Usuario moderador autenticado | Usuario moderador creado con estado "activo" y autenticado
+3 | Enviar petición PATCH /api/products/:id/moderate con token de moderador | ID del producto, Headers: Authorization token moderador, Body: { accion: "aprobar" } | Status 200, success: true, data con producto aprobado | Status 200 recibido, success: true, data contiene producto aprobado
+4 | Verificar respuesta exitosa | Respuesta del servidor | Status 200, success: true | Status 200 confirmado, success: true
+5 | Verificar que producto cambió a activo | ID del producto | estado: "activo" | estado del producto cambió a "activo" 
+
+
+--------------------------------------------------------------------------------
+CF-117: Moderador rechaza producto (pasa a rechazado)
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto pendiente_revision | Producto con estado "pendiente_revision" | Producto pendiente creado | Producto pendiente_revision creado exitosamente
+2 | Crear usuario moderador activo | | Usuario moderador autenticado | Usuario moderador creado con estado "activo" y autenticado
+3 | Enviar petición PATCH /api/products/:id/moderate con token de moderador | ID del producto, Headers: Authorization token moderador, Body: { accion: "rechazar", motivo: "motivo de rechazo" } | Status 200, success: true, data con producto rechazado | Status 200 recibido, success: true, data contiene producto rechazado
+4 | Verificar respuesta exitosa | Respuesta del servidor | Status 200, success: true | Status 200 confirmado, success: true
+5 | Verificar que producto cambió a rechazado | ID del producto | estado: "rechazado", motivo_rechazo existe | estado del producto cambió a "rechazado", motivo_rechazo existe y no está vacío 
+
+
+--------------------------------------------------------------------------------
+CF-118: Moderador suspende producto
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto activo | Producto con estado "activo" | Producto activo creado | Producto activo creado exitosamente
+2 | Crear usuario moderador activo | | Usuario moderador autenticado | Usuario moderador creado con estado "activo" y autenticado
+3 | Enviar petición PATCH /api/products/:id/moderate con token de moderador | ID del producto, Headers: Authorization token moderador, Body: { accion: "suspender", motivo: "motivo de suspensión" } | Status 200, success: true, data con producto suspendido | Status 200 recibido, success: true, data contiene producto suspendido
+4 | Verificar respuesta exitosa | Respuesta del servidor | Status 200, success: true | Status 200 confirmado, success: true
+5 | Verificar que producto cambió a suspendido | ID del producto | estado: "suspendido", motivo_suspension existe | estado del producto cambió a "suspendido", motivo_suspension existe y no está vacío 
+
+
+--------------------------------------------------------------------------------
+CF-119: Moderador marca producto como peligroso
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto activo | Producto con estado "activo" | Producto activo creado | Producto activo creado exitosamente
+2 | Crear usuario moderador activo | | Usuario moderador autenticado | Usuario moderador creado con estado "activo" y autenticado
+3 | Enviar petición PATCH /api/products/:id/moderate con token de moderador | ID del producto, Headers: Authorization token moderador, Body: { accion: "marcar_peligroso", motivo: "motivo de peligro" } | Status 200, success: true, data con producto marcado como peligroso | Status 200 recibido, success: true, data contiene producto marcado como peligroso
+4 | Verificar respuesta exitosa | Respuesta del servidor | Status 200, success: true | Status 200 confirmado, success: true
+5 | Verificar que producto cambió a peligroso | ID del producto | estado: "peligroso", motivo_rechazo existe | estado del producto cambió a "peligroso", motivo_rechazo existe y no está vacío 
+
+
+--------------------------------------------------------------------------------
+CF-120: Comprador NO puede moderar (debe fallar)
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto pendiente_revision | Producto con estado "pendiente_revision" | Producto pendiente creado | Producto pendiente_revision creado exitosamente
+2 | Crear usuario comprador activo | | Usuario comprador autenticado | Usuario comprador creado con estado "activo" y autenticado
+3 | Enviar petición PATCH /api/products/:id/moderate con token de comprador | ID del producto, Headers: Authorization token comprador, Body: { accion: "aprobar" } | Status 403, error indicando falta de permisos | Status 403 recibido, mensaje de error indica falta de permisos
+4 | Verificar que se rechazó la petición | Respuesta del servidor | Status 403, mensaje de error apropiado | Status 403 confirmado, mensaje de error apropiado recibido
+5 | Verificar que producto NO cambió de estado | ID del producto | estado: "pendiente_revision" | estado del producto permanece "pendiente_revision" 
+
+
+--------------------------------------------------------------------------------
+CF-121: Crear servicio con información adicional (horario, días, duración)
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Limpiar base de datos y crear usuario vendedor activo | Base de datos limpia | Base de datos sin datos previos | Base de datos limpiada exitosamente, usuario vendedor creado con estado "activo"
+2 | Preparar datos del servicio con información adicional | tipo: "servicio", horario, dias_disponibles, duracion_estimada | Objeto con datos completos del servicio | Objeto de servicio preparado con información adicional completa
+3 | Enviar petición POST /api/products con token de vendedor | Headers: Authorization token, Body: datos del servicio | Status 201, success: true, data con id del servicio | Status 201 recibido, success: true, data contiene id del servicio creado
+4 | Verificar respuesta exitosa | Respuesta del servidor | Status 201, success: true, data.id existe | Status 201 confirmado, success: true, data.id existe
+5 | Verificar información adicional del servicio | ID del servicio creado | horario, dias_disponibles, duracion_estimada guardados correctamente | horario, dias_disponibles y duracion_estimada guardados correctamente en base de datos 
+
+
+--------------------------------------------------------------------------------
+CF-122: Actualizar información de servicio
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear servicio activo por vendedor | Servicio con estado "activo" | Servicio válido creado | Servicio activo creado exitosamente por vendedor
+2 | Preparar datos de actualización de información adicional | Nuevos valores para horario, dias_disponibles, duracion_estimada | Objeto con datos actualizados | Objeto con datos de actualización de información adicional preparado correctamente
+3 | Enviar petición PUT /api/products/:id con token del vendedor | ID del servicio, Headers: Authorization token, Body: datos actualizados | Status 200, success: true, data con datos actualizados | Status 200 recibido, success: true, data contiene datos actualizados
+4 | Verificar respuesta exitosa | Respuesta del servidor | Status 200, success: true, datos actualizados correctamente | Status 200 confirmado, success: true, datos actualizados correctamente
+5 | Verificar que información adicional se actualizó | ID del servicio | horario, dias_disponibles, duracion_estimada actualizados | horario, dias_disponibles y duracion_estimada actualizados en base de datos 
+
+
+--------------------------------------------------------------------------------
+CF-123: Crear producto sin campos requeridos (debe fallar)
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Limpiar base de datos y crear usuario vendedor activo | Base de datos limpia | Base de datos sin datos previos | Base de datos limpiada exitosamente, usuario vendedor creado con estado "activo"
+2 | Preparar datos del producto incompletos | Datos faltantes (sin nombre, sin precio, etc.) | Objeto con datos incompletos | Objeto de producto preparado con datos incompletos (campos requeridos faltantes)
+3 | Enviar petición POST /api/products con token de vendedor | Headers: Authorization token, Body: datos incompletos | Status 400, error de validación indicando campos faltantes | Status 400 recibido, mensaje de error de validación indica campos faltantes
+4 | Verificar que se rechazó la petición | Respuesta del servidor | Status 400, mensaje de error de validación descriptivo | Status 400 confirmado, mensaje de error de validación descriptivo recibido
+5 | Verificar que NO se creó producto | | Producto no existe en base de datos | No se encontró producto creado en base de datos 
+
+
+--------------------------------------------------------------------------------
+CF-124: Crear producto con precio negativo (debe fallar)
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Limpiar base de datos y crear usuario vendedor activo | Base de datos limpia | Base de datos sin datos previos | Base de datos limpiada exitosamente, usuario vendedor creado con estado "activo"
+2 | Preparar datos del producto con precio negativo | precio: -100 | Objeto con precio negativo | Objeto de producto preparado con precio negativo (-100)
+3 | Enviar petición POST /api/products con token de vendedor | Headers: Authorization token, Body: datos con precio negativo | Status 400, error de validación indicando precio inválido | Status 400 recibido, mensaje de error de validación indica precio inválido
+4 | Verificar que se rechazó la petición | Respuesta del servidor | Status 400, mensaje de error de validación descriptivo | Status 400 confirmado, mensaje de error de validación descriptivo recibido
+5 | Verificar que NO se creó producto | | Producto no existe en base de datos | No se encontró producto creado en base de datos 
+
+
+--------------------------------------------------------------------------------
+CF-125: Usuario suspendido NO puede crear productos
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear usuario vendedor suspendido | Usuario con estado "suspendido" | Usuario vendedor suspendido creado | Usuario vendedor creado con estado "suspendido"
+2 | Preparar datos del producto válido | codigo, nombre, descripcion, precio, tipo, categoria_id, ubicacion_provincia, ubicacion_canton | Objeto con datos válidos del producto | Objeto de producto preparado con todos los campos requeridos
+3 | Enviar petición POST /api/products con token de vendedor suspendido | Headers: Authorization token vendedor suspendido, Body: datos del producto | Status 403, error indicando que usuario suspendido no puede crear productos | Status 403 recibido, mensaje de error indica que usuario suspendido no puede crear productos
+4 | Verificar que se rechazó la petición | Respuesta del servidor | Status 403, mensaje de error apropiado | Status 403 confirmado, mensaje de error apropiado recibido
+5 | Verificar que NO se creó producto | | Producto no existe en base de datos | No se encontró producto creado en base de datos 
+
+
+--------------------------------------------------------------------------------
+CF-126: Producto en revisión NO puede ser editado por vendedor
+--------------------------------------------------------------------------------
+
+Paso | Descripción de pasos a seguir | Datos Entrada | Resultado Esperado | Resultado Obtenido
+-----|-------------------------------|---------------|-------------------|-------------------
+1 | Crear producto pendiente_revision por vendedor | Producto con estado "pendiente_revision" | Producto pendiente creado | Producto pendiente_revision creado exitosamente por vendedor
+2 | Preparar datos de actualización | Nuevos valores para nombre, precio, descripcion | Objeto con datos actualizados | Objeto con datos de actualización preparado correctamente
+3 | Enviar petición PUT /api/products/:id con token del vendedor propietario | ID del producto pendiente, Headers: Authorization token, Body: datos actualizados | Status 400 o 403, error indicando que producto en revisión no puede editarse | Status 400 o 403 recibido, mensaje de error indica que producto en revisión no puede editarse
+4 | Verificar que se rechazó la petición | Respuesta del servidor | Status 400 o 403, mensaje de error apropiado | Status 400 o 403 confirmado, mensaje de error apropiado recibido
+5 | Verificar que producto NO se actualizó | ID del producto | Producto mantiene valores originales | Producto encontrado en base de datos mantiene valores originales 
+
+
+================================================================================
+FIN DEL DOCUMENTO
+================================================================================
+

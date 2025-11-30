@@ -63,6 +63,9 @@ export const UserManagementPage: React.FC = () => {
   const [isErrorFadingOut, setIsErrorFadingOut] = useState(false);
   const [isSuccessFadingOut, setIsSuccessFadingOut] = useState(false);
 
+  // Estado para total de usuarios
+  const [totalUsers, setTotalUsers] = useState(0);
+
   // Cargar usuarios
   const loadUsers = async () => {
     try {
@@ -75,6 +78,11 @@ export const UserManagementPage: React.FC = () => {
       
       if (response.success && response.data) {
         setUsers(response.data.users);
+        if (response.data.pagination) {
+          setTotalUsers(response.data.pagination.total);
+        } else {
+          setTotalUsers(response.data.users.length);
+        }
       } else {
         setError('Error cargando usuarios: ' + response.message);
       }
@@ -232,7 +240,6 @@ export const UserManagementPage: React.FC = () => {
   };
 
   // Calcular estadísticas
-  const totalUsers = users.length;
   const activeUsers = users.filter(u => u.estado === 'activo').length;
   const suspendedUsers = users.filter(u => u.estado === 'suspendido').length;
   const pendingUsers = users.filter(u => u.estado === 'pendiente_verificacion').length;
@@ -487,7 +494,7 @@ export const UserManagementPage: React.FC = () => {
               <div>
                 <h3 className="text-lg font-bold text-gray-900">Lista de Usuarios</h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  {filteredUsers.length} {filteredUsers.length === 1 ? 'usuario encontrado' : 'usuarios encontrados'}
+                  {totalUsers} {totalUsers === 1 ? 'usuario encontrado' : 'usuarios encontrados'}
                 </p>
               </div>
             </div>
