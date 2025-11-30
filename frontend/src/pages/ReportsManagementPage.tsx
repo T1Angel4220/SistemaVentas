@@ -294,13 +294,11 @@ export const ReportsManagementPage: React.FC = () => {
 
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
-    // PostgreSQL devuelve fechas sin zona horaria en formato: '2025-11-29 17:09:42.147637'
-    // Estas fechas están en hora de Ecuador, pero JavaScript las interpreta como hora local del navegador
-    // Solución: agregar el offset de Ecuador (-05:00) para que JavaScript las interprete correctamente
+    
     let dateStr = dateString.trim();
     
-    // Si ya tiene información de zona horaria, usarla directamente
-    if (dateStr.includes('Z') || dateStr.includes('+') || dateStr.includes('-05') || dateStr.includes('-04')) {
+    // Si ya tiene información de zona horaria completa (Z, +HH:MM, -HH:MM), usarla directamente
+    if (dateStr.includes('Z') || /[+-]\d{2}:\d{2}$/.test(dateStr)) {
       return new Date(dateStr).toLocaleString('es-EC', {
         timeZone: 'America/Guayaquil',
         year: 'numeric',
@@ -313,20 +311,36 @@ export const ReportsManagementPage: React.FC = () => {
       });
     }
     
-    // Si no tiene zona horaria, asumir que es hora de Ecuador y agregar el offset
-    // Formato esperado: '2025-11-29 17:09:42.147637' o '2025-11-29 17:09:42'
-    // Agregamos '-05:00' para indicar que es hora de Ecuador
-    if (dateStr.includes('T')) {
-      // Formato ISO con T
-      dateStr = dateStr.replace('T', ' ') + '-05:00';
-    } else {
-      // Formato sin T, agregar el offset
-      dateStr = dateStr + '-05:00';
+    // PostgreSQL devuelve fechas sin zona horaria: '2025-11-29 19:56:58.84055'
+    // Estas fechas están en hora de Ecuador (UTC-5). Necesitamos interpretarlas como tal.
+    // Convertir a formato ISO y agregar el offset de Ecuador
+    
+    // Primero, normalizar el formato: reemplazar espacio por 'T' si no tiene 'T'
+    if (!dateStr.includes('T')) {
+      dateStr = dateStr.replace(' ', 'T');
     }
+    
+    // Eliminar microsegundos si existen (mantener solo hasta segundos o milisegundos)
+    // Formato: '2025-11-29T19:56:58.84055' -> '2025-11-29T19:56:58'
+    if (dateStr.includes('.')) {
+      const parts = dateStr.split('.');
+      dateStr = parts[0]; // Mantener solo la parte antes del punto
+    }
+    
+    // Agregar el offset de Ecuador (UTC-5, que es -05:00)
+    // Ecuador está siempre en UTC-5 (no tiene horario de verano)
+    dateStr = dateStr + '-05:00';
     
     const date = new Date(dateStr);
     
+    // Verificar que la fecha es válida
+    if (isNaN(date.getTime())) {
+      console.error('Fecha inválida:', dateString, '->', dateStr);
+      return 'Fecha inválida';
+    }
+    
     // Formatear fecha usando la zona horaria de Ecuador
+    // toLocaleString con timeZone ya convierte correctamente
     return date.toLocaleString('es-EC', {
       timeZone: 'America/Guayaquil',
       year: 'numeric',
