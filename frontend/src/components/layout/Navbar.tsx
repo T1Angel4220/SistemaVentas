@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../ui/Button';
 import { LogoutConfirmModal } from '../ui/LogoutConfirmModal';
+import { MobileMenu } from './MobileMenu';
 import { LogOut, User, Shield, AlertTriangle, Flag, FileText } from 'lucide-react';
 import { apiService } from '../../services/api';
 
@@ -10,6 +11,7 @@ export const Navbar: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [dangerousProductsCount, setDangerousProductsCount] = useState(0);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Cargar conteo de productos peligrosos si es vendedor
   useEffect(() => {
@@ -190,7 +192,7 @@ export const Navbar: React.FC = () => {
               </p>
             </div>
             
-            <Link to="/profile" className="group relative">
+            <Link to="/profile" className="hidden md:block group relative">
               <Button 
                 variant="ghost" 
                 size="icon"
@@ -208,11 +210,18 @@ export const Navbar: React.FC = () => {
             <Button
               variant="ghost"
               onClick={handleLogoutClick}
-              className="text-gray-600 hover:text-red-600 hover:bg-red-50 hover:scale-105 hover:shadow-md hover:shadow-red-200/50 transition-all duration-300 flex items-center gap-2 group"
+              className="hidden md:flex text-gray-600 hover:text-red-600 hover:bg-red-50 hover:scale-105 hover:shadow-md hover:shadow-red-200/50 transition-all duration-300 items-center gap-2 group"
             >
               <LogOut className="h-4 w-4 transition-transform duration-300 group-hover:-rotate-12" />
               <span className="text-sm font-medium">Salir</span>
             </Button>
+
+            {/* Menú móvil */}
+            <MobileMenu 
+              isOpen={isMobileMenuOpen}
+              onClose={() => setIsMobileMenuOpen(false)}
+              onToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            />
           </div>
         </div>
       </div>
