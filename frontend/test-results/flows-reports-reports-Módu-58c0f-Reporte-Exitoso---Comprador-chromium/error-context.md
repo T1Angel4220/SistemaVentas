@@ -1,0 +1,75 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - navigation [ref=e4]:
+    - generic [ref=e6]:
+      - link "Sistema de Ventas" [ref=e8] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e9]:
+        - link "Iniciar Sesión" [ref=e10] [cursor=pointer]:
+          - /url: /login
+          - button "Iniciar Sesión" [ref=e11]
+        - link "Registrarse" [ref=e12] [cursor=pointer]:
+          - /url: /register
+          - button "Registrarse" [ref=e13]
+  - main [ref=e14]:
+    - generic [ref=e15]:
+      - generic [ref=e17]:
+        - generic [ref=e18]:
+          - img [ref=e20]
+          - generic [ref=e24]:
+            - heading "Sistema de Ventas" [level=1] [ref=e25]
+            - paragraph [ref=e26]: Multiempresa
+        - heading "La plataforma más completa para comprar y vender" [level=2] [ref=e27]
+        - generic [ref=e28]:
+          - generic [ref=e29]:
+            - img [ref=e31]
+            - generic [ref=e35]:
+              - heading "Comprar Fácil" [level=3] [ref=e36]
+              - paragraph [ref=e37]: Encuentra productos y servicios de calidad
+          - generic [ref=e38]:
+            - img [ref=e40]
+            - generic [ref=e42]:
+              - heading "Vender Seguro" [level=3] [ref=e43]
+              - paragraph [ref=e44]: Publica tus productos con total seguridad
+          - generic [ref=e45]:
+            - img [ref=e47]
+            - generic [ref=e49]:
+              - heading "Comunicación Directa" [level=3] [ref=e50]
+              - paragraph [ref=e51]: Chatea directamente con compradores y vendedores
+      - generic [ref=e53]:
+        - generic [ref=e55]:
+          - generic [ref=e56]:
+            - heading "Iniciar Sesión" [level=2] [ref=e57]
+            - paragraph [ref=e58]: Ingresa tus credenciales para acceder a tu cuenta
+          - generic [ref=e60]:
+            - generic [ref=e61]:
+              - generic [ref=e62]: Correo electrónico
+              - generic [ref=e63]:
+                - generic:
+                  - img
+                - textbox "tu@email.com" [disabled] [ref=e64]: comprador@test.com
+            - generic [ref=e65]:
+              - generic [ref=e66]: Contraseña
+              - generic [ref=e67]:
+                - generic:
+                  - img
+                - textbox "Tu contraseña" [disabled] [ref=e68]: password123
+                - button [disabled] [ref=e69]:
+                  - img [ref=e70]
+            - link "¿Olvidaste tu contraseña?" [ref=e74] [cursor=pointer]:
+              - /url: /forgot-password
+            - button "Iniciando sesión..." [disabled] [ref=e75]:
+              - generic [ref=e76]:
+                - img [ref=e77]
+                - text: Iniciando sesión...
+            - paragraph [ref=e81]:
+              - text: ¿No tienes cuenta?
+              - link "Regístrate aquí" [ref=e82] [cursor=pointer]:
+                - /url: /register
+        - paragraph [ref=e84]:
+          - text: ¿Necesitas ayuda?
+          - link "Contacta soporte" [ref=e85] [cursor=pointer]:
+            - /url: mailto:soporte@sistemaventas.com
+```
