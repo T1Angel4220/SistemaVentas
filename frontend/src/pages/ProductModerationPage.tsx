@@ -691,6 +691,15 @@ export const ProductModerationPage: React.FC = () => {
                   
                   {(product.estado === 'pendiente_revision' || product.estado === 'activo' || product.estado === 'rechazado' || product.estado === 'suspendido' || product.estado === 'peligroso') && (
                     <>
+                      {/* Verificar si hay apelación pendiente - bloquea todos los botones */}
+                      {product.tiene_apelacion_pendiente && (product.estado === 'rechazado' || product.estado === 'suspendido' || product.estado === 'peligroso') && (
+                        <div className="mb-3 p-3 bg-purple-50 border-l-4 border-purple-400 rounded-lg">
+                          <p className="text-sm text-purple-800 font-medium">
+                            ⚠️ Este producto tiene una apelación pendiente. No puedes cambiar su estado hasta que la apelación sea resuelta.
+                          </p>
+                        </div>
+                      )}
+                      
                       {/* Acciones principales: Aprobar, Rechazar, Suspender */}
                       <div className="grid grid-cols-3 gap-2 pt-3 border-t border-gray-100">
                         <Button 
@@ -701,21 +710,21 @@ export const ProductModerationPage: React.FC = () => {
                             product.estado === 'activo' || 
                             product.estado === 'peligroso' || 
                             product.es_peligroso ||
-                            ((product.estado === 'rechazado' || product.estado === 'suspendido') && !product.tiene_apelacion_pendiente)
+                            (product.tiene_apelacion_pendiente && (product.estado === 'rechazado' || product.estado === 'suspendido' || product.estado === 'peligroso'))
                           }
                           className={`h-10 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 ${
                             product.estado === 'activo' || 
                             product.estado === 'peligroso' || 
                             product.es_peligroso ||
-                            ((product.estado === 'rechazado' || product.estado === 'suspendido') && !product.tiene_apelacion_pendiente)
+                            (product.tiene_apelacion_pendiente && (product.estado === 'rechazado' || product.estado === 'suspendido' || product.estado === 'peligroso'))
                               ? 'bg-gray-400 cursor-not-allowed opacity-50' 
                               : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800'
                           } text-white`}
                           title={
                             product.estado === 'activo' ? 'Producto ya está aprobado' : 
                             (product.estado === 'peligroso' || product.es_peligroso ? 'No se puede aprobar un producto marcado como peligroso' : 
-                            ((product.estado === 'rechazado' || product.estado === 'suspendido') && !product.tiene_apelacion_pendiente) ? 
-                            'Debes esperar a que el vendedor apelé la decisión antes de poder aprobar este producto' : 
+                            (product.tiene_apelacion_pendiente && (product.estado === 'rechazado' || product.estado === 'suspendido' || product.estado === 'peligroso')) ? 
+                            'Este producto tiene una apelación pendiente. Debes esperar a que sea resuelta antes de poder cambiar su estado.' : 
                             'Aprobar producto')
                           }
                         >
@@ -736,21 +745,21 @@ export const ProductModerationPage: React.FC = () => {
                             product.estado === 'rechazado' || 
                             product.estado === 'peligroso' || 
                             product.es_peligroso ||
-                            ((product.estado === 'rechazado' || product.estado === 'suspendido') && !product.tiene_apelacion_pendiente)
+                            (product.tiene_apelacion_pendiente && (product.estado === 'rechazado' || product.estado === 'suspendido' || product.estado === 'peligroso'))
                           }
                           className={`h-10 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 ${
                             product.estado === 'rechazado' || 
                             product.estado === 'peligroso' || 
                             product.es_peligroso ||
-                            ((product.estado === 'rechazado' || product.estado === 'suspendido') && !product.tiene_apelacion_pendiente)
+                            (product.tiene_apelacion_pendiente && (product.estado === 'rechazado' || product.estado === 'suspendido' || product.estado === 'peligroso'))
                               ? 'bg-gray-400 cursor-not-allowed opacity-50' 
                               : 'bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800'
                           } text-white`}
                           title={
                             product.estado === 'rechazado' ? 'Producto ya está rechazado' : 
                             (product.estado === 'peligroso' || product.es_peligroso ? 'No se puede rechazar un producto marcado como peligroso' : 
-                            ((product.estado === 'rechazado' || product.estado === 'suspendido') && !product.tiene_apelacion_pendiente) ? 
-                            'Debes esperar a que el vendedor apelé la decisión' : 
+                            (product.tiene_apelacion_pendiente && (product.estado === 'rechazado' || product.estado === 'suspendido' || product.estado === 'peligroso')) ? 
+                            'Este producto tiene una apelación pendiente. Debes esperar a que sea resuelta antes de poder cambiar su estado.' : 
                             'Rechazar por errores corregibles (vendedor puede editar)')
                           }
                         >
@@ -771,21 +780,21 @@ export const ProductModerationPage: React.FC = () => {
                             product.estado === 'suspendido' || 
                             product.estado === 'peligroso' || 
                             product.es_peligroso ||
-                            ((product.estado === 'rechazado' || product.estado === 'suspendido') && !product.tiene_apelacion_pendiente)
+                            (product.tiene_apelacion_pendiente && (product.estado === 'rechazado' || product.estado === 'suspendido' || product.estado === 'peligroso'))
                           }
                           className={`h-10 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 ${
                             product.estado === 'suspendido' || 
                             product.estado === 'peligroso' || 
                             product.es_peligroso ||
-                            ((product.estado === 'rechazado' || product.estado === 'suspendido') && !product.tiene_apelacion_pendiente)
+                            (product.tiene_apelacion_pendiente && (product.estado === 'rechazado' || product.estado === 'suspendido' || product.estado === 'peligroso'))
                               ? 'bg-gray-400 cursor-not-allowed opacity-50' 
                               : 'bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800'
                           } text-white`}
                           title={
                             product.estado === 'suspendido' ? 'Producto ya está suspendido' : 
                             (product.estado === 'peligroso' || product.es_peligroso ? 'No se puede suspender un producto marcado como peligroso' : 
-                            ((product.estado === 'rechazado' || product.estado === 'suspendido') && !product.tiene_apelacion_pendiente) ? 
-                            'Debes esperar a que el vendedor apelé la decisión' : 
+                            (product.tiene_apelacion_pendiente && (product.estado === 'rechazado' || product.estado === 'suspendido' || product.estado === 'peligroso')) ? 
+                            'Este producto tiene una apelación pendiente. Debes esperar a que sea resuelta antes de poder cambiar su estado.' : 
                             'Suspender por violación grave (vendedor NO puede editar)')
                           }
                         >
@@ -804,13 +813,25 @@ export const ProductModerationPage: React.FC = () => {
                         <Button 
                           size="sm"
                           onClick={() => handleMarkAsDangerous(product.id, product.nombre)}
-                          disabled={actionLoading === product.id || product.estado === 'peligroso' || product.es_peligroso}
+                          disabled={
+                            actionLoading === product.id || 
+                            product.estado === 'peligroso' || 
+                            product.es_peligroso ||
+                            (product.tiene_apelacion_pendiente && (product.estado === 'rechazado' || product.estado === 'suspendido' || product.estado === 'peligroso'))
+                          }
                           className={`w-full h-10 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 ${
-                            product.estado === 'peligroso' || product.es_peligroso
+                            product.estado === 'peligroso' || 
+                            product.es_peligroso ||
+                            (product.tiene_apelacion_pendiente && (product.estado === 'rechazado' || product.estado === 'suspendido' || product.estado === 'peligroso'))
                               ? 'bg-gray-400 cursor-not-allowed opacity-50'
                               : 'bg-gradient-to-r from-red-700 to-red-900 hover:from-red-800 hover:to-red-950'
                           } text-white`}
-                          title={product.estado === 'peligroso' || product.es_peligroso ? 'Producto ya está marcado como peligroso' : 'Contenido prohibido - Producto OCULTO completamente'}
+                          title={
+                            product.estado === 'peligroso' || product.es_peligroso ? 'Producto ya está marcado como peligroso' : 
+                            (product.tiene_apelacion_pendiente && (product.estado === 'rechazado' || product.estado === 'suspendido' || product.estado === 'peligroso')) ? 
+                            'Este producto tiene una apelación pendiente. Debes esperar a que sea resuelta antes de poder cambiar su estado.' : 
+                            'Contenido prohibido - Producto OCULTO completamente'
+                          }
                         >
                           {actionLoading === product.id ? (
                             <Clock className="h-4 w-4 animate-spin" />

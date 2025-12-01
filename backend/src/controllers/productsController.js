@@ -535,7 +535,8 @@ class ProductsController {
           i.ubicacion_provincia,
           i.ubicacion_canton,
           i.ubicacion_distrito,
-          i.ubicacion_direccion
+          i.ubicacion_direccion,
+          (SELECT COUNT(*) FROM apelaciones WHERE item_id = i.id AND estado IN ('en_apelacion', 'pendiente')) > 0 as tiene_apelacion_pendiente
         FROM items i
         JOIN categorias c ON i.categoria_id = c.id
         JOIN usuarios u ON i.vendedor_id = u.id

@@ -34,6 +34,7 @@ export interface Product {
   es_peligroso?: boolean;
   fecha_revision?: string;
   motivo_rechazo?: string;
+  tiene_apelacion_pendiente?: boolean;
 }
 
 // Interface detallada de producto (para vista individual)
@@ -67,6 +68,7 @@ export interface ProductDetail {
   es_peligroso?: boolean;
   fecha_revision?: string;
   motivo_rechazo?: string;
+  tiene_apelacion_pendiente?: boolean;
 }
 
 // Imágenes de producto
