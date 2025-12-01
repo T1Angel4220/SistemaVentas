@@ -419,7 +419,7 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
       {isOpen && (
         <div
           ref={dropdownRef}
-          className={`absolute z-[9999] w-full ${expandWidth ? 'sm:w-[120%]' : ''} mt-1 bg-white border-2 border-gray-300 rounded-lg shadow-2xl max-h-[350px] flex flex-col overflow-hidden`}
+          className={`absolute z-[9999] w-full ${expandWidth ? 'sm:w-[120%]' : ''} mt-1 bg-white border-2 border-gray-300 rounded-lg shadow-2xl max-h-[280px] flex flex-col overflow-hidden`}
           style={{ boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}
         >
           {/* Selector de modo: Categoría General vs Subcategoría - SIEMPRE VISIBLE - STICKY */}
@@ -485,7 +485,7 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
           </div>
           
           {/* Lista de categorías con scroll */}
-          <div className="overflow-y-auto flex-1 min-h-0" style={{ maxHeight: 'calc(75vh - 140px)' }}>
+          <div className="overflow-y-auto flex-1 min-h-0" style={{ maxHeight: '200px' }}>
             {loading ? (
               <div className="px-4 py-8 text-sm text-gray-500 text-center">
                 Cargando categorías...
