@@ -21,7 +21,6 @@ import {
   DollarSign,
   Shield,
   Camera,
-  Flag,
   X
 } from 'lucide-react';
 import type { Product, ProductsResponse, ProductFilters } from '../types/product.types';
@@ -29,7 +28,6 @@ import type { Category } from '../types/category.types';
 import HierarchicalCategorySearch from '../components/ui/HierarchicalCategorySearch';
 import HierarchicalLocationSearch from '../components/ui/HierarchicalLocationSearch';
 import type { Location } from '../components/ui/HierarchicalLocationSearch';
-import { ReportProductDialog } from '../components/ui/ReportProductDialog';
 
 export const ProductsPage: React.FC = () => {
   const { user } = useAuth();
@@ -79,10 +77,6 @@ export const ProductsPage: React.FC = () => {
   // Estado para productos guardados
   const [savedProducts, setSavedProducts] = useState<number[]>([]);
   const [savingProduct, setSavingProduct] = useState<number | null>(null);
-  
-  // Estado para modal de reportes
-  const [reportModalOpen, setReportModalOpen] = useState(false);
-  const [selectedProductForReport, setSelectedProductForReport] = useState<{id: number; nombre: string} | null>(null);
   
   // Estado para mostrar/ocultar filtros de ubicación
   const [showLocationFilter, setShowLocationFilter] = useState(false);
@@ -272,33 +266,6 @@ export const ProductsPage: React.FC = () => {
       setSavingProduct(null);
     }
   };
-
-  const handleReportProduct = (product: Product) => {
-    // Verificar que el usuario no sea el vendedor del producto
-    if (user && user.id === product.vendedor_id) {
-      showError('Error', 'No puedes reportar tu propio producto');
-      return;
-    }
-    
-    setSelectedProductForReport({
-      id: product.id,
-      nombre: product.nombre
-    });
-    setReportModalOpen(true);
-  };
-
-  const handleReportSuccess = () => {
-    showSuccess(
-      '¡Reporte enviado!', 
-      user?.tipo_usuario === 'moderador' || user?.tipo_usuario === 'administrador'
-        ? 'Tu reporte será revisado por otro moderador o administrador.'
-        : 'Tu reporte será revisado por un moderador.'
-    );
-    setReportModalOpen(false);
-    setSelectedProductForReport(null);
-    loadProducts(); // Recargar productos
-  };
-
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({
@@ -1026,20 +993,6 @@ export const ProductsPage: React.FC = () => {
                               )}
                             </>
                           )}
-                          
-                          {/* Botón de Reportar - Solo para moderadores, administradores, compradores y vendedores (pero NO para el vendedor dueño) */}
-                          {/* NO mostrar si el producto es del usuario actual */}
-                          {((user?.tipo_usuario === 'moderador' || user?.tipo_usuario === 'administrador' || 
-                             user?.tipo_usuario === 'comprador' || 
-                             (user?.tipo_usuario === 'vendedor' && user.id !== product.vendedor_id)) && (
-                            <Button 
-                              onClick={() => handleReportProduct(product)}
-                              className="w-11 h-11 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
-                              title="Reportar producto"
-                            >
-                              <Flag className="h-4 w-4" />
-                            </Button>
-                          ))}
                         </div>
                 </CardContent>
               </Card>
@@ -1089,20 +1042,6 @@ export const ProductsPage: React.FC = () => {
           </div>
         )}
       </main>
-
-      {/* Modal de Reportes */}
-      {selectedProductForReport && (
-        <ReportProductDialog
-          isOpen={reportModalOpen}
-          onClose={() => {
-            setReportModalOpen(false);
-            setSelectedProductForReport(null);
-          }}
-          productId={selectedProductForReport.id}
-          productName={selectedProductForReport.nombre}
-          onSuccess={handleReportSuccess}
-        />
-      )}
     </div>
   );
 };
