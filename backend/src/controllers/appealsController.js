@@ -1,6 +1,5 @@
 const { query } = require('../config/database');
 const { config } = require('../config/config');
-const { normalizeImageUrl, buildImageUrl } = require('./productsController');
 
 // Controlador de Apelaciones
 class AppealsController {
@@ -202,11 +201,11 @@ class AppealsController {
           a.motivo_apelacion,
           a.informacion_adicional,
           a.estado,
-          TO_CHAR(a.fecha_apelacion AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') as fecha_apelacion,
-          CASE WHEN a.fecha_revision_apelacion IS NOT NULL THEN TO_CHAR(a.fecha_revision_apelacion AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_revision_apelacion,
+          TO_CHAR(a.fecha_apelacion, 'YYYY-MM-DD HH24:MI:SS.MS') as fecha_apelacion,
+          CASE WHEN a.fecha_revision_apelacion IS NOT NULL THEN TO_CHAR(a.fecha_revision_apelacion, 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_revision_apelacion,
           a.moderador_revisor_id,
           a.decision_apelacion,
-          CASE WHEN a.fecha_resolucion_apelacion IS NOT NULL THEN TO_CHAR(a.fecha_resolucion_apelacion AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_resolucion_apelacion,
+          CASE WHEN a.fecha_resolucion_apelacion IS NOT NULL THEN TO_CHAR(a.fecha_resolucion_apelacion, 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_resolucion_apelacion,
           u_apelante.nombre as apelante_nombre,
           u_apelante.apellido as apelante_apellido,
           u_apelante.correo as apelante_correo,
@@ -238,50 +237,7 @@ class AppealsController {
   // Obtener todas las apelaciones pendientes (para moderadores)
   static async getPendingAppeals(req, res) {
     try {
-      // Primero, buscar productos en estado 'en_apelacion' que no tienen apelación
-      // y crear apelaciones automáticamente para ellos
-      const productosSinApelacion = await query(
-        `SELECT i.id, i.vendedor_id
-         FROM items i
-         WHERE i.estado = 'en_apelacion'
-         AND NOT EXISTS (
-           SELECT 1 FROM apelaciones a 
-           WHERE a.item_id = i.id 
-           AND a.estado IN ('en_apelacion', 'pendiente')
-         )`
-      );
-
-      // Crear apelaciones automáticas para productos que están en en_apelacion pero no tienen registro
-      for (const producto of productosSinApelacion.rows) {
-        try {
-          // Verificar si ya existe una apelación para evitar duplicados
-          const existeApelacion = await query(
-            'SELECT id FROM apelaciones WHERE item_id = $1',
-            [producto.id]
-          );
-
-          if (existeApelacion.rows.length === 0) {
-            // Solo crear si no existe
-            await query(
-              `INSERT INTO apelaciones 
-              (item_id, usuario_apelante_id, motivo_apelacion, informacion_adicional, estado, fecha_apelacion)
-              VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)`,
-              [
-                producto.id,
-                producto.vendedor_id,
-                'Producto corregido - requiere revisión',
-                'Este producto fue corregido por el vendedor y está en proceso de apelación.',
-                'en_apelacion'
-              ]
-            );
-            console.log(`✅ Apelación automática creada para producto ${producto.id}`);
-          }
-        } catch (error) {
-          console.error(`Error al crear apelación automática para producto ${producto.id}:`, error);
-        }
-      }
-
-      // Obtener apelaciones existentes con fechas formateadas en timezone Ecuador
+      // Primero obtener apelaciones existentes
       const apelacionesExistentes = await query(
         `SELECT 
           a.id,
@@ -291,11 +247,11 @@ class AppealsController {
           a.motivo_apelacion,
           a.informacion_adicional,
           a.estado,
-          TO_CHAR(a.fecha_apelacion AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') as fecha_apelacion,
-          CASE WHEN a.fecha_revision_apelacion IS NOT NULL THEN TO_CHAR(a.fecha_revision_apelacion AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_revision_apelacion,
+          TO_CHAR(a.fecha_apelacion, 'YYYY-MM-DD HH24:MI:SS.MS') as fecha_apelacion,
+          CASE WHEN a.fecha_revision_apelacion IS NOT NULL THEN TO_CHAR(a.fecha_revision_apelacion, 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_revision_apelacion,
           a.moderador_revisor_id,
           a.decision_apelacion,
-          CASE WHEN a.fecha_resolucion_apelacion IS NOT NULL THEN TO_CHAR(a.fecha_resolucion_apelacion AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_resolucion_apelacion,
+          CASE WHEN a.fecha_resolucion_apelacion IS NOT NULL THEN TO_CHAR(a.fecha_resolucion_apelacion, 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_resolucion_apelacion,
           i.nombre as producto_nombre,
           i.descripcion as producto_descripcion,
           i.codigo as producto_codigo,
@@ -317,6 +273,7 @@ class AppealsController {
         INNER JOIN items i ON a.item_id = i.id
         INNER JOIN usuarios u_apelante ON a.usuario_apelante_id = u_apelante.id
         INNER JOIN usuarios u_vendedor ON i.vendedor_id = u_vendedor.id
+        LEFT JOIN usuarios u_moderador_original ON i.moderador_revision_id = u_moderador_original.id
         LEFT JOIN categorias cat ON i.categoria_id = cat.id
         WHERE a.estado IN ('en_apelacion', 'pendiente')
         ORDER BY a.fecha_apelacion ASC`
@@ -343,6 +300,7 @@ class AppealsController {
           i.tipo as producto_tipo,
           i.estado as producto_estado,
           i.motivo_rechazo,
+          i.moderador_revision_id,
           u_vendedor.nombre as apelante_nombre,
           u_vendedor.apellido as apelante_apellido,
           u_vendedor.correo as apelante_correo,
@@ -350,12 +308,15 @@ class AppealsController {
           u_vendedor.nombre as vendedor_nombre,
           u_vendedor.apellido as vendedor_apellido,
           u_vendedor.correo as vendedor_correo,
+          u_moderador_original.nombre as moderador_original_nombre,
+          u_moderador_original.apellido as moderador_original_apellido,
           cat.nombre as categoria_nombre,
           (SELECT url_imagen FROM item_imagenes WHERE item_id = i.id ORDER BY es_principal DESC, orden ASC LIMIT 1) as primera_imagen,
           (SELECT COUNT(*) FROM item_imagenes WHERE item_id = i.id) as total_imagenes,
           'producto_pendiente_apelacion' as tipo_registro
         FROM items i
         INNER JOIN usuarios u_vendedor ON i.vendedor_id = u_vendedor.id
+        LEFT JOIN usuarios u_moderador_original ON i.moderador_revision_id = u_moderador_original.id
         LEFT JOIN categorias cat ON i.categoria_id = cat.id
         WHERE (i.estado = 'rechazado' OR i.estado = 'suspendido')
         AND i.es_peligroso = FALSE
@@ -373,26 +334,10 @@ class AppealsController {
         rows: [...apelacionesExistentes.rows, ...productosPendientesApelacion.rows]
       };
 
-      // Normalizar URLs de imágenes antes de enviar la respuesta
-      const apelacionesNormalizadas = result.rows.map(apelacion => {
-        const primeraImagenNormalizada = apelacion.primera_imagen 
-          ? normalizeImageUrl(
-              apelacion.primera_imagen.startsWith('http') 
-                ? apelacion.primera_imagen 
-                : buildImageUrl(apelacion.primera_imagen.replace('/uploads/', '').replace('/uploads/products/', ''))
-            )
-          : null;
-
-        return {
-          ...apelacion,
-          primera_imagen: primeraImagenNormalizada
-        };
-      });
-
       res.json({
         success: true,
-        data: apelacionesNormalizadas,
-        count: apelacionesNormalizadas.length
+        data: result.rows,
+        count: result.rows.length
       });
 
     } catch (error) {
@@ -599,11 +544,11 @@ class AppealsController {
           a.motivo_apelacion,
           a.informacion_adicional,
           a.estado,
-          TO_CHAR(a.fecha_apelacion AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') as fecha_apelacion,
-          CASE WHEN a.fecha_revision_apelacion IS NOT NULL THEN TO_CHAR(a.fecha_revision_apelacion AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_revision_apelacion,
+          TO_CHAR(a.fecha_apelacion, 'YYYY-MM-DD HH24:MI:SS.MS') as fecha_apelacion,
+          CASE WHEN a.fecha_revision_apelacion IS NOT NULL THEN TO_CHAR(a.fecha_revision_apelacion, 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_revision_apelacion,
           a.moderador_revisor_id,
           a.decision_apelacion,
-          CASE WHEN a.fecha_resolucion_apelacion IS NOT NULL THEN TO_CHAR(a.fecha_resolucion_apelacion AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_resolucion_apelacion,
+          CASE WHEN a.fecha_resolucion_apelacion IS NOT NULL THEN TO_CHAR(a.fecha_resolucion_apelacion, 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_resolucion_apelacion,
           i.nombre as producto_nombre,
           i.descripcion as producto_descripcion,
           i.codigo as producto_codigo,

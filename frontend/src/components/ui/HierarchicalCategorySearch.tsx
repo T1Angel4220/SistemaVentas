@@ -322,9 +322,17 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
                             <FolderOpen className="h-4 w-4 text-blue-500 ml-1" />
                           </div>
                         )}
-                        <span className={isSelected ? 'text-blue-900' : 'text-gray-900'}>
-                          {category.nombre}
-                        </span>
+                        <div className="flex flex-col">
+                          <span className={isSelected ? 'text-blue-900 font-medium' : 'text-gray-900'}>
+                            {category.nombre}
+                          </span>
+                          {isParent && (
+                            <span className="text-xs text-gray-500 mt-0.5">Categoría general</span>
+                          )}
+                          {!isParent && (
+                            <span className="text-xs text-gray-500 mt-0.5">Subcategoría</span>
+                          )}
+                        </div>
                       </div>
                       {isSelected && (
                         <Check className="h-4 w-4 text-blue-600" />

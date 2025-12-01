@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 export const HomePage: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -76,49 +76,87 @@ export const HomePage: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-            <Card className="text-center">
-              <CardHeader>
-                <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                  <ShoppingCart className="h-6 w-6 text-blue-600" />
-                </div>
-                <CardTitle>Comprar Fácil</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription>
-                  Encuentra productos y servicios de calidad con solo unos clics
-                </CardDescription>
-              </CardContent>
-            </Card>
+            <Link to="/products" className="block">
+              <Card className="text-center hover:shadow-lg transition-shadow cursor-pointer h-full">
+                <CardHeader>
+                  <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                    <ShoppingCart className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <CardTitle>Comprar Fácil</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription>
+                    Encuentra productos y servicios de calidad con solo unos clics
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            </Link>
 
-            <Card className="text-center">
-              <CardHeader>
-                <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                  <Package className="h-6 w-6 text-green-600" />
-                </div>
-                <CardTitle>Vender Seguro</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription>
-                  Publica tus productos y servicios con total seguridad
-                </CardDescription>
-              </CardContent>
-            </Card>
+            {isAuthenticated && user?.tipo_usuario === 'vendedor' ? (
+              <Link to="/products/create" className="block">
+                <Card className="text-center hover:shadow-lg transition-shadow cursor-pointer h-full">
+                  <CardHeader>
+                    <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                      <Package className="h-6 w-6 text-green-600" />
+                    </div>
+                    <CardTitle>Vender Seguro</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription>
+                      Publica tus productos y servicios con total seguridad
+                    </CardDescription>
+                  </CardContent>
+                </Card>
+              </Link>
+            ) : (
+              <Card className="text-center h-full">
+                <CardHeader>
+                  <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                    <Package className="h-6 w-6 text-green-600" />
+                  </div>
+                  <CardTitle>Vender Seguro</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription>
+                    Publica tus productos y servicios con total seguridad
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            )}
 
-            <Card className="text-center">
-              <CardHeader>
-                <div className="mx-auto w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-4">
-                  <MessageSquare className="h-6 w-6 text-purple-600" />
-                </div>
-                <CardTitle>Comunicación Directa</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription>
-                  Chatea directamente con compradores y vendedores
-                </CardDescription>
-              </CardContent>
-            </Card>
+            {isAuthenticated ? (
+              <Link to="/chat" className="block">
+                <Card className="text-center hover:shadow-lg transition-shadow cursor-pointer h-full">
+                  <CardHeader>
+                    <div className="mx-auto w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-4">
+                      <MessageSquare className="h-6 w-6 text-purple-600" />
+                    </div>
+                    <CardTitle>Comunicación Directa</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription>
+                      Chatea directamente con compradores y vendedores
+                    </CardDescription>
+                  </CardContent>
+                </Card>
+              </Link>
+            ) : (
+              <Card className="text-center h-full">
+                <CardHeader>
+                  <div className="mx-auto w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-4">
+                    <MessageSquare className="h-6 w-6 text-purple-600" />
+                  </div>
+                  <CardTitle>Comunicación Directa</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription>
+                    Chatea directamente con compradores y vendedores
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            )}
 
-            <Card className="text-center">
+            <Card className="text-center h-full">
               <CardHeader>
                 <div className="mx-auto w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
                   <Shield className="h-6 w-6 text-yellow-600" />
@@ -132,7 +170,7 @@ export const HomePage: React.FC = () => {
               </CardContent>
             </Card>
 
-            <Card className="text-center">
+            <Card className="text-center h-full">
               <CardHeader>
                 <div className="mx-auto w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
                   <Users className="h-6 w-6 text-red-600" />
@@ -146,7 +184,7 @@ export const HomePage: React.FC = () => {
               </CardContent>
             </Card>
 
-            <Card className="text-center">
+            <Card className="text-center h-full">
               <CardHeader>
                 <div className="mx-auto w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
                   <Star className="h-6 w-6 text-indigo-600" />

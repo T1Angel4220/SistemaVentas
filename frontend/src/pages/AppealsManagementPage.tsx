@@ -523,8 +523,107 @@ export const AppealsManagementPage: React.FC = () => {
                       </div>
                     </div>
 
-                     {/* Columna 3: Acciones - Optimizado para móvil */}
+                     {/* Columna 3: Acciones o Información de Resolución - Optimizado para móvil */}
                      <div className="space-y-3 xl:border-l xl:border-gray-200 xl:pl-6 border-t border-gray-200 pt-4 xl:pt-0 xl:border-t-0">
+                      {/* Si la apelación ya está resuelta, mostrar solo información */}
+                      {appeal.estado === 'resuelto' || appeal.estado === 'rechazado' ? (
+                        <div className="space-y-4">
+                          <div className="text-sm font-semibold text-gray-700 mb-4">Información de Resolución</div>
+                          
+                          {/* Estado de la apelación */}
+                          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-4">
+                            <div className="flex items-center space-x-2 mb-2">
+                              {appeal.estado === 'resuelto' ? (
+                                <CheckCircle className="h-5 w-5 text-green-600" />
+                              ) : (
+                                <XCircle className="h-5 w-5 text-red-600" />
+                              )}
+                              <span className="text-sm font-semibold text-gray-900">
+                                Estado: {appeal.estado === 'resuelto' ? 'Aprobada' : 'Rechazada'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Información del apelante */}
+                          <div>
+                            <div className="text-xs font-semibold text-gray-600 mb-2 flex items-center">
+                              <User className="h-3 w-3 mr-1" />
+                              Apelación iniciada por:
+                            </div>
+                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                              <p className="text-sm font-medium text-gray-900">
+                                {appeal.vendedor_nombre} {appeal.vendedor_apellido}
+                              </p>
+                              <p className="text-xs text-gray-600 mt-1">{appeal.vendedor_correo}</p>
+                              {appeal.fecha_apelacion && (
+                                <p className="text-xs text-gray-500 mt-2">
+                                  Fecha: {formatDate(appeal.fecha_apelacion)}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Información del revisor */}
+                          {appeal.revisor_nombre && appeal.revisor_apellido && (
+                            <div>
+                              <div className="text-xs font-semibold text-gray-600 mb-2 flex items-center">
+                                <Shield className="h-3 w-3 mr-1" />
+                                Resuelta por:
+                              </div>
+                              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                <p className="text-sm font-medium text-gray-900">
+                                  {appeal.revisor_nombre} {appeal.revisor_apellido}
+                                </p>
+                                {appeal.fecha_resolucion_apelacion && (
+                                  <p className="text-xs text-gray-600 mt-2">
+                                    Fecha de resolución: {formatDate(appeal.fecha_resolucion_apelacion)}
+                                  </p>
+                                )}
+                                {appeal.fecha_revision_apelacion && (
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    Revisada: {formatDate(appeal.fecha_revision_apelacion)}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Decisión de la apelación */}
+                          {appeal.decision_apelacion && (
+                            <div>
+                              <div className="text-xs font-semibold text-gray-600 mb-2 flex items-center">
+                                <FileText className="h-3 w-3 mr-1" />
+                                {appeal.estado === 'resuelto' ? 'Razón de aprobación:' : 'Razón de rechazo:'}
+                              </div>
+                              <div className={`border-2 rounded-lg p-3 ${
+                                appeal.estado === 'resuelto' 
+                                  ? 'bg-green-50 border-green-200' 
+                                  : 'bg-red-50 border-red-200'
+                              }`}>
+                                <p className="text-sm text-gray-800 leading-relaxed">
+                                  {appeal.decision_apelacion}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Información adicional del producto original */}
+                          {appeal.moderador_original_nombre && appeal.moderador_original_apellido && (
+                            <div>
+                              <div className="text-xs font-semibold text-gray-600 mb-2 flex items-center">
+                                <Shield className="h-3 w-3 mr-1 text-orange-500" />
+                                Rechazado/Suspendido originalmente por:
+                              </div>
+                              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                                <p className="text-sm font-medium text-gray-900">
+                                  {appeal.moderador_original_nombre} {appeal.moderador_original_apellido}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <>
                       <div className="text-sm font-semibold text-gray-700 mb-4">Acciones de Moderación</div>
                       
                       {appeal.tipo_registro === 'producto_pendiente_apelacion' ? (
@@ -564,25 +663,57 @@ export const AppealsManagementPage: React.FC = () => {
                         </div>
                       ) : (
                         <>
-                      <Button
-                        size="sm"
-                        onClick={() => openResolveDialog(appeal, 'aprobar')}
-                        disabled={actionLoading === appeal.id}
-                        className="w-full h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-medium shadow-lg"
-                      >
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        Aceptar Apelación
-                      </Button>
+                      {/* Verificar si el moderador actual es quien rechazó/suspendió el producto */}
+                      {user && appeal.moderador_revision_id && user.id === appeal.moderador_revision_id ? (
+                        <div className="space-y-2">
+                          <Button
+                            size="sm"
+                            disabled={true}
+                            className="w-full h-10 bg-gray-400 cursor-not-allowed opacity-50 text-white rounded-xl font-medium shadow-lg"
+                            title="No puedes revisar una apelación de un producto que tú mismo rechazaste o suspendiste. La apelación debe ser revisada por un moderador diferente."
+                          >
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Aceptar Apelación
+                          </Button>
 
-                      <Button
-                        size="sm"
-                        onClick={() => openResolveDialog(appeal, 'rechazar')}
-                        disabled={actionLoading === appeal.id}
-                        className="w-full h-10 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl font-medium shadow-lg"
-                      >
-                        <XCircle className="h-4 w-4 mr-2" />
-                        Rechazar Apelación
-                      </Button>
+                          <Button
+                            size="sm"
+                            disabled={true}
+                            className="w-full h-10 bg-gray-400 cursor-not-allowed opacity-50 text-white rounded-xl font-medium shadow-lg"
+                            title="No puedes revisar una apelación de un producto que tú mismo rechazaste o suspendiste. La apelación debe ser revisada por un moderador diferente."
+                          >
+                            <XCircle className="h-4 w-4 mr-2" />
+                            Rechazar Apelación
+                          </Button>
+                          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-2">
+                            <p className="text-xs text-yellow-800">
+                              <strong>⚠️ Restricción:</strong> No puedes revisar esta apelación porque tú fuiste quien rechazó o suspendió este producto. Debe ser revisada por otro moderador.
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <Button
+                            size="sm"
+                            onClick={() => openResolveDialog(appeal, 'aprobar')}
+                            disabled={actionLoading === appeal.id}
+                            className="w-full h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-medium shadow-lg"
+                          >
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Aceptar Apelación
+                          </Button>
+
+                          <Button
+                            size="sm"
+                            onClick={() => openResolveDialog(appeal, 'rechazar')}
+                            disabled={actionLoading === appeal.id}
+                            className="w-full h-10 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl font-medium shadow-lg"
+                          >
+                            <XCircle className="h-4 w-4 mr-2" />
+                            Rechazar Apelación
+                          </Button>
+                        </>
+                      )}
                         </>
                       )}
 
@@ -592,6 +723,8 @@ export const AppealsManagementPage: React.FC = () => {
                           <strong>Rechazar:</strong> El producto mantiene su estado actual
                         </p>
                       </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 </CardContent>
