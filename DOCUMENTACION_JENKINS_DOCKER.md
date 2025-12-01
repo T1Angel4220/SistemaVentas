@@ -1013,7 +1013,7 @@ docker run -d \
   -e DB_HOST=postgres \
   -e DB_NAME=sistema_ventas_multiempresa \
   -e DB_USER=postgres \
-  -e DB_PASSWORD=Angel_4220 \
+  -e DB_PASSWORD=S1805787841 \
   sistema-ventas-backend:latest
 ```
 
@@ -1151,7 +1151,7 @@ environment {
     IMAGE_TAG = "${env.BUILD_NUMBER}"
     DB_NAME = 'sistema_ventas_multiempresa'
     DB_USER = 'postgres'
-    DB_PASSWORD = 'Angel_4220'
+    DB_PASSWORD = 'S1805787841'
     // ... más variables
 }
 ```

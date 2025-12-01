@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, ChevronDown, ChevronRight, Check, FolderOpen } from 'lucide-react';
+import { Search, ChevronDown, ChevronRight, Check, FolderOpen, X } from 'lucide-react';
 
 interface Category {
   id: number;
@@ -196,6 +196,16 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
 
   // Manejar selección de categoría
   const handleCategorySelect = (category: Category) => {
+    // Si la categoría ya está seleccionada, deseleccionarla
+    if (selectedCategoryId === category.id.toString()) {
+      onCategorySelect('', '', '');
+      setSearchTerm('');
+      setIsOpen(false);
+      setHighlightedIndex(-1);
+      return;
+    }
+    
+    // Si no está seleccionada, seleccionarla
     const fullPath = getFullPath(category);
     onCategorySelect(category.id.toString(), category.nombre, fullPath);
     setSearchTerm('');
@@ -342,17 +352,21 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
         <input
           ref={inputRef}
           type="text"
-          value={isOpen ? searchTerm : (selectedCategory ? getFullPath(selectedCategory) : '')}
+          value={searchTerm !== '' ? searchTerm : (selectedCategory && !isOpen ? getFullPath(selectedCategory) : '')}
           onChange={(e) => {
             setSearchTerm(e.target.value);
             setIsOpen(true);
           }}
-          onFocus={() => {
+          onFocus={(e) => {
             setIsOpen(true);
-            setSearchTerm('');
+            // Si hay una categoría seleccionada y el usuario hace clic, seleccionar todo el texto
+            // para que pueda empezar a escribir inmediatamente
+            if (selectedCategory && !searchTerm) {
+              e.target.select();
+            }
           }}
           onKeyDown={handleKeyDown}
-          placeholder={selectedCategory ? getFullPath(selectedCategory) : placeholder}
+          placeholder={placeholder}
           disabled={loading}
           className={`w-full h-10 pl-10 pr-10 rounded-md border transition-colors ${
             error 
@@ -369,12 +383,28 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
       {isOpen && (
         <div
           ref={dropdownRef}
-          className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-80 overflow-auto"
+          className="absolute z-50 w-full mt-1 bg-white border-2 border-gray-200 rounded-lg shadow-2xl max-h-80 overflow-auto"
         >
           {/* Selector de modo: Categoría General vs Subcategoría - SIEMPRE VISIBLE */}
           <div className="sticky top-0 bg-gradient-to-r from-blue-100 to-indigo-100 border-b-2 border-blue-500 px-4 py-4 z-10 shadow-lg">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-bold text-gray-900">Seleccionar tipo de categoría:</span>
+              {selectedCategory && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    onCategorySelect('', '', '');
+                    setSearchTerm('');
+                  }}
+                  className="px-3 py-1.5 text-xs font-semibold bg-red-500 hover:bg-red-600 text-white rounded-lg transition-all duration-200 shadow-sm hover:shadow-md flex items-center space-x-1"
+                  title="Limpiar selección"
+                >
+                  <X className="h-3 w-3" />
+                  <span>Limpiar</span>
+                </button>
+              )}
             </div>
             <div className="flex gap-3">
               <button
@@ -440,7 +470,7 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
               {searchTerm ? `No se encontraron categorías para "${searchTerm}"` : 'No hay categorías disponibles'}
             </div>
           ) : (
-            <div className="py-1">
+            <div className="py-2">
               {flatCategories.map((item, index) => {
                 const { category, isParent, hasChildren, indent } = item;
                 const isHighlighted = index === highlightedIndex;
@@ -450,10 +480,10 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
                 return (
                   <div
                     key={`${category.id}-${index}`}
-                    className={`flex items-center ${
+                    className={`flex items-center px-2 ${
                       isParent ? 'font-medium' : ''
-                    } ${isHighlighted ? 'bg-blue-50' : ''}`}
-                    style={{ paddingLeft: `${indent * 16 + 16}px` }}
+                    } ${isHighlighted && !isSelected ? 'bg-blue-50' : ''}`}
+                    style={{ paddingLeft: `${indent * 16 + 8}px` }}
                   >
                     {/* Botón de expandir/colapsar - SOLO para expandir, NO para seleccionar - Solo en modo subcategoría */}
                     {categoryMode === 'subcategoria' && isParent && hasChildren && (
@@ -501,16 +531,25 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
                         // pero prevenir el comportamiento por defecto
                         e.preventDefault();
                       }}
-                      className={`flex-1 px-4 py-2 text-left text-sm hover:bg-blue-50 focus:bg-blue-50 focus:outline-none flex items-center justify-between rounded transition-colors cursor-pointer ${
-                        isSelected ? 'bg-blue-100 font-semibold' : ''
+                      className={`flex-1 px-4 py-3 mx-1 text-left text-sm focus:outline-none flex items-center justify-between rounded-lg transition-all duration-200 cursor-pointer ${
+                        isSelected 
+                          ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold shadow-lg border-2 border-blue-700 hover:from-blue-600 hover:to-blue-700 transform scale-[1.02]' 
+                          : 'bg-gray-50 text-gray-900 hover:bg-blue-50 border-2 border-gray-200 hover:border-blue-300 hover:shadow-sm'
                       }`}
-                      title={`Seleccionar ${category.nombre}`}
+                      title={isSelected ? `Deseleccionar ${category.nombre} (clic para quitar)` : `Seleccionar ${category.nombre}`}
                     >
-                      <span className={isSelected ? 'text-blue-900' : 'text-gray-900'}>
+                      <span className={`flex items-center font-medium ${isSelected ? 'text-white' : 'text-gray-900'}`}>
                         {category.nombre}
                       </span>
                       {isSelected && (
-                        <Check className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                        <div className="flex items-center space-x-2">
+                          <div className="bg-white/30 rounded-full p-1.5 shadow-sm">
+                            <Check className="h-4 w-4 text-white flex-shrink-0 font-bold" strokeWidth={3} />
+                          </div>
+                        </div>
+                      )}
+                      {!isSelected && (
+                        <div className="w-5 h-5 border-2 border-gray-300 rounded flex-shrink-0 hover:border-blue-400 transition-colors"></div>
                       )}
                     </button>
                   </div>
