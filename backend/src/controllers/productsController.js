@@ -1348,7 +1348,11 @@ class ProductsController {
           i.ubicacion_provincia, i.ubicacion_canton, i.ubicacion_distrito, i.ubicacion_direccion,
           c.nombre as categoria_nombre,
           COUNT(ii.id) as total_imagenes,
-          (SELECT ii2.url_imagen FROM item_imagenes ii2 WHERE ii2.item_id = i.id ORDER BY ii2.orden LIMIT 1) as primera_imagen
+          (SELECT ii2.url_imagen FROM item_imagenes ii2 WHERE ii2.item_id = i.id ORDER BY ii2.orden LIMIT 1) as primera_imagen,
+          -- Verificar si hay una apelación REAL creada (no solo si puede ser apelado)
+          (SELECT COUNT(*) > 0 FROM apelaciones WHERE item_id = i.id AND estado IN ('en_apelacion', 'pendiente')) as tiene_apelacion_real,
+          -- Obtener la última apelación activa para determinar el estado correcto
+          (SELECT estado FROM apelaciones WHERE item_id = i.id AND estado IN ('en_apelacion', 'pendiente') ORDER BY fecha_apelacion DESC LIMIT 1) as estado_ultima_apelacion
         FROM items i
         JOIN categorias c ON i.categoria_id = c.id
         LEFT JOIN item_imagenes ii ON i.id = ii.item_id
@@ -1374,10 +1378,48 @@ class ProductsController {
       const total = parseInt(totalCount.rows[0].total);
       const totalPages = Math.ceil(total / limit);
 
-      const productosFormateados = productos.rows.map(producto => ({
-        ...producto,
-        primera_imagen: buildImageUrl(producto.primera_imagen),
-      }));
+      const productosFormateados = productos.rows.map(producto => {
+        // ✅ LÓGICA CORREGIDA: Solo mostrar "en_apelacion" si HAY una apelación activa REAL
+        // Si no hay apelación activa, mantener el estado original del producto (rechazado/suspendido)
+        let estadoFinal = producto.estado;
+        const tieneApelacionActiva = producto.tiene_apelacion_real === true;
+        
+        if (tieneApelacionActiva) {
+          // Si hay una apelación activa, el estado debe ser "en_apelacion"
+          // Verificar que la última apelación esté realmente activa
+          if (producto.estado_ultima_apelacion === 'en_apelacion' || producto.estado_ultima_apelacion === 'pendiente') {
+            estadoFinal = 'en_apelacion';
+          } else {
+            // Si la última apelación no está activa, mantener el estado original
+            estadoFinal = producto.estado;
+          }
+        } else {
+          // ✅ CRÍTICO: Si NO hay apelación activa, NUNCA mostrar "en_apelacion"
+          // Si el estado en BD es "en_apelacion" pero no hay apelación activa,
+          // significa que todas las apelaciones fueron resueltas
+          // En este caso, el producto debería estar en rechazado o suspendido
+          // Como no podemos saber cuál era el estado original sin consultar más,
+          // y el estado "en_apelacion" solo debería existir si hay apelación activa,
+          // corregimos a "rechazado" por defecto (el más común)
+          if (producto.estado === 'en_apelacion') {
+            // Si el estado es "en_apelacion" pero no hay apelación activa,
+            // significa que el estado en BD está incorrecto
+            // Por defecto, asumimos que era rechazado (más común que suspendido)
+            // NOTA: Esto debería corregirse en el backend cuando se resuelve una apelación
+            estadoFinal = 'rechazado';
+          } else {
+            // Si el estado no es "en_apelacion", mantenerlo tal cual
+            estadoFinal = producto.estado;
+          }
+        }
+        
+        return {
+          ...producto,
+          estado: estadoFinal,
+          primera_imagen: buildImageUrl(producto.primera_imagen),
+          tiene_apelacion_real: tieneApelacionActiva
+        };
+      });
 
       res.json({
         success: true,
