@@ -888,12 +888,14 @@ export const ProductDetailPage: React.FC = () => {
                       reviewLoading || 
                       product.estado === 'activo' || 
                       (product.estado === 'peligroso' || product.es_peligroso) ||
+                      (product.estado === 'rechazado' || product.estado === 'suspendido') ||
                       (product.tiene_apelacion_pendiente && (product.estado === 'rechazado' || product.estado === 'suspendido' || product.estado === 'peligroso'))
                     }
                     className="h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     title={
                       product.estado === 'activo' ? 'Producto ya está aprobado' : 
                       (product.estado === 'peligroso' || product.es_peligroso ? 'No se puede aprobar un producto marcado como peligroso' : 
+                      (product.estado === 'rechazado' || product.estado === 'suspendido') ? 'No se puede aprobar un producto rechazado o suspendido sin una apelación pendiente. Debes esperar a que el vendedor apelé la decisión antes de poder aprobarlo nuevamente.' :
                       (product.tiene_apelacion_pendiente && (product.estado === 'rechazado' || product.estado === 'suspendido' || product.estado === 'peligroso')) ? 
                       'Este producto tiene una apelación pendiente. Debes esperar a que sea resuelta antes de poder cambiar su estado.' : 
                       'Aprobar producto')
