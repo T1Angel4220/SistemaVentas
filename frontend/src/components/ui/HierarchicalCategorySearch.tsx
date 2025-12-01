@@ -338,9 +338,9 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
   }, [categoryMode, isOpen]);
 
   return (
-    <div className="relative">
+    <div className="relative w-full z-50">
       {/* Input de búsqueda */}
-      <div className="relative">
+      <div className="relative w-full">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <Search className="h-4 w-4 text-gray-400" />
         </div>
@@ -359,10 +359,10 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
           onKeyDown={handleKeyDown}
           placeholder={selectedCategory ? getFullPath(selectedCategory) : placeholder}
           disabled={loading}
-          className={`w-full h-10 pl-10 pr-10 rounded-md border transition-colors ${
+          className={`w-full h-12 pl-10 pr-10 rounded-xl border-2 transition-all duration-200 ${
             error 
-              ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
-              : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+              ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500' 
+              : 'border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 shadow-sm hover:shadow-md'
           } ${loading ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'}`}
         />
         <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
@@ -374,14 +374,15 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
       {isOpen && (
         <div
           ref={dropdownRef}
-          className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-80 overflow-auto"
+          className="absolute z-[9999] w-full mt-1 bg-white border-2 border-gray-300 rounded-xl shadow-2xl max-h-96 overflow-auto"
+          style={{ minWidth: '100%' }}
         >
           {/* Selector de modo: Categoría General vs Subcategoría - SIEMPRE VISIBLE */}
           <div className="sticky top-0 bg-gradient-to-r from-blue-100 to-indigo-100 border-b-2 border-blue-500 px-4 py-4 z-10 shadow-lg">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-bold text-gray-900">Seleccionar tipo de categoría:</span>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-3 flex-wrap">
               <button
                 type="button"
                 onClick={(e) => {
@@ -396,7 +397,7 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
                     onCategorySelect('', '', '');
                   }
                 }}
-                className={`flex-1 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
+                className={`flex-1 min-w-[140px] px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
                   categoryMode === 'general'
                     ? 'bg-blue-600 text-white shadow-lg scale-105'
                     : 'bg-white text-gray-700 border-2 border-gray-300 hover:bg-gray-50 hover:border-blue-400'
@@ -416,7 +417,7 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
                   // No necesitamos limpiar la selección al cambiar a subcategoría
                   // porque las categorías generales también son válidas en este modo
                 }}
-                className={`flex-1 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
+                className={`flex-1 min-w-[140px] px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
                   categoryMode === 'subcategoria'
                     ? 'bg-blue-600 text-white shadow-lg scale-105'
                     : 'bg-white text-gray-700 border-2 border-gray-300 hover:bg-gray-50 hover:border-blue-400'
@@ -457,10 +458,10 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
                 return (
                   <div
                     key={`${category.id}-${index}`}
-                    className={`flex items-center ${
+                    className={`flex items-center min-h-[44px] ${
                       isParent ? 'font-medium' : ''
                     } ${isHighlighted ? 'bg-blue-50' : ''}`}
-                    style={{ paddingLeft: `${indent * 16 + 16}px` }}
+                    style={{ paddingLeft: `${indent * 20 + 12}px`, paddingRight: '12px' }}
                   >
                     {/* Botón de expandir/colapsar - SOLO para expandir, NO para seleccionar - Solo en modo subcategoría */}
                     {categoryMode === 'subcategoria' && isParent && hasChildren && (
@@ -509,16 +510,16 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
                         // pero prevenir el comportamiento por defecto
                         e.preventDefault();
                       }}
-                      className={`flex-1 px-4 py-2 text-left text-sm hover:bg-blue-50 focus:bg-blue-50 focus:outline-none flex items-center justify-between rounded transition-colors cursor-pointer ${
-                        isSelected ? 'bg-blue-100 font-semibold' : ''
+                      className={`flex-1 px-4 py-3 text-left text-sm hover:bg-blue-50 focus:bg-blue-50 focus:outline-none flex items-center justify-between rounded-lg transition-all duration-200 cursor-pointer ${
+                        isSelected ? 'bg-blue-100 font-semibold shadow-sm' : 'hover:shadow-sm'
                       }`}
                       title={`Seleccionar ${category.nombre}`}
                     >
-                      <span className={isSelected ? 'text-blue-900' : 'text-gray-900'}>
+                      <span className={`truncate ${isSelected ? 'text-blue-900' : 'text-gray-900'}`}>
                         {category.nombre}
                       </span>
                       {isSelected && (
-                        <Check className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                        <Check className="h-5 w-5 text-blue-600 flex-shrink-0 ml-2" />
                       )}
                     </button>
                   </div>

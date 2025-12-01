@@ -571,21 +571,23 @@ export const ProductsPage: React.FC = () => {
               <div className="border-t border-gray-100 pt-6 space-y-6">
                 {/* Primera fila - Categoría y Precios */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* Categoría */}
-                  <div className="space-y-2">
+                  {/* Categoría - Contenedor mejorado */}
+                  <div className="space-y-2 relative z-50">
                     <label className="text-sm font-medium text-gray-700 flex items-center">
                       <Search className="h-4 w-4 mr-2 text-blue-500" />
                       Categoría
                     </label>
-                    <HierarchicalCategorySearch
-                      categories={categories}
-                      selectedCategoryId={filters.categoria_id}
-                      onCategorySelect={(categoryId) => {
-                        handleFilterChange('categoria_id', categoryId);
-                      }}
-                      loading={false}
-                      placeholder="Buscar categoría..."
-                    />
+                    <div className="relative">
+                      <HierarchicalCategorySearch
+                        categories={categories}
+                        selectedCategoryId={filters.categoria_id}
+                        onCategorySelect={(categoryId) => {
+                          handleFilterChange('categoria_id', categoryId);
+                        }}
+                        loading={false}
+                        placeholder="Buscar categoría..."
+                      />
+                    </div>
                   </div>
 
                   {/* Precio mínimo */}
