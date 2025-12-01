@@ -138,10 +138,10 @@ class AppealsController {
 
       // Actualizar el estado del producto a "en_apelacion" si estaba rechazado o suspendido
       if (producto.estado === 'rechazado' || producto.estado === 'suspendido') {
-        await query(
-          'UPDATE items SET estado = $1 WHERE id = $2',
-          ['en_apelacion', item_id]
-        );
+          await query(
+            'UPDATE items SET estado = $1 WHERE id = $2',
+            ['en_apelacion', item_id]
+          );
       }
 
       res.status(201).json({
@@ -450,6 +450,26 @@ class AppealsController {
         });
       }
 
+      // ✅ VALIDACIÓN CRÍTICA: Verificar que el moderador que revisa NO sea el mismo que rechazó/suspendió el producto
+      // Obtener información del producto para ver quién lo rechazó/suspendió originalmente
+      const productoResult = await query(
+        'SELECT moderador_revision_id FROM items WHERE id = $1',
+        [apelacion.item_id]
+      );
+
+      if (productoResult.rows.length > 0) {
+        const producto = productoResult.rows[0];
+        const moderador_original_id = producto.moderador_revision_id;
+
+        // Si hay un moderador que rechazó/suspendió originalmente, verificar que NO sea el mismo
+        if (moderador_original_id && moderador_original_id === moderador_revisor_id) {
+          return res.status(403).json({
+            success: false,
+            message: 'No puedes revisar una apelación de un producto que tú mismo rechazaste o suspendiste. La apelación debe ser revisada por un moderador diferente.'
+          });
+        }
+      }
+
       // Determinar nuevo estado
       let nuevoEstadoApelacion = decision === 'aprobar' ? 'resuelto' : 'rechazado';
       let nuevoEstadoProducto = nuevo_estado_producto || (decision === 'aprobar' ? 'activo' : 'rechazado');
@@ -560,6 +580,100 @@ class AppealsController {
       res.status(500).json({
         success: false,
         message: 'Error al obtener tus apelaciones',
+        error: error.message
+      });
+    }
+  }
+
+  // Obtener historial completo de apelaciones (para moderadores - todas las apelaciones)
+  static async getAllAppeals(req, res) {
+    try {
+      const { estado, fecha_desde, fecha_hasta } = req.query;
+      
+      let queryText = `
+        SELECT 
+          a.id,
+          a.reporte_id,
+          a.item_id,
+          a.usuario_apelante_id,
+          a.motivo_apelacion,
+          a.informacion_adicional,
+          a.estado,
+          TO_CHAR(a.fecha_apelacion AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') as fecha_apelacion,
+          CASE WHEN a.fecha_revision_apelacion IS NOT NULL THEN TO_CHAR(a.fecha_revision_apelacion AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_revision_apelacion,
+          a.moderador_revisor_id,
+          a.decision_apelacion,
+          CASE WHEN a.fecha_resolucion_apelacion IS NOT NULL THEN TO_CHAR(a.fecha_resolucion_apelacion AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_resolucion_apelacion,
+          i.nombre as producto_nombre,
+          i.descripcion as producto_descripcion,
+          i.codigo as producto_codigo,
+          i.tipo as producto_tipo,
+          i.estado as producto_estado,
+          i.motivo_rechazo,
+          i.moderador_revision_id,
+          u_apelante.nombre as apelante_nombre,
+          u_apelante.apellido as apelante_apellido,
+          u_apelante.correo as apelante_correo,
+          u_apelante.telefono as apelante_telefono,
+          u_vendedor.nombre as vendedor_nombre,
+          u_vendedor.apellido as vendedor_apellido,
+          u_vendedor.correo as vendedor_correo,
+          u_revisor.nombre as revisor_nombre,
+          u_revisor.apellido as revisor_apellido,
+          u_moderador_original.nombre as moderador_original_nombre,
+          u_moderador_original.apellido as moderador_original_apellido,
+          cat.nombre as categoria_nombre,
+          (SELECT url_imagen FROM item_imagenes WHERE item_id = i.id ORDER BY es_principal DESC, orden ASC LIMIT 1) as primera_imagen,
+          (SELECT COUNT(*) FROM item_imagenes WHERE item_id = i.id) as total_imagenes
+        FROM apelaciones a
+        INNER JOIN items i ON a.item_id = i.id
+        INNER JOIN usuarios u_apelante ON a.usuario_apelante_id = u_apelante.id
+        INNER JOIN usuarios u_vendedor ON i.vendedor_id = u_vendedor.id
+        LEFT JOIN usuarios u_revisor ON a.moderador_revisor_id = u_revisor.id
+        LEFT JOIN usuarios u_moderador_original ON i.moderador_revision_id = u_moderador_original.id
+        LEFT JOIN categorias cat ON i.categoria_id = cat.id
+        WHERE 1=1
+      `;
+      
+      const params = [];
+      let paramCount = 1;
+
+      // Filtrar por estado si se proporciona
+      if (estado) {
+        queryText += ` AND a.estado = $${paramCount}`;
+        params.push(estado);
+        paramCount++;
+      }
+
+      // Filtrar por fecha desde
+      if (fecha_desde) {
+        queryText += ` AND a.fecha_apelacion >= $${paramCount}`;
+        params.push(fecha_desde);
+        paramCount++;
+      }
+
+      // Filtrar por fecha hasta
+      if (fecha_hasta) {
+        queryText += ` AND a.fecha_apelacion <= $${paramCount}`;
+        params.push(fecha_hasta);
+        paramCount++;
+      }
+
+      queryText += ` ORDER BY a.fecha_apelacion DESC`;
+
+      const result = await query(queryText, params);
+
+      res.json({
+        success: true,
+        data: result.rows,
+        count: result.rows.length
+      });
+
+    } catch (error) {
+      console.error('Error al obtener historial de apelaciones:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error al obtener el historial de apelaciones',
         error: error.message
       });
     }

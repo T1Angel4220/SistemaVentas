@@ -52,6 +52,19 @@ interface Report {
   vendedor_correo: string;
   categoria_nombre: string;
   total_reportes_producto: number;
+  origen_deteccion?: string; // 'sistema' o 'comprador'
+  moderador_nombre?: string;
+  moderador_apellido?: string;
+  fecha_deteccion_peligroso?: string;
+  es_peligroso?: boolean;
+  moderador_resolutor_nombre?: string;
+  moderador_resolutor_apellido?: string;
+  moderador_producto_nombre?: string;
+  moderador_producto_apellido?: string;
+  decision_final?: string;
+  fecha_resolucion?: string;
+  motivo_rechazo?: string;
+  fecha_revision?: string;
 }
 
 export const ReportsManagementPage: React.FC = () => {
@@ -61,6 +74,7 @@ export const ReportsManagementPage: React.FC = () => {
   const { alert, showSuccess, showError, hideAlert } = useAlert();
   
   const [reports, setReports] = useState<Report[]>([]);
+  const [systemDetected, setSystemDetected] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
@@ -68,10 +82,13 @@ export const ReportsManagementPage: React.FC = () => {
   const [resolveAction, setResolveAction] = useState<'aprobar' | 'rechazar' | 'suspender' | 'eliminar'>('aprobar');
   const [decisionFinal, setDecisionFinal] = useState('');
   const [marcarPeligroso, setMarcarPeligroso] = useState(false);
+  const [activeTab, setActiveTab] = useState<'buyer-reports' | 'system-detected'>('buyer-reports');
 
   const [filters, setFilters] = useState({
     tipo_reporte: '',
-    estado: ''
+    estado: '',
+    fecha_desde: '',
+    fecha_hasta: ''
   });
 
   const loadReports = useCallback(async () => {
@@ -81,6 +98,8 @@ export const ReportsManagementPage: React.FC = () => {
       const queryParams = new URLSearchParams();
       if (filters.tipo_reporte) queryParams.append('tipo_reporte', filters.tipo_reporte);
       if (filters.estado) queryParams.append('estado', filters.estado);
+      if (filters.fecha_desde) queryParams.append('fecha_desde', filters.fecha_desde);
+      if (filters.fecha_hasta) queryParams.append('fecha_hasta', filters.fecha_hasta);
 
       const response = await fetch(`http://localhost:3001/api/reports/pending?${queryParams}`, {
         headers: {
@@ -104,12 +123,47 @@ export const ReportsManagementPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
-  useEffect(() => {
-    if (user && canModerateProduct()) {
-      loadReports();
+  const loadSystemDetected = useCallback(async () => {
+    try {
+      setLoading(true);
+      
+      const queryParams = new URLSearchParams();
+      if (filters.estado) queryParams.append('estado', filters.estado);
+      if (filters.fecha_desde) queryParams.append('fecha_desde', filters.fecha_desde);
+      if (filters.fecha_hasta) queryParams.append('fecha_hasta', filters.fecha_hasta);
+
+      const response = await fetch(`http://localhost:3001/api/reports/system-detected?${queryParams}`, {
+        headers: {
+          'Authorization': `Bearer ${apiService.getToken()}`
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setSystemDetected(data.data);
+      } else {
+        showError('Error', 'No se pudieron cargar los productos detectados');
+      }
+    } catch (error) {
+      console.error('Error al cargar productos detectados:', error);
+      showError('Error', 'Error de conexión al cargar productos detectados');
+    } finally {
+      setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
+
+  useEffect(() => {
+    if (user && canModerateProduct()) {
+      if (activeTab === 'buyer-reports') {
+      loadReports();
+      } else {
+        loadSystemDetected();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters, activeTab]);
 
   const handleResolveReport = async () => {
     if (!selectedReport) return;
@@ -120,8 +174,61 @@ export const ReportsManagementPage: React.FC = () => {
     }
 
     try {
-      setActionLoading(selectedReport.id);
+      const loadingId = activeTab === 'system-detected' ? selectedReport.item_id : selectedReport.id;
+      setActionLoading(loadingId);
       
+      // Si es un producto detectado por el sistema, usar el endpoint de moderación
+      if (activeTab === 'system-detected') {
+        // Solo permitir 'aprobar' (activar) o 'eliminar' (marcar peligroso)
+        const accionMap: Record<string, string> = {
+          'aprobar': 'aprobar',
+          'eliminar': 'marcar_peligroso'
+        };
+
+        // Si la acción no es válida para system-detected, mostrar error
+        if (!accionMap[resolveAction]) {
+          showError('Error', 'Acción no válida para productos detectados por el sistema');
+          setActionLoading(null);
+          return;
+        }
+
+        const response = await fetch(`http://localhost:3001/api/products/${selectedReport.item_id}/moderate`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiService.getToken()}`
+          },
+          body: JSON.stringify({
+            accion: accionMap[resolveAction],
+            motivo: decisionFinal,
+            decision_final: decisionFinal
+          })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          const actionText = {
+            'aprobar': 'Producto activado (no es peligroso)',
+            'eliminar': 'Producto marcado como peligroso'
+          };
+          
+          showSuccess(
+            '✅ Estado actualizado',
+            actionText[resolveAction] || 'Estado actualizado',
+            () => {
+              setShowResolveDialog(false);
+              setSelectedReport(null);
+              setDecisionFinal('');
+              setMarcarPeligroso(false);
+              loadSystemDetected();
+            }
+          );
+        } else {
+          showError('Error', data.message || 'Error al actualizar el estado del producto');
+        }
+      } else {
+        // Si es un reporte de comprador, usar el endpoint de reportes
       const response = await fetch(`http://localhost:3001/api/reports/${selectedReport.id}/resolve`, {
         method: 'PATCH',
         headers: {
@@ -158,10 +265,11 @@ export const ReportsManagementPage: React.FC = () => {
         );
       } else {
         showError('Error', data.message || 'Error al procesar el reporte');
+        }
       }
     } catch (error) {
-      console.error('Error al resolver reporte:', error);
-      showError('Error', 'Error de conexión al procesar el reporte');
+      console.error('Error al procesar:', error);
+      showError('Error', 'Error de conexión al procesar');
     } finally {
       setActionLoading(null);
     }
@@ -171,35 +279,8 @@ export const ReportsManagementPage: React.FC = () => {
     setSelectedReport(report);
     setResolveAction(action);
     setShowResolveDialog(true);
-  };
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return 'N/A';
-    const [datePart, timePart] = dateString.split(' ');
-    const [year, month, day] = datePart.split('-');
-    const [hour, minute, second] = timePart.split('.')[0].split(':'); // Ignorar milisegundos para consistencia
-
-    const date = new Date(
-      parseInt(year),
-      parseInt(month) - 1, // Meses en JS son 0-indexados
-      parseInt(day),
-      parseInt(hour),
-      parseInt(minute),
-      parseInt(second)
-    );
-
-    // Formatear la fecha directamente sin conversiones de zona horaria
-    // Asumimos que los valores ya están en la hora de Ecuador
-    const options: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: true,
-    };
-    return date.toLocaleDateString('es-EC', options);
+    setDecisionFinal('');
+    setMarcarPeligroso(false);
   };
 
   const clearFilters = () => {
@@ -211,7 +292,95 @@ export const ReportsManagementPage: React.FC = () => {
     });
   };
 
-  const hasActiveFilters = filters.tipo_reporte || filters.estado || filters.fecha_desde || filters.fecha_hasta;
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'N/A';
+    
+    let dateStr = dateString.trim();
+    
+    // Si ya tiene información de zona horaria completa, usarla directamente
+    if (dateStr.includes('Z') || /[+-]\d{2}:\d{2}$/.test(dateStr)) {
+      return new Date(dateStr).toLocaleString('es-EC', {
+        timeZone: 'America/Guayaquil',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      });
+    }
+    
+    // PostgreSQL devuelve fechas sin zona horaria: '2025-11-29 19:56:58.84055'
+    // IMPORTANTE: Estas fechas están almacenadas en hora de Ecuador (UTC-5)
+    // El problema: JavaScript interpreta fechas sin zona horaria como hora local del navegador
+    // Solución: Agregar explícitamente el offset de Ecuador (-05:00) al crear el Date
+    
+    // Normalizar: reemplazar espacio por 'T' para formato ISO
+    if (!dateStr.includes('T')) {
+      dateStr = dateStr.replace(' ', 'T');
+    }
+    
+    // Eliminar microsegundos (mantener solo hasta segundos)
+    if (dateStr.includes('.')) {
+      const parts = dateStr.split('.');
+      dateStr = parts[0];
+    }
+    
+    // Extraer componentes de la fecha
+    const match = dateStr.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/);
+    if (!match) {
+      console.error('Formato de fecha no reconocido:', dateString);
+      return 'Fecha inválida';
+    }
+    
+    // Extraer componentes de la fecha (que ya están en hora de Ecuador)
+    const year = parseInt(match[1]);
+    const month = parseInt(match[2]) - 1; // JavaScript months are 0-indexed
+    const day = parseInt(match[3]);
+    const hour = parseInt(match[4]);
+    const minute = parseInt(match[5]);
+    const second = parseInt(match[6]);
+    
+    // IMPORTANTE: Los valores ya están en hora de Ecuador
+    // JavaScript necesita interpretarlos como hora local, no como UTC
+    // Solución: Crear el Date directamente con los valores como hora local
+    // Pero como estamos en el navegador del usuario, necesitamos ajustar
+    
+    // Crear string ISO con el offset de Ecuador explícitamente
+    // Esto le dice a JavaScript que interprete la hora como UTC-5 (Ecuador)
+    const isoString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}-05:00`;
+    
+    const date = new Date(isoString);
+    
+    // Verificar que la fecha es válida
+    if (isNaN(date.getTime())) {
+      console.error('Fecha inválida:', dateString, '->', isoString);
+      return 'Fecha inválida';
+    }
+    
+    // Formatear directamente mostrando los valores tal como están
+    // Los valores hora, minuto, segundo ya están en hora de Ecuador
+    // Solo necesitamos formatearlos correctamente
+    const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    const mes = meses[month];
+    
+    // Determinar AM/PM
+    let hora12 = hour;
+    let periodo = 'a. m.';
+    if (hour === 0) {
+      hora12 = 12;
+    } else if (hour === 12) {
+      periodo = 'p. m.';
+    } else if (hour > 12) {
+      hora12 = hour - 12;
+      periodo = 'p. m.';
+    }
+    
+    // Formatear con los valores directos (ya están en hora de Ecuador)
+    // Nota: Los valores hora, minuto, segundo vienen directamente de la BD en hora de Ecuador
+    return `${day} ${mes} ${year}, ${String(hora12).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')} ${periodo}`;
+  };
 
 
   const getTipoReporteLabel = (tipo: string) => {
@@ -225,7 +394,46 @@ export const ReportsManagementPage: React.FC = () => {
     return labels[tipo] || tipo;
   };
 
-  const getEstadoBadge = (estado: string) => {
+  const getEstadoBadge = (estado: string | undefined, productoEstado?: string, esPeligroso?: boolean) => {
+    // Si es un producto detectado por el sistema, usar el estado del producto
+    if (activeTab === 'system-detected') {
+      if (esPeligroso || productoEstado === 'peligroso') {
+        return (
+          <Badge className="bg-red-100 text-red-800 border-red-300 border">
+            PELIGROSO
+          </Badge>
+        );
+      }
+      if (productoEstado) {
+        const colors: Record<string, string> = {
+          'activo': 'bg-green-100 text-green-800 border-green-300',
+          'suspendido': 'bg-orange-100 text-orange-800 border-orange-300',
+          'rechazado': 'bg-gray-100 text-gray-800 border-gray-300',
+          'peligroso': 'bg-red-100 text-red-800 border-red-300',
+          'pendiente_revision': 'bg-yellow-100 text-yellow-800 border-yellow-300'
+        };
+        return (
+          <Badge className={`${colors[productoEstado] || 'bg-gray-100 text-gray-800'} border`}>
+            {productoEstado.replace('_', ' ').toUpperCase()}
+          </Badge>
+        );
+      }
+      return (
+        <Badge className="bg-gray-100 text-gray-800 border">
+          SIN ESTADO
+        </Badge>
+      );
+    }
+    
+    // Para reportes de compradores, usar el estado del reporte
+    if (!estado) {
+      return (
+        <Badge className="bg-gray-100 text-gray-800 border">
+          SIN ESTADO
+        </Badge>
+      );
+    }
+    
     const colors: Record<string, string> = {
       'pendiente': 'bg-yellow-100 text-yellow-800 border-yellow-300',
       'en_revision': 'bg-blue-100 text-blue-800 border-blue-300',
@@ -285,6 +493,34 @@ export const ReportsManagementPage: React.FC = () => {
       </div>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 -mt-6 sm:-mt-8 relative z-10">
+        {/* Pestañas - Reportes de Compradores y Detectados por Sistema */}
+        <div className="mb-6 sm:mb-8">
+          <div className="flex space-x-2 border-b border-gray-200">
+            <button
+              onClick={() => setActiveTab('buyer-reports')}
+              className={`px-4 py-2 font-medium text-sm transition-colors ${
+                activeTab === 'buyer-reports'
+                  ? 'text-red-600 border-b-2 border-red-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Flag className="h-4 w-4 inline mr-2" />
+              Reportes de Compradores
+            </button>
+            <button
+              onClick={() => setActiveTab('system-detected')}
+              className={`px-4 py-2 font-medium text-sm transition-colors ${
+                activeTab === 'system-detected'
+                  ? 'text-red-600 border-b-2 border-red-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <AlertTriangle className="h-4 w-4 inline mr-2" />
+              Detectados por Sistema
+            </button>
+          </div>
+        </div>
+
         {/* Estadísticas - Optimizado para móvil */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200 shadow-lg hover:shadow-xl transition-all duration-300">
@@ -293,7 +529,9 @@ export const ReportsManagementPage: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-yellow-700">Pendientes</p>
                   <p className="text-3xl font-bold text-yellow-900 mt-1">
-                    {reports.filter(r => r.estado === 'pendiente').length}
+                    {activeTab === 'buyer-reports' 
+                      ? reports.filter(r => r.estado === 'pendiente').length
+                      : systemDetected.filter(r => r.producto_estado === 'peligroso' || r.es_peligroso).length}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-yellow-500 rounded-xl flex items-center justify-center shadow-lg">
@@ -309,7 +547,9 @@ export const ReportsManagementPage: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-blue-700">En Revisión</p>
                   <p className="text-3xl font-bold text-blue-900 mt-1">
-                    {reports.filter(r => r.estado === 'en_revision').length}
+                    {activeTab === 'buyer-reports' 
+                      ? reports.filter(r => r.estado === 'en_revision').length
+                      : 0}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg">
@@ -325,7 +565,9 @@ export const ReportsManagementPage: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-green-700">Resueltos</p>
                   <p className="text-3xl font-bold text-green-900 mt-1">
-                    {reports.filter(r => r.estado === 'resuelto').length}
+                    {activeTab === 'buyer-reports' 
+                      ? reports.filter(r => r.estado === 'resuelto').length
+                      : 0}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center shadow-lg">
@@ -341,7 +583,7 @@ export const ReportsManagementPage: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-red-700">Total</p>
                   <p className="text-3xl font-bold text-red-900 mt-1">
-                    {reports.length}
+                    {activeTab === 'buyer-reports' ? reports.length : systemDetected.length}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-red-500 rounded-xl flex items-center justify-center shadow-lg">
@@ -366,7 +608,8 @@ export const ReportsManagementPage: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 sm:p-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              {activeTab === 'buyer-reports' && (
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Tipo de Reporte
@@ -384,6 +627,7 @@ export const ReportsManagementPage: React.FC = () => {
                   <option value="otro">🔖 Otro</option>
                 </select>
               </div>
+              )}
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -395,10 +639,42 @@ export const ReportsManagementPage: React.FC = () => {
                   className="w-full flex h-12 items-center justify-between rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm hover:border-gray-300 transition-colors"
                 >
                   <option value="">Todos</option>
+                  {activeTab === 'buyer-reports' ? (
+                    <>
                   <option value="pendiente">Pendiente</option>
                   <option value="en_revision">En Revisión</option>
                   <option value="resuelto">Resuelto</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="peligroso">Peligroso</option>
+                      <option value="suspendido">Suspendido</option>
+                      <option value="rechazado">Rechazado</option>
+                    </>
+                  )}
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Fecha Desde
+                </label>
+                <input
+                  type="date"
+                  value={filters.fecha_desde}
+                  onChange={(e) => setFilters(prev => ({ ...prev, fecha_desde: e.target.value }))}
+                  className="w-full flex h-12 items-center justify-between rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm hover:border-gray-300 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Fecha Hasta
+                </label>
+                <input
+                  type="date"
+                  value={filters.fecha_hasta}
+                  onChange={(e) => setFilters(prev => ({ ...prev, fecha_hasta: e.target.value }))}
+                  className="w-full flex h-12 items-center justify-between rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm hover:border-gray-300 transition-colors"
+                />
               </div>
             </div>
             {/* Botón para limpiar filtros */}
@@ -407,7 +683,7 @@ export const ReportsManagementPage: React.FC = () => {
                 onClick={clearFilters}
                 variant="outline"
                 className="h-10 px-4 rounded-xl border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors"
-                disabled={!hasActiveFilters}
+                disabled={!filters.tipo_reporte && !filters.estado && !filters.fecha_desde && !filters.fecha_hasta}
               >
                 <X className="h-4 w-4 mr-2" />
                 Limpiar Filtros
@@ -416,29 +692,33 @@ export const ReportsManagementPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Lista de reportes */}
+        {/* Lista de reportes o productos detectados */}
         {loading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Cargando reportes...</p>
+            <p className="text-gray-600">Cargando {activeTab === 'buyer-reports' ? 'reportes' : 'productos detectados'}...</p>
           </div>
-        ) : reports.length === 0 ? (
+        ) : (activeTab === 'buyer-reports' ? reports.length === 0 : systemDetected.length === 0) ? (
           <Card className="bg-white/90 backdrop-blur-sm shadow-xl border-0 rounded-2xl">
             <CardContent className="text-center py-16">
               <div className="w-24 h-24 bg-gradient-to-br from-red-100 to-orange-100 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg">
                 <Flag className="h-12 w-12 text-red-600" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                No hay reportes
+                {activeTab === 'buyer-reports' 
+                  ? 'No hay reportes pendientes'
+                  : 'No hay productos detectados por el sistema'}
               </h3>
               <p className="text-gray-600 text-lg max-w-md mx-auto">
-                No se encontraron reportes con los filtros seleccionados
+                {activeTab === 'buyer-reports'
+                  ? 'No se encontraron reportes con los filtros seleccionados'
+                  : 'No se encontraron productos detectados automáticamente por el sistema'}
               </p>
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-6">
-            {reports.map((report) => (
+            {(activeTab === 'buyer-reports' ? reports : systemDetected).map((report) => (
                <Card key={report.id} className="bg-white/95 backdrop-blur-sm shadow-lg hover:shadow-2xl transition-all duration-300 border-0 rounded-2xl overflow-hidden">
                  <CardContent className="p-4 sm:p-6">
                    <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
@@ -451,7 +731,7 @@ export const ReportsManagementPage: React.FC = () => {
                           </h3>
                           <p className="text-sm text-gray-500">Código: {report.producto_codigo}</p>
                         </div>
-                        {getEstadoBadge(report.estado)}
+                        {getEstadoBadge(report.estado, report.producto_estado, report.es_peligroso)}
                       </div>
 
                       {/* Imagen del producto */}
@@ -507,8 +787,10 @@ export const ReportsManagementPage: React.FC = () => {
                       </Button>
                     </div>
 
-                     {/* Columna 2: Info del Reporte - Optimizado para móvil */}
+                     {/* Columna 2: Info del Reporte o Producto Detectado - Optimizado para móvil */}
                      <div className="space-y-4 xl:border-l xl:border-gray-200 xl:pl-6 border-t border-gray-200 pt-4 xl:pt-0 xl:border-t-0">
+                      {activeTab === 'buyer-reports' ? (
+                        <>
                       <div>
                         <div className="text-sm font-semibold text-gray-700 mb-2">Tipo de Reporte</div>
                         <Badge className="bg-red-100 text-red-800 border-red-300 border">
@@ -544,9 +826,88 @@ export const ReportsManagementPage: React.FC = () => {
                         </div>
                         <div className="flex items-center space-x-2">
                           <Clock className="h-4 w-4 text-gray-400" />
-                          <span className="text-gray-600">{formatDate(report.fecha_reporte)}</span>
+                              <span className="text-gray-600">Reportado: {formatDate(report.fecha_reporte)}</span>
                         </div>
+                            {report.estado === 'resuelto' && (
+                              <>
+                                {report.moderador_resolutor_nombre && (
+                                  <div className="flex items-center space-x-2 mt-2">
+                                    <User className="h-4 w-4 text-green-500" />
+                                    <span className="text-gray-600">
+                                      Reporte resuelto por: <span className="font-medium text-green-700">{report.moderador_resolutor_nombre} {report.moderador_resolutor_apellido}</span>
+                                    </span>
+                                  </div>
+                                )}
+                                {report.moderador_producto_nombre && (
+                                  <div className="flex items-center space-x-2 mt-2">
+                                    <User className="h-4 w-4 text-blue-500" />
+                                    <span className="text-gray-600">
+                                      Estado cambiado por: <span className="font-medium text-blue-700">{report.moderador_producto_nombre} {report.moderador_producto_apellido}</span>
+                                      <span className="text-xs text-gray-500 ml-2">
+                                        ({report.producto_estado === 'rechazado' ? 'Rechazó' : report.producto_estado === 'suspendido' ? 'Suspendió' : report.producto_estado === 'peligroso' ? 'Marcó como peligroso' : 'Aprobó'})
+                                      </span>
+                                    </span>
+                                  </div>
+                                )}
+                                {report.fecha_resolucion && (
+                                  <div className="flex items-center space-x-2 mt-2">
+                                    <Clock className="h-4 w-4 text-gray-400" />
+                                    <span className="text-gray-600">Resuelto: {formatDate(report.fecha_resolucion)}</span>
+                                  </div>
+                                )}
+                                {report.decision_final && (
+                                  <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                    <div className="text-sm font-semibold text-gray-700 mb-1">Decisión del Moderador:</div>
+                                    <p className="text-sm text-gray-600">{report.decision_final}</p>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div>
+                            <div className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                              <AlertTriangle className="h-4 w-4 mr-2 text-red-600" />
+                              Detectado por el Sistema
+                            </div>
+                            <Badge className="bg-red-100 text-red-800 border-red-300 border">
+                              🚨 Producto Peligroso
+                            </Badge>
                       </div>
+
+                          {report.motivo_rechazo && (
+                            <div>
+                              <div className="text-sm font-semibold text-gray-700 mb-2">Motivo de Detección</div>
+                              <p className="text-sm text-gray-600 bg-red-50 p-3 rounded-lg border border-red-200">
+                                {report.motivo_rechazo}
+                              </p>
+                            </div>
+                          )}
+
+                          <div className="space-y-2 text-sm">
+                            {report.moderador_nombre && (
+                              <div className="flex items-center space-x-2">
+                                <User className="h-4 w-4 text-gray-400" />
+                                <span className="text-gray-600">Revisado por: <span className="font-medium text-gray-900">{report.moderador_nombre} {report.moderador_apellido}</span></span>
+                              </div>
+                            )}
+                            {report.fecha_deteccion_peligroso && (
+                              <div className="flex items-center space-x-2">
+                                <Clock className="h-4 w-4 text-gray-400" />
+                                <span className="text-gray-600">Detectado: {formatDate(report.fecha_deteccion_peligroso)}</span>
+                              </div>
+                            )}
+                            {report.fecha_revision && (
+                              <div className="flex items-center space-x-2">
+                                <Clock className="h-4 w-4 text-gray-400" />
+                                <span className="text-gray-600">Revisado: {formatDate(report.fecha_revision)}</span>
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      )}
 
                       {report.total_reportes_producto > 1 && (
                         <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
@@ -561,11 +922,18 @@ export const ReportsManagementPage: React.FC = () => {
                      <div className="space-y-3 xl:border-l xl:border-gray-200 xl:pl-6 border-t border-gray-200 pt-4 xl:pt-0 xl:border-t-0">
                       <div className="text-sm font-semibold text-gray-700 mb-4">Acciones de Moderación</div>
                       
+                      {/* Botones para reportes de compradores */}
+                      {activeTab === 'buyer-reports' && (
+                        <>
                       <Button
                         size="sm"
                         onClick={() => openResolveDialog(report, 'aprobar')}
-                        disabled={actionLoading === report.id}
-                        className="w-full h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-medium shadow-lg"
+                            disabled={actionLoading === report.id || report.estado === 'resuelto'}
+                            className={`w-full h-10 rounded-xl font-medium shadow-lg ${
+                              report.estado === 'resuelto' 
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60' 
+                                : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white'
+                            }`}
                       >
                         <CheckCircle className="h-4 w-4 mr-2" />
                         Producto Válido
@@ -574,8 +942,12 @@ export const ReportsManagementPage: React.FC = () => {
                       <Button
                         size="sm"
                         onClick={() => openResolveDialog(report, 'rechazar')}
-                        disabled={actionLoading === report.id}
-                        className="w-full h-10 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white rounded-xl font-medium shadow-lg"
+                            disabled={actionLoading === report.id || report.estado === 'resuelto'}
+                            className={`w-full h-10 rounded-xl font-medium shadow-lg ${
+                              report.estado === 'resuelto' 
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60' 
+                                : 'bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white'
+                            }`}
                       >
                         <XCircle className="h-4 w-4 mr-2" />
                         Rechazar Producto
@@ -584,8 +956,12 @@ export const ReportsManagementPage: React.FC = () => {
                       <Button
                         size="sm"
                         onClick={() => openResolveDialog(report, 'suspender')}
-                        disabled={actionLoading === report.id}
-                        className="w-full h-10 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-xl font-medium shadow-lg"
+                            disabled={actionLoading === report.id || report.estado === 'resuelto'}
+                            className={`w-full h-10 rounded-xl font-medium shadow-lg ${
+                              report.estado === 'resuelto' 
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60' 
+                                : 'bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white'
+                            }`}
                       >
                         <AlertTriangle className="h-4 w-4 mr-2" />
                         Suspender
@@ -594,12 +970,62 @@ export const ReportsManagementPage: React.FC = () => {
                       <Button
                         size="sm"
                         onClick={() => openResolveDialog(report, 'eliminar')}
-                        disabled={actionLoading === report.id}
-                        className="w-full h-10 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl font-medium shadow-lg"
+                            disabled={actionLoading === report.id || report.estado === 'resuelto'}
+                            className={`w-full h-10 rounded-xl font-medium shadow-lg ${
+                              report.estado === 'resuelto' 
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60' 
+                                : 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white'
+                            }`}
                       >
                         <AlertTriangle className="h-4 w-4 mr-2" />
                         Marcar Peligroso
                       </Button>
+                        </>
+                      )}
+
+                      {/* Botones para productos detectados por el sistema - Solo 2 opciones válidas */}
+                      {/* Solo mostrar botones si el producto fue detectado por el sistema (tiene fecha_deteccion_peligroso) */}
+                      {activeTab === 'system-detected' && report.fecha_deteccion_peligroso && (
+                        <>
+                          <Button
+                            size="sm"
+                            onClick={() => openResolveDialog(report, 'aprobar')}
+                            disabled={actionLoading === report.item_id || (report.producto_estado === 'activo' && !report.es_peligroso)}
+                            className={`w-full h-10 rounded-xl font-medium shadow-lg ${
+                              ((report.producto_estado === 'activo' && !report.es_peligroso) || actionLoading === report.item_id)
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60' 
+                                : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white'
+                            }`}
+                          >
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            No es Peligroso (Activar)
+                          </Button>
+
+                          <Button
+                            size="sm"
+                            onClick={() => openResolveDialog(report, 'eliminar')}
+                            disabled={actionLoading === report.item_id || (report.es_peligroso && report.producto_estado === 'peligroso')}
+                            className={`w-full h-10 rounded-xl font-medium shadow-lg ${
+                              (report.es_peligroso && report.producto_estado === 'peligroso') || actionLoading === report.item_id
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60' 
+                                : 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white'
+                            }`}
+                          >
+                            <AlertTriangle className="h-4 w-4 mr-2" />
+                            Marcar como Peligroso
+                          </Button>
+                        </>
+                      )}
+                      
+                      {/* Mensaje si el producto no fue detectado por el sistema */}
+                      {activeTab === 'system-detected' && !report.fecha_deteccion_peligroso && (
+                        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded-lg">
+                          <p className="text-sm text-yellow-800">
+                            <strong>⚠️ Nota:</strong> Este producto no fue detectado automáticamente por el sistema. 
+                            Para cambiar su estado, usa la sección de "Reportes de Compradores" o la página de moderación de productos.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -614,7 +1040,9 @@ export const ReportsManagementPage: React.FC = () => {
          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto m-4">
             <div className="sticky top-0 bg-gradient-to-r from-red-600 to-orange-600 text-white p-6 rounded-t-2xl">
-              <h2 className="text-2xl font-bold">Resolver Reporte</h2>
+              <h2 className="text-2xl font-bold">
+                {activeTab === 'buyer-reports' ? 'Resolver Reporte' : 'Cambiar Estado de Visualización'}
+              </h2>
               <p className="text-red-100 text-sm mt-1">Producto: {selectedReport.producto_nombre}</p>
             </div>
 
@@ -623,10 +1051,19 @@ export const ReportsManagementPage: React.FC = () => {
                 <Label className="text-base font-semibold text-gray-900 mb-2">Acción seleccionada</Label>
                 <div className="bg-gray-50 border-2 border-gray-200 rounded-xl p-4">
                   <p className="font-semibold text-gray-900">
+                    {activeTab === 'buyer-reports' ? (
+                      <>
                     {resolveAction === 'aprobar' && '✅ Producto Válido - Reporte Rechazado'}
                     {resolveAction === 'rechazar' && '❌ Rechazar Producto'}
                     {resolveAction === 'suspender' && '⏸️ Suspender Producto'}
                     {resolveAction === 'eliminar' && '🚨 Marcar como Peligroso'}
+                      </>
+                    ) : (
+                      <>
+                        {resolveAction === 'aprobar' && '✅ No es Peligroso - Activar Producto'}
+                        {resolveAction === 'eliminar' && '🚨 Marcar como Peligroso'}
+                      </>
+                    )}
                   </p>
                 </div>
               </div>
@@ -634,13 +1071,15 @@ export const ReportsManagementPage: React.FC = () => {
               <div>
                 <Label htmlFor="decision" className="text-base font-semibold text-gray-900 mb-2 flex items-center">
                   <FileText className="h-4 w-4 mr-2 text-red-600" />
-                  Explicación de la Decisión *
+                  {activeTab === 'buyer-reports' ? 'Explicación de la Decisión *' : 'Motivo del Cambio de Estado *'}
                 </Label>
                 <Textarea
                   id="decision"
                   value={decisionFinal}
                   onChange={(e) => setDecisionFinal(e.target.value)}
-                  placeholder="Explica detalladamente por qué tomaste esta decisión (mínimo 10 caracteres)..."
+                  placeholder={activeTab === 'buyer-reports' 
+                    ? "Explica detalladamente por qué tomaste esta decisión (mínimo 10 caracteres)..."
+                    : "Explica por qué cambias el estado de visualización de este producto (mínimo 10 caracteres)..."}
                   rows={5}
                   className="w-full border-2 border-gray-200 focus:border-red-500 focus:ring-red-500 rounded-xl"
                   required
@@ -653,7 +1092,7 @@ export const ReportsManagementPage: React.FC = () => {
                 </div>
               </div>
 
-              {(resolveAction === 'eliminar' || resolveAction === 'rechazar' || resolveAction === 'suspender') && (
+              {activeTab === 'buyer-reports' && (resolveAction === 'eliminar' || resolveAction === 'rechazar' || resolveAction === 'suspender') && (
                 <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4">
                   <label className="flex items-center space-x-3 cursor-pointer">
                     <input
@@ -721,4 +1160,3 @@ export const ReportsManagementPage: React.FC = () => {
     </div>
   );
 };
-

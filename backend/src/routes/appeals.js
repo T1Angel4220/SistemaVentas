@@ -12,6 +12,7 @@ router.get('/my/appeals', authenticate, AppealsController.getMyAppeals);        
 
 // Rutas para moderadores (requieren permisos de moderación)
 router.get('/pending', authenticate, requireProductModerate, AppealsController.getPendingAppeals);          // GET /api/appeals/pending - Apelaciones pendientes
+router.get('/history', authenticate, requireProductModerate, AppealsController.getAllAppeals);              // GET /api/appeals/history - Historial completo de apelaciones
 router.patch('/:id/resolve', authenticate, requireProductModerate, AppealsController.resolveAppeal);        // PATCH /api/appeals/:id/resolve - Resolver apelación
 
 module.exports = router;

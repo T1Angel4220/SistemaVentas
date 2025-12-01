@@ -60,18 +60,24 @@ export const AppealsManagementPage: React.FC = () => {
   const { alert, showSuccess, showError, hideAlert } = useAlert();
   
   const [appeals, setAppeals] = useState<Appeal[]>([]);
+  const [allAppeals, setAllAppeals] = useState<Appeal[]>([]); // Todas las apelaciones para estadísticas
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [selectedAppeal, setSelectedAppeal] = useState<Appeal | null>(null);
   const [showResolveDialog, setShowResolveDialog] = useState(false);
   const [resolveAction, setResolveAction] = useState<'aprobar' | 'rechazar'>('aprobar');
   const [decisionApelacion, setDecisionApelacion] = useState('');
+  const [activeTab, setActiveTab] = useState<'pending' | 'history'>('pending');
 
-  const loadAppeals = useCallback(async () => {
+  const loadAppeals = useCallback(async (tab: 'pending' | 'history' = 'pending') => {
     try {
       setLoading(true);
       
-      const response = await fetch(`http://localhost:3001/api/appeals/pending`, {
+      const endpoint = tab === 'pending' 
+        ? 'http://localhost:3001/api/appeals/pending'
+        : 'http://localhost:3001/api/appeals/history';
+      
+      const response = await fetch(endpoint, {
         headers: {
           'Authorization': `Bearer ${apiService.getToken()}`
         }
@@ -102,12 +108,39 @@ export const AppealsManagementPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Cargar todas las apelaciones para estadísticas
+  const loadAllAppealsForStats = useCallback(async () => {
+    try {
+      const response = await fetch('http://localhost:3001/api/appeals/history', {
+        headers: {
+          'Authorization': `Bearer ${apiService.getToken()}`
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Asegurar que no haya duplicados usando un Map con id como clave
+        const uniqueAppeals = new Map();
+        data.data.forEach((appeal: Appeal) => {
+          if (appeal.id && !uniqueAppeals.has(appeal.id)) {
+            uniqueAppeals.set(appeal.id, appeal);
+          }
+        });
+        setAllAppeals(Array.from(uniqueAppeals.values()));
+      }
+    } catch (error) {
+      console.error('Error al cargar todas las apelaciones para estadísticas:', error);
+    }
+  }, []);
+
   useEffect(() => {
     if (user && canModerateProduct()) {
-      loadAppeals();
+      loadAppeals(activeTab);
+      loadAllAppealsForStats(); // Cargar todas las apelaciones para estadísticas
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [activeTab, user]);
 
   const handleResolveAppeal = async () => {
     if (!selectedAppeal) return;
@@ -146,7 +179,8 @@ export const AppealsManagementPage: React.FC = () => {
             setShowResolveDialog(false);
             setSelectedAppeal(null);
             setDecisionApelacion('');
-            loadAppeals();
+            loadAppeals(activeTab);
+            loadAllAppealsForStats();
           }
         );
       } else {
@@ -254,6 +288,34 @@ export const AppealsManagementPage: React.FC = () => {
       </div>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 -mt-6 sm:-mt-8 relative z-10">
+        {/* Pestañas - Pendientes e Historial */}
+        <div className="mb-6 sm:mb-8">
+          <div className="flex space-x-2 border-b border-gray-200">
+            <button
+              onClick={() => setActiveTab('pending')}
+              className={`px-4 py-2 font-medium text-sm transition-colors ${
+                activeTab === 'pending'
+                  ? 'text-purple-600 border-b-2 border-purple-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Clock className="h-4 w-4 inline mr-2" />
+              Pendientes
+            </button>
+            <button
+              onClick={() => setActiveTab('history')}
+              className={`px-4 py-2 font-medium text-sm transition-colors ${
+                activeTab === 'history'
+                  ? 'text-purple-600 border-b-2 border-purple-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <FileText className="h-4 w-4 inline mr-2" />
+              Historial Completo
+            </button>
+          </div>
+        </div>
+
         {/* Estadísticas - Optimizado para móvil */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-lg hover:shadow-xl transition-all duration-300">
@@ -262,7 +324,7 @@ export const AppealsManagementPage: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-purple-700">Pendientes</p>
                   <p className="text-3xl font-bold text-purple-900 mt-1">
-                    {appeals.filter(a => a.estado === 'en_apelacion').length}
+                    {allAppeals.filter(a => a.estado === 'en_apelacion' || a.estado === 'pendiente').length}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center shadow-lg">
@@ -278,7 +340,7 @@ export const AppealsManagementPage: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-green-700">Aprobadas</p>
                   <p className="text-3xl font-bold text-green-900 mt-1">
-                    {appeals.filter(a => a.estado === 'aprobado').length}
+                    {allAppeals.filter(a => a.estado === 'resuelto' || a.estado === 'aprobado').length}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center shadow-lg">
@@ -294,7 +356,7 @@ export const AppealsManagementPage: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-red-700">Rechazadas</p>
                   <p className="text-3xl font-bold text-red-900 mt-1">
-                    {appeals.filter(a => a.estado === 'rechazado').length}
+                    {allAppeals.filter(a => a.estado === 'rechazado').length}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-red-500 rounded-xl flex items-center justify-center shadow-lg">
@@ -318,7 +380,7 @@ export const AppealsManagementPage: React.FC = () => {
                 <FileText className="h-12 w-12 text-purple-600" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                No hay apelaciones pendientes
+                {activeTab === 'pending' ? 'No hay apelaciones pendientes' : 'No hay historial de apelaciones'}
               </h3>
               <p className="text-gray-600 text-lg max-w-md mx-auto">
                 No se encontraron apelaciones que requieran revisión
@@ -416,33 +478,33 @@ export const AppealsManagementPage: React.FC = () => {
                         </div>
                       ) : (
                         <>
-                          <div>
-                            <div className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                              <MessageSquare className="h-4 w-4 mr-2 text-purple-600" />
-                              Motivo de Apelación
-                            </div>
-                            <p className="text-sm text-gray-600 bg-purple-50 p-3 rounded-lg border border-purple-200">
-                              {appeal.motivo_apelacion}
-                            </p>
-                          </div>
+                      <div>
+                        <div className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                          <MessageSquare className="h-4 w-4 mr-2 text-purple-600" />
+                          Motivo de Apelación
+                        </div>
+                        <p className="text-sm text-gray-600 bg-purple-50 p-3 rounded-lg border border-purple-200">
+                          {appeal.motivo_apelacion}
+                        </p>
+                      </div>
 
-                          {appeal.informacion_adicional && (
-                            <div>
-                              <div className="text-sm font-semibold text-gray-700 mb-2">Información Adicional</div>
-                              <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
-                                {appeal.informacion_adicional}
-                              </p>
-                            </div>
+                      {appeal.informacion_adicional && (
+                        <div>
+                          <div className="text-sm font-semibold text-gray-700 mb-2">Información Adicional</div>
+                          <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
+                            {appeal.informacion_adicional}
+                          </p>
+                        </div>
                           )}
                         </>
                       )}
 
                       <div className="space-y-2 text-sm">
                         {appeal.fecha_apelacion && (
-                          <div className="flex items-center space-x-2">
-                            <Clock className="h-4 w-4 text-gray-400" />
-                            <span className="text-gray-600">Apelado: {formatDate(appeal.fecha_apelacion)}</span>
-                          </div>
+                        <div className="flex items-center space-x-2">
+                          <Clock className="h-4 w-4 text-gray-400" />
+                          <span className="text-gray-600">Apelado: {formatDate(appeal.fecha_apelacion)}</span>
+                        </div>
                         )}
                         {appeal.moderador_original_nombre && appeal.moderador_original_apellido && (
                           <div className="flex items-center space-x-2">
@@ -502,25 +564,25 @@ export const AppealsManagementPage: React.FC = () => {
                         </div>
                       ) : (
                         <>
-                          <Button
-                            size="sm"
-                            onClick={() => openResolveDialog(appeal, 'aprobar')}
-                            disabled={actionLoading === appeal.id}
-                            className="w-full h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-medium shadow-lg"
-                          >
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                            Aceptar Apelación
-                          </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => openResolveDialog(appeal, 'aprobar')}
+                        disabled={actionLoading === appeal.id}
+                        className="w-full h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-medium shadow-lg"
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Aceptar Apelación
+                      </Button>
 
-                          <Button
-                            size="sm"
-                            onClick={() => openResolveDialog(appeal, 'rechazar')}
-                            disabled={actionLoading === appeal.id}
-                            className="w-full h-10 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl font-medium shadow-lg"
-                          >
-                            <XCircle className="h-4 w-4 mr-2" />
-                            Rechazar Apelación
-                          </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => openResolveDialog(appeal, 'rechazar')}
+                        disabled={actionLoading === appeal.id}
+                        className="w-full h-10 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl font-medium shadow-lg"
+                      >
+                        <XCircle className="h-4 w-4 mr-2" />
+                        Rechazar Apelación
+                      </Button>
                         </>
                       )}
 

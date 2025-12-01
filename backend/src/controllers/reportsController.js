@@ -300,6 +300,14 @@ class ReportsController {
 
       const reporte = reporteResult.rows[0];
 
+      // ✅ VALIDACIÓN CRÍTICA: Verificar que el moderador que resuelve NO sea el mismo que creó el reporte
+      if (reporte.usuario_reportador_id === moderador_resolutor_id) {
+        return res.status(403).json({
+          success: false,
+          message: 'No puedes resolver un reporte que tú mismo creaste. El reporte debe ser resuelto por otro moderador o administrador.'
+        });
+      }
+
       // Verificar que el reporte está pendiente
       if (!['pendiente', 'en_revision'].includes(reporte.estado)) {
         return res.status(400).json({
@@ -583,6 +591,130 @@ class ReportsController {
       res.status(500).json({
         success: false,
         message: 'Error al obtener productos detectados',
+        error: error.message
+      });
+    }
+  }
+
+  // Obtener historial completo de reportes (para moderadores - todos los reportes)
+  static async getAllReports(req, res) {
+    try {
+      const { estado, tipo_reporte, fecha_desde, fecha_hasta } = req.query;
+      
+      let queryText = `
+        SELECT 
+          r.id,
+          r.item_id,
+          r.usuario_reportador_id,
+          r.tipo_reporte,
+          r.descripcion,
+          r.comentario_opcional,
+          r.estado,
+          TO_CHAR(r.fecha_reporte AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') as fecha_reporte,
+          CASE WHEN r.fecha_revision IS NOT NULL THEN TO_CHAR(r.fecha_revision AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_revision,
+          r.moderador_revisor_id,
+          r.decision_final,
+          CASE WHEN r.fecha_resolucion IS NOT NULL THEN TO_CHAR(r.fecha_resolucion AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_resolucion,
+          i.nombre as producto_nombre,
+          i.codigo as producto_codigo,
+          i.tipo as producto_tipo,
+          i.estado as producto_estado,
+          i.precio as producto_precio,
+          i.motivo_rechazo,
+          i.moderador_revision_id,
+          u_reportador.nombre as reportante_nombre,
+          u_reportador.apellido as reportante_apellido,
+          u_reportador.correo as reportante_correo,
+          u_reportador.tipo_usuario as reportante_tipo,
+          u_vendedor.nombre as vendedor_nombre,
+          u_vendedor.apellido as vendedor_apellido,
+          u_vendedor.correo as vendedor_correo,
+          u_revisor.nombre as moderador_nombre,
+          u_revisor.apellido as moderador_apellido,
+          u_resolutor.nombre as moderador_resolutor_nombre,
+          u_resolutor.apellido as moderador_resolutor_apellido,
+          u_producto.nombre as moderador_producto_nombre,
+          u_producto.apellido as moderador_producto_apellido,
+          cat.nombre as categoria_nombre,
+          (SELECT url_imagen FROM item_imagenes WHERE item_id = i.id ORDER BY es_principal DESC, orden ASC LIMIT 1) as primera_imagen,
+          (SELECT COUNT(*) FROM item_imagenes WHERE item_id = i.id) as total_imagenes,
+          (SELECT COUNT(*) FROM reportes WHERE item_id = i.id) as total_reportes_producto,
+          i.es_peligroso,
+          CASE WHEN i.fecha_deteccion_peligroso IS NOT NULL THEN TO_CHAR(i.fecha_deteccion_peligroso AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_deteccion_peligroso,
+          CASE WHEN i.fecha_revision IS NOT NULL THEN TO_CHAR(i.fecha_revision AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as producto_fecha_revision
+        FROM reportes r
+        INNER JOIN items i ON r.item_id = i.id
+        INNER JOIN usuarios u_reportador ON r.usuario_reportador_id = u_reportador.id
+        INNER JOIN usuarios u_vendedor ON i.vendedor_id = u_vendedor.id
+        LEFT JOIN usuarios u_revisor ON r.moderador_revisor_id = u_revisor.id
+        LEFT JOIN usuarios u_resolutor ON r.moderador_resolutor_id = u_resolutor.id
+        LEFT JOIN usuarios u_producto ON i.moderador_revision_id = u_producto.id
+        LEFT JOIN categorias cat ON i.categoria_id = cat.id
+        WHERE 1=1
+      `;
+      
+      const params = [];
+      let paramCount = 1;
+
+      // Filtrar por estado si se proporciona
+      if (estado) {
+        queryText += ` AND r.estado = $${paramCount}`;
+        params.push(estado);
+        paramCount++;
+      }
+
+      // Filtrar por tipo de reporte si se proporciona
+      if (tipo_reporte) {
+        queryText += ` AND r.tipo_reporte = $${paramCount}`;
+        params.push(tipo_reporte);
+        paramCount++;
+      }
+
+      // Filtrar por fecha desde
+      if (fecha_desde) {
+        queryText += ` AND r.fecha_reporte >= $${paramCount}`;
+        params.push(fecha_desde);
+        paramCount++;
+      }
+
+      // Filtrar por fecha hasta
+      if (fecha_hasta) {
+        queryText += ` AND r.fecha_reporte <= $${paramCount}`;
+        params.push(fecha_hasta);
+        paramCount++;
+      }
+
+      queryText += ` ORDER BY r.fecha_reporte DESC`;
+
+      const result = await query(queryText, params);
+
+      // Normalizar URLs de imágenes
+      const reportesNormalizados = result.rows.map(reporte => {
+        const primeraImagenNormalizada = reporte.primera_imagen 
+          ? normalizeImageUrl(
+              reporte.primera_imagen.startsWith('http') 
+                ? reporte.primera_imagen 
+                : buildImageUrl(reporte.primera_imagen.replace('/uploads/', '').replace('/uploads/products/', ''))
+            )
+          : null;
+
+        return {
+          ...reporte,
+          primera_imagen: primeraImagenNormalizada
+        };
+      });
+
+      res.json({
+        success: true,
+        data: reportesNormalizados,
+        count: reportesNormalizados.length
+      });
+
+    } catch (error) {
+      console.error('Error al obtener historial de reportes:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error al obtener el historial de reportes',
         error: error.message
       });
     }

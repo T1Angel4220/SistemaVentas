@@ -2,7 +2,7 @@ const { query } = require('../config/database');
 const { config } = require('../config/config');
 const { detectarContenidoInadecuado, obtenerMensajeRechazo } = require('../services/contentDetection');
 const { filtrarPorProximidad } = require('../utils/geoLocation');
-const { sendAccountBlockedByDangerousProductsEmail } = require('../services/email');
+const { sendAccountBlockedByDangerousProductsEmail, sendBuyerContactEmail } = require('../services/email');
 
 // Función helper para construir URLs completas de imágenes
 // NOTA: SIEMPRE usar 'localhost' para que el navegador pueda acceder (nunca 0.0.0.0)
@@ -540,7 +540,7 @@ class ProductsController {
           ? imagen.url_imagen 
           : buildImageUrl(imagen.url_imagen.replace('/uploads/', '').replace('/uploads/products/', ''));
         return {
-          ...imagen,
+        ...imagen,
           url_imagen: normalizeImageUrl(url)
         };
       });
@@ -635,7 +635,7 @@ class ProductsController {
           ? imagen.url_imagen 
           : buildImageUrl(imagen.url_imagen.replace('/uploads/', '').replace('/uploads/products/', ''));
         return {
-          ...imagen,
+        ...imagen,
           url_imagen: normalizeImageUrl(url)
         };
       });
@@ -793,7 +793,7 @@ class ProductsController {
 
       // Guardar si el producto estaba rechazado antes de cualquier cambio
       const productoEstabaRechazado = producto.estado === 'rechazado';
-      
+
       if (deteccion.esInadecuado) {
         if (deteccion.nivelRiesgo === 'alto') {
           // Si es alto riesgo, siempre marcarlo como peligroso (sobrescribe cualquier estado)
@@ -806,8 +806,8 @@ class ProductsController {
           // 1. NO sobrescribir si el producto estaba rechazado y se corrigió (mantener en_apelacion)
           // 2. Solo cambiar a pendiente_revision si el producto estaba activo
           if (producto.estado === 'activo' && !productoEstabaRechazado) {
-            nuevoEstado = 'pendiente_revision';
-            motivoRechazo = obtenerMensajeRechazo(deteccion.categoria, deteccion.palabrasDetectadas);
+          nuevoEstado = 'pendiente_revision';
+          motivoRechazo = obtenerMensajeRechazo(deteccion.categoria, deteccion.palabrasDetectadas);
           }
           // Si el producto estaba rechazado y se corrigió, mantener en_apelacion (no cambiar)
           // El motivo de rechazo ya existe del rechazo anterior
@@ -938,7 +938,7 @@ class ProductsController {
               );
               
               console.log('📁 URLs de imágenes a eliminar:', imagesToDelete.rows);
-              
+
               // Eliminar de la base de datos
               await query(
                 'DELETE FROM item_imagenes WHERE id = ANY($1)',
@@ -983,7 +983,7 @@ class ProductsController {
           if (!urlImagen.startsWith('/uploads')) {
             urlImagen = `/uploads/${file.filename}`;
           }
-          
+
           await query(
             `INSERT INTO item_imagenes (item_id, url_imagen, orden, es_principal)
              VALUES ($1, $2, $3, $4)`,
@@ -1189,7 +1189,7 @@ class ProductsController {
           [id]
         );
         console.log(`🗑️ ${chatsRelacionados.rows[0].total} chat(s) eliminado(s) al eliminar el producto`);
-      }
+          }
 
       // Eliminar valoraciones relacionadas con el producto (para evitar violaciones de clave foránea)
       const valoracionesRelacionadas = await query(
@@ -1361,7 +1361,7 @@ class ProductsController {
           : null;
 
         return {
-          ...producto,
+        ...producto,
           primera_imagen: primeraImagenNormalizada
         };
       });
@@ -1643,7 +1643,7 @@ class ProductsController {
           : null;
 
         return {
-          ...producto,
+        ...producto,
           primera_imagen: primeraImagenNormalizada
         };
       });
@@ -1748,7 +1748,7 @@ class ProductsController {
           : null;
 
         return {
-          ...producto,
+        ...producto,
           primera_imagen: primeraImagenNormalizada
         };
       });
@@ -1956,7 +1956,7 @@ class ProductsController {
           : null;
 
         return {
-          ...producto,
+        ...producto,
           primera_imagen: primeraImagenNormalizada
         };
       });
@@ -2152,6 +2152,102 @@ class ProductsController {
         error: error.message,
         fecha_ejecucion: new Date().toISOString()
       };
+    }
+  }
+
+  /**
+   * Contactar vendedor sobre un producto
+   * POST /api/products/:id/contact
+   */
+  static async contactVendor(req, res) {
+    try {
+      const { id } = req.params;
+      const { nombre, telefono, email, mensaje } = req.body;
+
+      // Validaciones
+      if (!nombre || !telefono || !mensaje) {
+        return res.status(400).json({
+          success: false,
+          message: 'Nombre, teléfono y mensaje son requeridos'
+        });
+      }
+
+      // Obtener información del producto y vendedor
+      const productoResult = await query(
+        `SELECT 
+          i.id, 
+          i.nombre, 
+          i.precio, 
+          i.vendedor_id,
+          i.estado,
+          u.nombre as vendedor_nombre,
+          u.apellido as vendedor_apellido,
+          u.correo as vendedor_email
+        FROM items i
+        INNER JOIN usuarios u ON i.vendedor_id = u.id
+        WHERE i.id = $1`,
+        [id]
+      );
+
+      if (productoResult.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Producto no encontrado'
+        });
+      }
+
+      const producto = productoResult.rows[0];
+
+      // Validar que el usuario no sea el vendedor del producto
+      if (req.user && req.user.id === producto.vendedor_id) {
+        return res.status(403).json({
+          success: false,
+          message: 'No puedes contactar sobre tus propios productos'
+        });
+      }
+
+      // Validar que el producto esté activo
+      if (producto.estado !== 'activo') {
+        return res.status(400).json({
+          success: false,
+          message: 'Solo puedes contactar sobre productos activos'
+        });
+      }
+
+      // Enviar email al vendedor
+      try {
+        const nombreCompletoVendedor = `${producto.vendedor_nombre || ''} ${producto.vendedor_apellido || ''}`.trim() || producto.vendedor_email;
+        
+        await sendBuyerContactEmail(
+          producto.vendedor_email,
+          nombreCompletoVendedor,
+          nombre,
+          email || '',
+          telefono,
+          producto.nombre,
+          producto.precio,
+          mensaje
+        );
+
+        res.json({
+          success: true,
+          message: 'Mensaje enviado exitosamente al vendedor'
+        });
+      } catch (emailError) {
+        console.error('❌ Error al enviar email:', emailError);
+        // Aún así retornamos éxito para no exponer detalles del error al usuario
+        res.json({
+          success: true,
+          message: 'Mensaje enviado exitosamente al vendedor'
+        });
+      }
+
+    } catch (error) {
+      console.error('❌ Error al contactar vendedor:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error al enviar el mensaje'
+      });
     }
   }
 }

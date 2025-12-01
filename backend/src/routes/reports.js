@@ -12,6 +12,8 @@ router.get('/my/reports', authenticate, ReportsController.getMyReports);        
 
 // Rutas para moderadores (requieren permisos de moderación)
 router.get('/pending', authenticate, requireProductModerate, ReportsController.getPendingReports);         // GET /api/reports/pending - Reportes pendientes
+router.get('/system-detected', authenticate, requireProductModerate, ReportsController.getSystemDetectedProducts); // GET /api/reports/system-detected - Productos detectados por el sistema
+router.get('/history', authenticate, requireProductModerate, ReportsController.getAllReports);             // GET /api/reports/history - Historial completo de reportes
 router.get('/statistics', authenticate, requireProductModerate, ReportsController.getReportStatistics);    // GET /api/reports/statistics - Estadísticas de reportes
 router.patch('/:id/resolve', authenticate, requireProductModerate, ReportsController.resolveReport);       // PATCH /api/reports/:id/resolve - Resolver reporte
 
