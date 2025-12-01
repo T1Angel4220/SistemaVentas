@@ -419,7 +419,7 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
       {isOpen && (
         <div
           ref={dropdownRef}
-          className={`absolute z-[9999] w-full ${expandWidth ? 'sm:w-[120%]' : ''} mt-1 bg-white border-2 border-gray-300 rounded-lg shadow-2xl max-h-[75vh] min-h-[450px] flex flex-col overflow-hidden`}
+          className={`absolute z-[9999] w-full ${expandWidth ? 'sm:w-[120%]' : ''} mt-1 bg-white border-2 border-gray-300 rounded-lg shadow-2xl max-h-[350px] flex flex-col overflow-hidden`}
           style={{ boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}
         >
           {/* Selector de modo: Categoría General vs Subcategoría - SIEMPRE VISIBLE - STICKY */}
