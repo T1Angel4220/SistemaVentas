@@ -17,6 +17,7 @@ interface HierarchicalCategorySearchProps {
   loading?: boolean;
   error?: string;
   placeholder?: string;
+  expandWidth?: boolean; // Si es true, expande el dropdown un 20% más en pantallas pequeñas y superiores
 }
 
 const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
@@ -25,7 +26,8 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
   onCategorySelect,
   loading = false,
   error,
-  placeholder = "Buscar categoría..."
+  placeholder = "Buscar categoría...",
+  expandWidth = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -34,10 +36,17 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
   const [categoryMode, setCategoryMode] = useState<'general' | 'subcategoria'>('subcategoria'); // Modo por defecto: subcategoría
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Validar que categories sea un array válido
+  const validCategories = React.useMemo(() => {
+    if (!categories || !Array.isArray(categories)) {
+      return [];
+    }
+    return categories.filter(cat => cat && cat.id && cat.nombre);
+  }, [categories]);
 
   // Obtener la categoría seleccionada
-  const selectedCategory = categories.find(cat => cat.id.toString() === selectedCategoryId);
+  const selectedCategory = validCategories.find(cat => cat.id.toString() === selectedCategoryId);
   
   // Detectar automáticamente el modo basado en la categoría seleccionada
   useEffect(() => {
@@ -53,113 +62,150 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
       return [];
     }
 
-    const parents = categories.filter(cat => cat.nivel === 0).sort((a, b) => a.orden - b.orden);
-    const children = categories.filter(cat => cat.nivel === 1);
+    // Filtrar categorías inválidas (sin nombre o sin ID)
+    const validCategories = categories.filter(cat => cat && cat.id && cat.nombre);
     
+    // Separar categorías por nivel
+    // Categorías padre: nivel 0 o null/undefined (sin nivel definido)
+    const parents = validCategories.filter(cat => {
+      const nivel = cat.nivel;
+      return nivel === 0 || nivel === null || nivel === undefined || (!cat.categoria_padre_id);
+    })
+      .sort((a, b) => {
+        // Ordenar primero por orden, luego por nombre
+        const orderA = a.orden || 0;
+        const orderB = b.orden || 0;
+        if (orderA !== orderB) {
+          return orderA - orderB;
+        }
+        return (a.nombre || '').localeCompare(b.nombre || '');
+      });
+    
+    // Categorías hijas: nivel 1 o con categoria_padre_id definido
+    const children = validCategories.filter(cat => {
+      const nivel = cat.nivel;
+      return (nivel === 1 || (cat.categoria_padre_id && nivel !== 0));
+    });
+    
+    // Crear un Map para agrupar subcategorías por categoría padre
+    const childrenByParent = new Map<number, Category[]>();
+    children.forEach(child => {
+      if (child.categoria_padre_id) {
+        if (!childrenByParent.has(child.categoria_padre_id)) {
+          childrenByParent.set(child.categoria_padre_id, []);
+        }
+        childrenByParent.get(child.categoria_padre_id)!.push(child);
+      }
+    });
+    
+    // Ordenar las subcategorías de cada padre
+    childrenByParent.forEach((subcats) => {
+      subcats.sort((a, b) => {
+        const orderA = a.orden || 0;
+        const orderB = b.orden || 0;
+        if (orderA !== orderB) {
+          return orderA - orderB;
+        }
+        return (a.nombre || '').localeCompare(b.nombre || '');
+      });
+    });
+    
+    // Organizar todas las categorías padre con sus subcategorías
+    // IMPORTANTE: Mostrar TODAS las categorías padre sin filtrar duplicados
     const organized = parents.map(parent => {
-      const subcategorias = children
-        .filter(child => child.categoria_padre_id === parent.id)
-        .sort((a, b) => a.orden - b.orden);
-      
+      const subcategorias = childrenByParent.get(parent.id) || [];
       return {
         ...parent,
         subcategorias
       };
     });
-
-    // Filtrar duplicados: agrupar por nombre y mantener solo las que tienen subcategorías
-    // Si ninguna tiene subcategorías, mantener solo una (la de menor orden)
-    const categoriesByName = new Map<string, typeof organized>();
     
-    // Agrupar todas las categorías por nombre
-    organized.forEach(cat => {
-      if (!categoriesByName.has(cat.nombre)) {
-        categoriesByName.set(cat.nombre, []);
-      }
-      categoriesByName.get(cat.nombre)!.push(cat);
-    });
-    
-    // Procesar cada grupo de duplicados
-    const finalFiltered: typeof organized = [];
-    
-    categoriesByName.forEach((duplicates) => {
-      if (duplicates.length === 1) {
-        // No hay duplicados - mantener todas las categorías (incluso sin subcategorías)
-        finalFiltered.push(duplicates[0]);
-      } else {
-        // Hay duplicados - filtrar correctamente
-        const withSubs = duplicates.filter(c => c.subcategorias && c.subcategorias.length > 0);
-        
-        if (withSubs.length > 0) {
-          // Hay categorías con subcategorías - mantener SOLO estas
-          finalFiltered.push(...withSubs);
-        } else {
-          // Ninguna tiene subcategorías - mantener solo una (la de menor orden)
-          const sorted = duplicates.sort((a, b) => a.orden - b.orden);
-          finalFiltered.push(sorted[0]);
-        }
-      }
-    });
-    
-    // Ordenar por orden final
-    finalFiltered.sort((a, b) => a.orden - b.orden);
-    
-    return finalFiltered;
+    // Devolver todas las categorías organizadas sin filtrar duplicados
+    return organized;
   };
 
   // Obtener ruta completa de una categoría
   const getFullPath = (category: Category): string => {
-    if (category.nivel === 0) {
-      return category.nombre;
+    if (!category || !category.nombre) {
+      return '';
     }
     
-    const parent = categories.find(cat => cat.id === category.categoria_padre_id);
-    return parent ? `${parent.nombre} > ${category.nombre}` : category.nombre;
+    const categoryName = category.nombre || '';
+    
+    if (category.nivel === 0) {
+      return categoryName;
+    }
+    
+    const parent = validCategories.find(cat => cat.id === category.categoria_padre_id);
+    const parentName = parent?.nombre || '';
+    return parentName ? `${parentName} > ${categoryName}` : categoryName;
   };
 
   // Filtrar categorías basado en el término de búsqueda
   const filteredCategories = React.useMemo(() => {
     if (!searchTerm) {
-      return organizeCategories(categories);
+      return organizeCategories(validCategories);
     }
 
     const searchLower = searchTerm.toLowerCase();
-    const matchingCategories = categories.filter(category =>
-      category.nombre.toLowerCase().includes(searchLower) ||
-      category.descripcion?.toLowerCase().includes(searchLower)
-    );
+    const matchingCategories = validCategories.filter(category => {
+      // Validar que category y category.nombre existan antes de usar métodos de string
+      if (!category || !category.nombre) {
+        return false;
+      }
+      return category.nombre.toLowerCase().includes(searchLower) ||
+        (category.descripcion && category.descripcion.toLowerCase().includes(searchLower));
+    });
 
     // Organizar resultados de búsqueda
     const result = [];
     const addedParents = new Set<number>();
 
     for (const category of matchingCategories) {
-      if (category.nivel === 1) {
+      const nivel = category.nivel;
+      const hasParentId = category.categoria_padre_id;
+      
+      // Si es una subcategoría (nivel 1 o tiene categoria_padre_id)
+      if (nivel === 1 || (hasParentId && nivel !== 0)) {
         // Es una subcategoría, agregar su padre si no está ya
-        const parent = categories.find(cat => cat.id === category.categoria_padre_id);
+        const parent = validCategories.find(cat => cat.id === category.categoria_padre_id);
         if (parent && !addedParents.has(parent.id)) {
           result.push({
             ...parent,
             subcategorias: matchingCategories.filter(cat => 
               cat.categoria_padre_id === parent.id
-            ).sort((a, b) => a.orden - b.orden)
+            ).sort((a, b) => {
+              const orderA = a.orden || 0;
+              const orderB = b.orden || 0;
+              if (orderA !== orderB) {
+                return orderA - orderB;
+              }
+              return (a.nombre || '').localeCompare(b.nombre || '');
+            })
           });
           addedParents.add(parent.id);
         }
-      } else if (category.nivel === 0 && !addedParents.has(category.id)) {
+      } else if ((nivel === 0 || nivel === null || nivel === undefined || !hasParentId) && !addedParents.has(category.id)) {
         // Es una categoría principal
         result.push({
           ...category,
           subcategorias: matchingCategories.filter(cat => 
             cat.categoria_padre_id === category.id
-          ).sort((a, b) => a.orden - b.orden)
+          ).sort((a, b) => {
+            const orderA = a.orden || 0;
+            const orderB = b.orden || 0;
+            if (orderA !== orderB) {
+              return orderA - orderB;
+            }
+            return (a.nombre || '').localeCompare(b.nombre || '');
+          })
         });
         addedParents.add(category.id);
       }
     }
 
     return result;
-  }, [categories, searchTerm]);
+  }, [validCategories, searchTerm]);
 
   // Crear lista plana para navegación con teclado
   const flatCategories = React.useMemo(() => {
@@ -197,8 +243,11 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
 
   // Manejar selección de categoría
   const handleCategorySelect = (category: Category) => {
+    if (!category || !category.nombre) {
+      return;
+    }
     const fullPath = getFullPath(category);
-    onCategorySelect(category.id.toString(), category.nombre, fullPath);
+    onCategorySelect(category.id.toString(), category.nombre || '', fullPath);
     setSearchTerm('');
     setIsOpen(false);
     setHighlightedIndex(-1);
@@ -333,16 +382,11 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
     setHighlightedIndex(-1);
   }, [searchTerm]);
 
-  // Debug: Verificar que el componente se está renderizando
-  useEffect(() => {
-    console.log('🟢 HierarchicalCategorySearch renderizado, categoryMode:', categoryMode, 'isOpen:', isOpen);
-  }, [categoryMode, isOpen]);
-
   return (
-    <div ref={containerRef} className="relative w-full" style={{ zIndex: isOpen ? 9999 : 50 }}>
+    <div className="relative">
       {/* Input de búsqueda */}
-      <div className="relative w-full">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+      <div className="relative">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <Search className="h-4 w-4 text-gray-400" />
         </div>
         <input
@@ -366,176 +410,170 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
               : 'border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 shadow-sm hover:shadow-md'
           } ${loading ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'}`}
         />
-        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none z-10">
+        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
           <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </div>
       </div>
 
       {/* Dropdown de resultados */}
       {isOpen && (
-          <div
-            ref={dropdownRef}
-            className="absolute z-[9999] w-full mt-1 bg-white border-2 border-gray-300 rounded-xl shadow-2xl max-h-[450px] overflow-y-auto overflow-x-hidden"
-            style={{ 
-              position: 'absolute',
-              top: '100%',
-              left: 0,
-              width: '100%',
-              minWidth: '100%',
-              maxWidth: '100%',
-              transform: 'translateZ(0)' // Forzar aceleración por hardware
-            }}
-          >
-          {/* Selector de modo: Categoría General vs Subcategoría - Scroll normal sin sticky */}
-          <div className="bg-gradient-to-r from-blue-100 to-indigo-100 border-b-2 border-blue-500 px-4 py-3 z-10">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-bold text-gray-900">Seleccionar tipo de categoría:</span>
+        <div
+          ref={dropdownRef}
+          className={`absolute z-[9999] w-full ${expandWidth ? 'sm:w-[120%]' : ''} mt-1 bg-white border-2 border-gray-300 rounded-lg shadow-2xl max-h-[75vh] min-h-[450px] flex flex-col overflow-hidden`}
+          style={{ boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}
+        >
+          {/* Selector de modo: Categoría General vs Subcategoría - SIEMPRE VISIBLE - STICKY */}
+          <div className="sticky top-0 bg-gradient-to-r from-blue-50 to-indigo-50 border-b-2 border-blue-300 px-3 py-2 shadow-md z-10 flex-shrink-0">
+            <div className="w-full">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs font-bold text-gray-800 uppercase tracking-wide">Tipo de categoría:</span>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    setCategoryMode('general');
+                    setSearchTerm('');
+                    setExpandedCategories(new Set());
+                    // Si la categoría seleccionada es una subcategoría (nivel 1), limpiar la selección
+                    if (selectedCategory && selectedCategory.nivel === 1) {
+                      onCategorySelect('', '', '');
+                    }
+                  }}
+                  className={`flex-1 px-2.5 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 ${
+                    categoryMode === 'general'
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'bg-white text-gray-700 border-2 border-gray-300 hover:bg-gray-50 hover:border-blue-400'
+                  }`}
+                  title="Seleccionar solo categorías principales (sin subcategorías)"
+                >
+                  📦 General
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    setCategoryMode('subcategoria');
+                    setSearchTerm('');
+                    // No necesitamos limpiar la selección al cambiar a subcategoría
+                    // porque las categorías generales también son válidas en este modo
+                  }}
+                  className={`flex-1 px-2.5 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 ${
+                    categoryMode === 'subcategoria'
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'bg-white text-gray-700 border-2 border-gray-300 hover:bg-gray-50 hover:border-blue-400'
+                  }`}
+                  title="Seleccionar subcategorías específicas (con jerarquía)"
+                >
+                  🔽 Subcategoría
+                </button>
+              </div>
+              {categoryMode === 'general' && (
+                <p className="text-xs text-gray-600 mt-1.5 font-medium leading-tight">
+                  ℹ Solo categorías principales
+                </p>
+              )}
+              {categoryMode === 'subcategoria' && (
+                <p className="text-xs text-gray-600 mt-1.5 font-medium leading-tight">
+                  ℹ Categorías principales o subcategorías específicas
+                </p>
+              )}
             </div>
-            <div className="flex gap-3 flex-wrap">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  console.log('🟢 Cambiando a modo GENERAL');
-                  setCategoryMode('general');
-                  setSearchTerm('');
-                  setExpandedCategories(new Set());
-                  // Si la categoría seleccionada es una subcategoría (nivel 1), limpiar la selección
-                  if (selectedCategory && selectedCategory.nivel === 1) {
-                    onCategorySelect('', '', '');
-                  }
-                }}
-                className={`flex-1 min-w-[140px] px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
-                  categoryMode === 'general'
-                    ? 'bg-blue-600 text-white shadow-lg scale-105'
-                    : 'bg-white text-gray-700 border-2 border-gray-300 hover:bg-gray-50 hover:border-blue-400'
-                }`}
-                title="Seleccionar solo categorías principales (sin subcategorías)"
-              >
-                📦 Categoría General
-              </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  console.log('🟢 Cambiando a modo SUBCATEGORÍA');
-                  setCategoryMode('subcategoria');
-                  setSearchTerm('');
-                  // No necesitamos limpiar la selección al cambiar a subcategoría
-                  // porque las categorías generales también son válidas en este modo
-                }}
-                className={`flex-1 min-w-[140px] px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
-                  categoryMode === 'subcategoria'
-                    ? 'bg-blue-600 text-white shadow-lg scale-105'
-                    : 'bg-white text-gray-700 border-2 border-gray-300 hover:bg-gray-50 hover:border-blue-400'
-                }`}
-                title="Seleccionar subcategorías específicas (con jerarquía)"
-              >
-                🔽 Subcategoría
-              </button>
-            </div>
-            {categoryMode === 'general' && (
-              <p className="text-xs text-gray-700 mt-3 font-medium">
-                ℹ️ Solo categorías principales (ej: "Electrónicos", "Hogar y Jardín")
-              </p>
-            )}
-            {categoryMode === 'subcategoria' && (
-              <p className="text-xs text-gray-700 mt-3 font-medium">
-                ℹ️ Categorías principales o subcategorías específicas (ej: &quot;Electrónicos &gt; Computadoras&quot;)
-              </p>
-            )}
           </div>
           
-          {loading ? (
-            <div className="px-4 py-3 text-sm text-gray-500 text-center">
-              Cargando categorías...
-            </div>
-          ) : flatCategories.length === 0 ? (
-            <div className="px-4 py-3 text-sm text-gray-500 text-center">
-              {searchTerm ? `No se encontraron categorías para "${searchTerm}"` : 'No hay categorías disponibles'}
-            </div>
-          ) : (
-            <div className="py-1">
-              {flatCategories.map((item, index) => {
-                const { category, isParent, hasChildren, indent } = item;
-                const isHighlighted = index === highlightedIndex;
-                const isSelected = selectedCategoryId === category.id.toString();
-                const isExpanded = expandedCategories.has(category.id);
-                
-                return (
-                  <div
-                    key={`${category.id}-${index}`}
-                    className={`flex items-center min-h-[44px] ${
-                      isParent ? 'font-medium' : ''
-                    } ${isHighlighted ? 'bg-blue-50' : ''}`}
-                    style={{ paddingLeft: `${indent * 20 + 12}px`, paddingRight: '12px' }}
-                  >
-                    {/* Botón de expandir/colapsar - SOLO para expandir, NO para seleccionar - Solo en modo subcategoría */}
-                    {categoryMode === 'subcategoria' && isParent && hasChildren && (
+          {/* Lista de categorías con scroll */}
+          <div className="overflow-y-auto flex-1 min-h-0" style={{ maxHeight: 'calc(75vh - 140px)' }}>
+            {loading ? (
+              <div className="px-4 py-8 text-sm text-gray-500 text-center">
+                Cargando categorías...
+              </div>
+            ) : flatCategories.length === 0 ? (
+              <div className="px-4 py-8 text-sm text-gray-500 text-center">
+                {searchTerm ? `No se encontraron categorías para "${searchTerm}"` : 'No hay categorías disponibles'}
+              </div>
+            ) : (
+              <div className="py-0.5">
+                {flatCategories.map((item, index) => {
+                  const { category, isParent, hasChildren, indent } = item;
+                  const isHighlighted = index === highlightedIndex;
+                  const isSelected = selectedCategoryId === category.id.toString();
+                  const isExpanded = expandedCategories.has(category.id);
+                  
+                  return (
+                    <div
+                      key={`${category.id}-${index}`}
+                      className={`flex items-center ${
+                        isParent ? 'font-medium' : ''
+                      } ${isHighlighted ? 'bg-blue-50' : ''}`}
+                      style={{ paddingLeft: `${indent * 16 + 12}px` }}
+                    >
+                      {/* Botón de expandir/colapsar - SOLO para expandir, NO para seleccionar - Solo en modo subcategoría */}
+                      {categoryMode === 'subcategoria' && isParent && hasChildren && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            toggleExpansion(category.id);
+                          }}
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
+                          }}
+                          className="p-1 text-gray-500 hover:text-gray-700 focus:outline-none flex-shrink-0 mr-0.5 z-10 relative"
+                          aria-label={isExpanded ? 'Colapsar categoría' : 'Expandir categoría'}
+                          title={isExpanded ? 'Colapsar categoría' : 'Expandir categoría'}
+                        >
+                          {isExpanded ? (
+                            <ChevronDown className="h-3.5 w-3.5" />
+                          ) : (
+                            <ChevronRight className="h-3.5 w-3.5" />
+                          )}
+                        </button>
+                      )}
+                      {categoryMode === 'subcategoria' && isParent && !hasChildren && (
+                        <div className="p-1 text-gray-400 flex-shrink-0 mr-0.5">
+                          <FolderOpen className="h-3.5 w-3.5" />
+                        </div>
+                      )}
+                      {categoryMode === 'general' && isParent && (
+                        <div className="p-1 text-blue-500 flex-shrink-0 mr-0.5">
+                          <FolderOpen className="h-3.5 w-3.5" />
+                        </div>
+                      )}
+                      {/* Botón de selección - ÁREA PRINCIPAL CLICKEABLE - Funciona para TODAS las categorías (padre e hijas) */}
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           e.preventDefault();
-                          toggleExpansion(category.id);
+                          handleCategorySelect(category);
                         }}
                         onMouseDown={(e) => {
-                          e.stopPropagation();
+                          // Permitir que el evento se propague para asegurar que se seleccione
+                          // pero prevenir el comportamiento por defecto
+                          e.preventDefault();
                         }}
-                        className="p-1.5 text-gray-500 hover:text-gray-700 focus:outline-none flex-shrink-0 mr-1 z-10 relative"
-                        aria-label={isExpanded ? 'Colapsar categoría' : 'Expandir categoría'}
-                        title={isExpanded ? 'Colapsar categoría' : 'Expandir categoría'}
+                        className={`flex-1 px-3 py-1.5 text-left text-sm hover:bg-blue-50 focus:bg-blue-50 focus:outline-none flex items-center justify-between rounded transition-colors cursor-pointer ${
+                          isSelected ? 'bg-blue-100 font-semibold' : ''
+                        }`}
+                        title={`Seleccionar ${category.nombre || 'categoría'}`}
                       >
-                        {isExpanded ? (
-                          <ChevronDown className="h-4 w-4" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4" />
+                        <span className={isSelected ? 'text-blue-900' : 'text-gray-900'}>
+                          {category.nombre || 'Sin nombre'}
+                        </span>
+                        {isSelected && (
+                          <Check className="h-3.5 w-3.5 text-blue-600 flex-shrink-0 ml-2" />
                         )}
                       </button>
-                    )}
-                    {categoryMode === 'subcategoria' && isParent && !hasChildren && (
-                      <div className="p-1.5 text-gray-400 flex-shrink-0 mr-1">
-                        <FolderOpen className="h-4 w-4" />
-                      </div>
-                    )}
-                    {categoryMode === 'general' && isParent && (
-                      <div className="p-1.5 text-blue-500 flex-shrink-0 mr-1">
-                        <FolderOpen className="h-4 w-4" />
-                      </div>
-                    )}
-                    {/* Botón de selección - ÁREA PRINCIPAL CLICKEABLE - Funciona para TODAS las categorías (padre e hijas) */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        console.log('🔵 Seleccionando categoría:', category.nombre, 'ID:', category.id, 'Nivel:', category.nivel, 'isParent:', isParent);
-                        handleCategorySelect(category);
-                      }}
-                      onMouseDown={(e) => {
-                        // Permitir que el evento se propague para asegurar que se seleccione
-                        // pero prevenir el comportamiento por defecto
-                        e.preventDefault();
-                      }}
-                      className={`flex-1 px-4 py-3 text-left text-sm hover:bg-blue-50 focus:bg-blue-50 focus:outline-none flex items-center justify-between rounded-lg transition-all duration-200 cursor-pointer ${
-                        isSelected ? 'bg-blue-100 font-semibold shadow-sm' : 'hover:shadow-sm'
-                      }`}
-                      title={`Seleccionar ${category.nombre}`}
-                    >
-                      <span className={`truncate ${isSelected ? 'text-blue-900' : 'text-gray-900'}`}>
-                        {category.nombre}
-                      </span>
-                      {isSelected && (
-                        <Check className="h-5 w-5 text-blue-600 flex-shrink-0 ml-2" />
-                      )}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
