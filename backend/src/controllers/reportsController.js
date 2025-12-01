@@ -189,13 +189,27 @@ class ReportsController {
 
       const result = await query(
         `SELECT 
-          r.*,
+          r.id,
+          r.item_id,
+          r.usuario_reportador_id,
+          r.tipo_reporte,
+          r.descripcion,
+          r.comentario_opcional,
+          r.estado,
+          TO_CHAR(r.fecha_reporte AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') as fecha_reporte,
+          CASE WHEN r.fecha_revision IS NOT NULL THEN TO_CHAR(r.fecha_revision AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_revision,
+          r.moderador_resolutor_id,
+          r.decision_final,
+          CASE WHEN r.fecha_resolucion IS NOT NULL THEN TO_CHAR(r.fecha_resolucion AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_resolucion,
           i.nombre as producto_nombre,
           i.descripcion as producto_descripcion,
           i.codigo as producto_codigo,
           i.tipo as producto_tipo,
           i.estado as producto_estado,
           i.precio as producto_precio,
+          CASE WHEN i.fecha_revision IS NOT NULL THEN TO_CHAR(i.fecha_revision AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as producto_fecha_revision,
+          i.es_peligroso,
+          CASE WHEN i.fecha_deteccion_peligroso IS NOT NULL THEN TO_CHAR(i.fecha_deteccion_peligroso AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_deteccion_peligroso,
           u_reportante.nombre as reportante_nombre,
           u_reportante.apellido as reportante_apellido,
           u_reportante.correo as reportante_correo,
@@ -433,7 +447,18 @@ class ReportsController {
 
       const result = await query(
         `SELECT 
-          r.*,
+          r.id,
+          r.item_id,
+          r.usuario_reportador_id,
+          r.tipo_reporte,
+          r.descripcion,
+          r.comentario_opcional,
+          r.estado,
+          TO_CHAR(r.fecha_reporte AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') as fecha_reporte,
+          CASE WHEN r.fecha_revision IS NOT NULL THEN TO_CHAR(r.fecha_revision AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_revision,
+          r.moderador_resolutor_id,
+          r.decision_final,
+          CASE WHEN r.fecha_resolucion IS NOT NULL THEN TO_CHAR(r.fecha_resolucion AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_resolucion,
           i.nombre as producto_nombre,
           i.codigo as producto_codigo,
           i.tipo as producto_tipo,
@@ -459,6 +484,105 @@ class ReportsController {
       res.status(500).json({
         success: false,
         message: 'Error al obtener tus reportes',
+        error: error.message
+      });
+    }
+  }
+
+  // Obtener productos detectados automáticamente por el sistema (peligrosos)
+  static async getSystemDetectedProducts(req, res) {
+    try {
+      const { fecha_desde, fecha_hasta, estado } = req.query;
+
+      // Solo mostrar productos que fueron detectados por el sistema
+      let whereConditions = ["(i.fecha_deteccion_peligroso IS NOT NULL OR i.es_peligroso = TRUE OR i.estado = 'peligroso')"];
+      let queryParams = [];
+      let paramIndex = 1;
+
+      if (fecha_desde || fecha_hasta) {
+        whereConditions.push(`COALESCE(i.fecha_deteccion_peligroso, i.fecha_revision) IS NOT NULL`);
+      }
+
+      if (fecha_desde) {
+        whereConditions.push(`DATE(COALESCE(i.fecha_deteccion_peligroso, i.fecha_revision)) >= $${paramIndex}::date`);
+        queryParams.push(fecha_desde);
+        paramIndex++;
+      }
+
+      if (fecha_hasta) {
+        whereConditions.push(`DATE(COALESCE(i.fecha_deteccion_peligroso, i.fecha_revision)) <= $${paramIndex}::date`);
+        queryParams.push(fecha_hasta);
+        paramIndex++;
+      }
+
+      if (estado) {
+        whereConditions.push(`i.estado = $${paramIndex}`);
+        queryParams.push(estado);
+        paramIndex++;
+      }
+
+      const whereClause = whereConditions.join(' AND ');
+
+      const result = await query(
+        `SELECT 
+          i.id as item_id,
+          i.nombre as producto_nombre,
+          i.descripcion as producto_descripcion,
+          i.codigo as producto_codigo,
+          i.tipo as producto_tipo,
+          i.estado as producto_estado,
+          i.precio as producto_precio,
+          i.es_peligroso,
+          i.motivo_rechazo,
+          CASE WHEN i.fecha_deteccion_peligroso IS NOT NULL THEN TO_CHAR(i.fecha_deteccion_peligroso AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_deteccion_peligroso,
+          CASE WHEN i.fecha_revision IS NOT NULL THEN TO_CHAR(i.fecha_revision AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_revision,
+          i.moderador_revision_id,
+          u_vendedor.nombre as vendedor_nombre,
+          u_vendedor.apellido as vendedor_apellido,
+          u_vendedor.correo as vendedor_correo,
+          u_moderador.nombre as moderador_nombre,
+          u_moderador.apellido as moderador_apellido,
+          cat.nombre as categoria_nombre,
+          (SELECT url_imagen FROM item_imagenes WHERE item_id = i.id ORDER BY orden ASC LIMIT 1) as primera_imagen,
+          (SELECT COUNT(*) FROM item_imagenes WHERE item_id = i.id) as total_imagenes,
+          (SELECT COUNT(*) FROM reportes WHERE item_id = i.id) as total_reportes_producto,
+          'sistema' as origen_deteccion
+        FROM items i
+        INNER JOIN usuarios u_vendedor ON i.vendedor_id = u_vendedor.id
+        LEFT JOIN usuarios u_moderador ON i.moderador_revision_id = u_moderador.id
+        LEFT JOIN categorias cat ON i.categoria_id = cat.id
+        WHERE ${whereClause}
+        ORDER BY COALESCE(i.fecha_deteccion_peligroso, i.fecha_revision) DESC`,
+        queryParams
+      );
+
+      // Normalizar URLs de imágenes
+      const productosNormalizados = result.rows.map(producto => {
+        const primeraImagenNormalizada = producto.primera_imagen 
+          ? normalizeImageUrl(
+              producto.primera_imagen.startsWith('http') 
+                ? producto.primera_imagen 
+                : buildImageUrl(producto.primera_imagen.replace('/uploads/', '').replace('/uploads/products/', ''))
+            )
+          : null;
+
+        return {
+          ...producto,
+          primera_imagen: primeraImagenNormalizada
+        };
+      });
+
+      res.json({
+        success: true,
+        data: productosNormalizados,
+        count: productosNormalizados.length
+      });
+
+    } catch (error) {
+      console.error('Error al obtener productos detectados:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error al obtener productos detectados',
         error: error.message
       });
     }

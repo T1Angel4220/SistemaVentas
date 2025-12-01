@@ -23,7 +23,8 @@ import {
   FileText,
   Shield,
   Camera,
-  DollarSign
+  DollarSign,
+  X
 } from 'lucide-react';
 
 interface Report {
@@ -173,14 +174,44 @@ export const ReportsManagementPage: React.FC = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
+    if (!dateString) return 'N/A';
+    const [datePart, timePart] = dateString.split(' ');
+    const [year, month, day] = datePart.split('-');
+    const [hour, minute, second] = timePart.split('.')[0].split(':'); // Ignorar milisegundos para consistencia
+
+    const date = new Date(
+      parseInt(year),
+      parseInt(month) - 1, // Meses en JS son 0-indexados
+      parseInt(day),
+      parseInt(hour),
+      parseInt(minute),
+      parseInt(second)
+    );
+
+    // Formatear la fecha directamente sin conversiones de zona horaria
+    // Asumimos que los valores ya están en la hora de Ecuador
+    const options: Intl.DateTimeFormatOptions = {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+    };
+    return date.toLocaleDateString('es-EC', options);
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      tipo_reporte: '',
+      estado: '',
+      fecha_desde: '',
+      fecha_hasta: ''
     });
   };
+
+  const hasActiveFilters = filters.tipo_reporte || filters.estado || filters.fecha_desde || filters.fecha_hasta;
 
 
   const getTipoReporteLabel = (tipo: string) => {
@@ -369,6 +400,18 @@ export const ReportsManagementPage: React.FC = () => {
                   <option value="resuelto">Resuelto</option>
                 </select>
               </div>
+            </div>
+            {/* Botón para limpiar filtros */}
+            <div className="mt-4 sm:mt-6 flex justify-end">
+              <Button
+                onClick={clearFilters}
+                variant="outline"
+                className="h-10 px-4 rounded-xl border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors"
+                disabled={!hasActiveFilters}
+              >
+                <X className="h-4 w-4 mr-2" />
+                Limpiar Filtros
+              </Button>
             </div>
           </CardContent>
         </Card>

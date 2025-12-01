@@ -24,13 +24,19 @@ import {
 } from 'lucide-react';
 
 interface Appeal {
-  id: number;
+  id?: number;
   item_id: number;
   usuario_apelante_id: number;
-  motivo_apelacion: string;
+  motivo_apelacion?: string;
   informacion_adicional?: string;
   estado: string;
-  fecha_apelacion: string;
+  fecha_apelacion?: string;
+  fecha_revision_apelacion?: string;
+  fecha_resolucion_apelacion?: string;
+  decision_apelacion?: string;
+  moderador_revisor_id?: number;
+  revisor_nombre?: string;
+  revisor_apellido?: string;
   producto_nombre: string;
   producto_codigo: string;
   producto_tipo: string;
@@ -39,8 +45,12 @@ interface Appeal {
   vendedor_apellido: string;
   vendedor_correo: string;
   motivo_rechazo_original?: string;
+  moderador_revision_id?: number;
+  moderador_original_nombre?: string;
+  moderador_original_apellido?: string;
   primera_imagen?: string;
   total_imagenes?: number;
+  tipo_registro?: string; // 'apelacion_existente' o 'producto_pendiente_apelacion'
 }
 
 export const AppealsManagementPage: React.FC = () => {
@@ -70,7 +80,16 @@ export const AppealsManagementPage: React.FC = () => {
       const data = await response.json();
       
       if (data.success) {
-        setAppeals(data.data);
+        // Asegurar que no haya duplicados usando un Map con item_id como clave
+        // Para apelaciones existentes, usar id; para productos pendientes, usar item_id
+        const uniqueAppeals = new Map();
+        data.data.forEach((appeal: Appeal) => {
+          const key = appeal.id || `pending_${appeal.item_id}`;
+          if (!uniqueAppeals.has(key)) {
+            uniqueAppeals.set(key, appeal);
+          }
+        });
+        setAppeals(Array.from(uniqueAppeals.values()));
       } else {
         showError('Error', 'No se pudieron cargar las apelaciones');
       }
@@ -148,13 +167,32 @@ export const AppealsManagementPage: React.FC = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
+    if (!dateString) return 'N/A';
+    const [datePart, timePart] = dateString.split(' ');
+    const [year, month, day] = datePart.split('-');
+    const [hour, minute, second] = timePart.split('.')[0].split(':'); // Ignorar milisegundos para consistencia
+
+    const date = new Date(
+      parseInt(year),
+      parseInt(month) - 1, // Meses en JS son 0-indexados
+      parseInt(day),
+      parseInt(hour),
+      parseInt(minute),
+      parseInt(second)
+    );
+
+    // Formatear la fecha directamente sin conversiones de zona horaria
+    // Asumimos que los valores ya están en la hora de Ecuador
+    const options: Intl.DateTimeFormatOptions = {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
-    });
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+    };
+    return date.toLocaleDateString('es-EC', options);
   };
 
   const getEstadoBadge = (estado: string) => {
@@ -365,30 +403,55 @@ export const AppealsManagementPage: React.FC = () => {
 
                      {/* Columna 2: Info de la Apelación - Optimizado para móvil */}
                      <div className="space-y-4 xl:border-l xl:border-gray-200 xl:pl-6 border-t border-gray-200 pt-4 xl:pt-0 xl:border-t-0">
-                      <div>
-                        <div className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                          <MessageSquare className="h-4 w-4 mr-2 text-purple-600" />
-                          Motivo de Apelación
-                        </div>
-                        <p className="text-sm text-gray-600 bg-purple-50 p-3 rounded-lg border border-purple-200">
-                          {appeal.motivo_apelacion}
-                        </p>
-                      </div>
-
-                      {appeal.informacion_adicional && (
-                        <div>
-                          <div className="text-sm font-semibold text-gray-700 mb-2">Información Adicional</div>
-                          <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
-                            {appeal.informacion_adicional}
+                      {appeal.tipo_registro === 'producto_pendiente_apelacion' ? (
+                        <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <Clock className="h-5 w-5 text-yellow-600" />
+                            <div className="text-sm font-semibold text-yellow-800">Esperando Apelación del Vendedor</div>
+                          </div>
+                          <p className="text-sm text-yellow-700">
+                            Este producto fue {appeal.producto_estado === 'rechazado' ? 'rechazado' : 'suspendido'} pero el vendedor aún no ha presentado una apelación. 
+                            Debes esperar a que el vendedor apelé la decisión antes de poder tomar acciones adicionales.
                           </p>
                         </div>
+                      ) : (
+                        <>
+                          <div>
+                            <div className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                              <MessageSquare className="h-4 w-4 mr-2 text-purple-600" />
+                              Motivo de Apelación
+                            </div>
+                            <p className="text-sm text-gray-600 bg-purple-50 p-3 rounded-lg border border-purple-200">
+                              {appeal.motivo_apelacion}
+                            </p>
+                          </div>
+
+                          {appeal.informacion_adicional && (
+                            <div>
+                              <div className="text-sm font-semibold text-gray-700 mb-2">Información Adicional</div>
+                              <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
+                                {appeal.informacion_adicional}
+                              </p>
+                            </div>
+                          )}
+                        </>
                       )}
 
                       <div className="space-y-2 text-sm">
-                        <div className="flex items-center space-x-2">
-                          <Clock className="h-4 w-4 text-gray-400" />
-                          <span className="text-gray-600">Apelado: {formatDate(appeal.fecha_apelacion)}</span>
-                        </div>
+                        {appeal.fecha_apelacion && (
+                          <div className="flex items-center space-x-2">
+                            <Clock className="h-4 w-4 text-gray-400" />
+                            <span className="text-gray-600">Apelado: {formatDate(appeal.fecha_apelacion)}</span>
+                          </div>
+                        )}
+                        {appeal.moderador_original_nombre && appeal.moderador_original_apellido && (
+                          <div className="flex items-center space-x-2">
+                            <Shield className="h-4 w-4 text-orange-500" />
+                            <span className="text-gray-600">
+                              Rechazado/Suspendido por: <span className="font-medium text-orange-700">{appeal.moderador_original_nombre} {appeal.moderador_original_apellido}</span>
+                            </span>
+                          </div>
+                        )}
                       </div>
 
                       <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
@@ -402,25 +465,64 @@ export const AppealsManagementPage: React.FC = () => {
                      <div className="space-y-3 xl:border-l xl:border-gray-200 xl:pl-6 border-t border-gray-200 pt-4 xl:pt-0 xl:border-t-0">
                       <div className="text-sm font-semibold text-gray-700 mb-4">Acciones de Moderación</div>
                       
-                      <Button
-                        size="sm"
-                        onClick={() => openResolveDialog(appeal, 'aprobar')}
-                        disabled={actionLoading === appeal.id}
-                        className="w-full h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-medium shadow-lg"
-                      >
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        Aceptar Apelación
-                      </Button>
+                      {appeal.tipo_registro === 'producto_pendiente_apelacion' ? (
+                        <div className="space-y-3">
+                          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
+                            <div className="flex items-start">
+                              <Clock className="h-5 w-5 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" />
+                              <div>
+                                <p className="text-sm font-semibold text-yellow-800 mb-1">
+                                  Esperando Apelación del Vendedor
+                                </p>
+                                <p className="text-xs text-yellow-700 leading-relaxed">
+                                  El vendedor aún no ha presentado una apelación para este producto. 
+                                  No puedes tomar acciones hasta que el vendedor apelé la decisión.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <Button
+                            size="sm"
+                            disabled={true}
+                            className="w-full h-10 bg-gray-400 cursor-not-allowed opacity-50 text-white rounded-xl font-medium shadow-lg"
+                          >
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Aceptar Apelación
+                          </Button>
 
-                      <Button
-                        size="sm"
-                        onClick={() => openResolveDialog(appeal, 'rechazar')}
-                        disabled={actionLoading === appeal.id}
-                        className="w-full h-10 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl font-medium shadow-lg"
-                      >
-                        <XCircle className="h-4 w-4 mr-2" />
-                        Rechazar Apelación
-                      </Button>
+                          <Button
+                            size="sm"
+                            disabled={true}
+                            className="w-full h-10 bg-gray-400 cursor-not-allowed opacity-50 text-white rounded-xl font-medium shadow-lg"
+                          >
+                            <XCircle className="h-4 w-4 mr-2" />
+                            Rechazar Apelación
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <Button
+                            size="sm"
+                            onClick={() => openResolveDialog(appeal, 'aprobar')}
+                            disabled={actionLoading === appeal.id}
+                            className="w-full h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-medium shadow-lg"
+                          >
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Aceptar Apelación
+                          </Button>
+
+                          <Button
+                            size="sm"
+                            onClick={() => openResolveDialog(appeal, 'rechazar')}
+                            disabled={actionLoading === appeal.id}
+                            className="w-full h-10 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl font-medium shadow-lg"
+                          >
+                            <XCircle className="h-4 w-4 mr-2" />
+                            Rechazar Apelación
+                          </Button>
+                        </>
+                      )}
 
                       <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
                         <p className="text-xs text-blue-800">

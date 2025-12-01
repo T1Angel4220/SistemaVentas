@@ -381,6 +381,7 @@ class ProductsController {
           u.nombre || ' ' || u.apellido as vendedor_nombre,
           ub.nombre as ubicacion_nombre,
           COUNT(ii.id) as total_imagenes,
+          (SELECT COUNT(*) FROM apelaciones WHERE item_id = i.id AND estado IN ('en_apelacion', 'pendiente')) > 0 as tiene_apelacion_pendiente,
           (SELECT ii2.url_imagen FROM item_imagenes ii2 WHERE ii2.item_id = i.id ORDER BY ii2.orden LIMIT 1) as primera_imagen
         FROM items i
         JOIN categorias c ON i.categoria_id = c.id
@@ -1126,15 +1127,85 @@ class ProductsController {
         });
       }
 
-      // Verificar que no esté suspendido (solo admins pueden eliminar productos suspendidos)
-      if (producto.estado === 'suspendido' && req.user.tipo_usuario !== 'administrador') {
-        return res.status(400).json({
-          success: false,
-          message: 'No se puede eliminar un producto que ha sido suspendido. Contacta con los moderadores para más información.'
-        });
+      // Los productos suspendidos o en apelación (que NO son peligrosos) SÍ pueden ser eliminados por el vendedor
+      // Si el producto tiene apelaciones, se deben eliminar todas antes de eliminar el producto
+      // Primero, cancelar las apelaciones activas (si las hay)
+      const apelacionesActivas = await query(
+        'SELECT id FROM apelaciones WHERE item_id = $1 AND estado IN ($2, $3)',
+        [id, 'en_apelacion', 'pendiente']
+      );
+
+      if (apelacionesActivas.rows.length > 0) {
+        // Cancelar todas las apelaciones activas
+        await query(
+          `UPDATE apelaciones 
+           SET estado = 'rechazado', 
+               fecha_resolucion_apelacion = CURRENT_TIMESTAMP,
+               decision_apelacion = 'Apelación cancelada: El producto fue eliminado por el vendedor'
+           WHERE item_id = $1 AND estado IN ($2, $3)`,
+          [id, 'en_apelacion', 'pendiente']
+        );
+        console.log(`📝 ${apelacionesActivas.rows.length} apelación(es) cancelada(s) al eliminar el producto`);
       }
 
-      // Eliminar producto (CASCADE eliminará imágenes y servicios relacionados)
+      // Eliminar TODAS las apelaciones relacionadas con el producto (activas, resueltas, rechazadas, etc.)
+      // Esto es necesario para evitar violaciones de clave foránea
+      const todasLasApelaciones = await query(
+        'SELECT COUNT(*) as total FROM apelaciones WHERE item_id = $1',
+        [id]
+      );
+
+      if (parseInt(todasLasApelaciones.rows[0].total) > 0) {
+        await query(
+          'DELETE FROM apelaciones WHERE item_id = $1',
+          [id]
+        );
+        console.log(`🗑️ ${todasLasApelaciones.rows[0].total} apelación(es) eliminada(s) al eliminar el producto`);
+      }
+
+      // Eliminar reportes relacionados con el producto (para evitar violaciones de clave foránea)
+      const reportesRelacionados = await query(
+        'SELECT COUNT(*) as total FROM reportes WHERE item_id = $1',
+        [id]
+      );
+
+      if (parseInt(reportesRelacionados.rows[0].total) > 0) {
+        await query(
+          'DELETE FROM reportes WHERE item_id = $1',
+          [id]
+        );
+        console.log(`🗑️ ${reportesRelacionados.rows[0].total} reporte(s) eliminado(s) al eliminar el producto`);
+      }
+
+      // Eliminar chats relacionados con el producto (para evitar violaciones de clave foránea)
+      const chatsRelacionados = await query(
+        'SELECT COUNT(*) as total FROM chats WHERE item_id = $1',
+        [id]
+      );
+
+      if (parseInt(chatsRelacionados.rows[0].total) > 0) {
+        await query(
+          'DELETE FROM chats WHERE item_id = $1',
+          [id]
+        );
+        console.log(`🗑️ ${chatsRelacionados.rows[0].total} chat(s) eliminado(s) al eliminar el producto`);
+      }
+
+      // Eliminar valoraciones relacionadas con el producto (para evitar violaciones de clave foránea)
+      const valoracionesRelacionadas = await query(
+        'SELECT COUNT(*) as total FROM valoraciones WHERE item_id = $1',
+        [id]
+      );
+
+      if (parseInt(valoracionesRelacionadas.rows[0].total) > 0) {
+        await query(
+          'DELETE FROM valoraciones WHERE item_id = $1',
+          [id]
+        );
+        console.log(`🗑️ ${valoracionesRelacionadas.rows[0].total} valoración(es) eliminada(s) al eliminar el producto`);
+      }
+
+      // Finalmente, eliminar el producto
       await query('DELETE FROM items WHERE id = $1', [id]);
 
       res.json({
@@ -1347,6 +1418,22 @@ class ProductsController {
 
       const producto = productoExistente.rows[0];
 
+      // ✅ VALIDACIÓN CRÍTICA: Si el producto está rechazado o suspendido, solo se puede aprobar si tiene una apelación pendiente
+      if (accion === 'aprobar' && (producto.estado === 'rechazado' || producto.estado === 'suspendido')) {
+        // Verificar si tiene apelación pendiente
+        const apelacionPendiente = await query(
+          'SELECT id FROM apelaciones WHERE item_id = $1 AND estado IN ($2, $3)',
+          [id, 'en_apelacion', 'pendiente']
+        );
+
+        if (apelacionPendiente.rows.length === 0) {
+          return res.status(400).json({
+            success: false,
+            message: 'No se puede aprobar un producto rechazado o suspendido sin una apelación pendiente. Debes esperar a que el vendedor apelé la decisión antes de poder aprobarlo nuevamente.'
+          });
+        }
+      }
+
       // Determinar nuevo estado según la acción
       let nuevoEstado;
       let esPeligroso = producto.es_peligroso;
@@ -1482,6 +1569,7 @@ class ProductsController {
           u.nombre || ' ' || u.apellido as vendedor_nombre,
           ub.nombre as ubicacion_nombre,
           COUNT(ii.id) as total_imagenes,
+          (SELECT COUNT(*) FROM apelaciones WHERE item_id = i.id AND estado IN ('en_apelacion', 'pendiente')) > 0 as tiene_apelacion_pendiente,
           (SELECT ii2.url_imagen FROM item_imagenes ii2 WHERE ii2.item_id = i.id ORDER BY ii2.orden LIMIT 1) as primera_imagen
         FROM items i
         JOIN categorias c ON i.categoria_id = c.id

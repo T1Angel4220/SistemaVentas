@@ -72,13 +72,68 @@ class AppealsController {
         });
       }
 
-      // Crear la apelación
+      // Buscar el reporte_id más relevante
+      // Prioridad: 1) acciones_moderacion relacionadas, 2) decision_final con contenido relevante, 3) reporte más reciente resuelto
+      let reporte_id = null;
+      
+      if (producto.estado === 'rechazado' || producto.estado === 'suspendido') {
+        // Primero, buscar reportes resueltos que tienen una acción de moderación asociada
+        const reporteConAccion = await query(
+          `SELECT DISTINCT r.id, r.fecha_resolucion
+           FROM reportes r
+           INNER JOIN acciones_moderacion am ON am.registro_id = r.item_id 
+           WHERE r.item_id = $1 
+             AND r.estado = 'resuelto'
+             AND am.tabla_afectada = 'items'
+           ORDER BY r.fecha_resolucion DESC
+           LIMIT 1`,
+          [item_id]
+        );
+        
+        if (reporteConAccion.rows.length > 0) {
+          reporte_id = reporteConAccion.rows[0].id;
+        } else {
+          // Si no hay acciones de moderación, buscar por decision_final que contenga palabras clave
+          const reporteConDecision = await query(
+            `SELECT r.id 
+             FROM reportes r
+             WHERE r.item_id = $1 
+               AND r.estado = 'resuelto'
+               AND r.decision_final IS NOT NULL 
+               AND r.decision_final != ''
+             ORDER BY r.fecha_resolucion DESC
+             LIMIT 1`,
+            [item_id]
+          );
+          
+          if (reporteConDecision.rows.length > 0) {
+            reporte_id = reporteConDecision.rows[0].id;
+          } else {
+            // Finalmente, buscar el reporte más reciente resuelto para este producto
+            const reporteReciente = await query(
+              `SELECT r.id 
+               FROM reportes r
+               WHERE r.item_id = $1 
+                 AND r.estado = 'resuelto'
+               ORDER BY r.fecha_resolucion DESC
+               LIMIT 1`,
+              [item_id]
+            );
+            
+            if (reporteReciente.rows.length > 0) {
+              reporte_id = reporteReciente.rows[0].id;
+            }
+          }
+        }
+      }
+
+      // Crear la apelación con reporte_id si se encontró
       const result = await query(
         `INSERT INTO apelaciones 
-        (item_id, usuario_apelante_id, motivo_apelacion, informacion_adicional, estado, fecha_apelacion)
-        VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+        (item_id, usuario_apelante_id, motivo_apelacion, informacion_adicional, estado, fecha_apelacion, reporte_id)
+        VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, $6)
         RETURNING *`,
-        [item_id, usuario_apelante_id, motivo_apelacion, informacion_adicional || null, 'en_apelacion']
+        [item_id, usuario_apelante_id, motivo_apelacion, informacion_adicional || null, 'en_apelacion', reporte_id]
       );
 
       // Actualizar el estado del producto a "en_apelacion" si estaba rechazado o suspendido
@@ -140,7 +195,18 @@ class AppealsController {
       // Obtener apelaciones del producto con información del apelante y revisor
       const result = await query(
         `SELECT 
-          a.*,
+          a.id,
+          a.reporte_id,
+          a.item_id,
+          a.usuario_apelante_id,
+          a.motivo_apelacion,
+          a.informacion_adicional,
+          a.estado,
+          TO_CHAR(a.fecha_apelacion AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') as fecha_apelacion,
+          CASE WHEN a.fecha_revision_apelacion IS NOT NULL THEN TO_CHAR(a.fecha_revision_apelacion AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_revision_apelacion,
+          a.moderador_revisor_id,
+          a.decision_apelacion,
+          CASE WHEN a.fecha_resolucion_apelacion IS NOT NULL THEN TO_CHAR(a.fecha_resolucion_apelacion AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_resolucion_apelacion,
           u_apelante.nombre as apelante_nombre,
           u_apelante.apellido as apelante_apellido,
           u_apelante.correo as apelante_correo,
@@ -215,10 +281,21 @@ class AppealsController {
         }
       }
 
-      // Ahora obtener todas las apelaciones pendientes (incluyendo las recién creadas)
-      const result = await query(
+      // Obtener apelaciones existentes con fechas formateadas en timezone Ecuador
+      const apelacionesExistentes = await query(
         `SELECT 
-          a.*,
+          a.id,
+          a.reporte_id,
+          a.item_id,
+          a.usuario_apelante_id,
+          a.motivo_apelacion,
+          a.informacion_adicional,
+          a.estado,
+          TO_CHAR(a.fecha_apelacion AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') as fecha_apelacion,
+          CASE WHEN a.fecha_revision_apelacion IS NOT NULL THEN TO_CHAR(a.fecha_revision_apelacion AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_revision_apelacion,
+          a.moderador_revisor_id,
+          a.decision_apelacion,
+          CASE WHEN a.fecha_resolucion_apelacion IS NOT NULL THEN TO_CHAR(a.fecha_resolucion_apelacion AT TIME ZONE 'America/Guayaquil', 'YYYY-MM-DD HH24:MI:SS.MS') ELSE NULL END as fecha_resolucion_apelacion,
           i.nombre as producto_nombre,
           i.descripcion as producto_descripcion,
           i.codigo as producto_codigo,
@@ -234,16 +311,67 @@ class AppealsController {
           u_vendedor.correo as vendedor_correo,
           cat.nombre as categoria_nombre,
           (SELECT url_imagen FROM item_imagenes WHERE item_id = i.id ORDER BY es_principal DESC, orden ASC LIMIT 1) as primera_imagen,
-          (SELECT COUNT(*) FROM item_imagenes WHERE item_id = i.id) as total_imagenes
+          (SELECT COUNT(*) FROM item_imagenes WHERE item_id = i.id) as total_imagenes,
+          'apelacion_existente' as tipo_registro
         FROM apelaciones a
         INNER JOIN items i ON a.item_id = i.id
         INNER JOIN usuarios u_apelante ON a.usuario_apelante_id = u_apelante.id
         INNER JOIN usuarios u_vendedor ON i.vendedor_id = u_vendedor.id
         LEFT JOIN categorias cat ON i.categoria_id = cat.id
         WHERE a.estado IN ('en_apelacion', 'pendiente')
-        AND i.estado = 'en_apelacion'
         ORDER BY a.fecha_apelacion ASC`
       );
+
+      // También obtener productos rechazados/suspendidos que pueden ser apelados pero aún no tienen apelación
+      const productosPendientesApelacion = await query(
+        `SELECT 
+          NULL as id,
+          NULL as reporte_id,
+          i.id as item_id,
+          i.vendedor_id as usuario_apelante_id,
+          NULL as motivo_apelacion,
+          NULL as informacion_adicional,
+          'pendiente_apelacion' as estado,
+          NULL as fecha_apelacion,
+          NULL as fecha_revision_apelacion,
+          NULL as moderador_revisor_id,
+          NULL as decision_apelacion,
+          NULL as fecha_resolucion_apelacion,
+          i.nombre as producto_nombre,
+          i.descripcion as producto_descripcion,
+          i.codigo as producto_codigo,
+          i.tipo as producto_tipo,
+          i.estado as producto_estado,
+          i.motivo_rechazo,
+          u_vendedor.nombre as apelante_nombre,
+          u_vendedor.apellido as apelante_apellido,
+          u_vendedor.correo as apelante_correo,
+          u_vendedor.telefono as apelante_telefono,
+          u_vendedor.nombre as vendedor_nombre,
+          u_vendedor.apellido as vendedor_apellido,
+          u_vendedor.correo as vendedor_correo,
+          cat.nombre as categoria_nombre,
+          (SELECT url_imagen FROM item_imagenes WHERE item_id = i.id ORDER BY es_principal DESC, orden ASC LIMIT 1) as primera_imagen,
+          (SELECT COUNT(*) FROM item_imagenes WHERE item_id = i.id) as total_imagenes,
+          'producto_pendiente_apelacion' as tipo_registro
+        FROM items i
+        INNER JOIN usuarios u_vendedor ON i.vendedor_id = u_vendedor.id
+        LEFT JOIN categorias cat ON i.categoria_id = cat.id
+        WHERE (i.estado = 'rechazado' OR i.estado = 'suspendido')
+        AND i.es_peligroso = FALSE
+        AND i.estado != 'peligroso'
+        AND NOT EXISTS (
+          SELECT 1 FROM apelaciones a2 
+          WHERE a2.item_id = i.id 
+          AND a2.estado IN ('en_apelacion', 'pendiente')
+        )
+        ORDER BY i.fecha_revision DESC`
+      );
+
+      // Combinar ambos resultados
+      const result = {
+        rows: [...apelacionesExistentes.rows, ...productosPendientesApelacion.rows]
+      };
 
       // Normalizar URLs de imágenes antes de enviar la respuesta
       const apelacionesNormalizadas = result.rows.map(apelacion => {
