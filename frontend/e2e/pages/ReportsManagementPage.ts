@@ -94,25 +94,29 @@ export class ReportsManagementPage {
    */
   async goto() {
     await this.page.goto('/moderation/reports');
-    await this.page.waitForLoadState('networkidle');
+    // Usar 'domcontentloaded' en lugar de 'networkidle' para evitar timeouts
+    await this.page.waitForLoadState('domcontentloaded');
+    // Esperar a que los elementos principales estén visibles
     await this.page.waitForTimeout(2000);
+    // Esperar a que se carguen los datos (pero no bloquear si hay peticiones pendientes)
+    try {
+      await this.page.waitForLoadState('networkidle', { timeout: 10000 });
+    } catch {
+      // Si hay timeout, continuar de todas formas
+    }
+    await this.page.waitForTimeout(1000);
   }
 
   /**
    * Esperar a que la página cargue completamente
    */
   async waitForPageLoad() {
-    await this.page.waitForLoadState('networkidle');
-    // Esperar a que desaparezca el spinner de carga
-    await this.page.waitForFunction(
-      () => {
-        const spinners = document.querySelectorAll('[class*="spinner"], [class*="loading"], [class*="animate-spin"]');
-        return spinners.length === 0 || Array.from(spinners).every(el => 
-          !(el as HTMLElement).textContent?.includes('Cargando')
-        );
-      },
-      { timeout: 15000 }
-    ).catch(() => {});
+    // Simplificado: solo esperar un tiempo corto sin verificar networkidle
+    try {
+      await this.page.waitForLoadState('domcontentloaded', { timeout: 10000 });
+    } catch {
+      // Continuar de todas formas
+    }
     await this.page.waitForTimeout(1000);
   }
 

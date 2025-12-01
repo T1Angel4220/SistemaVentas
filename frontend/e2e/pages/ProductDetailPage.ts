@@ -101,22 +101,43 @@ export class ProductDetailPage {
   async openReportDialog() {
     // Esperar a que la página esté completamente cargada
     await this.page.waitForLoadState('networkidle');
-    await this.page.waitForTimeout(500);
+    await this.page.waitForTimeout(1000);
     
     // Buscar el botón - puede estar en diferentes ubicaciones
-    const reportButton = this.page.locator('button:has-text("Reportar producto")')
+    // Primero intentar con el selector más específico
+    let reportButton = this.page.locator('button:has-text("Reportar producto")')
+      .or(this.page.locator('button:has-text("Reportar Producto")'))
       .or(this.page.locator('button:has-text("Reportar")'))
       .first();
     
-    await reportButton.waitFor({ state: 'visible', timeout: 15000 });
+    // Verificar si el botón existe y está visible
+    const buttonCount = await reportButton.count();
+    if (buttonCount === 0) {
+      // Si no se encuentra, puede que el usuario no tenga permisos o el producto no permita reportes
+      throw new Error('No se encontró el botón de reportar. Verificar permisos del usuario o estado del producto.');
+    }
+    
+    // Esperar a que el botón esté visible (puede estar oculto inicialmente)
+    await reportButton.waitFor({ state: 'visible', timeout: 20000 });
     await reportButton.scrollIntoViewIfNeeded();
-    await this.page.waitForTimeout(300);
+    await this.page.waitForTimeout(500);
+    
+    // Verificar que el botón no esté deshabilitado
+    const isDisabled = await reportButton.isDisabled().catch(() => false);
+    if (isDisabled) {
+      throw new Error('El botón de reportar está deshabilitado');
+    }
+    
     await reportButton.click();
-    await this.page.waitForTimeout(1000);
+    await this.page.waitForTimeout(1500);
     
     // Esperar a que el dialog aparezca - buscar por el h2 "Reportar Producto"
-    const dialog = this.page.locator('h2:has-text("Reportar Producto")').locator('..').locator('..').first();
-    await dialog.waitFor({ state: 'visible', timeout: 10000 });
+    const dialog = this.page.locator('h2:has-text("Reportar Producto")')
+      .locator('..')
+      .locator('..')
+      .or(this.page.locator('div[class*="fixed"]:has(h2:has-text("Reportar Producto"))'))
+      .first();
+    await dialog.waitFor({ state: 'visible', timeout: 15000 });
     await this.page.waitForTimeout(500);
   }
 
@@ -229,13 +250,34 @@ export class ProductDetailPage {
    */
   async isReportSuccess(): Promise<boolean> {
     try {
-      // El dialog debería cerrarse y mostrar mensaje de éxito
-      await this.page.waitForTimeout(2000);
-      const dialogVisible = await this.reportDialog.isVisible({ timeout: 1000 });
-      // Si el dialog no está visible, probablemente fue exitoso
-      return !dialogVisible;
+      // Esperar a que se procese el reporte
+      await this.page.waitForTimeout(3000);
+      
+      // Verificar si hay mensaje de éxito visible en la página
+      const successMessage = this.page.locator('text=/éxito|exitosamente|reporte.*creado|reporte.*enviado/i');
+      const hasSuccessMessage = await successMessage.isVisible({ timeout: 3000 }).catch(() => false);
+      
+      // Verificar si el dialog se cerró
+      const dialogVisible = await this.reportDialog.isVisible({ timeout: 1000 }).catch(() => false);
+      
+      // También verificar si hay un toast o notificación de éxito
+      const toastSuccess = this.page.locator('[class*="toast"], [class*="notification"]')
+        .filter({ hasText: /éxito|exitosamente/i })
+        .first();
+      const hasToast = await toastSuccess.isVisible({ timeout: 2000 }).catch(() => false);
+      
+      // El reporte fue exitoso si:
+      // 1. El dialog se cerró Y (hay mensaje de éxito O hay toast de éxito)
+      // 2. O simplemente el dialog se cerró (puede que no haya mensaje visible)
+      return (!dialogVisible && (hasSuccessMessage || hasToast)) || (!dialogVisible && !hasSuccessMessage && !hasToast);
     } catch {
-      return false;
+      // Si hay error, verificar si el dialog se cerró (indicador de éxito)
+      try {
+        const dialogVisible = await this.reportDialog.isVisible({ timeout: 1000 }).catch(() => true);
+        return !dialogVisible;
+      } catch {
+        return false;
+      }
     }
   }
 

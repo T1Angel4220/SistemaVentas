@@ -164,13 +164,39 @@ export class ReportsApiHelper {
     }
 
     try {
-      const response = await page.request.get(`${this.baseURL}/reports/my/reports`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      // Intentar diferentes endpoints posibles
+      const endpoints = [
+        `${this.baseURL}/reports/my/reports`,
+        `${this.baseURL}/reports/my`,
+        `${this.baseURL}/reports/me`,
+        `${this.baseURL}/my-reports`
+      ];
 
-      return await response.json();
+      for (const endpoint of endpoints) {
+        try {
+          const response = await page.request.get(endpoint, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+
+          const data = await response.json();
+          
+          // Si la respuesta es exitosa (200-299), retornarla
+          if (response.status() >= 200 && response.status() < 300) {
+            return data;
+          }
+        } catch {
+          // Continuar con el siguiente endpoint
+          continue;
+        }
+      }
+
+      // Si ninguno funcionó, retornar error
+      return {
+        success: false,
+        message: 'No se pudo encontrar el endpoint para obtener mis reportes'
+      };
     } catch (error: any) {
       return {
         success: false,
