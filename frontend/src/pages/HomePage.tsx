@@ -78,18 +78,18 @@ export const HomePage: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             <Link to="/products" className="block">
               <Card className="text-center hover:shadow-lg transition-shadow cursor-pointer h-full">
-                <CardHeader>
-                  <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                    <ShoppingCart className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <CardTitle>Comprar Fácil</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription>
-                    Encuentra productos y servicios de calidad con solo unos clics
-                  </CardDescription>
-                </CardContent>
-              </Card>
+              <CardHeader>
+                <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                  <ShoppingCart className="h-6 w-6 text-blue-600" />
+                </div>
+                <CardTitle>Comprar Fácil</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription>
+                  Encuentra productos y servicios de calidad con solo unos clics
+                </CardDescription>
+              </CardContent>
+            </Card>
             </Link>
 
             {isAuthenticated && user?.tipo_usuario === 'vendedor' ? (
@@ -110,18 +110,18 @@ export const HomePage: React.FC = () => {
               </Link>
             ) : (
               <Card className="text-center h-full">
-                <CardHeader>
-                  <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                    <Package className="h-6 w-6 text-green-600" />
-                  </div>
-                  <CardTitle>Vender Seguro</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription>
-                    Publica tus productos y servicios con total seguridad
-                  </CardDescription>
-                </CardContent>
-              </Card>
+              <CardHeader>
+                <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                  <Package className="h-6 w-6 text-green-600" />
+                </div>
+                <CardTitle>Vender Seguro</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription>
+                  Publica tus productos y servicios con total seguridad
+                </CardDescription>
+              </CardContent>
+            </Card>
             )}
 
             {isAuthenticated ? (

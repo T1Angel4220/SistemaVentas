@@ -1532,7 +1532,22 @@ class ProductsController {
       let queryParams = [];
       let paramIndex = 1;
       
-      if (estado && estado.trim() !== '') {
+      // Por defecto, excluir productos rechazados/suspendidos que no tienen apelación pendiente
+      // Estos productos solo deberían aparecer en AppealsManagementPage
+      // Solo mostrar productos que:
+      // - Están pendientes de revisión (nuevos o editados)
+      // - Están activos (para poder moderarlos)
+      // - Están en apelación (para poder verlos)
+      // - Están marcados como peligrosos (para poder verlos)
+      // - O tienen apelación pendiente (aunque estén rechazados/suspendidos)
+      if (!estado || estado.trim() === '') {
+        // Si no hay filtro de estado, mostrar solo productos que pueden ser moderados
+        whereConditions.push(`(
+          i.estado IN ('pendiente_revision', 'activo', 'en_apelacion', 'peligroso') 
+          OR (i.estado IN ('rechazado', 'suspendido') 
+              AND EXISTS (SELECT 1 FROM apelaciones a WHERE a.item_id = i.id AND a.estado IN ('en_apelacion', 'pendiente')))
+        )`);
+      } else {
         whereConditions.push(`i.estado = $${paramIndex}`);
         queryParams.push(estado);
         paramIndex++;
@@ -1592,7 +1607,14 @@ class ProductsController {
       let countParams = [];
       let countParamIndex = 1;
       
-      if (estado && estado.trim() !== '') {
+      // Aplicar el mismo filtro por defecto para el conteo
+      if (!estado || estado.trim() === '') {
+        countWhereConditions.push(`(
+          i.estado IN ('pendiente_revision', 'activo', 'en_apelacion', 'peligroso') 
+          OR (i.estado IN ('rechazado', 'suspendido') 
+              AND EXISTS (SELECT 1 FROM apelaciones a WHERE a.item_id = i.id AND a.estado IN ('en_apelacion', 'pendiente')))
+        )`);
+      } else {
         countWhereConditions.push(`i.estado = $${countParamIndex}`);
         countParams.push(estado);
         countParamIndex++;

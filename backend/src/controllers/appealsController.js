@@ -265,6 +265,8 @@ class AppealsController {
           u_vendedor.nombre as vendedor_nombre,
           u_vendedor.apellido as vendedor_apellido,
           u_vendedor.correo as vendedor_correo,
+          u_moderador_original.nombre as moderador_original_nombre,
+          u_moderador_original.apellido as moderador_original_apellido,
           cat.nombre as categoria_nombre,
           (SELECT url_imagen FROM item_imagenes WHERE item_id = i.id ORDER BY es_principal DESC, orden ASC LIMIT 1) as primera_imagen,
           (SELECT COUNT(*) FROM item_imagenes WHERE item_id = i.id) as total_imagenes,
@@ -273,7 +275,17 @@ class AppealsController {
         INNER JOIN items i ON a.item_id = i.id
         INNER JOIN usuarios u_apelante ON a.usuario_apelante_id = u_apelante.id
         INNER JOIN usuarios u_vendedor ON i.vendedor_id = u_vendedor.id
-        LEFT JOIN usuarios u_moderador_original ON i.moderador_revision_id = u_moderador_original.id
+        LEFT JOIN LATERAL (
+          SELECT am.moderador_id 
+          FROM acciones_moderacion am 
+          WHERE am.registro_id = i.id 
+            AND am.tabla_afectada = 'items'
+            AND am.accion IN ('moderar_producto_rechazar', 'moderar_producto_suspender', 'moderar_producto_marcar_peligroso')
+            AND am.fecha_accion < COALESCE(a.fecha_apelacion, NOW())
+          ORDER BY am.fecha_accion DESC 
+          LIMIT 1
+        ) am_original ON true
+        LEFT JOIN usuarios u_moderador_original ON am_original.moderador_id = u_moderador_original.id
         LEFT JOIN categorias cat ON i.categoria_id = cat.id
         WHERE a.estado IN ('en_apelacion', 'pendiente')
         ORDER BY a.fecha_apelacion ASC`
@@ -316,7 +328,16 @@ class AppealsController {
           'producto_pendiente_apelacion' as tipo_registro
         FROM items i
         INNER JOIN usuarios u_vendedor ON i.vendedor_id = u_vendedor.id
-        LEFT JOIN usuarios u_moderador_original ON i.moderador_revision_id = u_moderador_original.id
+        LEFT JOIN LATERAL (
+          SELECT am.moderador_id 
+          FROM acciones_moderacion am 
+          WHERE am.registro_id = i.id 
+            AND am.tabla_afectada = 'items'
+            AND am.accion IN ('moderar_producto_rechazar', 'moderar_producto_suspender', 'moderar_producto_marcar_peligroso')
+          ORDER BY am.fecha_accion DESC 
+          LIMIT 1
+        ) am_original ON true
+        LEFT JOIN usuarios u_moderador_original ON am_original.moderador_id = u_moderador_original.id
         LEFT JOIN categorias cat ON i.categoria_id = cat.id
         WHERE (i.estado = 'rechazado' OR i.estado = 'suspendido')
         AND i.es_peligroso = FALSE
@@ -397,14 +418,28 @@ class AppealsController {
 
       // ✅ VALIDACIÓN CRÍTICA: Verificar que el moderador que revisa NO sea el mismo que rechazó/suspendió el producto
       // Obtener información del producto para ver quién lo rechazó/suspendió originalmente
+      // IMPORTANTE: Buscar en acciones_moderacion para encontrar al moderador original que rechazó/suspendió
+      // antes de que se creara la apelación, ya que moderador_revision_id puede haber sido actualizado
       const productoResult = await query(
-        'SELECT moderador_revision_id FROM items WHERE id = $1',
-        [apelacion.item_id]
+        `SELECT 
+          i.moderador_revision_id,
+          (SELECT am.moderador_id 
+           FROM acciones_moderacion am 
+           WHERE am.registro_id = i.id 
+             AND am.tabla_afectada = 'items'
+             AND am.accion IN ('moderar_producto_rechazar', 'moderar_producto_suspender', 'moderar_producto_marcar_peligroso')
+             AND (am.fecha_accion < COALESCE((SELECT fecha_apelacion FROM apelaciones WHERE id = $2), NOW()))
+           ORDER BY am.fecha_accion DESC 
+           LIMIT 1) as moderador_original_id
+        FROM items i 
+        WHERE i.id = $1`,
+        [apelacion.item_id, appeal_id]
       );
 
       if (productoResult.rows.length > 0) {
         const producto = productoResult.rows[0];
-        const moderador_original_id = producto.moderador_revision_id;
+        // Usar moderador_original_id de acciones_moderacion si existe, sino usar moderador_revision_id
+        const moderador_original_id = producto.moderador_original_id || producto.moderador_revision_id;
 
         // Si hay un moderador que rechazó/suspendió originalmente, verificar que NO sea el mismo
         if (moderador_original_id && moderador_original_id === moderador_revisor_id) {
@@ -432,31 +467,33 @@ class AppealsController {
       );
 
       // Actualizar el estado del producto
+      // IMPORTANTE: NO actualizar moderador_revision_id porque ese campo debe mantener
+      // al moderador original que rechazó/suspendió el producto, no al que resuelve la apelación
       // Si se aprueba, también activar la disponibilidad
       const disponibilidad = decision === 'aprobar' ? true : null;
       
       if (decision === 'aprobar') {
         // Al aprobar: cambiar estado, limpiar errores, y activar disponibilidad
+        // NO actualizar moderador_revision_id para mantener al moderador original
         await query(
           `UPDATE items 
           SET estado = $1, 
-              moderador_revision_id = $2, 
               fecha_revision = CURRENT_TIMESTAMP,
               motivo_rechazo = NULL,
               es_peligroso = FALSE,
               disponibilidad = TRUE
-          WHERE id = $3`,
-          [nuevoEstadoProducto, moderador_revisor_id, apelacion.item_id]
+          WHERE id = $2`,
+          [nuevoEstadoProducto, apelacion.item_id]
         );
       } else {
         // Al rechazar: solo cambiar estado
+        // NO actualizar moderador_revision_id para mantener al moderador original
         await query(
           `UPDATE items 
           SET estado = $1, 
-              moderador_revision_id = $2, 
               fecha_revision = CURRENT_TIMESTAMP
-          WHERE id = $3`,
-          [nuevoEstadoProducto, moderador_revisor_id, apelacion.item_id]
+          WHERE id = $2`,
+          [nuevoEstadoProducto, apelacion.item_id]
         );
       }
 
@@ -575,7 +612,16 @@ class AppealsController {
         INNER JOIN usuarios u_apelante ON a.usuario_apelante_id = u_apelante.id
         INNER JOIN usuarios u_vendedor ON i.vendedor_id = u_vendedor.id
         LEFT JOIN usuarios u_revisor ON a.moderador_revisor_id = u_revisor.id
-        LEFT JOIN usuarios u_moderador_original ON i.moderador_revision_id = u_moderador_original.id
+        LEFT JOIN LATERAL (
+          SELECT am.moderador_id 
+          FROM acciones_moderacion am 
+          WHERE am.registro_id = i.id 
+            AND am.tabla_afectada = 'items'
+            AND am.accion IN ('moderar_producto_rechazar', 'moderar_producto_suspender', 'moderar_producto_marcar_peligroso')
+          ORDER BY am.fecha_accion DESC 
+          LIMIT 1
+        ) am_original ON true
+        LEFT JOIN usuarios u_moderador_original ON am_original.moderador_id = u_moderador_original.id
         LEFT JOIN categorias cat ON i.categoria_id = cat.id
         WHERE 1=1
       `;
