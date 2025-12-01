@@ -528,7 +528,7 @@ export const ProductsPage: React.FC = () => {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 -mt-8 relative z-10">
         {/* Filtros */}
-        <Card className="mb-12 shadow-2xl border-0 bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden">
+        <Card className="mb-12 shadow-2xl border-0 bg-white/90 backdrop-blur-sm rounded-2xl overflow-visible">
           <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6">
             <CardTitle className="flex items-center space-x-3 text-gray-800">
               <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
@@ -540,7 +540,7 @@ export const ProductsPage: React.FC = () => {
               </div>
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-8">
+          <CardContent className="p-8 overflow-visible">
             <div className="space-y-6">
               {/* Filtros principales - siempre visibles */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -568,16 +568,16 @@ export const ProductsPage: React.FC = () => {
               </div>
 
               {/* Filtros adicionales */}
-              <div className="border-t border-gray-100 pt-6 space-y-6">
+              <div className="border-t border-gray-100 pt-6 space-y-6" style={{ overflow: 'visible' }}>
                 {/* Primera fila - Categoría y Precios */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6" style={{ overflow: 'visible' }}>
                   {/* Categoría - Contenedor mejorado */}
-                  <div className="space-y-2 relative z-50">
+                  <div className="space-y-2 relative" style={{ zIndex: 50, overflow: 'visible', position: 'relative' }}>
                     <label className="text-sm font-medium text-gray-700 flex items-center">
                       <Search className="h-4 w-4 mr-2 text-blue-500" />
                       Categoría
                     </label>
-                    <div className="relative">
+                    <div className="relative w-full" style={{ overflow: 'visible', position: 'relative' }}>
                       <HierarchicalCategorySearch
                         categories={categories}
                         selectedCategoryId={filters.categoria_id}

@@ -34,6 +34,7 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
   const [categoryMode, setCategoryMode] = useState<'general' | 'subcategoria'>('subcategoria'); // Modo por defecto: subcategoría
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Obtener la categoría seleccionada
   const selectedCategory = categories.find(cat => cat.id.toString() === selectedCategoryId);
@@ -338,10 +339,10 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
   }, [categoryMode, isOpen]);
 
   return (
-    <div className="relative w-full z-50">
+    <div ref={containerRef} className="relative w-full" style={{ zIndex: isOpen ? 9999 : 50 }}>
       {/* Input de búsqueda */}
       <div className="relative w-full">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
           <Search className="h-4 w-4 text-gray-400" />
         </div>
         <input
@@ -365,7 +366,7 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
               : 'border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 shadow-sm hover:shadow-md'
           } ${loading ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'}`}
         />
-        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none z-10">
           <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </div>
       </div>
@@ -375,7 +376,15 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
         <div
           ref={dropdownRef}
           className="absolute z-[9999] w-full mt-1 bg-white border-2 border-gray-300 rounded-xl shadow-2xl max-h-96 overflow-auto"
-          style={{ minWidth: '100%' }}
+          style={{ 
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            width: '100%',
+            minWidth: '100%',
+            maxWidth: '100%',
+            transform: 'translateZ(0)' // Forzar aceleración por hardware
+          }}
         >
           {/* Selector de modo: Categoría General vs Subcategoría - SIEMPRE VISIBLE */}
           <div className="sticky top-0 bg-gradient-to-r from-blue-100 to-indigo-100 border-b-2 border-blue-500 px-4 py-4 z-10 shadow-lg">
