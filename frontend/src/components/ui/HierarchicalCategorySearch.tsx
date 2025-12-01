@@ -373,21 +373,21 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
 
       {/* Dropdown de resultados */}
       {isOpen && (
-        <div
-          ref={dropdownRef}
-          className="absolute z-[9999] w-full mt-1 bg-white border-2 border-gray-300 rounded-xl shadow-2xl max-h-96 overflow-auto"
-          style={{ 
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            width: '100%',
-            minWidth: '100%',
-            maxWidth: '100%',
-            transform: 'translateZ(0)' // Forzar aceleración por hardware
-          }}
-        >
-          {/* Selector de modo: Categoría General vs Subcategoría - SIEMPRE VISIBLE */}
-          <div className="sticky top-0 bg-gradient-to-r from-blue-100 to-indigo-100 border-b-2 border-blue-500 px-4 py-4 z-10 shadow-lg">
+          <div
+            ref={dropdownRef}
+            className="absolute z-[9999] w-full mt-1 bg-white border-2 border-gray-300 rounded-xl shadow-2xl max-h-[450px] overflow-y-auto overflow-x-hidden"
+            style={{ 
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              width: '100%',
+              minWidth: '100%',
+              maxWidth: '100%',
+              transform: 'translateZ(0)' // Forzar aceleración por hardware
+            }}
+          >
+          {/* Selector de modo: Categoría General vs Subcategoría - Scroll normal sin sticky */}
+          <div className="bg-gradient-to-r from-blue-100 to-indigo-100 border-b-2 border-blue-500 px-4 py-3 z-10">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-bold text-gray-900">Seleccionar tipo de categoría:</span>
             </div>
