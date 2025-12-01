@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../ui/Button';
 import { LogoutConfirmModal } from '../ui/LogoutConfirmModal';
+import { MobileMenu } from './MobileMenu';
 import { LogOut, User, Shield, AlertTriangle, Flag, FileText } from 'lucide-react';
 import { apiService } from '../../services/api';
 
@@ -10,6 +11,7 @@ export const Navbar: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [dangerousProductsCount, setDangerousProductsCount] = useState(0);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Cargar conteo de productos peligrosos si es vendedor
   useEffect(() => {
@@ -65,12 +67,19 @@ export const Navbar: React.FC = () => {
                 Sistema de Ventas
               </Link>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
               <Link to="/login">
-                <Button variant="outline">Iniciar Sesión</Button>
+                <Button 
+                  variant="outline" 
+                  className="border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 font-medium"
+                >
+                  Iniciar Sesión
+                </Button>
               </Link>
               <Link to="/register">
-                <Button>Registrarse</Button>
+                <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md hover:shadow-lg transition-all duration-300 font-medium">
+                  Registrarse
+                </Button>
               </Link>
             </div>
           </div>
@@ -84,6 +93,12 @@ export const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center h-16 gap-8">
           <div className="flex items-center space-x-8 flex-1">
+            {/* Menú móvil - Botón hamburguesa a la izquierda */}
+            <MobileMenu 
+              isOpen={isMobileMenuOpen}
+              onClose={() => setIsMobileMenuOpen(false)}
+              onToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            />
             <Link to="/dashboard" className="text-xl font-bold text-gray-900 whitespace-nowrap">
               Sistema de Ventas
             </Link>
@@ -125,12 +140,6 @@ export const Navbar: React.FC = () => {
                   </span>
                 </Link>
               )}
-              <Link
-                to="/chat"
-                className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 hover:scale-105 hover:shadow-sm"
-              >
-                Chat
-              </Link>
               {user.tipo_usuario === 'moderador' && (
                 <>
                   <div className="h-6 w-px bg-gray-300 mx-2"></div>

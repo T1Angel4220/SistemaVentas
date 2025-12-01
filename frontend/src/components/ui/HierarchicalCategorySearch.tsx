@@ -31,23 +31,79 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [categoryMode, setCategoryMode] = useState<'general' | 'subcategoria'>('subcategoria'); // Modo por defecto: subcategoría
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Obtener la categoría seleccionada
   const selectedCategory = categories.find(cat => cat.id.toString() === selectedCategoryId);
+  
+  // Detectar automáticamente el modo basado en la categoría seleccionada
+  useEffect(() => {
+    if (selectedCategory) {
+      // Si la categoría seleccionada es nivel 0, es general; si es nivel 1, es subcategoría
+      setCategoryMode(selectedCategory.nivel === 0 ? 'general' : 'subcategoria');
+    }
+  }, [selectedCategory]);
 
   // Organizar categorías en estructura jerárquica
   const organizeCategories = (categories: Category[]) => {
+    if (!categories || categories.length === 0) {
+      return [];
+    }
+
     const parents = categories.filter(cat => cat.nivel === 0).sort((a, b) => a.orden - b.orden);
     const children = categories.filter(cat => cat.nivel === 1);
     
-    return parents.map(parent => ({
-      ...parent,
-      subcategorias: children
+    const organized = parents.map(parent => {
+      const subcategorias = children
         .filter(child => child.categoria_padre_id === parent.id)
-        .sort((a, b) => a.orden - b.orden)
-    }));
+        .sort((a, b) => a.orden - b.orden);
+      
+      return {
+        ...parent,
+        subcategorias
+      };
+    });
+
+    // Filtrar duplicados: agrupar por nombre y mantener solo las que tienen subcategorías
+    // Si ninguna tiene subcategorías, mantener solo una (la de menor orden)
+    const categoriesByName = new Map<string, typeof organized>();
+    
+    // Agrupar todas las categorías por nombre
+    organized.forEach(cat => {
+      if (!categoriesByName.has(cat.nombre)) {
+        categoriesByName.set(cat.nombre, []);
+      }
+      categoriesByName.get(cat.nombre)!.push(cat);
+    });
+    
+    // Procesar cada grupo de duplicados
+    const finalFiltered: typeof organized = [];
+    
+    categoriesByName.forEach((duplicates) => {
+      if (duplicates.length === 1) {
+        // No hay duplicados - mantener todas las categorías (incluso sin subcategorías)
+        finalFiltered.push(duplicates[0]);
+      } else {
+        // Hay duplicados - filtrar correctamente
+        const withSubs = duplicates.filter(c => c.subcategorias && c.subcategorias.length > 0);
+        
+        if (withSubs.length > 0) {
+          // Hay categorías con subcategorías - mantener SOLO estas
+          finalFiltered.push(...withSubs);
+        } else {
+          // Ninguna tiene subcategorías - mantener solo una (la de menor orden)
+          const sorted = duplicates.sort((a, b) => a.orden - b.orden);
+          finalFiltered.push(sorted[0]);
+        }
+      }
+    });
+    
+    // Ordenar por orden final
+    finalFiltered.sort((a, b) => a.orden - b.orden);
+    
+    return finalFiltered;
   };
 
   // Obtener ruta completa de una categoría
@@ -106,20 +162,37 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
 
   // Crear lista plana para navegación con teclado
   const flatCategories = React.useMemo(() => {
-    const flat: Array<{ category: Category; isParent: boolean; indent: number }> = [];
+    const flat: Array<{ category: Category; isParent: boolean; hasChildren: boolean; indent: number }> = [];
     
+    // Si el modo es "general", solo mostrar categorías padre (nivel 0)
+    if (categoryMode === 'general') {
+      filteredCategories.forEach(parent => {
+        flat.push({ category: parent, isParent: true, hasChildren: false, indent: 0 });
+      });
+      return flat;
+    }
+    
+    // Modo "subcategoría": comportamiento normal con jerarquía
     filteredCategories.forEach(parent => {
-      flat.push({ category: parent, isParent: true, indent: 0 });
+      const hasSubcategories = parent.subcategorias && parent.subcategorias.length > 0;
+      const isExpanded = expandedCategories.has(parent.id);
       
-      if (expandedCategories.has(parent.id) || searchTerm) {
+      // Las subcategorías SOLO se muestran si la categoría padre está expandida
+      // O si hay búsqueda activa (para mostrar resultados de búsqueda)
+      const shouldShowSubcategories = isExpanded || (searchTerm && searchTerm.trim() !== '');
+      
+      flat.push({ category: parent, isParent: true, hasChildren: hasSubcategories, indent: 0 });
+      
+      // Mostrar subcategorías SOLO si la categoría padre está expandida y tiene subcategorías
+      if (shouldShowSubcategories && hasSubcategories) {
         parent.subcategorias.forEach(child => {
-          flat.push({ category: child, isParent: false, indent: 1 });
+          flat.push({ category: child, isParent: false, hasChildren: false, indent: 1 });
         });
       }
     });
     
     return flat;
-  }, [filteredCategories, expandedCategories, searchTerm]);
+  }, [filteredCategories, expandedCategories, searchTerm, categoryMode]);
 
   // Manejar selección de categoría
   const handleCategorySelect = (category: Category) => {
@@ -170,17 +243,13 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
       case 'Enter':
         e.preventDefault();
         if (highlightedIndex >= 0 && flatCategories[highlightedIndex]) {
-          const { category, isParent } = flatCategories[highlightedIndex];
-          if (isParent) {
-            toggleExpansion(category.id);
-          } else {
-            handleCategorySelect(category);
-          }
+          const { category } = flatCategories[highlightedIndex];
+          handleCategorySelect(category);
         }
         break;
       case 'ArrowRight':
         e.preventDefault();
-        if (highlightedIndex >= 0 && flatCategories[highlightedIndex]?.isParent) {
+        if (highlightedIndex >= 0 && flatCategories[highlightedIndex]?.isParent && flatCategories[highlightedIndex]?.hasChildren) {
           const category = flatCategories[highlightedIndex].category;
           setExpandedCategories(prev => new Set(prev).add(category.id));
         }
@@ -221,6 +290,34 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Auto-expandir todas las categorías padre con subcategorías cuando se abre el dropdown (solo en modo subcategoría)
+  useEffect(() => {
+    if (isOpen && !searchTerm && filteredCategories.length > 0 && categoryMode === 'subcategoria') {
+      // Expandir automáticamente TODAS las categorías padre que tienen subcategorías
+      const parentIdsWithSubcategories = filteredCategories
+        .filter(cat => {
+          const hasSubs = cat.subcategorias && cat.subcategorias.length > 0;
+          return hasSubs;
+        })
+        .map(cat => cat.id);
+      
+      // Si hay una categoría seleccionada, también expandir su categoría padre
+      if (selectedCategory && selectedCategory.nivel === 1 && selectedCategory.categoria_padre_id) {
+        const parentId = selectedCategory.categoria_padre_id;
+        if (!parentIdsWithSubcategories.includes(parentId)) {
+          parentIdsWithSubcategories.push(parentId);
+        }
+      }
+      
+      if (parentIdsWithSubcategories.length > 0) {
+        setExpandedCategories(new Set(parentIdsWithSubcategories));
+      }
+    } else if (categoryMode === 'general') {
+      // En modo general, no expandir nada
+      setExpandedCategories(new Set());
+    }
+  }, [isOpen, searchTerm, filteredCategories, selectedCategory, categoryMode]);
 
   // Auto-expandir categorías cuando hay búsqueda
   useEffect(() => {
@@ -274,6 +371,66 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
           ref={dropdownRef}
           className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-80 overflow-auto"
         >
+          {/* Selector de modo: Categoría General vs Subcategoría - SIEMPRE VISIBLE */}
+          <div className="sticky top-0 bg-gradient-to-r from-blue-100 to-indigo-100 border-b-2 border-blue-500 px-4 py-4 z-10 shadow-lg">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-bold text-gray-900">Seleccionar tipo de categoría:</span>
+            </div>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setCategoryMode('general');
+                  setSearchTerm('');
+                  setExpandedCategories(new Set());
+                  // Si la categoría seleccionada es una subcategoría (nivel 1), limpiar la selección
+                  if (selectedCategory && selectedCategory.nivel === 1) {
+                    onCategorySelect('', '', '');
+                  }
+                }}
+                className={`flex-1 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
+                  categoryMode === 'general'
+                    ? 'bg-blue-600 text-white shadow-lg scale-105'
+                    : 'bg-white text-gray-700 border-2 border-gray-300 hover:bg-gray-50 hover:border-blue-400'
+                }`}
+                title="Seleccionar solo categorías principales (sin subcategorías)"
+              >
+                📦 Categoría General
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setCategoryMode('subcategoria');
+                  setSearchTerm('');
+                  // No necesitamos limpiar la selección al cambiar a subcategoría
+                  // porque las categorías generales también son válidas en este modo
+                }}
+                className={`flex-1 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
+                  categoryMode === 'subcategoria'
+                    ? 'bg-blue-600 text-white shadow-lg scale-105'
+                    : 'bg-white text-gray-700 border-2 border-gray-300 hover:bg-gray-50 hover:border-blue-400'
+                }`}
+                title="Seleccionar subcategorías específicas (con jerarquía)"
+              >
+                🔽 Subcategoría
+              </button>
+            </div>
+            {categoryMode === 'general' && (
+              <p className="text-xs text-gray-700 mt-3 font-medium">
+                ℹ️ Solo categorías principales (ej: "Electrónicos", "Hogar y Jardín")
+              </p>
+            )}
+            {categoryMode === 'subcategoria' && (
+              <p className="text-xs text-gray-700 mt-3 font-medium">
+                ℹ️ Categorías principales o subcategorías específicas (ej: &quot;Electrónicos &gt; Computadoras&quot;)
+              </p>
+            )}
+          </div>
+          
           {loading ? (
             <div className="px-4 py-3 text-sm text-gray-500 text-center">
               Cargando categorías...
@@ -285,7 +442,7 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
           ) : (
             <div className="py-1">
               {flatCategories.map((item, index) => {
-                const { category, isParent, indent } = item;
+                const { category, isParent, hasChildren, indent } = item;
                 const isHighlighted = index === highlightedIndex;
                 const isSelected = selectedCategoryId === category.id.toString();
                 const isExpanded = expandedCategories.has(category.id);
@@ -298,36 +455,62 @@ const HierarchicalCategorySearch: React.FC<HierarchicalCategorySearchProps> = ({
                     } ${isHighlighted ? 'bg-blue-50' : ''}`}
                     style={{ paddingLeft: `${indent * 16 + 16}px` }}
                   >
+                    {/* Botón de expandir/colapsar - SOLO para expandir, NO para seleccionar - Solo en modo subcategoría */}
+                    {categoryMode === 'subcategoria' && isParent && hasChildren && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          toggleExpansion(category.id);
+                        }}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                        }}
+                        className="p-1.5 text-gray-500 hover:text-gray-700 focus:outline-none flex-shrink-0 mr-1 z-10 relative"
+                        aria-label={isExpanded ? 'Colapsar categoría' : 'Expandir categoría'}
+                        title={isExpanded ? 'Colapsar categoría' : 'Expandir categoría'}
+                      >
+                        {isExpanded ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                      </button>
+                    )}
+                    {categoryMode === 'subcategoria' && isParent && !hasChildren && (
+                      <div className="p-1.5 text-gray-400 flex-shrink-0 mr-1">
+                        <FolderOpen className="h-4 w-4" />
+                      </div>
+                    )}
+                    {categoryMode === 'general' && isParent && (
+                      <div className="p-1.5 text-blue-500 flex-shrink-0 mr-1">
+                        <FolderOpen className="h-4 w-4" />
+                      </div>
+                    )}
+                    {/* Botón de selección - ÁREA PRINCIPAL CLICKEABLE - Funciona para TODAS las categorías (padre e hijas) */}
                     <button
                       type="button"
-                      onClick={() => {
-                        if (isParent) {
-                          toggleExpansion(category.id);
-                        } else {
-                          handleCategorySelect(category);
-                        }
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        handleCategorySelect(category);
                       }}
-                      className={`w-full px-4 py-2 text-left text-sm hover:bg-blue-50 focus:bg-blue-50 focus:outline-none flex items-center justify-between ${
-                        isSelected ? 'bg-blue-100' : ''
+                      onMouseDown={(e) => {
+                        // Permitir que el evento se propague para asegurar que se seleccione
+                        // pero prevenir el comportamiento por defecto
+                        e.preventDefault();
+                      }}
+                      className={`flex-1 px-4 py-2 text-left text-sm hover:bg-blue-50 focus:bg-blue-50 focus:outline-none flex items-center justify-between rounded transition-colors cursor-pointer ${
+                        isSelected ? 'bg-blue-100 font-semibold' : ''
                       }`}
+                      title={`Seleccionar ${category.nombre}`}
                     >
-                      <div className="flex items-center space-x-2">
-                        {isParent && (
-                          <div className="flex items-center">
-                            {isExpanded ? (
-                              <ChevronDown className="h-3 w-3 text-gray-400" />
-                            ) : (
-                              <ChevronRight className="h-3 w-3 text-gray-400" />
-                            )}
-                            <FolderOpen className="h-4 w-4 text-blue-500 ml-1" />
-                          </div>
-                        )}
-                        <span className={isSelected ? 'text-blue-900' : 'text-gray-900'}>
-                          {category.nombre}
-                        </span>
-                      </div>
+                      <span className={isSelected ? 'text-blue-900' : 'text-gray-900'}>
+                        {category.nombre}
+                      </span>
                       {isSelected && (
-                        <Check className="h-4 w-4 text-blue-600" />
+                        <Check className="h-4 w-4 text-blue-600 flex-shrink-0" />
                       )}
                     </button>
                   </div>

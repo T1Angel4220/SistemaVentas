@@ -211,6 +211,9 @@ const productos = [
     descripcion: 'Servicio profesional de limpieza profunda para hogares y oficinas. Incluye limpieza de ventanas, pisos, baños, cocina, muebles. Personal capacitado, productos de alta calidad. Disponible de lunes a sábado.',
     precio: 85.00,
     tipo: 'servicio',
+    horario_atencion: '08:00 - 18:00',
+    dias_disponibles: 'Lunes,Martes,Miércoles,Jueves,Viernes,Sábado',
+    duracion_estimada: '2-4 horas',
     imagenes: [
       'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800',
       'https://images.unsplash.com/photo-1628177142898-93e36e4e3a50?w=800',
@@ -223,6 +226,9 @@ const productos = [
     descripcion: 'Servicio de plomería de emergencia disponible 24/7. Reparación de fugas, instalación de tuberías, destape de cañerías, mantenimiento preventivo. Plomeros certificados con experiencia.',
     precio: 45.00,
     tipo: 'servicio',
+    horario_atencion: '24 horas',
+    dias_disponibles: 'Lunes,Martes,Miércoles,Jueves,Viernes,Sábado,Domingo',
+    duracion_estimada: '1-3 horas',
     imagenes: [
       'https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=800',
       'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=800',
@@ -235,6 +241,9 @@ const productos = [
     descripcion: 'Clases particulares de matemáticas para estudiantes de secundaria y preparatoria. Profesor con maestría en educación matemática. Sesiones personalizadas de 1 hora. Modalidad presencial u online.',
     precio: 25.00,
     tipo: 'servicio',
+    horario_atencion: '14:00 - 20:00',
+    dias_disponibles: 'Lunes,Martes,Miércoles,Jueves,Viernes,Sábado',
+    duracion_estimada: '1 hora',
     imagenes: [
       'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=800',
       'https://images.unsplash.com/photo-1596496181848-3091d4878b24?w=800',
@@ -368,6 +377,29 @@ async function insertProducts() {
       console.log(`   Precio: $${producto.precio}`);
       
       productosInsertados++;
+      
+      // Si es un servicio, insertar detalles del servicio
+      if (producto.tipo === 'servicio') {
+        if (producto.horario_atencion && producto.dias_disponibles && producto.duracion_estimada) {
+          await client.query(
+            `INSERT INTO servicios (
+              item_id, horario_atencion, dias_disponibles, duracion_estimada
+            ) VALUES ($1, $2, $3, $4)`,
+            [
+              itemId,
+              producto.horario_atencion,
+              producto.dias_disponibles,
+              producto.duracion_estimada
+            ]
+          );
+          console.log(`   🔧 Detalles del servicio insertados:`);
+          console.log(`      Horario: ${producto.horario_atencion}`);
+          console.log(`      Días: ${producto.dias_disponibles}`);
+          console.log(`      Duración: ${producto.duracion_estimada}`);
+        } else {
+          console.log(`   ⚠️  Servicio sin detalles completos (horario, días o duración faltantes)`);
+        }
+      }
       
       // Insertar imágenes
       for (let i = 0; i < producto.imagenes.length; i++) {

@@ -26,6 +26,7 @@ router.delete('/:id/unsave', authenticate, ProductsController.unsaveProduct);   
 router.get('/:id/saved-status', authenticate, ProductsController.getSavedStatus);            // GET /api/products/:id/saved-status - Verificar si está guardado
 
 router.get('/:id', ProductsController.getProductById);             // GET /api/products/:id - Obtener producto específico
+router.post('/:id/contact', authenticate, ProductsController.contactVendor);  // POST /api/products/:id/contact - Contactar vendedor
 
 // Rutas protegidas con permisos específicos por rol
 router.post('/', authenticate, requireProductCreate, upload.array('images', 5), handleMulterError, validateProductCreate, ProductsController.createProduct);   // POST /api/products - Crear producto (vendedores, moderadores, administradores)

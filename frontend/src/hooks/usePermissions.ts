@@ -66,11 +66,11 @@ export const usePermissions = () => {
         return {
           canView: true,
           canCreate: true,
-          canUpdate: true,
-          canDelete: true,
-          canModerate: true,
-          canUpdateOwn: true,
-          canDeleteOwn: true,
+          canUpdate: false, // Los administradores NO pueden editar productos de vendedores
+          canDelete: false, // Los administradores NO pueden eliminar productos de vendedores
+          canModerate: true, // Solo pueden moderar (aprobar/rechazar/suspender)
+          canUpdateOwn: true, // Solo pueden editar sus propios productos
+          canDeleteOwn: true, // Solo pueden eliminar sus propios productos
         };
 
       default:
@@ -108,10 +108,10 @@ export const usePermissions = () => {
 
     const permissions = getProductPermissions();
 
-    // Moderadores y administradores pueden modificar cualquier producto
-    if (permissions.canUpdate) return true;
+    // Solo moderadores pueden modificar cualquier producto
+    if (permissions.canUpdate && user.tipo_usuario === 'moderador') return true;
 
-    // Vendedores solo pueden modificar sus propios productos
+    // Vendedores y administradores solo pueden modificar sus propios productos
     if (permissions.canUpdateOwn && productOwnerId === user.id) return true;
 
     return false;
@@ -122,10 +122,10 @@ export const usePermissions = () => {
 
     const permissions = getProductPermissions();
 
-    // Moderadores y administradores pueden eliminar cualquier producto
-    if (permissions.canDelete) return true;
+    // Solo moderadores pueden eliminar cualquier producto
+    if (permissions.canDelete && user.tipo_usuario === 'moderador') return true;
 
-    // Vendedores solo pueden eliminar sus propios productos
+    // Vendedores y administradores solo pueden eliminar sus propios productos
     if (permissions.canDeleteOwn && productOwnerId === user.id) return true;
 
     return false;

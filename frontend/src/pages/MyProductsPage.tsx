@@ -23,7 +23,8 @@ import {
   MessageSquare,
   CheckCircle,
   ToggleRight,
-  Search
+  Search,
+  Clock
 } from 'lucide-react';
 import type { Product, ProductsResponse } from '../types/product.types';
 import { AppealProductDialog } from '../components/ui/AppealProductDialog';
@@ -708,6 +709,18 @@ export const MyProductsPage: React.FC = () => {
                       </Button>
                     )}
                     
+                    {/* Mostrar estado "En Apelación" para productos que ya fueron corregidos */}
+                    {product.estado === 'en_apelacion' && (
+                      <Button 
+                        disabled
+                        className="flex-1 min-w-[120px] h-10 sm:h-11 bg-gradient-to-r from-gray-400 to-gray-500 cursor-not-allowed opacity-60 border-0 shadow-lg rounded-xl text-xs sm:text-sm font-semibold"
+                        title="Este producto está en proceso de apelación. No puedes editarlo ni eliminarlo hasta que se resuelva la apelación."
+                      >
+                        <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                        <span>En Apelación</span>
+                      </Button>
+                    )}
+                    
                     {/* Botón para productos suspendidos - Abre modal de apelación formal */}
                     {product.estado === 'suspendido' && (
                       <Button 
@@ -719,7 +732,7 @@ export const MyProductsPage: React.FC = () => {
                       </Button>
                     )}
                     
-                    {product.estado !== 'rechazado' && !product.es_peligroso && product.estado !== 'pendiente_revision' && product.estado !== 'suspendido' && (
+                    {product.estado !== 'rechazado' && !product.es_peligroso && product.estado !== 'pendiente_revision' && product.estado !== 'suspendido' && product.estado !== 'en_apelacion' && (
                       <Button 
                         onClick={() => handleEditProduct(product.id)}
                         className="h-10 w-10 sm:h-11 sm:w-11 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl flex-shrink-0"
@@ -732,15 +745,16 @@ export const MyProductsPage: React.FC = () => {
                     {/* Botón de eliminar - Uniformado con estilo de ProductsPage */}
                     <Button
                       onClick={() => handleDeleteProduct(product.id, product.nombre, product.estado)}
-                      disabled={product.es_peligroso || product.estado === 'peligroso' || product.estado === 'pendiente_revision' || product.estado === 'suspendido'}
+                      disabled={product.es_peligroso || product.estado === 'peligroso' || product.estado === 'pendiente_revision' || product.estado === 'suspendido' || product.estado === 'en_apelacion'}
                       className={`h-10 w-10 sm:h-11 sm:w-11 border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl flex-shrink-0 ${
-                        product.es_peligroso || product.estado === 'peligroso' || product.estado === 'pendiente_revision' || product.estado === 'suspendido'
+                        product.es_peligroso || product.estado === 'peligroso' || product.estado === 'pendiente_revision' || product.estado === 'suspendido' || product.estado === 'en_apelacion'
                           ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-50'
                           : 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white'
                       }`}
                       title={
                         product.estado === 'pendiente_revision' ? 'No puedes eliminar un producto en revisión' :
                         product.estado === 'suspendido' ? 'No puedes eliminar un producto suspendido' :
+                        product.estado === 'en_apelacion' ? 'No puedes eliminar un producto en apelación. Espera a que se resuelva la apelación.' :
                         'Eliminar producto'
                       }
                     >

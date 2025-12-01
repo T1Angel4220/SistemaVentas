@@ -2,7 +2,7 @@ const { query } = require('../config/database');
 const { config } = require('../config/config');
 const { detectarContenidoInadecuado, obtenerMensajeRechazo } = require('../services/contentDetection');
 const { filtrarPorProximidad } = require('../utils/geoLocation');
-const { sendAccountBlockedByDangerousProductsEmail } = require('../services/email');
+const { sendAccountBlockedByDangerousProductsEmail, sendBuyerContactEmail } = require('../services/email');
 
 // Función helper para construir URLs completas de imágenes
 // NOTA: SIEMPRE usar 'localhost' para que el navegador pueda acceder (nunca 0.0.0.0)
@@ -381,6 +381,7 @@ class ProductsController {
           u.nombre || ' ' || u.apellido as vendedor_nombre,
           ub.nombre as ubicacion_nombre,
           COUNT(ii.id) as total_imagenes,
+          (SELECT COUNT(*) FROM apelaciones WHERE item_id = i.id AND estado IN ('en_apelacion', 'pendiente')) > 0 as tiene_apelacion_pendiente,
           (SELECT ii2.url_imagen FROM item_imagenes ii2 WHERE ii2.item_id = i.id ORDER BY ii2.orden LIMIT 1) as primera_imagen
         FROM items i
         JOIN categorias c ON i.categoria_id = c.id
@@ -539,7 +540,7 @@ class ProductsController {
           ? imagen.url_imagen 
           : buildImageUrl(imagen.url_imagen.replace('/uploads/', '').replace('/uploads/products/', ''));
         return {
-          ...imagen,
+        ...imagen,
           url_imagen: normalizeImageUrl(url)
         };
       });
@@ -634,7 +635,7 @@ class ProductsController {
           ? imagen.url_imagen 
           : buildImageUrl(imagen.url_imagen.replace('/uploads/', '').replace('/uploads/products/', ''));
         return {
-          ...imagen,
+        ...imagen,
           url_imagen: normalizeImageUrl(url)
         };
       });
@@ -723,8 +724,9 @@ class ProductsController {
 
       const producto = productoExistente.rows[0];
 
-      // Verificar permisos (solo el vendedor propietario o admin)
-      if (req.user.id !== producto.vendedor_id && req.user.tipo_usuario !== 'administrador') {
+      // Verificar permisos (solo el vendedor propietario o moderador)
+      // Los administradores NO pueden editar productos de vendedores, solo moderar
+      if (req.user.id !== producto.vendedor_id && req.user.tipo_usuario !== 'moderador') {
         return res.status(403).json({
           success: false,
           message: 'No tienes permisos para editar este producto'
@@ -791,7 +793,7 @@ class ProductsController {
 
       // Guardar si el producto estaba rechazado antes de cualquier cambio
       const productoEstabaRechazado = producto.estado === 'rechazado';
-      
+
       if (deteccion.esInadecuado) {
         if (deteccion.nivelRiesgo === 'alto') {
           // Si es alto riesgo, siempre marcarlo como peligroso (sobrescribe cualquier estado)
@@ -804,8 +806,8 @@ class ProductsController {
           // 1. NO sobrescribir si el producto estaba rechazado y se corrigió (mantener en_apelacion)
           // 2. Solo cambiar a pendiente_revision si el producto estaba activo
           if (producto.estado === 'activo' && !productoEstabaRechazado) {
-            nuevoEstado = 'pendiente_revision';
-            motivoRechazo = obtenerMensajeRechazo(deteccion.categoria, deteccion.palabrasDetectadas);
+          nuevoEstado = 'pendiente_revision';
+          motivoRechazo = obtenerMensajeRechazo(deteccion.categoria, deteccion.palabrasDetectadas);
           }
           // Si el producto estaba rechazado y se corrigió, mantener en_apelacion (no cambiar)
           // El motivo de rechazo ya existe del rechazo anterior
@@ -936,7 +938,7 @@ class ProductsController {
               );
               
               console.log('📁 URLs de imágenes a eliminar:', imagesToDelete.rows);
-              
+
               // Eliminar de la base de datos
               await query(
                 'DELETE FROM item_imagenes WHERE id = ANY($1)',
@@ -981,7 +983,7 @@ class ProductsController {
           if (!urlImagen.startsWith('/uploads')) {
             urlImagen = `/uploads/${file.filename}`;
           }
-          
+
           await query(
             `INSERT INTO item_imagenes (item_id, url_imagen, orden, es_principal)
              VALUES ($1, $2, $3, $4)`,
@@ -1100,8 +1102,9 @@ class ProductsController {
 
       const producto = productoExistente.rows[0];
 
-      // Verificar permisos (solo el vendedor propietario o admin)
-      if (req.user.id !== producto.vendedor_id && req.user.tipo_usuario !== 'administrador') {
+      // Verificar permisos (solo el vendedor propietario o moderador)
+      // Los administradores NO pueden eliminar productos de vendedores, solo moderar
+      if (req.user.id !== producto.vendedor_id && req.user.tipo_usuario !== 'moderador') {
         return res.status(403).json({
           success: false,
           message: 'No tienes permisos para eliminar este producto'
@@ -1124,15 +1127,85 @@ class ProductsController {
         });
       }
 
-      // Verificar que no esté suspendido (solo admins pueden eliminar productos suspendidos)
-      if (producto.estado === 'suspendido' && req.user.tipo_usuario !== 'administrador') {
-        return res.status(400).json({
-          success: false,
-          message: 'No se puede eliminar un producto que ha sido suspendido. Contacta con los moderadores para más información.'
-        });
+      // Los productos suspendidos o en apelación (que NO son peligrosos) SÍ pueden ser eliminados por el vendedor
+      // Si el producto tiene apelaciones, se deben eliminar todas antes de eliminar el producto
+      // Primero, cancelar las apelaciones activas (si las hay)
+      const apelacionesActivas = await query(
+        'SELECT id FROM apelaciones WHERE item_id = $1 AND estado IN ($2, $3)',
+        [id, 'en_apelacion', 'pendiente']
+      );
+
+      if (apelacionesActivas.rows.length > 0) {
+        // Cancelar todas las apelaciones activas
+        await query(
+          `UPDATE apelaciones 
+           SET estado = 'rechazado', 
+               fecha_resolucion_apelacion = CURRENT_TIMESTAMP,
+               decision_apelacion = 'Apelación cancelada: El producto fue eliminado por el vendedor'
+           WHERE item_id = $1 AND estado IN ($2, $3)`,
+          [id, 'en_apelacion', 'pendiente']
+        );
+        console.log(`📝 ${apelacionesActivas.rows.length} apelación(es) cancelada(s) al eliminar el producto`);
       }
 
-      // Eliminar producto (CASCADE eliminará imágenes y servicios relacionados)
+      // Eliminar TODAS las apelaciones relacionadas con el producto (activas, resueltas, rechazadas, etc.)
+      // Esto es necesario para evitar violaciones de clave foránea
+      const todasLasApelaciones = await query(
+        'SELECT COUNT(*) as total FROM apelaciones WHERE item_id = $1',
+        [id]
+      );
+
+      if (parseInt(todasLasApelaciones.rows[0].total) > 0) {
+        await query(
+          'DELETE FROM apelaciones WHERE item_id = $1',
+          [id]
+        );
+        console.log(`🗑️ ${todasLasApelaciones.rows[0].total} apelación(es) eliminada(s) al eliminar el producto`);
+      }
+
+      // Eliminar reportes relacionados con el producto (para evitar violaciones de clave foránea)
+      const reportesRelacionados = await query(
+        'SELECT COUNT(*) as total FROM reportes WHERE item_id = $1',
+        [id]
+      );
+
+      if (parseInt(reportesRelacionados.rows[0].total) > 0) {
+        await query(
+          'DELETE FROM reportes WHERE item_id = $1',
+          [id]
+        );
+        console.log(`🗑️ ${reportesRelacionados.rows[0].total} reporte(s) eliminado(s) al eliminar el producto`);
+      }
+
+      // Eliminar chats relacionados con el producto (para evitar violaciones de clave foránea)
+      const chatsRelacionados = await query(
+        'SELECT COUNT(*) as total FROM chats WHERE item_id = $1',
+        [id]
+      );
+
+      if (parseInt(chatsRelacionados.rows[0].total) > 0) {
+        await query(
+          'DELETE FROM chats WHERE item_id = $1',
+          [id]
+        );
+        console.log(`🗑️ ${chatsRelacionados.rows[0].total} chat(s) eliminado(s) al eliminar el producto`);
+          }
+
+      // Eliminar valoraciones relacionadas con el producto (para evitar violaciones de clave foránea)
+      const valoracionesRelacionadas = await query(
+        'SELECT COUNT(*) as total FROM valoraciones WHERE item_id = $1',
+        [id]
+      );
+
+      if (parseInt(valoracionesRelacionadas.rows[0].total) > 0) {
+        await query(
+          'DELETE FROM valoraciones WHERE item_id = $1',
+          [id]
+        );
+        console.log(`🗑️ ${valoracionesRelacionadas.rows[0].total} valoración(es) eliminada(s) al eliminar el producto`);
+      }
+
+      // Finalmente, eliminar el producto
       await query('DELETE FROM items WHERE id = $1', [id]);
 
       res.json({
@@ -1288,7 +1361,7 @@ class ProductsController {
           : null;
 
         return {
-          ...producto,
+        ...producto,
           primera_imagen: primeraImagenNormalizada
         };
       });
@@ -1344,6 +1417,22 @@ class ProductsController {
       }
 
       const producto = productoExistente.rows[0];
+
+      // ✅ VALIDACIÓN CRÍTICA: Si el producto está rechazado o suspendido, solo se puede aprobar si tiene una apelación pendiente
+      if (accion === 'aprobar' && (producto.estado === 'rechazado' || producto.estado === 'suspendido')) {
+        // Verificar si tiene apelación pendiente
+        const apelacionPendiente = await query(
+          'SELECT id FROM apelaciones WHERE item_id = $1 AND estado IN ($2, $3)',
+          [id, 'en_apelacion', 'pendiente']
+        );
+
+        if (apelacionPendiente.rows.length === 0) {
+          return res.status(400).json({
+            success: false,
+            message: 'No se puede aprobar un producto rechazado o suspendido sin una apelación pendiente. Debes esperar a que el vendedor apelé la decisión antes de poder aprobarlo nuevamente.'
+          });
+        }
+      }
 
       // Determinar nuevo estado según la acción
       let nuevoEstado;
@@ -1443,7 +1532,22 @@ class ProductsController {
       let queryParams = [];
       let paramIndex = 1;
       
-      if (estado && estado.trim() !== '') {
+      // Por defecto, excluir productos rechazados/suspendidos que no tienen apelación pendiente
+      // Estos productos solo deberían aparecer en AppealsManagementPage
+      // Solo mostrar productos que:
+      // - Están pendientes de revisión (nuevos o editados)
+      // - Están activos (para poder moderarlos)
+      // - Están en apelación (para poder verlos)
+      // - Están marcados como peligrosos (para poder verlos)
+      // - O tienen apelación pendiente (aunque estén rechazados/suspendidos)
+      if (!estado || estado.trim() === '') {
+        // Si no hay filtro de estado, mostrar solo productos que pueden ser moderados
+        whereConditions.push(`(
+          i.estado IN ('pendiente_revision', 'activo', 'en_apelacion', 'peligroso') 
+          OR (i.estado IN ('rechazado', 'suspendido') 
+              AND EXISTS (SELECT 1 FROM apelaciones a WHERE a.item_id = i.id AND a.estado IN ('en_apelacion', 'pendiente')))
+        )`);
+      } else {
         whereConditions.push(`i.estado = $${paramIndex}`);
         queryParams.push(estado);
         paramIndex++;
@@ -1480,6 +1584,7 @@ class ProductsController {
           u.nombre || ' ' || u.apellido as vendedor_nombre,
           ub.nombre as ubicacion_nombre,
           COUNT(ii.id) as total_imagenes,
+          (SELECT COUNT(*) FROM apelaciones WHERE item_id = i.id AND estado IN ('en_apelacion', 'pendiente')) > 0 as tiene_apelacion_pendiente,
           (SELECT ii2.url_imagen FROM item_imagenes ii2 WHERE ii2.item_id = i.id ORDER BY ii2.orden LIMIT 1) as primera_imagen
         FROM items i
         JOIN categorias c ON i.categoria_id = c.id
@@ -1502,7 +1607,14 @@ class ProductsController {
       let countParams = [];
       let countParamIndex = 1;
       
-      if (estado && estado.trim() !== '') {
+      // Aplicar el mismo filtro por defecto para el conteo
+      if (!estado || estado.trim() === '') {
+        countWhereConditions.push(`(
+          i.estado IN ('pendiente_revision', 'activo', 'en_apelacion', 'peligroso') 
+          OR (i.estado IN ('rechazado', 'suspendido') 
+              AND EXISTS (SELECT 1 FROM apelaciones a WHERE a.item_id = i.id AND a.estado IN ('en_apelacion', 'pendiente')))
+        )`);
+      } else {
         countWhereConditions.push(`i.estado = $${countParamIndex}`);
         countParams.push(estado);
         countParamIndex++;
@@ -1553,7 +1665,7 @@ class ProductsController {
           : null;
 
         return {
-          ...producto,
+        ...producto,
           primera_imagen: primeraImagenNormalizada
         };
       });
@@ -1658,7 +1770,7 @@ class ProductsController {
           : null;
 
         return {
-          ...producto,
+        ...producto,
           primera_imagen: primeraImagenNormalizada
         };
       });
@@ -1866,7 +1978,7 @@ class ProductsController {
           : null;
 
         return {
-          ...producto,
+        ...producto,
           primera_imagen: primeraImagenNormalizada
         };
       });
@@ -2062,6 +2174,102 @@ class ProductsController {
         error: error.message,
         fecha_ejecucion: new Date().toISOString()
       };
+    }
+  }
+
+  /**
+   * Contactar vendedor sobre un producto
+   * POST /api/products/:id/contact
+   */
+  static async contactVendor(req, res) {
+    try {
+      const { id } = req.params;
+      const { nombre, telefono, email, mensaje } = req.body;
+
+      // Validaciones
+      if (!nombre || !telefono || !mensaje) {
+        return res.status(400).json({
+          success: false,
+          message: 'Nombre, teléfono y mensaje son requeridos'
+        });
+      }
+
+      // Obtener información del producto y vendedor
+      const productoResult = await query(
+        `SELECT 
+          i.id, 
+          i.nombre, 
+          i.precio, 
+          i.vendedor_id,
+          i.estado,
+          u.nombre as vendedor_nombre,
+          u.apellido as vendedor_apellido,
+          u.correo as vendedor_email
+        FROM items i
+        INNER JOIN usuarios u ON i.vendedor_id = u.id
+        WHERE i.id = $1`,
+        [id]
+      );
+
+      if (productoResult.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Producto no encontrado'
+        });
+      }
+
+      const producto = productoResult.rows[0];
+
+      // Validar que el usuario no sea el vendedor del producto
+      if (req.user && req.user.id === producto.vendedor_id) {
+        return res.status(403).json({
+          success: false,
+          message: 'No puedes contactar sobre tus propios productos'
+        });
+      }
+
+      // Validar que el producto esté activo
+      if (producto.estado !== 'activo') {
+        return res.status(400).json({
+          success: false,
+          message: 'Solo puedes contactar sobre productos activos'
+        });
+      }
+
+      // Enviar email al vendedor
+      try {
+        const nombreCompletoVendedor = `${producto.vendedor_nombre || ''} ${producto.vendedor_apellido || ''}`.trim() || producto.vendedor_email;
+        
+        await sendBuyerContactEmail(
+          producto.vendedor_email,
+          nombreCompletoVendedor,
+          nombre,
+          email || '',
+          telefono,
+          producto.nombre,
+          producto.precio,
+          mensaje
+        );
+
+        res.json({
+          success: true,
+          message: 'Mensaje enviado exitosamente al vendedor'
+        });
+      } catch (emailError) {
+        console.error('❌ Error al enviar email:', emailError);
+        // Aún así retornamos éxito para no exponer detalles del error al usuario
+        res.json({
+          success: true,
+          message: 'Mensaje enviado exitosamente al vendedor'
+        });
+      }
+
+    } catch (error) {
+      console.error('❌ Error al contactar vendedor:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error al enviar el mensaje'
+      });
     }
   }
 }

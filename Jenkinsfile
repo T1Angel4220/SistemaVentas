@@ -305,8 +305,6 @@ FRONTEND_PORT=${env.FRONTEND_PORT}
             }
             always {
                 echo 'Limpiando artefactos temporales...'
-                // Opcional: comentar la siguiente línea si quieres mantener los contenedores corriendo
-                // sh 'docker-compose down'
             }
         }
     }

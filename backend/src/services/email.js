@@ -1017,6 +1017,167 @@ const sendNewSessionEmail = async (to, name, ipAddress, userAgent) => {
   }
 };
 
+/**
+ * Envía un email al vendedor cuando un comprador está interesado en su producto
+ * @param {string} vendorEmail - Email del vendedor
+ * @param {string} vendorName - Nombre del vendedor
+ * @param {string} buyerName - Nombre del comprador
+ * @param {string} buyerEmail - Email del comprador
+ * @param {string} buyerPhone - Teléfono del comprador
+ * @param {string} productName - Nombre del producto
+ * @param {number} productPrice - Precio del producto
+ * @param {string} message - Mensaje del comprador
+ * @returns {Promise<boolean>} True si se envió correctamente
+ */
+const sendBuyerContactEmail = async (vendorEmail, vendorName, buyerName, buyerEmail, buyerPhone, productName, productPrice, message) => {
+  try {
+    const formatPrice = (price) => {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2
+      }).format(price);
+    };
+
+    const mailOptions = {
+      from: config.email.from,
+      to: vendorEmail,
+      subject: `Interés en tu producto: ${productName}`,
+      html: `
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Interés en tu Producto</title>
+        </head>
+        <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh;">
+          
+          <!-- Contenedor Principal -->
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0; padding: 40px 20px;">
+            <tr>
+              <td align="center">
+                
+                <!-- Tarjeta Principal -->
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%; background-color: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden;">
+                  
+                  <!-- Encabezado con Gradiente -->
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 50px 40px; text-align: center;">
+                      <div style="font-size: 72px; line-height: 1; margin-bottom: 20px; text-shadow: 0 4px 6px rgba(0,0,0,0.2);">
+                        📧
+                      </div>
+                      <h1 style="margin: 0; padding: 0; color: white; font-size: 32px; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.2); line-height: 1.2;">
+                        Interés en tu Producto
+                      </h1>
+                      <p style="margin: 15px 0 0 0; padding: 0; color: rgba(255,255,255,0.95); font-size: 16px; line-height: 1.4;">
+                        Un comprador está interesado en tu producto
+                      </p>
+                    </td>
+                  </tr>
+                  
+                  <!-- Contenido Principal -->
+                  <tr>
+                    <td style="padding: 40px;">
+                      
+                      <!-- Saludo -->
+                      <p style="margin: 0 0 20px 0; font-size: 18px; color: #2d3748; line-height: 1.6;">
+                        Hola <strong style="color: #667eea;">${vendorName}</strong>,
+                      </p>
+                      
+                      <!-- Mensaje Principal -->
+                      <p style="margin: 0 0 30px 0; font-size: 16px; color: #4a5568; line-height: 1.6;">
+                        Tienes un nuevo mensaje de un comprador interesado en tu producto:
+                      </p>
+                      
+                      <!-- Tarjeta de Producto -->
+                      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); border-radius: 12px; overflow: hidden; margin-bottom: 30px;">
+                        <tr>
+                          <td style="padding: 30px;">
+                            <h2 style="margin: 0 0 15px 0; font-size: 20px; color: #2d3748; font-weight: 600;">
+                              📦 ${productName}
+                            </h2>
+                            <p style="margin: 0; font-size: 24px; color: #667eea; font-weight: bold;">
+                              ${formatPrice(productPrice)}
+                            </p>
+                          </td>
+                        </tr>
+                      </table>
+                      
+                      <!-- Información del Comprador -->
+                      <h2 style="margin: 0 0 20px 0; font-size: 18px; color: #2d3748; font-weight: 600;">
+                        👤 Información del Comprador
+                      </h2>
+                      
+                      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #f7fafc; border-radius: 12px; margin-bottom: 30px;">
+                        <tr>
+                          <td style="padding: 20px;">
+                            <p style="margin: 0 0 10px 0; font-size: 15px; color: #4a5568;">
+                              <strong style="color: #2d3748;">Nombre:</strong> ${buyerName}
+                            </p>
+                            ${buyerEmail ? `<p style="margin: 0 0 10px 0; font-size: 15px; color: #4a5568;">
+                              <strong style="color: #2d3748;">Email:</strong> <a href="mailto:${buyerEmail}" style="color: #667eea; text-decoration: none;">${buyerEmail}</a>
+                            </p>` : ''}
+                            ${buyerPhone ? `<p style="margin: 0; font-size: 15px; color: #4a5568;">
+                              <strong style="color: #2d3748;">Teléfono:</strong> <a href="tel:${buyerPhone}" style="color: #667eea; text-decoration: none;">${buyerPhone}</a>
+                            </p>` : ''}
+                          </td>
+                        </tr>
+                      </table>
+                      
+                      <!-- Mensaje del Comprador -->
+                      <h2 style="margin: 0 0 15px 0; font-size: 18px; color: #2d3748; font-weight: 600;">
+                        💬 Mensaje
+                      </h2>
+                      
+                      <div style="background: #fff; border-left: 4px solid #667eea; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+                        <p style="margin: 0; font-size: 15px; color: #4a5568; line-height: 1.8; white-space: pre-wrap;">
+                          ${message}
+                        </p>
+                      </div>
+                      
+                      <!-- Información de Contacto -->
+                      <div style="background: #fef3c7; border: 2px solid #fbbf24; border-radius: 12px; padding: 20px; margin: 25px 0;">
+                        <p style="color: #92400e; font-size: 14px; margin: 0; line-height: 1.6;">
+                          <strong>💡 Tip:</strong> Puedes responder directamente al comprador usando su email o teléfono proporcionados arriba.
+                        </p>
+                      </div>
+                      
+                    </td>
+                  </tr>
+                  
+                  <!-- Footer -->
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); padding: 30px; text-align: center; border-top: 1px solid #e2e8f0;">
+                      <p style="color: #718096; font-size: 13px; margin: 0;">
+                        Este es un email automático del Sistema de Ventas.
+                      </p>
+                      <p style="color: #a0aec0; font-size: 12px; margin: 10px 0 0 0;">
+                        © 2024 Sistema de Ventas. Todos los derechos reservados.
+                      </p>
+                    </td>
+                  </tr>
+                  
+                </table>
+                
+              </td>
+            </tr>
+          </table>
+          
+        </body>
+        </html>
+      `
+    };
+    
+    const result = await transporter.sendMail(mailOptions);
+    console.log('✅ Email de contacto de comprador enviado a:', vendorEmail);
+    return true;
+  } catch (error) {
+    console.error('❌ Error al enviar email de contacto:', error.message);
+    throw error;
+  }
+};
+
 module.exports = {
   verifyEmailConnection,
   sendVerificationEmail,
@@ -1025,5 +1186,6 @@ module.exports = {
   sendAccountSuspendedEmail,
   sendAccountReactivatedEmail,
   sendAccountBlockedByDangerousProductsEmail,
-  sendNewSessionEmail
+  sendNewSessionEmail,
+  sendBuyerContactEmail
 };

@@ -31,6 +31,12 @@ interface Appeal {
   informacion_adicional?: string;
   estado: string;
   fecha_apelacion: string;
+  fecha_revision_apelacion?: string;
+  fecha_resolucion_apelacion?: string;
+  decision_apelacion?: string;
+  moderador_revisor_id?: number;
+  revisor_nombre?: string;
+  revisor_apellido?: string;
   producto_nombre: string;
   producto_codigo: string;
   producto_tipo: string;
@@ -39,8 +45,12 @@ interface Appeal {
   vendedor_apellido: string;
   vendedor_correo: string;
   motivo_rechazo_original?: string;
+  moderador_revision_id?: number; // ID del moderador que hizo la suspensión/rechazo original
+  moderador_original_nombre?: string; // Nombre del moderador original
+  moderador_original_apellido?: string; // Apellido del moderador original
   primera_imagen?: string;
   total_imagenes?: number;
+  tipo_registro?: string; // 'apelacion_existente' o 'producto_pendiente_apelacion'
 }
 
 export const AppealsManagementPage: React.FC = () => {
@@ -50,18 +60,24 @@ export const AppealsManagementPage: React.FC = () => {
   const { alert, showSuccess, showError, hideAlert } = useAlert();
   
   const [appeals, setAppeals] = useState<Appeal[]>([]);
+  const [allAppeals, setAllAppeals] = useState<Appeal[]>([]); // Todas las apelaciones para estadísticas
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [selectedAppeal, setSelectedAppeal] = useState<Appeal | null>(null);
   const [showResolveDialog, setShowResolveDialog] = useState(false);
   const [resolveAction, setResolveAction] = useState<'aprobar' | 'rechazar'>('aprobar');
   const [decisionApelacion, setDecisionApelacion] = useState('');
+  const [activeTab, setActiveTab] = useState<'pending' | 'history'>('pending');
 
-  const loadAppeals = useCallback(async () => {
+  const loadAppeals = useCallback(async (tab: 'pending' | 'history' = 'pending') => {
     try {
       setLoading(true);
       
-      const response = await fetch(`http://localhost:3001/api/appeals/pending`, {
+      const endpoint = tab === 'pending' 
+        ? 'http://localhost:3001/api/appeals/pending'
+        : 'http://localhost:3001/api/appeals/history';
+      
+      const response = await fetch(endpoint, {
         headers: {
           'Authorization': `Bearer ${apiService.getToken()}`
         }
@@ -70,7 +86,16 @@ export const AppealsManagementPage: React.FC = () => {
       const data = await response.json();
       
       if (data.success) {
-        setAppeals(data.data);
+        // Asegurar que no haya duplicados usando un Map con item_id como clave
+        // Para apelaciones existentes, usar id; para productos pendientes, usar item_id
+        const uniqueAppeals = new Map();
+        data.data.forEach((appeal: Appeal) => {
+          const key = appeal.id || `pending_${appeal.item_id}`;
+          if (!uniqueAppeals.has(key)) {
+            uniqueAppeals.set(key, appeal);
+          }
+        });
+        setAppeals(Array.from(uniqueAppeals.values()));
       } else {
         showError('Error', 'No se pudieron cargar las apelaciones');
       }
@@ -83,12 +108,39 @@ export const AppealsManagementPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Cargar todas las apelaciones para estadísticas
+  const loadAllAppealsForStats = useCallback(async () => {
+    try {
+      const response = await fetch('http://localhost:3001/api/appeals/history', {
+        headers: {
+          'Authorization': `Bearer ${apiService.getToken()}`
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Asegurar que no haya duplicados usando un Map con id como clave
+        const uniqueAppeals = new Map();
+        data.data.forEach((appeal: Appeal) => {
+          if (appeal.id && !uniqueAppeals.has(appeal.id)) {
+            uniqueAppeals.set(appeal.id, appeal);
+          }
+        });
+        setAllAppeals(Array.from(uniqueAppeals.values()));
+      }
+    } catch (error) {
+      console.error('Error al cargar todas las apelaciones para estadísticas:', error);
+    }
+  }, []);
+
   useEffect(() => {
     if (user && canModerateProduct()) {
-      loadAppeals();
+      loadAppeals(activeTab);
+      loadAllAppealsForStats(); // Cargar todas las apelaciones para estadísticas
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [activeTab, user]);
 
   const handleResolveAppeal = async () => {
     if (!selectedAppeal) return;
@@ -127,7 +179,8 @@ export const AppealsManagementPage: React.FC = () => {
             setShowResolveDialog(false);
             setSelectedAppeal(null);
             setDecisionApelacion('');
-            loadAppeals();
+            loadAppeals(activeTab);
+            loadAllAppealsForStats(); // Actualizar estadísticas
           }
         );
       } else {
@@ -148,24 +201,116 @@ export const AppealsManagementPage: React.FC = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    if (!dateString) return 'N/A';
+    
+    let dateStr = dateString.trim();
+    
+    // Si ya tiene información de zona horaria completa, usarla directamente
+    if (dateStr.includes('Z') || /[+-]\d{2}:\d{2}$/.test(dateStr)) {
+      return new Date(dateStr).toLocaleString('es-EC', {
+        timeZone: 'America/Guayaquil',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      });
+    }
+    
+    // PostgreSQL devuelve fechas sin zona horaria: '2025-11-29 19:56:58.84055'
+    // IMPORTANTE: Estas fechas están almacenadas en hora de Ecuador (UTC-5)
+    // El problema: JavaScript interpreta fechas sin zona horaria como hora local del navegador
+    // Solución: Agregar explícitamente el offset de Ecuador (-05:00) al crear el Date
+    
+    // Normalizar: reemplazar espacio por 'T' para formato ISO
+    if (!dateStr.includes('T')) {
+      dateStr = dateStr.replace(' ', 'T');
+    }
+    
+    // Eliminar microsegundos (mantener solo hasta segundos)
+    if (dateStr.includes('.')) {
+      const parts = dateStr.split('.');
+      dateStr = parts[0];
+    }
+    
+    // Extraer componentes de la fecha
+    const match = dateStr.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/);
+    if (!match) {
+      console.error('Formato de fecha no reconocido:', dateString);
+      return 'Fecha inválida';
+    }
+    
+    // Extraer componentes de la fecha (que ya están en hora de Ecuador)
+    const year = parseInt(match[1]);
+    const month = parseInt(match[2]) - 1; // JavaScript months are 0-indexed
+    const day = parseInt(match[3]);
+    const hour = parseInt(match[4]);
+    const minute = parseInt(match[5]);
+    const second = parseInt(match[6]);
+    
+    // IMPORTANTE: Los valores ya están en hora de Ecuador
+    // JavaScript necesita interpretarlos como hora local, no como UTC
+    // Solución: Crear el Date directamente con los valores como hora local
+    // Pero como estamos en el navegador del usuario, necesitamos ajustar
+    
+    // Crear string ISO con el offset de Ecuador explícitamente
+    // Esto le dice a JavaScript que interprete la hora como UTC-5 (Ecuador)
+    const isoString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}-05:00`;
+    
+    const date = new Date(isoString);
+    
+    // Verificar que la fecha es válida
+    if (isNaN(date.getTime())) {
+      console.error('Fecha inválida:', dateString, '->', isoString);
+      return 'Fecha inválida';
+    }
+    
+    // Formatear directamente mostrando los valores tal como están
+    // Los valores hora, minuto, segundo ya están en hora de Ecuador
+    // Solo necesitamos formatearlos correctamente
+    const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    const mes = meses[month];
+    
+    // Determinar AM/PM
+    let hora12 = hour;
+    let periodo = 'a. m.';
+    if (hour === 0) {
+      hora12 = 12;
+    } else if (hour === 12) {
+      periodo = 'p. m.';
+    } else if (hour > 12) {
+      hora12 = hour - 12;
+      periodo = 'p. m.';
+    }
+    
+    // Formatear con los valores directos (ya están en hora de Ecuador)
+    // Nota: Los valores hora, minuto, segundo vienen directamente de la BD en hora de Ecuador
+    return `${day} ${mes} ${year}, ${String(hora12).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')} ${periodo}`;
   };
 
   const getEstadoBadge = (estado: string) => {
     const colors: Record<string, string> = {
       'en_apelacion': 'bg-purple-100 text-purple-800 border-purple-300',
-      'aprobado': 'bg-green-100 text-green-800 border-green-300',
+      'pendiente': 'bg-yellow-100 text-yellow-800 border-yellow-300',
+      'resuelto': 'bg-green-100 text-green-800 border-green-300',
+      'aprobado': 'bg-green-100 text-green-800 border-green-300', // Compatibilidad
       'rechazado': 'bg-red-100 text-red-800 border-red-300'
     };
+    
+    // Mapear estados para mostrar texto más amigable
+    const estadoLabels: Record<string, string> = {
+      'en_apelacion': 'EN APELACIÓN',
+      'pendiente': 'PENDIENTE',
+      'resuelto': 'APROBADA',
+      'aprobado': 'APROBADA',
+      'rechazado': 'RECHAZADA'
+    };
+    
     return (
       <Badge className={`${colors[estado] || 'bg-gray-100 text-gray-800'} border`}>
-        {estado.replace('_', ' ').toUpperCase()}
+        {estadoLabels[estado] || estado.replace('_', ' ').toUpperCase()}
       </Badge>
     );
   };
@@ -216,6 +361,34 @@ export const AppealsManagementPage: React.FC = () => {
       </div>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 -mt-6 sm:-mt-8 relative z-10">
+        {/* Pestañas - Pendientes e Historial */}
+        <div className="mb-6 sm:mb-8">
+          <div className="flex space-x-2 border-b border-gray-200">
+            <button
+              onClick={() => setActiveTab('pending')}
+              className={`px-4 py-2 font-medium text-sm transition-colors ${
+                activeTab === 'pending'
+                  ? 'text-purple-600 border-b-2 border-purple-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Clock className="h-4 w-4 inline mr-2" />
+              Pendientes
+            </button>
+            <button
+              onClick={() => setActiveTab('history')}
+              className={`px-4 py-2 font-medium text-sm transition-colors ${
+                activeTab === 'history'
+                  ? 'text-purple-600 border-b-2 border-purple-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <FileText className="h-4 w-4 inline mr-2" />
+              Historial Completo
+            </button>
+          </div>
+        </div>
+
         {/* Estadísticas - Optimizado para móvil */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-lg hover:shadow-xl transition-all duration-300">
@@ -224,7 +397,7 @@ export const AppealsManagementPage: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-purple-700">Pendientes</p>
                   <p className="text-3xl font-bold text-purple-900 mt-1">
-                    {appeals.filter(a => a.estado === 'en_apelacion').length}
+                    {allAppeals.filter(a => a.estado === 'en_apelacion' || a.estado === 'pendiente').length}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center shadow-lg">
@@ -240,7 +413,7 @@ export const AppealsManagementPage: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-green-700">Aprobadas</p>
                   <p className="text-3xl font-bold text-green-900 mt-1">
-                    {appeals.filter(a => a.estado === 'aprobado').length}
+                    {allAppeals.filter(a => a.estado === 'resuelto' || a.estado === 'aprobado').length}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center shadow-lg">
@@ -256,7 +429,7 @@ export const AppealsManagementPage: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-red-700">Rechazadas</p>
                   <p className="text-3xl font-bold text-red-900 mt-1">
-                    {appeals.filter(a => a.estado === 'rechazado').length}
+                    {allAppeals.filter(a => a.estado === 'rechazado').length}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-red-500 rounded-xl flex items-center justify-center shadow-lg">
@@ -280,10 +453,12 @@ export const AppealsManagementPage: React.FC = () => {
                 <FileText className="h-12 w-12 text-purple-600" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                No hay apelaciones pendientes
+                {activeTab === 'pending' ? 'No hay apelaciones pendientes' : 'No hay historial de apelaciones'}
               </h3>
               <p className="text-gray-600 text-lg max-w-md mx-auto">
-                No se encontraron apelaciones que requieran revisión
+                {activeTab === 'pending' 
+                  ? 'No se encontraron apelaciones que requieran revisión'
+                  : 'Aún no se han procesado apelaciones en el sistema'}
               </p>
             </CardContent>
           </Card>
@@ -292,7 +467,7 @@ export const AppealsManagementPage: React.FC = () => {
             {appeals.map((appeal) => (
                <Card key={appeal.id} className="bg-white/95 backdrop-blur-sm shadow-lg hover:shadow-2xl transition-all duration-300 border-0 rounded-2xl overflow-hidden">
                  <CardContent className="p-4 sm:p-6">
-                   <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
+                   <div className={`grid grid-cols-1 ${activeTab === 'pending' ? 'xl:grid-cols-3' : 'xl:grid-cols-2'} gap-4 sm:gap-6`}>
                     {/* Columna 1: Info del Producto */}
                     <div className="space-y-4">
                       {/* Imagen del producto */}
@@ -343,6 +518,16 @@ export const AppealsManagementPage: React.FC = () => {
                         <div className="flex items-center space-x-2 text-sm">
                           <span className="text-gray-600 text-xs">{appeal.vendedor_correo}</span>
                         </div>
+                        {appeal.moderador_original_nombre && appeal.moderador_original_apellido && (
+                          <div className="flex items-center space-x-2 text-sm">
+                            <Shield className="h-4 w-4 text-gray-400" />
+                            <span className="text-gray-600">
+                              Moderador original: <span className="font-medium text-gray-900">
+                                {appeal.moderador_original_nombre} {appeal.moderador_original_apellido}
+                              </span>
+                            </span>
+                          </div>
+                        )}
                       </div>
 
                       {appeal.motivo_rechazo_original && (
@@ -365,70 +550,196 @@ export const AppealsManagementPage: React.FC = () => {
 
                      {/* Columna 2: Info de la Apelación - Optimizado para móvil */}
                      <div className="space-y-4 xl:border-l xl:border-gray-200 xl:pl-6 border-t border-gray-200 pt-4 xl:pt-0 xl:border-t-0">
-                      <div>
-                        <div className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                          <MessageSquare className="h-4 w-4 mr-2 text-purple-600" />
-                          Motivo de Apelación
-                        </div>
-                        <p className="text-sm text-gray-600 bg-purple-50 p-3 rounded-lg border border-purple-200">
-                          {appeal.motivo_apelacion}
-                        </p>
-                      </div>
-
-                      {appeal.informacion_adicional && (
-                        <div>
-                          <div className="text-sm font-semibold text-gray-700 mb-2">Información Adicional</div>
-                          <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
-                            {appeal.informacion_adicional}
+                      {appeal.tipo_registro === 'producto_pendiente_apelacion' ? (
+                        <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <Clock className="h-5 w-5 text-yellow-600" />
+                            <div className="text-sm font-semibold text-yellow-800">Esperando Apelación del Vendedor</div>
+                          </div>
+                          <p className="text-sm text-yellow-700">
+                            Este producto fue {appeal.producto_estado === 'rechazado' ? 'rechazado' : 'suspendido'} pero el vendedor aún no ha presentado una apelación. 
+                            Debes esperar a que el vendedor apelé la decisión antes de poder tomar acciones adicionales.
                           </p>
                         </div>
+                      ) : (
+                        <>
+                          <div>
+                            <div className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                              <MessageSquare className="h-4 w-4 mr-2 text-purple-600" />
+                              Motivo de Apelación
+                            </div>
+                            <p className="text-sm text-gray-600 bg-purple-50 p-3 rounded-lg border border-purple-200">
+                              {appeal.motivo_apelacion}
+                            </p>
+                          </div>
+
+                          {appeal.informacion_adicional && (
+                            <div>
+                              <div className="text-sm font-semibold text-gray-700 mb-2">Información Adicional</div>
+                              <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
+                                {appeal.informacion_adicional}
+                              </p>
+                            </div>
+                          )}
+                        </>
                       )}
 
                       <div className="space-y-2 text-sm">
-                        <div className="flex items-center space-x-2">
-                          <Clock className="h-4 w-4 text-gray-400" />
-                          <span className="text-gray-600">Apelado: {formatDate(appeal.fecha_apelacion)}</span>
-                        </div>
+                        {appeal.fecha_apelacion && (
+                          <div className="flex items-center space-x-2">
+                            <Clock className="h-4 w-4 text-gray-400" />
+                            <span className="text-gray-600">Apelado: {formatDate(appeal.fecha_apelacion)}</span>
+                          </div>
+                        )}
+                        {appeal.moderador_original_nombre && appeal.moderador_original_apellido && (
+                          <div className="flex items-center space-x-2">
+                            <Shield className="h-4 w-4 text-orange-500" />
+                            <span className="text-gray-600">
+                              Rechazado/Suspendido por: <span className="font-medium text-orange-700">{appeal.moderador_original_nombre} {appeal.moderador_original_apellido}</span>
+                            </span>
+                          </div>
+                        )}
+                        {appeal.fecha_resolucion_apelacion && (
+                          <div className="flex items-center space-x-2">
+                            <CheckCircle className="h-4 w-4 text-gray-400" />
+                            <span className="text-gray-600">Resuelto: {formatDate(appeal.fecha_resolucion_apelacion)}</span>
+                          </div>
+                        )}
+                        {appeal.revisor_nombre && (
+                          <div className="flex items-center space-x-2">
+                            <User className="h-4 w-4 text-green-500" />
+                            <span className="text-gray-600">
+                              Revisado por: <span className="font-medium text-green-700">{appeal.revisor_nombre} {appeal.revisor_apellido}</span>
+                            </span>
+                          </div>
+                        )}
+                        {appeal.decision_apelacion && (
+                          <div className="mt-3">
+                            <div className="text-sm font-semibold text-gray-700 mb-1">Decisión del Moderador:</div>
+                            <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                              {appeal.decision_apelacion}
+                            </p>
+                          </div>
+                        )}
                       </div>
 
-                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                        <p className="text-sm text-amber-800">
-                          💡 <strong>Recuerda:</strong> Revisa cuidadosamente la apelación del vendedor antes de tomar una decisión.
-                        </p>
-                      </div>
+                      {activeTab === 'pending' && (
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                          <p className="text-sm text-amber-800">
+                            💡 <strong>Recuerda:</strong> Revisa cuidadosamente la apelación del vendedor antes de tomar una decisión.
+                          </p>
+                        </div>
+                      )}
                     </div>
 
-                     {/* Columna 3: Acciones - Optimizado para móvil */}
+                     {/* Columna 3: Acciones - Solo para pendientes */}
+                     {activeTab === 'pending' && (
                      <div className="space-y-3 xl:border-l xl:border-gray-200 xl:pl-6 border-t border-gray-200 pt-4 xl:pt-0 xl:border-t-0">
                       <div className="text-sm font-semibold text-gray-700 mb-4">Acciones de Moderación</div>
                       
-                      <Button
-                        size="sm"
-                        onClick={() => openResolveDialog(appeal, 'aprobar')}
-                        disabled={actionLoading === appeal.id}
-                        className="w-full h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-medium shadow-lg"
-                      >
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        Aceptar Apelación
-                      </Button>
+                      {/* Si el producto aún no tiene apelación, deshabilitar acciones */}
+                      {appeal.tipo_registro === 'producto_pendiente_apelacion' ? (
+                        <div className="space-y-3">
+                          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
+                            <div className="flex items-start">
+                              <Clock className="h-5 w-5 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" />
+                              <div>
+                                <p className="text-sm font-semibold text-yellow-800 mb-1">
+                                  Esperando Apelación del Vendedor
+                                </p>
+                                <p className="text-xs text-yellow-700 leading-relaxed">
+                                  El vendedor aún no ha presentado una apelación para este producto. 
+                                  No puedes tomar acciones hasta que el vendedor apelé la decisión.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <Button
+                            size="sm"
+                            disabled={true}
+                            className="w-full h-10 bg-gray-300 text-gray-500 cursor-not-allowed rounded-xl font-medium shadow-lg opacity-60"
+                          >
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Aceptar Apelación
+                          </Button>
 
-                      <Button
-                        size="sm"
-                        onClick={() => openResolveDialog(appeal, 'rechazar')}
-                        disabled={actionLoading === appeal.id}
-                        className="w-full h-10 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl font-medium shadow-lg"
-                      >
-                        <XCircle className="h-4 w-4 mr-2" />
-                        Rechazar Apelación
-                      </Button>
+                          <Button
+                            size="sm"
+                            disabled={true}
+                            className="w-full h-10 bg-gray-300 text-gray-500 cursor-not-allowed rounded-xl font-medium shadow-lg opacity-60"
+                          >
+                            <XCircle className="h-4 w-4 mr-2" />
+                            Rechazar Apelación
+                          </Button>
+                        </div>
+                      ) : user && appeal.moderador_revision_id && user.id === appeal.moderador_revision_id ? (
+                        <div className="space-y-3">
+                          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
+                            <div className="flex items-start">
+                              <Shield className="h-5 w-5 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" />
+                              <div>
+                                <p className="text-sm font-semibold text-yellow-800 mb-1">
+                                  Modo Solo Lectura
+                                </p>
+                                <p className="text-xs text-yellow-700 leading-relaxed">
+                                  No puedes resolver esta apelación porque tú fuiste el moderador que rechazó o suspendió este producto originalmente. 
+                                  La apelación debe ser revisada por un moderador diferente para garantizar imparcialidad.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <Button
+                            size="sm"
+                            disabled={true}
+                            className="w-full h-10 bg-gray-300 text-gray-500 cursor-not-allowed rounded-xl font-medium shadow-lg opacity-60"
+                          >
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Aceptar Apelación
+                          </Button>
 
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
-                        <p className="text-xs text-blue-800">
-                          <strong>Aceptar:</strong> El producto será reactivado<br />
-                          <strong>Rechazar:</strong> El producto mantiene su estado actual
-                        </p>
-                      </div>
+                          <Button
+                            size="sm"
+                            disabled={true}
+                            className="w-full h-10 bg-gray-300 text-gray-500 cursor-not-allowed rounded-xl font-medium shadow-lg opacity-60"
+                          >
+                            <XCircle className="h-4 w-4 mr-2" />
+                            Rechazar Apelación
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <Button
+                            size="sm"
+                            onClick={() => openResolveDialog(appeal, 'aprobar')}
+                            disabled={actionLoading === appeal.id}
+                            className="w-full h-10 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-medium shadow-lg"
+                          >
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Aceptar Apelación
+                          </Button>
+
+                          <Button
+                            size="sm"
+                            onClick={() => openResolveDialog(appeal, 'rechazar')}
+                            disabled={actionLoading === appeal.id}
+                            className="w-full h-10 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl font-medium shadow-lg"
+                          >
+                            <XCircle className="h-4 w-4 mr-2" />
+                            Rechazar Apelación
+                          </Button>
+
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
+                            <p className="text-xs text-blue-800">
+                              <strong>Aceptar:</strong> El producto será reactivado<br />
+                              <strong>Rechazar:</strong> El producto mantiene su estado actual
+                            </p>
+                          </div>
+                        </>
+                      )}
                     </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -529,4 +840,3 @@ export const AppealsManagementPage: React.FC = () => {
     </div>
   );
 };
-
