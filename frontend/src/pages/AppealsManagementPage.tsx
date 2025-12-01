@@ -24,13 +24,13 @@ import {
 } from 'lucide-react';
 
 interface Appeal {
-  id?: number;
+  id: number;
   item_id: number;
   usuario_apelante_id: number;
-  motivo_apelacion?: string;
+  motivo_apelacion: string;
   informacion_adicional?: string;
   estado: string;
-  fecha_apelacion?: string;
+  fecha_apelacion: string;
   fecha_revision_apelacion?: string;
   fecha_resolucion_apelacion?: string;
   decision_apelacion?: string;
@@ -45,9 +45,9 @@ interface Appeal {
   vendedor_apellido: string;
   vendedor_correo: string;
   motivo_rechazo_original?: string;
-  moderador_revision_id?: number;
-  moderador_original_nombre?: string;
-  moderador_original_apellido?: string;
+  moderador_revision_id?: number; // ID del moderador que hizo la suspensión/rechazo original
+  moderador_original_nombre?: string; // Nombre del moderador original
+  moderador_original_apellido?: string; // Apellido del moderador original
   primera_imagen?: string;
   total_imagenes?: number;
   tipo_registro?: string; // 'apelacion_existente' o 'producto_pendiente_apelacion'
@@ -180,7 +180,7 @@ export const AppealsManagementPage: React.FC = () => {
             setSelectedAppeal(null);
             setDecisionApelacion('');
             loadAppeals(activeTab);
-            loadAllAppealsForStats();
+            loadAllAppealsForStats(); // Actualizar estadísticas
           }
         );
       } else {
@@ -202,42 +202,115 @@ export const AppealsManagementPage: React.FC = () => {
 
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
-    const [datePart, timePart] = dateString.split(' ');
-    const [year, month, day] = datePart.split('-');
-    const [hour, minute, second] = timePart.split('.')[0].split(':'); // Ignorar milisegundos para consistencia
-
-    const date = new Date(
-      parseInt(year),
-      parseInt(month) - 1, // Meses en JS son 0-indexados
-      parseInt(day),
-      parseInt(hour),
-      parseInt(minute),
-      parseInt(second)
-    );
-
-    // Formatear la fecha directamente sin conversiones de zona horaria
-    // Asumimos que los valores ya están en la hora de Ecuador
-    const options: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: true,
-    };
-    return date.toLocaleDateString('es-EC', options);
+    
+    let dateStr = dateString.trim();
+    
+    // Si ya tiene información de zona horaria completa, usarla directamente
+    if (dateStr.includes('Z') || /[+-]\d{2}:\d{2}$/.test(dateStr)) {
+      return new Date(dateStr).toLocaleString('es-EC', {
+        timeZone: 'America/Guayaquil',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      });
+    }
+    
+    // PostgreSQL devuelve fechas sin zona horaria: '2025-11-29 19:56:58.84055'
+    // IMPORTANTE: Estas fechas están almacenadas en hora de Ecuador (UTC-5)
+    // El problema: JavaScript interpreta fechas sin zona horaria como hora local del navegador
+    // Solución: Agregar explícitamente el offset de Ecuador (-05:00) al crear el Date
+    
+    // Normalizar: reemplazar espacio por 'T' para formato ISO
+    if (!dateStr.includes('T')) {
+      dateStr = dateStr.replace(' ', 'T');
+    }
+    
+    // Eliminar microsegundos (mantener solo hasta segundos)
+    if (dateStr.includes('.')) {
+      const parts = dateStr.split('.');
+      dateStr = parts[0];
+    }
+    
+    // Extraer componentes de la fecha
+    const match = dateStr.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/);
+    if (!match) {
+      console.error('Formato de fecha no reconocido:', dateString);
+      return 'Fecha inválida';
+    }
+    
+    // Extraer componentes de la fecha (que ya están en hora de Ecuador)
+    const year = parseInt(match[1]);
+    const month = parseInt(match[2]) - 1; // JavaScript months are 0-indexed
+    const day = parseInt(match[3]);
+    const hour = parseInt(match[4]);
+    const minute = parseInt(match[5]);
+    const second = parseInt(match[6]);
+    
+    // IMPORTANTE: Los valores ya están en hora de Ecuador
+    // JavaScript necesita interpretarlos como hora local, no como UTC
+    // Solución: Crear el Date directamente con los valores como hora local
+    // Pero como estamos en el navegador del usuario, necesitamos ajustar
+    
+    // Crear string ISO con el offset de Ecuador explícitamente
+    // Esto le dice a JavaScript que interprete la hora como UTC-5 (Ecuador)
+    const isoString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}-05:00`;
+    
+    const date = new Date(isoString);
+    
+    // Verificar que la fecha es válida
+    if (isNaN(date.getTime())) {
+      console.error('Fecha inválida:', dateString, '->', isoString);
+      return 'Fecha inválida';
+    }
+    
+    // Formatear directamente mostrando los valores tal como están
+    // Los valores hora, minuto, segundo ya están en hora de Ecuador
+    // Solo necesitamos formatearlos correctamente
+    const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    const mes = meses[month];
+    
+    // Determinar AM/PM
+    let hora12 = hour;
+    let periodo = 'a. m.';
+    if (hour === 0) {
+      hora12 = 12;
+    } else if (hour === 12) {
+      periodo = 'p. m.';
+    } else if (hour > 12) {
+      hora12 = hour - 12;
+      periodo = 'p. m.';
+    }
+    
+    // Formatear con los valores directos (ya están en hora de Ecuador)
+    // Nota: Los valores hora, minuto, segundo vienen directamente de la BD en hora de Ecuador
+    return `${day} ${mes} ${year}, ${String(hora12).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')} ${periodo}`;
   };
 
   const getEstadoBadge = (estado: string) => {
     const colors: Record<string, string> = {
       'en_apelacion': 'bg-purple-100 text-purple-800 border-purple-300',
-      'aprobado': 'bg-green-100 text-green-800 border-green-300',
+      'pendiente': 'bg-yellow-100 text-yellow-800 border-yellow-300',
+      'resuelto': 'bg-green-100 text-green-800 border-green-300',
+      'aprobado': 'bg-green-100 text-green-800 border-green-300', // Compatibilidad
       'rechazado': 'bg-red-100 text-red-800 border-red-300'
     };
+    
+    // Mapear estados para mostrar texto más amigable
+    const estadoLabels: Record<string, string> = {
+      'en_apelacion': 'EN APELACIÓN',
+      'pendiente': 'PENDIENTE',
+      'resuelto': 'APROBADA',
+      'aprobado': 'APROBADA',
+      'rechazado': 'RECHAZADA'
+    };
+    
     return (
       <Badge className={`${colors[estado] || 'bg-gray-100 text-gray-800'} border`}>
-        {estado.replace('_', ' ').toUpperCase()}
+        {estadoLabels[estado] || estado.replace('_', ' ').toUpperCase()}
       </Badge>
     );
   };
@@ -383,7 +456,9 @@ export const AppealsManagementPage: React.FC = () => {
                 {activeTab === 'pending' ? 'No hay apelaciones pendientes' : 'No hay historial de apelaciones'}
               </h3>
               <p className="text-gray-600 text-lg max-w-md mx-auto">
-                No se encontraron apelaciones que requieran revisión
+                {activeTab === 'pending' 
+                  ? 'No se encontraron apelaciones que requieran revisión'
+                  : 'Aún no se han procesado apelaciones en el sistema'}
               </p>
             </CardContent>
           </Card>
@@ -392,7 +467,7 @@ export const AppealsManagementPage: React.FC = () => {
             {appeals.map((appeal) => (
                <Card key={appeal.id} className="bg-white/95 backdrop-blur-sm shadow-lg hover:shadow-2xl transition-all duration-300 border-0 rounded-2xl overflow-hidden">
                  <CardContent className="p-4 sm:p-6">
-                   <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
+                   <div className={`grid grid-cols-1 ${activeTab === 'pending' ? 'xl:grid-cols-3' : 'xl:grid-cols-2'} gap-4 sm:gap-6`}>
                     {/* Columna 1: Info del Producto */}
                     <div className="space-y-4">
                       {/* Imagen del producto */}
@@ -443,6 +518,16 @@ export const AppealsManagementPage: React.FC = () => {
                         <div className="flex items-center space-x-2 text-sm">
                           <span className="text-gray-600 text-xs">{appeal.vendedor_correo}</span>
                         </div>
+                        {appeal.moderador_original_nombre && appeal.moderador_original_apellido && (
+                          <div className="flex items-center space-x-2 text-sm">
+                            <Shield className="h-4 w-4 text-gray-400" />
+                            <span className="text-gray-600">
+                              Moderador original: <span className="font-medium text-gray-900">
+                                {appeal.moderador_original_nombre} {appeal.moderador_original_apellido}
+                              </span>
+                            </span>
+                          </div>
+                        )}
                       </div>
 
                       {appeal.motivo_rechazo_original && (
@@ -478,33 +563,33 @@ export const AppealsManagementPage: React.FC = () => {
                         </div>
                       ) : (
                         <>
-                      <div>
-                        <div className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                          <MessageSquare className="h-4 w-4 mr-2 text-purple-600" />
-                          Motivo de Apelación
-                        </div>
-                        <p className="text-sm text-gray-600 bg-purple-50 p-3 rounded-lg border border-purple-200">
-                          {appeal.motivo_apelacion}
-                        </p>
-                      </div>
+                          <div>
+                            <div className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                              <MessageSquare className="h-4 w-4 mr-2 text-purple-600" />
+                              Motivo de Apelación
+                            </div>
+                            <p className="text-sm text-gray-600 bg-purple-50 p-3 rounded-lg border border-purple-200">
+                              {appeal.motivo_apelacion}
+                            </p>
+                          </div>
 
-                      {appeal.informacion_adicional && (
-                        <div>
-                          <div className="text-sm font-semibold text-gray-700 mb-2">Información Adicional</div>
-                          <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
-                            {appeal.informacion_adicional}
-                          </p>
-                        </div>
+                          {appeal.informacion_adicional && (
+                            <div>
+                              <div className="text-sm font-semibold text-gray-700 mb-2">Información Adicional</div>
+                              <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
+                                {appeal.informacion_adicional}
+                              </p>
+                            </div>
                           )}
                         </>
                       )}
 
                       <div className="space-y-2 text-sm">
                         {appeal.fecha_apelacion && (
-                        <div className="flex items-center space-x-2">
-                          <Clock className="h-4 w-4 text-gray-400" />
-                          <span className="text-gray-600">Apelado: {formatDate(appeal.fecha_apelacion)}</span>
-                        </div>
+                          <div className="flex items-center space-x-2">
+                            <Clock className="h-4 w-4 text-gray-400" />
+                            <span className="text-gray-600">Apelado: {formatDate(appeal.fecha_apelacion)}</span>
+                          </div>
                         )}
                         {appeal.moderador_original_nombre && appeal.moderador_original_apellido && (
                           <div className="flex items-center space-x-2">
@@ -514,118 +599,45 @@ export const AppealsManagementPage: React.FC = () => {
                             </span>
                           </div>
                         )}
+                        {appeal.fecha_resolucion_apelacion && (
+                          <div className="flex items-center space-x-2">
+                            <CheckCircle className="h-4 w-4 text-gray-400" />
+                            <span className="text-gray-600">Resuelto: {formatDate(appeal.fecha_resolucion_apelacion)}</span>
+                          </div>
+                        )}
+                        {appeal.revisor_nombre && (
+                          <div className="flex items-center space-x-2">
+                            <User className="h-4 w-4 text-green-500" />
+                            <span className="text-gray-600">
+                              Revisado por: <span className="font-medium text-green-700">{appeal.revisor_nombre} {appeal.revisor_apellido}</span>
+                            </span>
+                          </div>
+                        )}
+                        {appeal.decision_apelacion && (
+                          <div className="mt-3">
+                            <div className="text-sm font-semibold text-gray-700 mb-1">Decisión del Moderador:</div>
+                            <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                              {appeal.decision_apelacion}
+                            </p>
+                          </div>
+                        )}
                       </div>
 
-                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                        <p className="text-sm text-amber-800">
-                          💡 <strong>Recuerda:</strong> Revisa cuidadosamente la apelación del vendedor antes de tomar una decisión.
-                        </p>
-                      </div>
+                      {activeTab === 'pending' && (
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                          <p className="text-sm text-amber-800">
+                            💡 <strong>Recuerda:</strong> Revisa cuidadosamente la apelación del vendedor antes de tomar una decisión.
+                          </p>
+                        </div>
+                      )}
                     </div>
 
-                     {/* Columna 3: Acciones o Información de Resolución - Optimizado para móvil */}
+                     {/* Columna 3: Acciones - Solo para pendientes */}
+                     {activeTab === 'pending' && (
                      <div className="space-y-3 xl:border-l xl:border-gray-200 xl:pl-6 border-t border-gray-200 pt-4 xl:pt-0 xl:border-t-0">
-                      {/* Si la apelación ya está resuelta, mostrar solo información */}
-                      {appeal.estado === 'resuelto' || appeal.estado === 'rechazado' ? (
-                        <div className="space-y-4">
-                          <div className="text-sm font-semibold text-gray-700 mb-4">Información de Resolución</div>
-                          
-                          {/* Estado de la apelación */}
-                          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-4">
-                            <div className="flex items-center space-x-2 mb-2">
-                              {appeal.estado === 'resuelto' ? (
-                                <CheckCircle className="h-5 w-5 text-green-600" />
-                              ) : (
-                                <XCircle className="h-5 w-5 text-red-600" />
-                              )}
-                              <span className="text-sm font-semibold text-gray-900">
-                                Estado: {appeal.estado === 'resuelto' ? 'Aprobada' : 'Rechazada'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Información del apelante */}
-                          <div>
-                            <div className="text-xs font-semibold text-gray-600 mb-2 flex items-center">
-                              <User className="h-3 w-3 mr-1" />
-                              Apelación iniciada por:
-                            </div>
-                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                              <p className="text-sm font-medium text-gray-900">
-                                {appeal.vendedor_nombre} {appeal.vendedor_apellido}
-                              </p>
-                              <p className="text-xs text-gray-600 mt-1">{appeal.vendedor_correo}</p>
-                              {appeal.fecha_apelacion && (
-                                <p className="text-xs text-gray-500 mt-2">
-                                  Fecha: {formatDate(appeal.fecha_apelacion)}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Información del revisor */}
-                          {appeal.revisor_nombre && appeal.revisor_apellido && (
-                            <div>
-                              <div className="text-xs font-semibold text-gray-600 mb-2 flex items-center">
-                                <Shield className="h-3 w-3 mr-1" />
-                                Resuelta por:
-                              </div>
-                              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                                <p className="text-sm font-medium text-gray-900">
-                                  {appeal.revisor_nombre} {appeal.revisor_apellido}
-                                </p>
-                                {appeal.fecha_resolucion_apelacion && (
-                                  <p className="text-xs text-gray-600 mt-2">
-                                    Fecha de resolución: {formatDate(appeal.fecha_resolucion_apelacion)}
-                                  </p>
-                                )}
-                                {appeal.fecha_revision_apelacion && (
-                                  <p className="text-xs text-gray-500 mt-1">
-                                    Revisada: {formatDate(appeal.fecha_revision_apelacion)}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Decisión de la apelación */}
-                          {appeal.decision_apelacion && (
-                            <div>
-                              <div className="text-xs font-semibold text-gray-600 mb-2 flex items-center">
-                                <FileText className="h-3 w-3 mr-1" />
-                                {appeal.estado === 'resuelto' ? 'Razón de aprobación:' : 'Razón de rechazo:'}
-                              </div>
-                              <div className={`border-2 rounded-lg p-3 ${
-                                appeal.estado === 'resuelto' 
-                                  ? 'bg-green-50 border-green-200' 
-                                  : 'bg-red-50 border-red-200'
-                              }`}>
-                                <p className="text-sm text-gray-800 leading-relaxed">
-                                  {appeal.decision_apelacion}
-                                </p>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Información adicional del producto original */}
-                          {appeal.moderador_original_nombre && appeal.moderador_original_apellido && (
-                            <div>
-                              <div className="text-xs font-semibold text-gray-600 mb-2 flex items-center">
-                                <Shield className="h-3 w-3 mr-1 text-orange-500" />
-                                Rechazado/Suspendido originalmente por:
-                              </div>
-                              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-                                <p className="text-sm font-medium text-gray-900">
-                                  {appeal.moderador_original_nombre} {appeal.moderador_original_apellido}
-                                </p>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <>
                       <div className="text-sm font-semibold text-gray-700 mb-4">Acciones de Moderación</div>
                       
+                      {/* Si el producto aún no tiene apelación, deshabilitar acciones */}
                       {appeal.tipo_registro === 'producto_pendiente_apelacion' ? (
                         <div className="space-y-3">
                           <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
@@ -646,7 +658,7 @@ export const AppealsManagementPage: React.FC = () => {
                           <Button
                             size="sm"
                             disabled={true}
-                            className="w-full h-10 bg-gray-400 cursor-not-allowed opacity-50 text-white rounded-xl font-medium shadow-lg"
+                            className="w-full h-10 bg-gray-300 text-gray-500 cursor-not-allowed rounded-xl font-medium shadow-lg opacity-60"
                           >
                             <CheckCircle className="h-4 w-4 mr-2" />
                             Aceptar Apelación
@@ -655,22 +667,33 @@ export const AppealsManagementPage: React.FC = () => {
                           <Button
                             size="sm"
                             disabled={true}
-                            className="w-full h-10 bg-gray-400 cursor-not-allowed opacity-50 text-white rounded-xl font-medium shadow-lg"
+                            className="w-full h-10 bg-gray-300 text-gray-500 cursor-not-allowed rounded-xl font-medium shadow-lg opacity-60"
                           >
                             <XCircle className="h-4 w-4 mr-2" />
                             Rechazar Apelación
                           </Button>
                         </div>
-                      ) : (
-                        <>
-                      {/* Verificar si el moderador actual es quien rechazó/suspendió el producto */}
-                      {user && appeal.moderador_revision_id && user.id === appeal.moderador_revision_id ? (
-                        <div className="space-y-2">
+                      ) : user && appeal.moderador_revision_id && user.id === appeal.moderador_revision_id ? (
+                        <div className="space-y-3">
+                          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
+                            <div className="flex items-start">
+                              <Shield className="h-5 w-5 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" />
+                              <div>
+                                <p className="text-sm font-semibold text-yellow-800 mb-1">
+                                  Modo Solo Lectura
+                                </p>
+                                <p className="text-xs text-yellow-700 leading-relaxed">
+                                  No puedes resolver esta apelación porque tú fuiste el moderador que rechazó o suspendió este producto originalmente. 
+                                  La apelación debe ser revisada por un moderador diferente para garantizar imparcialidad.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          
                           <Button
                             size="sm"
                             disabled={true}
-                            className="w-full h-10 bg-gray-400 cursor-not-allowed opacity-50 text-white rounded-xl font-medium shadow-lg"
-                            title="No puedes revisar una apelación de un producto que tú mismo rechazaste o suspendiste. La apelación debe ser revisada por un moderador diferente."
+                            className="w-full h-10 bg-gray-300 text-gray-500 cursor-not-allowed rounded-xl font-medium shadow-lg opacity-60"
                           >
                             <CheckCircle className="h-4 w-4 mr-2" />
                             Aceptar Apelación
@@ -679,17 +702,11 @@ export const AppealsManagementPage: React.FC = () => {
                           <Button
                             size="sm"
                             disabled={true}
-                            className="w-full h-10 bg-gray-400 cursor-not-allowed opacity-50 text-white rounded-xl font-medium shadow-lg"
-                            title="No puedes revisar una apelación de un producto que tú mismo rechazaste o suspendiste. La apelación debe ser revisada por un moderador diferente."
+                            className="w-full h-10 bg-gray-300 text-gray-500 cursor-not-allowed rounded-xl font-medium shadow-lg opacity-60"
                           >
                             <XCircle className="h-4 w-4 mr-2" />
                             Rechazar Apelación
                           </Button>
-                          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-2">
-                            <p className="text-xs text-yellow-800">
-                              <strong>⚠️ Restricción:</strong> No puedes revisar esta apelación porque tú fuiste quien rechazó o suspendió este producto. Debe ser revisada por otro moderador.
-                            </p>
-                          </div>
                         </div>
                       ) : (
                         <>
@@ -712,20 +729,17 @@ export const AppealsManagementPage: React.FC = () => {
                             <XCircle className="h-4 w-4 mr-2" />
                             Rechazar Apelación
                           </Button>
-                        </>
-                      )}
-                        </>
-                      )}
 
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
-                        <p className="text-xs text-blue-800">
-                          <strong>Aceptar:</strong> El producto será reactivado<br />
-                          <strong>Rechazar:</strong> El producto mantiene su estado actual
-                        </p>
-                      </div>
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-4">
+                            <p className="text-xs text-blue-800">
+                              <strong>Aceptar:</strong> El producto será reactivado<br />
+                              <strong>Rechazar:</strong> El producto mantiene su estado actual
+                            </p>
+                          </div>
                         </>
                       )}
                     </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -826,4 +840,3 @@ export const AppealsManagementPage: React.FC = () => {
     </div>
   );
 };
-
