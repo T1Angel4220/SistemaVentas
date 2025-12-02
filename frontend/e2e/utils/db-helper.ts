@@ -26,11 +26,13 @@ const poolConfig: any = {
 };
 
 // Solo incluir password si está definida (evita errores de SCRAM)
+// Si no está definida en .env, usar la contraseña por defecto del sistema
 if (process.env.DB_PASSWORD !== undefined && process.env.DB_PASSWORD !== '') {
   poolConfig.password = process.env.DB_PASSWORD;
 } else {
-  // Advertencia si no hay contraseña configurada (puede fallar si la BD requiere contraseña)
-  console.warn('⚠️  DB_PASSWORD no está configurada. Si tu base de datos requiere contraseña, crea un archivo .env en el directorio frontend/ con las variables DB_HOST, DB_PORT, DB_NAME, DB_USER y DB_PASSWORD');
+  // Contraseña por defecto para pruebas E2E
+  poolConfig.password = '7dejunio';
+  console.warn('⚠️  DB_PASSWORD no está configurada en .env. Usando contraseña por defecto para E2E.');
 }
 
 const pool = new Pool(poolConfig);

@@ -1,0 +1,62 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - navigation [ref=e4]:
+    - generic [ref=e6]:
+      - link "Sistema de Ventas" [ref=e8] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e9]:
+        - link "Iniciar Sesión" [ref=e10] [cursor=pointer]:
+          - /url: /login
+          - button "Iniciar Sesión" [ref=e11]
+        - link "Registrarse" [ref=e12] [cursor=pointer]:
+          - /url: /register
+          - button "Registrarse" [ref=e13]
+  - main [ref=e14]:
+    - generic [ref=e16]:
+      - generic [ref=e17]:
+        - link "Volver al Login" [ref=e18] [cursor=pointer]:
+          - /url: /login
+          - img [ref=e19]
+          - text: Volver al Login
+        - img [ref=e22]
+        - heading "Recuperar Contraseña" [level=1] [ref=e24]
+        - paragraph [ref=e25]: Ingresa tu correo electrónico y te enviaremos un código para restablecer tu contraseña
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - img [ref=e28]
+          - heading "¡Email Enviado!" [level=2] [ref=e31]
+          - paragraph [ref=e32]: Revisa tu bandeja de entrada
+        - generic [ref=e33]:
+          - generic [ref=e34]:
+            - img [ref=e36]
+            - heading "¡Email Enviado Exitosamente!" [level=3] [ref=e39]
+            - paragraph [ref=e40]:
+              - text: Si el correo existe en nuestro sistema, recibirás un email con un
+              - strong [ref=e41]: código de 6 dígitos
+              - text: para restablecer tu contraseña.
+            - button "Ir a ingresar código de verificación" [ref=e43]:
+              - img [ref=e44]
+              - text: Ir a ingresar código de verificación
+          - generic [ref=e47]:
+            - heading "¿No recibiste el email?" [level=4] [ref=e48]
+            - list [ref=e49]:
+              - listitem [ref=e50]:
+                - generic [ref=e51]: •
+                - text: Revisa tu carpeta de spam o correo no deseado
+              - listitem [ref=e52]:
+                - generic [ref=e53]: •
+                - text: Verifica que el correo esté escrito correctamente
+              - listitem [ref=e54]:
+                - generic [ref=e55]: •
+                - text: Espera unos minutos, puede tardar en llegar
+              - listitem [ref=e56]:
+                - generic [ref=e57]: •
+                - text: El código expira en 10 minutos por seguridad
+          - generic [ref=e58]:
+            - button "Intentar con otro correo" [ref=e59]
+            - link "Volver al Login" [ref=e60] [cursor=pointer]:
+              - /url: /login
+              - button "Volver al Login" [ref=e61]
+```

@@ -1,0 +1,156 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - navigation [ref=e4]:
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - link "Sistema de Ventas" [ref=e8] [cursor=pointer]:
+          - /url: /dashboard
+        - generic [ref=e9]:
+          - link "Dashboard" [ref=e10] [cursor=pointer]:
+            - /url: /dashboard
+          - link "Chat" [ref=e11] [cursor=pointer]:
+            - /url: /chat
+          - link "Administración" [ref=e13] [cursor=pointer]:
+            - /url: /products/moderation
+            - img [ref=e14]
+            - text: Administración
+          - link "Reportes" [ref=e16] [cursor=pointer]:
+            - /url: /moderation/reports
+            - img [ref=e17]
+            - text: Reportes
+          - link "Apelaciones" [ref=e19] [cursor=pointer]:
+            - /url: /moderation/appeals
+            - img [ref=e20]
+            - text: Apelaciones
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - paragraph [ref=e25]: Test Admin
+          - paragraph [ref=e26]: Administrador
+        - link "Mi Perfil" [ref=e27] [cursor=pointer]:
+          - /url: /profile
+          - button [ref=e28]:
+            - img [ref=e29]
+          - generic: Mi Perfil
+        - button "Salir" [ref=e32]:
+          - img [ref=e33]
+          - generic [ref=e36]: Salir
+  - main [ref=e37]:
+    - generic [ref=e38]:
+      - generic [ref=e41]:
+        - generic [ref=e42]:
+          - generic [ref=e43]:
+            - img [ref=e45]
+            - heading "Gestión de Usuarios" [level=1] [ref=e50]
+          - paragraph [ref=e51]: Administra usuarios, roles y permisos del sistema
+        - button "Registrar Moderador" [ref=e52]:
+          - img [ref=e53]
+          - text: Registrar Moderador
+      - generic [ref=e56]:
+        - generic [ref=e57]:
+          - generic [ref=e59]:
+            - generic [ref=e60]:
+              - generic [ref=e61]:
+                - paragraph [ref=e62]: Total Usuarios
+                - paragraph [ref=e63]: "1"
+              - img [ref=e65]
+            - generic [ref=e70]:
+              - img [ref=e71]
+              - generic [ref=e74]: Sistema completo
+          - generic [ref=e76]:
+            - generic [ref=e77]:
+              - generic [ref=e78]:
+                - paragraph [ref=e79]: Activos
+                - paragraph [ref=e80]: "0"
+              - img [ref=e82]
+            - generic [ref=e85]:
+              - img [ref=e86]
+              - generic [ref=e88]: 0% del total
+          - generic [ref=e90]:
+            - generic [ref=e91]:
+              - generic [ref=e92]:
+                - paragraph [ref=e93]: Suspendidos
+                - paragraph [ref=e94]: "0"
+              - img [ref=e96]
+            - generic [ref=e98]:
+              - img [ref=e99]
+              - generic [ref=e103]: Requieren atención
+          - generic [ref=e105]:
+            - generic [ref=e106]:
+              - generic [ref=e107]:
+                - paragraph [ref=e108]: Pendientes
+                - paragraph [ref=e109]: "1"
+              - img [ref=e111]
+            - generic [ref=e114]:
+              - img [ref=e115]
+              - generic [ref=e127]: Verificación pendiente
+        - generic [ref=e128]:
+          - generic [ref=e129]:
+            - heading "Filtros de Búsqueda" [level=3] [ref=e130]:
+              - img [ref=e131]
+              - text: Filtros de Búsqueda
+            - paragraph [ref=e133]: Encuentra usuarios de forma rápida y precisa
+          - generic [ref=e134]:
+            - generic [ref=e135]:
+              - generic [ref=e136]:
+                - img [ref=e137]
+                - text: Buscar Usuario
+              - generic [ref=e140]:
+                - img [ref=e141]
+                - textbox "Nombre, email, cédula..." [active] [ref=e145]: suspension-test-1764645148805@test.com
+            - generic [ref=e146]:
+              - generic [ref=e147]:
+                - img [ref=e148]
+                - text: Rol
+              - combobox [ref=e150]:
+                - option "Todos los roles" [selected]
+                - option "Comprador"
+                - option "Vendedor"
+                - option "Moderador"
+                - option "Administrador"
+            - generic [ref=e151]:
+              - generic [ref=e152]:
+                - img [ref=e153]
+                - text: Estado
+              - combobox [ref=e155]:
+                - option "Todos los estados" [selected]
+                - option "Activo"
+                - option "Inactivo"
+                - option "Suspendido"
+                - option "Pendiente"
+        - generic [ref=e156]:
+          - generic [ref=e159]:
+            - heading "Lista de Usuarios" [level=3] [ref=e160]
+            - paragraph [ref=e161]: 1 usuario encontrado
+          - table [ref=e163]:
+            - rowgroup [ref=e164]:
+              - row "Usuario Rol Estado Último Acceso Acciones" [ref=e165]:
+                - cell "Usuario" [ref=e166]
+                - cell "Rol" [ref=e167]
+                - cell "Estado" [ref=e168]
+                - cell "Último Acceso" [ref=e169]
+                - cell "Acciones" [ref=e170]
+            - rowgroup [ref=e171]:
+              - 'row "US Usuario Suspension suspension-test-1764645148805@test.com Cédula: 3355671255 Comprador PENDIENTE VERIFICACION Nunca" [ref=e172]':
+                - 'cell "US Usuario Suspension suspension-test-1764645148805@test.com Cédula: 3355671255" [ref=e173]':
+                  - generic [ref=e174]:
+                    - generic [ref=e177]: US
+                    - generic [ref=e178]:
+                      - generic [ref=e179]: Usuario Suspension
+                      - generic [ref=e180]: suspension-test-1764645148805@test.com
+                      - generic [ref=e181]: "Cédula: 3355671255"
+                - cell "Comprador" [ref=e182]:
+                  - generic [ref=e183]: Comprador
+                - cell "PENDIENTE VERIFICACION" [ref=e184]:
+                  - generic [ref=e185]:
+                    - img [ref=e186]
+                    - generic [ref=e189]: PENDIENTE VERIFICACION
+                - cell "Nunca" [ref=e190]
+                - cell [ref=e191]:
+                  - generic [ref=e192]:
+                    - button "Ver detalles" [ref=e193]:
+                      - img [ref=e194]
+                    - button "Gestionar sesiones" [ref=e197]:
+                      - img [ref=e198]
+```

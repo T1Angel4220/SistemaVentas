@@ -1,0 +1,90 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - navigation [ref=e4]:
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - link "Sistema de Ventas" [ref=e8] [cursor=pointer]:
+          - /url: /dashboard
+        - generic [ref=e9]:
+          - link "Dashboard" [ref=e10] [cursor=pointer]:
+            - /url: /dashboard
+          - link "Chat" [ref=e11] [cursor=pointer]:
+            - /url: /chat
+          - link "Administración" [ref=e13] [cursor=pointer]:
+            - /url: /products/moderation
+            - img [ref=e14]
+            - text: Administración
+          - link "Reportes" [ref=e16] [cursor=pointer]:
+            - /url: /moderation/reports
+            - img [ref=e17]
+            - text: Reportes
+          - link "Apelaciones" [ref=e19] [cursor=pointer]:
+            - /url: /moderation/appeals
+            - img [ref=e20]
+            - text: Apelaciones
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - paragraph [ref=e25]: Test Admin
+          - paragraph [ref=e26]: Administrador
+        - link "Mi Perfil" [ref=e27] [cursor=pointer]:
+          - /url: /profile
+          - button [ref=e28]:
+            - img [ref=e29]
+          - generic: Mi Perfil
+        - button "Salir" [ref=e32]:
+          - img [ref=e33]
+          - generic [ref=e36]: Salir
+  - main [ref=e37]:
+    - generic [ref=e38]:
+      - generic [ref=e41]:
+        - generic [ref=e42]:
+          - button "Volver" [ref=e43]:
+            - img [ref=e44]
+            - generic [ref=e46]: Volver
+          - generic [ref=e47]:
+            - generic [ref=e48]:
+              - img [ref=e50]
+              - heading "Gestión de Sesiones" [level=1] [ref=e52]
+            - paragraph [ref=e53]: Carmen López
+        - generic [ref=e54]:
+          - img [ref=e55]
+          - generic [ref=e57]: Solo Moderadores/Admin
+      - generic [ref=e59]:
+        - generic [ref=e61]:
+          - generic [ref=e63]:
+            - generic [ref=e65]: CL
+            - generic [ref=e66]:
+              - heading "Carmen López" [level=3] [ref=e67]
+              - paragraph [ref=e68]: carmen.vendedor@sistemaventas.com
+          - generic [ref=e69]:
+            - generic [ref=e72]:
+              - generic [ref=e73]:
+                - generic [ref=e74]:
+                  - img [ref=e75]
+                  - generic [ref=e79]: Sesiones Activas
+                - text: "0"
+              - img [ref=e81]
+            - generic [ref=e86]:
+              - generic [ref=e87]:
+                - generic [ref=e88]:
+                  - img [ref=e89]
+                  - generic [ref=e96]: Sesiones Cerradas
+                - text: "0"
+              - img [ref=e98]
+        - generic [ref=e103]:
+          - generic [ref=e105]:
+            - generic [ref=e106]:
+              - heading "Sesiones del Usuario" [level=2] [ref=e107]:
+                - img [ref=e108]
+                - text: Sesiones del Usuario
+              - paragraph [ref=e110]: 0 sesiones registradas
+            - button "Actualizar" [ref=e111]:
+              - img [ref=e112]
+              - text: Actualizar
+          - generic [ref=e117]:
+            - img [ref=e119]
+            - paragraph [ref=e126]: No hay sesiones registradas
+            - paragraph [ref=e127]: El usuario no ha iniciado sesión en el sistema
+```
