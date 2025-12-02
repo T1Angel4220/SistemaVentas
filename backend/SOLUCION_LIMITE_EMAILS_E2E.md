@@ -97,3 +97,4 @@ Si necesitas probar el envío real de emails en algún momento:
 - Alertas de nueva sesión
 - Bloqueo por productos peligrosos
 
+
