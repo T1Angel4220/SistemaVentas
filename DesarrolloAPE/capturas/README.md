@@ -7,7 +7,7 @@ Esta carpeta debe contener todas las capturas de pantalla necesarias para el inf
 ### Instalación
 - [ ] Instalación de Docker
 - [ ] Instalación de Jenkins
-- [ ] (Opcional) Instalación de Kubernetes
+- [ ] NO aplica - Kubernetes no se instala
 
 ### Docker
 - [ ] Construcción de imágenes (`docker build`)
@@ -24,7 +24,9 @@ Esta carpeta debe contener todas las capturas de pantalla necesarias para el inf
 - [ ] Estado final del pipeline (Success/Failed)
 - [ ] Historial de builds
 
-### Kubernetes (Opcional)
+### Kubernetes - NO Aplica
+
+**Kubernetes NO se implementa**, por lo que NO se necesitan capturas de Kubernetes.
 - [ ] Pods en ejecución (`kubectl get pods`)
 - [ ] Servicios creados (`kubectl get services`)
 - [ ] Deployments (`kubectl get deployments`)

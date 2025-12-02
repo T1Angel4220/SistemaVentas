@@ -217,41 +217,13 @@ Esta guía detalla la instalación de todas las herramientas necesarias para com
 
 ---
 
-## 3. Instalación de Kubernetes (Opcional)
+## 3. Kubernetes - NO Necesario
 
-### Usando Docker Desktop (Windows/macOS)
+**IMPORTANTE:** Kubernetes NO se instala ni se implementa en esta APE. Solo se investiga teóricamente.
 
-1. **Habilitar Kubernetes en Docker Desktop:**
-   - Abrir Docker Desktop
-   - Ir a Settings > Kubernetes
-   - Marcar "Enable Kubernetes"
-   - Click en "Apply & Restart"
+Si en el futuro quieres aprender sobre Kubernetes, puedes consultar la documentación oficial, pero NO es necesario para completar esta APE.
 
-2. **Verificar Instalación:**
-   ```bash
-   kubectl version --client
-   ```
-
-### Linux (kubeadm)
-
-1. **Instalar kubectl:**
-   ```bash
-   curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-   sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-   ```
-
-2. **Instalar minikube (para desarrollo local):**
-   ```bash
-   curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-   sudo install minikube-linux-amd64 /usr/local/bin/minikube
-   minikube start
-   ```
-
-3. **Verificar Instalación:**
-   ```bash
-   kubectl version --client
-   minikube status
-   ```
+**Kubernetes NO se instala para esta APE.** Solo se investiga teóricamente como parte de los requisitos de la asignatura.
 
 ---
 
@@ -288,9 +260,7 @@ docker ps
 java -version
 # Verificar que Jenkins está corriendo en http://localhost:8080
 
-# Verificar Kubernetes (si se instaló)
-kubectl version --client
-kubectl cluster-info
+# Kubernetes NO se instala para esta APE
 
 # Verificar Git
 git --version
@@ -304,7 +274,7 @@ Después de la instalación inicial de Jenkins, instalar los siguientes plugins:
 
 1. **Pipeline Plugin** - Para usar Jenkinsfile
 2. **Docker Pipeline Plugin** - Para integración con Docker
-3. **Kubernetes Plugin** - Para integración con Kubernetes
+3. **Kubernetes Plugin** - NO necesario (Kubernetes no se implementa)
 4. **Git Plugin** - Para integración con Git
 5. **Blue Ocean Plugin** - Interfaz moderna (opcional)
 
@@ -320,7 +290,7 @@ Después de la instalación inicial de Jenkins, instalar los siguientes plugins:
 
 - **Docker Desktop** requiere WSL 2 en Windows
 - **Jenkins** necesita Java JDK 11 o superior
-- **Kubernetes** es opcional pero recomendado para la práctica completa
+- **Kubernetes** NO se instala - Solo investigación teórica
 - Guardar todas las contraseñas y tokens generados en un lugar seguro
 
 ---
@@ -329,7 +299,7 @@ Después de la instalación inicial de Jenkins, instalar los siguientes plugins:
 
 - Docker: https://docs.docker.com/get-started/
 - Jenkins: https://www.jenkins.io/doc/
-- Kubernetes: https://kubernetes.io/docs/home/
+- Kubernetes: https://kubernetes.io/docs/ (solo para investigación teórica)
 
 ---
 

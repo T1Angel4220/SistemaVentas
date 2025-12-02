@@ -132,11 +132,13 @@ docker-compose logs postgres
 
 ---
 
-### 6. Ejecución con Kubernetes (Opcional - No Requerido)
+### 6. Kubernetes - NO Se Implementa
 
-**NOTA:** Kubernetes es completamente opcional para esta APE. Puedes completar la APE sin implementarlo.
+**IMPORTANTE:** Kubernetes NO se implementa en esta APE. Solo se investiga teóricamente.
 
-Si decides implementar Kubernetes (opcional):
+La siguiente sección es solo informativa y NO es necesaria para completar la APE:
+
+~~Si decides implementar Kubernetes (NO RECOMENDADO PARA ESTA APE):~~
 
 #### Paso 1: Asegurar que Kubernetes está corriendo
 
@@ -198,7 +200,9 @@ kubectl port-forward service/frontend-service 8080:80 -n sistema-ventas
 
 ---
 
-### 7. Pruebas de Escalabilidad (Kubernetes)
+### 7. Pruebas de Escalabilidad - NO Aplica
+
+**Kubernetes NO se implementa**, por lo que las pruebas de escalabilidad en Kubernetes NO son necesarias.
 
 #### Escalar Backend
 
@@ -341,18 +345,9 @@ docker stats
 docker stats sistema-ventas-backend sistema-ventas-frontend
 ```
 
-#### Ver Estadísticas de Kubernetes
+#### Kubernetes - NO Aplica
 
-```bash
-# Uso de recursos de pods
-kubectl top pods -n sistema-ventas
-
-# Uso de recursos de nodos
-kubectl top nodes
-
-# Métricas detalladas
-kubectl get --raw /apis/metrics.k8s.io/v1beta1/namespaces/sistema-ventas/pods
-```
+Kubernetes NO se implementa en esta APE.
 
 ---
 
@@ -369,7 +364,7 @@ kubectl get --raw /apis/metrics.k8s.io/v1beta1/namespaces/sistema-ventas/pods
 - [ ] Contenedores desplegados y funcionando
 - [ ] Aplicación accesible en navegador
 - [ ] Logs verificados
-- [ ] (Opcional) Kubernetes configurado
+- [ ] Kubernetes investigado teóricamente (NO se implementa)
 - [ ] (Opcional) Escalabilidad probada
 
 ---
@@ -384,8 +379,7 @@ kubectl get --raw /apis/metrics.k8s.io/v1beta1/namespaces/sistema-ventas/pods
 6. **Aplicación Frontend** funcionando en navegador
 7. **API Backend** respondiendo (health check)
 8. **Logs de Contenedores** (backend, frontend, postgres)
-9. **(Opcional) Pods de Kubernetes** en ejecución
-10. **(Opcional) Escalado de réplicas** en Kubernetes
+9. **NO aplica** - Kubernetes no se implementa
 
 ---
 
@@ -398,11 +392,7 @@ docker-compose down           # Detener servicios
 docker-compose logs -f        # Ver logs
 docker-compose ps             # Ver estado
 
-# Kubernetes
-kubectl get pods -n sistema-ventas
-kubectl get services -n sistema-ventas
-kubectl logs -f deployment/backend -n sistema-ventas
-kubectl scale deployment backend --replicas=3 -n sistema-ventas
+# Kubernetes - NO se usa en esta APE
 
 # Jenkins
 # Acceder en http://localhost:8080

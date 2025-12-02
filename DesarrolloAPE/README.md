@@ -26,7 +26,7 @@ Este documento contiene la implementación completa de la **APE7: Investigación
 El objetivo es automatizar el despliegue de la aplicación utilizando herramientas modernas de DevOps:
 - **Jenkins**: Para la integración y entrega continua (CI/CD)
 - **Docker**: Para la containerización de la aplicación
-- **Kubernetes**: Para la orquestación de contenedores (OPCIONAL - No requerido para esta APE)
+- **Kubernetes**: Investigación teórica únicamente (NO se implementa)
 
 ---
 
@@ -40,7 +40,7 @@ Jenkins es un servidor de automatización open-source escrito en Java que facili
 **Funcionamiento Básico:**
 - Jenkins funciona como un servidor que ejecuta tareas automatizadas llamadas "jobs" o "pipelines"
 - Los pipelines pueden ser definidos como código (Jenkinsfile) o mediante la interfaz web
-- Jenkins puede integrarse con Git, Docker, Kubernetes y muchas otras herramientas
+- Jenkins puede integrarse con Git, Docker y muchas otras herramientas
 
 **Conceptos Clave:**
 - **Pipeline**: Secuencia de pasos automatizados
@@ -178,9 +178,9 @@ Ver el archivo: [02-DOCKER.md](./02-DOCKER.md)
 
 Ver el archivo: [03-JENKINS.md](./03-JENKINS.md)
 
-### Configuración de Kubernetes
+### Investigación sobre Kubernetes (Solo Teórica)
 
-Ver el archivo: [04-KUBERNETES.md](./04-KUBERNETES.md)
+Kubernetes se investiga solo teóricamente. No se implementa en esta APE. Ver sección de investigación más arriba.
 
 ---
 
@@ -196,8 +196,9 @@ Ver el archivo: [04-KUBERNETES.md](./04-KUBERNETES.md)
 - `Jenkinsfile` - Pipeline de CI/CD
 - `jenkins/plugins.txt` - Lista de plugins necesarios
 
-### Kubernetes (Opcional - No requerido)
-- `kubernetes/` - Carpeta con manifiestos de Kubernetes (solo si decides implementarlo)
+### Kubernetes
+- **NO se implementa** - Solo investigación teórica
+- La carpeta `kubernetes/` existe pero NO es necesaria para esta APE
 
 ---
 

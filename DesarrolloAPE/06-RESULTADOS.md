@@ -12,7 +12,7 @@ Este documento registra los resultados obtenidos durante la implementación de l
 - ✅ Pipeline de automatización de despliegue creado en Jenkins
 - ✅ Aplicación containerizada con Docker
 - ✅ Despliegue automatizado funcionando
-- ✅ (Opcional) Aplicación desplegada en Kubernetes
+- ✅ Kubernetes investigado teóricamente (NO implementado)
 - ✅ Documentación completa del proceso
 
 ---
@@ -47,15 +47,15 @@ Este documento registra los resultados obtenidos durante la implementación de l
 
 ### Kubernetes
 
-**Conocimientos Adquiridos:**
+**Conocimientos Adquiridos (Teóricos):**
 - Conceptos de orquestación de contenedores
 - Deployments, Services, Pods
 - Escalabilidad horizontal y vertical
 - Gestión de aplicaciones en clústeres
 
 **Aplicación Práctica:**
-- (Opcional) Aplicación desplegada en Kubernetes
-- (Opcional) Escalabilidad probada exitosamente
+- ❌ NO se implementa - Solo investigación teórica
+- La investigación teórica está documentada en el README.md
 
 ---
 
@@ -160,7 +160,9 @@ sistema-ventas-postgres     Up 2 minutes    0.0.0.0:5432->5432/tcp
 
 ---
 
-## 4. Despliegue en Kubernetes (Opcional)
+## 4. Kubernetes - Investigación Teórica
+
+**NOTA:** Kubernetes NO se implementa en esta APE. Solo se investiga teóricamente.
 
 ### Configuración
 

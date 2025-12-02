@@ -52,23 +52,23 @@ Este documento presenta las conclusiones finales de la implementación de la APE
 - Aislamiento de dependencias entre servicios
 - Facilidad para replicar el entorno de producción localmente
 
-### 3. Kubernetes - Orquestación de Contenedores
+### 3. Kubernetes - Investigación Teórica
 
-**Aprendizajes Clave:**
+**Aprendizajes Clave (Teóricos):**
 - Kubernetes permite gestionar aplicaciones containerizadas a escala
 - Los Deployments facilitan la gestión del ciclo de vida de las aplicaciones
 - Los Services proporcionan descubrimiento y balanceo de carga automático
 - El escalado horizontal es simple y efectivo
 
 **Aplicación Práctica:**
-- Se desplegó la aplicación en un clúster de Kubernetes
-- Se probó el escalado manual y automático de réplicas
-- Se verificó la distribución de carga entre múltiples pods
+- ❌ NO se implementa - Solo investigación teórica
+- Se investigó y documentó teóricamente sobre Kubernetes
+- Se decidió no implementarlo debido a la complejidad y porque excede las capacidades actuales
 
 **Impacto:**
-- Capacidad de escalar la aplicación según la demanda
-- Alta disponibilidad mediante múltiples réplicas
-- Recuperación automática ante fallos
+- Comprensión teórica de las capacidades de Kubernetes
+- Conocimiento de cuándo sería apropiado usar Kubernetes
+- Decisión informada de usar Docker Compose en su lugar para esta APE
 
 ---
 
@@ -115,7 +115,7 @@ Este documento presenta las conclusiones finales de la implementación de la APE
 └─────────────────┘
 ```
 
-### Con Kubernetes (Opcional)
+### Kubernetes - NO Implementado
 
 ```
 ┌─────────────────────────────────────┐
@@ -261,7 +261,7 @@ El sistema ahora cuenta con:
 - ✅ Pipeline CI/CD funcional
 - ✅ Aplicación containerizada
 - ✅ Despliegue automatizado
-- ✅ Capacidad de escalado (con Kubernetes)
+- ✅ Comprensión teórica de Kubernetes (no implementado)
 
 Estas competencias son esenciales en el desarrollo de software moderno y serán de gran valor en la carrera profesional.
 

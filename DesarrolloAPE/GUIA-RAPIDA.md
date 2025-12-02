@@ -33,7 +33,9 @@ docker-compose up -d
 3. Configurar para usar Jenkinsfile desde SCM o pegar directamente
 4. Ejecutar "Build Now"
 
-### 4. Desplegar en Kubernetes (Opcional)
+### 4. Kubernetes - NO Se Implementa
+
+**Kubernetes NO se implementa en esta APE.** Solo se investiga teóricamente.
 
 ```bash
 cd kubernetes
@@ -66,7 +68,7 @@ kubectl apply -f frontend-service.yaml
 - [ ] Jenkinsfile creado y funcionando
 - [ ] Pipeline ejecutado exitosamente
 - [ ] Aplicación desplegada en contenedores
-- [ ] (Opcional) Kubernetes configurado
+- [ ] Kubernetes investigado teóricamente (NO se implementa)
 - [ ] (Opcional) Escalabilidad probada
 
 ### Capturas de Pantalla
@@ -76,7 +78,7 @@ kubectl apply -f frontend-service.yaml
 - [ ] Pipeline de Jenkins en ejecución
 - [ ] Logs del pipeline
 - [ ] Aplicación funcionando
-- [ ] (Opcional) Pods de Kubernetes
+- [ ] NO aplica - Kubernetes no se implementa
 - [ ] (Opcional) Escalado de réplicas
 
 ### Informe Final
@@ -153,7 +155,7 @@ DesarrolloAPE/
 ├── 01-INSTALACION.md           # Guía de instalación
 ├── 02-DOCKER.md                # Configuración Docker
 ├── 03-JENKINS.md               # Configuración Jenkins
-├── 04-KUBERNETES.md            # Configuración Kubernetes
+~~├── 04-KUBERNETES.md~~            # ELIMINADO - Kubernetes no se implementa
 ├── 05-EJECUCION.md             # Guía de ejecución
 ├── 06-RESULTADOS.md            # Resultados obtenidos
 ├── 07-CONCLUSIONES.md          # Conclusiones
@@ -163,7 +165,7 @@ DesarrolloAPE/
 ├── docker-compose.yml          # Orquestación Docker
 ├── Jenkinsfile                 # Pipeline CI/CD
 ├── .dockerignore               # Archivos excluidos
-├── kubernetes/                 # Manifiestos Kubernetes
+├── kubernetes/                 # NO necesario (solo investigación teórica)
 │   ├── namespace.yaml
 │   ├── postgres-*.yaml
 │   ├── backend-*.yaml
@@ -203,7 +205,7 @@ DesarrolloAPE/
 
 - **Docker Docs**: https://docs.docker.com/
 - **Jenkins Docs**: https://www.jenkins.io/doc/
-- **Kubernetes Docs**: https://kubernetes.io/docs/
+- **Kubernetes Docs**: https://kubernetes.io/docs/ (solo para investigación teórica)
 - **Docker Compose**: https://docs.docker.com/compose/
 
 ---

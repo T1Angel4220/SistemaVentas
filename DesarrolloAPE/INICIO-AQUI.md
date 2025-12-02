@@ -25,10 +25,9 @@
    - Crea el pipeline CI/CD
    - Automatiza el despliegue
 
-4. **[04-KUBERNETES.md](./04-KUBERNETES.md)** (Opcional - No Requerido)
-   - Despliega en Kubernetes
-   - Prueba la escalabilidad
-   - **NOTA:** Esta sección es completamente opcional y no es necesaria para completar la APE
+4. **Kubernetes** - Solo investigación teórica
+   - **NO se implementa** - Solo se investiga y documenta teóricamente
+   - La carpeta `kubernetes/` NO es necesaria
 
 5. **[05-EJECUCION.md](./05-EJECUCION.md)**
    - Ejecuta el pipeline completo
@@ -46,12 +45,12 @@
 
 ## 🎯 Objetivos de la APE7
 
-- ✅ Investigar sobre Jenkins, Docker y Kubernetes
+- ✅ Investigar sobre Jenkins, Docker y Kubernetes (Kubernetes solo teóricamente)
 - ✅ Crear pipeline de automatización en Jenkins
 - ✅ Containerizar la aplicación con Docker
 - ✅ Desplegar automáticamente la aplicación
 - ✅ Clonar desde GitHub y usar rama `Jenkins/Johan`
-- ✅ (Opcional) Desplegar en Kubernetes - **NO REQUERIDO**
+- ✅ Investigar Kubernetes teóricamente (NO se implementa)
 - ✅ Documentar todo el proceso
 
 ---
@@ -64,7 +63,7 @@ Todos los archivos necesarios están listos:
 - ✅ `Dockerfile.frontend` - Imagen del frontend
 - ✅ `docker-compose.yml` - Orquestación de servicios
 - ✅ `Jenkinsfile` - Pipeline CI/CD
-- ✅ `kubernetes/` - Manifiestos de Kubernetes
+- ⚠️ `kubernetes/` - NO necesario (solo investigación teórica)
 
 ---
 

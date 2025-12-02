@@ -30,7 +30,7 @@ Instalar los siguientes plugins desde **Manage Jenkins > Manage Plugins**:
 3. **Docker** - Para construir imágenes Docker
 4. **Git** - Integración con Git
 5. **Blue Ocean** - Interfaz moderna (opcional)
-6. **Kubernetes** - Si se usará Kubernetes (opcional)
+6. **Kubernetes** - NO necesario (solo investigación teórica)
 
 ---
 
@@ -489,5 +489,5 @@ sudo tar -czf jenkins-backup.tar.gz /var/lib/jenkins
 
 ---
 
-**Próximo Paso:** [Configuración de Kubernetes](./04-KUBERNETES.md)
+**Nota:** Kubernetes no se implementa en esta APE, solo se investiga teóricamente.
 
