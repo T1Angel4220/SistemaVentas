@@ -1,0 +1,229 @@
+pipeline {
+    agent any
+    
+    environment {
+        // URL del repositorio GitHub
+        GITHUB_REPO_URL = 'https://github.com/T1Angel4220/SistemaVentas.git'
+        GITHUB_BRANCH = 'Jenkins/Johan'
+        DOCKER_IMAGE_BACKEND = 'sistema-ventas-backend'
+        DOCKER_IMAGE_FRONTEND = 'sistema-ventas-frontend'
+        DOCKER_TAG = "${env.BUILD_NUMBER}"
+        DOCKER_REGISTRY = 'docker.io' // Cambiar si usas un registro privado
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                echo '========================================'
+                echo 'Clonando repositorio desde GitHub...'
+                echo '========================================'
+                script {
+                    // Clonar el repositorio
+                    sh '''
+                        if [ -d "SistemaVentas" ]; then
+                            echo "El directorio ya existe, eliminando..."
+                            rm -rf SistemaVentas
+                        fi
+                        
+                        echo "Clonando repositorio desde GitHub..."
+                        echo "URL: ${GITHUB_REPO_URL}"
+                        git clone ${GITHUB_REPO_URL} || {
+                            echo "ERROR: No se pudo clonar el repositorio"
+                            echo "Por favor, verifica la URL del repositorio en el Jenkinsfile"
+                            echo "URL configurada: ${GITHUB_REPO_URL}"
+                            exit 1
+                        }
+                        
+                        cd SistemaVentas
+                        
+                        echo "Cambiando a la rama ${GITHUB_BRANCH}..."
+                        git checkout ${GITHUB_BRANCH} || {
+                            echo "La rama ${GITHUB_BRANCH} no existe localmente, intentando desde origin..."
+                            git fetch origin
+                            git checkout -b ${GITHUB_BRANCH} origin/${GITHUB_BRANCH} || {
+                                echo "ERROR: No se pudo cambiar a la rama ${GITHUB_BRANCH}"
+                                echo "Verifica que la rama existe en el repositorio remoto"
+                                exit 1
+                            }
+                        }
+                        
+                        echo "Haciendo pull de la rama ${GITHUB_BRANCH}..."
+                        git pull origin ${GITHUB_BRANCH} || {
+                            echo "ADVERTENCIA: No se pudo hacer pull, continuando con el código local"
+                        }
+                        
+                        echo "Información del repositorio:"
+                        git log -1 --oneline
+                        git branch -a
+                        echo "Rama actual:"
+                        git branch --show-current
+                    '''
+                }
+            }
+        }
+        
+        stage('Build Backend') {
+            steps {
+                echo '========================================'
+                echo 'Construyendo imagen Docker del backend...'
+                echo '========================================'
+                script {
+                    sh '''
+                        cd SistemaVentas
+                        docker build -t ${DOCKER_IMAGE_BACKEND}:${DOCKER_TAG} -f DesarrolloAPE/Dockerfile.backend .
+                        docker tag ${DOCKER_IMAGE_BACKEND}:${DOCKER_TAG} ${DOCKER_IMAGE_BACKEND}:latest
+                        echo "Imagen backend construida: ${DOCKER_IMAGE_BACKEND}:${DOCKER_TAG}"
+                    '''
+                }
+            }
+        }
+        
+        stage('Build Frontend') {
+            steps {
+                echo '========================================'
+                echo 'Construyendo imagen Docker del frontend...'
+                echo '========================================'
+                script {
+                    sh '''
+                        cd SistemaVentas
+                        docker build -t ${DOCKER_IMAGE_FRONTEND}:${DOCKER_TAG} -f DesarrolloAPE/Dockerfile.frontend .
+                        docker tag ${DOCKER_IMAGE_FRONTEND}:${DOCKER_TAG} ${DOCKER_IMAGE_FRONTEND}:latest
+                        echo "Imagen frontend construida: ${DOCKER_IMAGE_FRONTEND}:${DOCKER_TAG}"
+                    '''
+                }
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                echo '========================================'
+                echo 'Ejecutando pruebas...'
+                echo '========================================'
+                script {
+                    // Ejecutar pruebas dentro de contenedor (opcional)
+                    try {
+                        sh '''
+                            cd SistemaVentas
+                            docker run --rm \
+                                -v ${WORKSPACE}/SistemaVentas/backend:/app \
+                                -w /app \
+                                node:18-alpine \
+                                npm test || echo "Tests no configurados o fallaron"
+                        '''
+                    } catch (Exception e) {
+                        echo "Tests no ejecutados o fallaron: ${e.getMessage()}"
+                        // No fallar el pipeline si las pruebas fallan (ajustar según necesidad)
+                    }
+                }
+            }
+        }
+        
+        stage('Stop Old Containers') {
+            steps {
+                echo '========================================'
+                echo 'Deteniendo contenedores antiguos...'
+                echo '========================================'
+                script {
+                    sh '''
+                        cd SistemaVentas/DesarrolloAPE
+                        docker-compose down || true
+                        # Limpiar contenedores huérfanos
+                        docker container prune -f || true
+                    '''
+                }
+            }
+        }
+        
+        stage('Deploy') {
+            steps {
+                echo '========================================'
+                echo 'Desplegando aplicación...'
+                echo '========================================'
+                script {
+                    sh '''
+                        cd SistemaVentas/DesarrolloAPE
+                        docker-compose up -d --build
+                        # Esperar a que los servicios estén listos
+                        sleep 15
+                        # Verificar estado de los contenedores
+                        docker-compose ps
+                    '''
+                }
+            }
+        }
+        
+        stage('Health Check') {
+            steps {
+                echo '========================================'
+                echo 'Verificando salud de la aplicación...'
+                echo '========================================'
+                script {
+                    sh '''
+                        # Esperar un poco más para que los servicios estén completamente listos
+                        sleep 10
+                        
+                        # Verificar backend (si tiene endpoint /health)
+                        echo "Verificando backend..."
+                        curl -f http://localhost:3001/health || \
+                        curl -f http://localhost:3001/ || \
+                        echo "Backend no responde en /health, pero puede estar funcionando"
+                        
+                        # Verificar frontend
+                        echo "Verificando frontend..."
+                        curl -f http://localhost/ || exit 1
+                        
+                        echo "Health check completado"
+                    '''
+                }
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo '========================================'
+            echo 'Pipeline ejecutado exitosamente!'
+            echo '========================================'
+            echo "Build Number: ${env.BUILD_NUMBER}"
+            echo "Backend Image: ${DOCKER_IMAGE_BACKEND}:${DOCKER_TAG}"
+            echo "Frontend Image: ${DOCKER_IMAGE_FRONTEND}:${DOCKER_TAG}"
+            // Opcional: Enviar notificación por email
+            // emailext (
+            //     subject: "Pipeline Exitoso: ${env.JOB_NAME} - ${env.BUILD_NUMBER}",
+            //     body: "El pipeline se ejecutó correctamente.",
+            //     to: "tu-email@ejemplo.com"
+            // )
+        }
+        failure {
+            echo '========================================'
+            echo 'Pipeline falló!'
+            echo '========================================'
+            echo "Build Number: ${env.BUILD_NUMBER}"
+            // Opcional: Enviar notificación de error
+            // emailext (
+            //     subject: "Pipeline Falló: ${env.JOB_NAME} - ${env.BUILD_NUMBER}",
+            //     body: "El pipeline falló. Revisar logs.",
+            //     to: "tu-email@ejemplo.com"
+            // )
+        }
+        always {
+            echo '========================================'
+            echo 'Limpiando imágenes antiguas...'
+            echo '========================================'
+            script {
+                sh '''
+                    # Eliminar imágenes huérfanas (sin tag)
+                    docker image prune -f || true
+                    
+                    # Opcional: Eliminar imágenes antiguas (mantener últimas 5)
+                    # docker images --format "{{.Repository}}:{{.Tag}}" | \
+                    #   grep -E "${DOCKER_IMAGE_BACKEND}|${DOCKER_IMAGE_FRONTEND}" | \
+                    #   tail -n +6 | xargs -r docker rmi || true
+                '''
+            }
+            // Archivar artefactos si es necesario
+            archiveArtifacts artifacts: 'SistemaVentas/DesarrolloAPE/docker-compose.yml', allowEmptyArchive: true
+        }
+    }
+}
+

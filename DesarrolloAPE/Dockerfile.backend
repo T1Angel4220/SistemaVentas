@@ -1,0 +1,26 @@
+# Dockerfile para el Backend del Sistema de Ventas
+# Usar imagen base de Node.js
+FROM node:18-alpine
+
+# Establecer directorio de trabajo
+WORKDIR /app
+
+# Copiar archivos de dependencias primero (para cache de Docker)
+COPY backend/package*.json ./
+
+# Instalar dependencias de producción
+RUN npm ci --only=production && \
+    npm cache clean --force
+
+# Copiar código fuente del backend
+COPY backend/ ./
+
+# Crear directorio para uploads si no existe
+RUN mkdir -p uploads
+
+# Exponer puerto
+EXPOSE 3001
+
+# Comando para iniciar la aplicación
+CMD ["npm", "start"]
+

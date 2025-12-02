@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sistema-ventas
+  labels:
+    name: sistema-ventas
+    environment: production
+

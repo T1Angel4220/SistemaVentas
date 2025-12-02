@@ -1,0 +1,63 @@
+# Archivos y directorios a excluir de las imágenes Docker
+
+# Dependencias
+node_modules
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# Control de versiones
+.git
+.gitignore
+.gitattributes
+
+# Variables de entorno
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+
+# Documentación
+*.md
+README.md
+docs/
+
+# IDE y editores
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Build y dist
+dist
+build
+coverage
+.nyc_output
+
+# Logs
+logs
+*.log
+
+# Testing
+test
+tests
+__tests__
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+
+# Otros
+.cache
+.temp
+tmp
+temp
+
