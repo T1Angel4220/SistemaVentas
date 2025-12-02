@@ -7,11 +7,50 @@
 
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
-import { resolve } from 'path';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { existsSync } from 'fs';
 
-// Cargar variables de entorno desde .env (ruta relativa desde la raíz del proyecto frontend)
-const envPath = resolve(process.cwd(), '.env');
-dotenv.config({ path: envPath });
+// Obtener el directorio del archivo actual (compatible con ES modules)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Intentar múltiples rutas posibles para el archivo .env
+const possiblePaths = [
+  // Ruta relativa desde el DBHelper (frontend/e2e/utils/ -> frontend/)
+  resolve(__dirname, '../../..', '.env'),
+  // Ruta desde process.cwd() (si se ejecuta desde frontend/)
+  resolve(process.cwd(), '.env'),
+  // Ruta desde process.cwd() con subdirectorio (si se ejecuta desde raíz del proyecto)
+  resolve(process.cwd(), 'frontend', '.env'),
+];
+
+let envPath: string | null = null;
+let result: dotenv.DotenvConfigOutput | null = null;
+
+// Intentar cargar desde cada ruta posible
+for (const path of possiblePaths) {
+  if (existsSync(path)) {
+    envPath = path;
+    result = dotenv.config({ path });
+    if (!result.error) {
+      console.log(`✅ Variables de entorno cargadas desde: ${envPath}`);
+      console.log(`   Variables cargadas: ${Object.keys(result.parsed || {}).length}`);
+      break;
+    }
+  }
+}
+
+// Si ninguna ruta funcionó, intentar cargar sin ruta específica (desde process.cwd())
+if (!result || result.error) {
+  console.warn('⚠️  No se encontró .env en las rutas esperadas. Intentando carga por defecto...');
+  result = dotenv.config();
+  if (result.error) {
+    console.error('❌ Error cargando variables de entorno:', result.error.message);
+  } else {
+    console.log('✅ Variables de entorno cargadas (ruta por defecto)');
+  }
+}
 
 // Configuración de conexión a la BD (usar variables de entorno o valores por defecto)
 // Nota: Si DB_PASSWORD no está definida, se usa undefined (no cadena vacía) para evitar errores de SCRAM
@@ -27,13 +66,27 @@ const poolConfig: any = {
 
 // Solo incluir password si está definida (evita errores de SCRAM)
 // Si no está definida en .env, usar la contraseña por defecto del sistema
-if (process.env.DB_PASSWORD !== undefined && process.env.DB_PASSWORD !== '') {
-  poolConfig.password = process.env.DB_PASSWORD;
+const dbPassword = process.env.DB_PASSWORD;
+if (dbPassword !== undefined && dbPassword !== '' && dbPassword.trim() !== '') {
+  // Eliminar espacios en blanco y caracteres de nueva línea
+  poolConfig.password = dbPassword.trim().replace(/\r?\n/g, '');
+  console.log('✅ DB_PASSWORD cargada desde .env');
 } else {
   // Contraseña por defecto para pruebas E2E
   poolConfig.password = '7dejunio';
   console.warn('⚠️  DB_PASSWORD no está configurada en .env. Usando contraseña por defecto para E2E.');
 }
+
+// Log de configuración (sin mostrar la contraseña completa por seguridad)
+console.log('🔌 Configuración de BD:', {
+  host: poolConfig.host,
+  port: poolConfig.port,
+  database: poolConfig.database,
+  user: poolConfig.user,
+  hasPassword: !!poolConfig.password,
+  passwordLength: poolConfig.password?.length || 0,
+  passwordSource: dbPassword ? 'env' : 'default'
+});
 
 const pool = new Pool(poolConfig);
 
