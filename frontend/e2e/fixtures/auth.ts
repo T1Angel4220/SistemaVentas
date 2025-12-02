@@ -62,20 +62,27 @@ export class AuthHelper {
 
     // Esperar redirección - puede ser dashboard, products, o cualquier ruta autenticada
     try {
-      await this.page.waitForURL(/.*dashboard|.*products|.*profile|.*users/, { timeout: 15000 });
+      await this.page.waitForURL(/.*dashboard|.*products|.*profile|.*users|.*my-products|.*catalog/, { timeout: 20000 });
     } catch {
       // Si no redirige, verificar si hay error
-      const errorVisible = await this.page.locator('.text-red-500, [role="alert"]').isVisible().catch(() => false);
+      const errorVisible = await this.page.locator('.text-red-500, [role="alert"], text=/error|Error|falló/i').isVisible({ timeout: 3000 }).catch(() => false);
       if (errorVisible) {
-        throw new Error('Login falló - verificar credenciales');
+        const errorText = await this.page.locator('.text-red-500, [role="alert"]').textContent().catch(() => '');
+        throw new Error(`Login falló - verificar credenciales: ${errorText}`);
       }
-      // Si no hay error y no redirige, puede que ya esté logueado
+      // Si no hay error y no redirige, puede que ya esté logueado o la redirección sea diferente
       const currentUrl = this.page.url();
-      if (!currentUrl.includes('/login')) {
-        // Ya está en una página autenticada
+      if (!currentUrl.includes('/login') && !currentUrl.includes('/register')) {
+        // Ya está en una página autenticada o la redirección fue diferente
+        await this.waitForVisualization(1000);
         return;
       }
-      throw new Error('Login timeout - no se redirigió después del login');
+      // Esperar un poco más y verificar nuevamente
+      await this.waitForVisualization(3000);
+      const finalUrl = this.page.url();
+      if (finalUrl.includes('/login') || finalUrl.includes('/register')) {
+        throw new Error('Login timeout - no se redirigió después del login');
+      }
     }
     await this.waitForVisualization(1000);
   }

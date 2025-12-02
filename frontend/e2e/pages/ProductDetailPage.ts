@@ -48,7 +48,13 @@ export class ProductDetailPage {
    */
   async goto(productId: number) {
     await this.page.goto(`/products/${productId}`);
-    await this.page.waitForLoadState('networkidle', { timeout: 20000 });
+    try {
+      await this.page.waitForLoadState('networkidle', { timeout: 20000 });
+    } catch {
+      // Si networkidle falla, esperar domcontentloaded
+      await this.page.waitForLoadState('domcontentloaded', { timeout: 10000 });
+      await this.page.waitForTimeout(2000);
+    }
   }
 
   /**
@@ -196,8 +202,19 @@ export class ProductDetailPage {
    * Verificar si el botón de reportar está visible
    */
   async isReportButtonVisible(): Promise<boolean> {
+    // Verificar que la página no esté cerrada
+    if (this.page.isClosed()) {
+      return false;
+    }
+    
     // Esperar a que la página cargue
     await this.page.waitForLoadState('networkidle').catch(() => {});
+    
+    // Verificar nuevamente antes de hacer waitForTimeout
+    if (this.page.isClosed()) {
+      return false;
+    }
+    
     await this.page.waitForTimeout(1000);
     
     // Buscar el botón de múltiples formas

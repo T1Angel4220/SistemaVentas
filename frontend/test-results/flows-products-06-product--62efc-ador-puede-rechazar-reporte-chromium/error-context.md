@@ -1,0 +1,231 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - navigation [ref=e4]:
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - link "Sistema de Ventas" [ref=e8] [cursor=pointer]:
+          - /url: /dashboard
+        - generic [ref=e9]:
+          - link "Dashboard" [ref=e10] [cursor=pointer]:
+            - /url: /dashboard
+          - link "Productos" [ref=e11] [cursor=pointer]:
+            - /url: /products
+          - link "Chat" [ref=e12] [cursor=pointer]:
+            - /url: /chat
+          - link "Moderación" [ref=e14] [cursor=pointer]:
+            - /url: /products/moderation
+            - img [ref=e15]
+            - text: Moderación
+          - link "Reportes" [ref=e17] [cursor=pointer]:
+            - /url: /moderation/reports
+            - img [ref=e18]
+            - text: Reportes
+          - link "Apelaciones" [ref=e20] [cursor=pointer]:
+            - /url: /moderation/appeals
+            - img [ref=e21]
+            - text: Apelaciones
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - paragraph [ref=e26]: Test Moderador
+          - paragraph [ref=e27]: Moderador
+        - link "Mi Perfil" [ref=e28] [cursor=pointer]:
+          - /url: /profile
+          - button [ref=e29]:
+            - img [ref=e30]
+          - generic: Mi Perfil
+        - button "Salir" [ref=e33]:
+          - img [ref=e34]
+          - generic [ref=e37]: Salir
+  - main [ref=e38]:
+    - generic [ref=e39]:
+      - generic [ref=e42]:
+        - generic [ref=e43]:
+          - img [ref=e45]
+          - generic [ref=e47]:
+            - heading "Gestión de Reportes" [level=1] [ref=e48]
+            - paragraph [ref=e49]: Reportes de compradores y moderadores
+        - generic [ref=e51]:
+          - generic [ref=e52]: Moderador activo
+          - generic [ref=e53]: Moderador
+      - main [ref=e56]:
+        - generic [ref=e57]:
+          - generic [ref=e60]:
+            - generic [ref=e61]:
+              - paragraph [ref=e62]: Pendientes
+              - paragraph [ref=e63]: "2"
+            - img [ref=e65]
+          - generic [ref=e70]:
+            - generic [ref=e71]:
+              - paragraph [ref=e72]: En Revisión
+              - paragraph [ref=e73]: "0"
+            - img [ref=e75]
+          - generic [ref=e80]:
+            - generic [ref=e81]:
+              - paragraph [ref=e82]: Resueltos
+              - paragraph [ref=e83]: "0"
+            - img [ref=e85]
+          - generic [ref=e90]:
+            - generic [ref=e91]:
+              - paragraph [ref=e92]: Total
+              - paragraph [ref=e93]: "2"
+            - img [ref=e95]
+        - generic [ref=e97]:
+          - heading "Filtros de Reportes Filtra reportes por tipo y estado" [level=3] [ref=e99]:
+            - img [ref=e101]
+            - generic [ref=e103]:
+              - text: Filtros de Reportes
+              - paragraph [ref=e104]: Filtra reportes por tipo y estado
+          - generic [ref=e106]:
+            - generic [ref=e107]:
+              - generic [ref=e108]: Tipo de Reporte
+              - combobox [ref=e109]:
+                - option "Todos" [selected]
+                - option "⚠️ Contenido Inapropiado"
+                - option "🚫 Producto Prohibido"
+                - option "❌ Información Falsa"
+                - option "📧 Spam"
+                - option "🔖 Otro"
+            - generic [ref=e110]:
+              - generic [ref=e111]: Estado
+              - combobox [ref=e112]:
+                - option "Todos" [selected]
+                - option "Pendiente"
+                - option "En Revisión"
+                - option "Resuelto"
+        - generic [ref=e113]:
+          - generic [ref=e116]:
+            - generic [ref=e117]:
+              - generic [ref=e118]:
+                - generic [ref=e119]:
+                  - heading "iPhone 13 Pro Max" [level=3] [ref=e120]
+                  - paragraph [ref=e121]: "Código: ELEC001"
+                - generic [ref=e122]: PENDIENTE
+              - generic [ref=e123]:
+                - img "iPhone 13 Pro Max" [ref=e124]
+                - generic [ref=e125]:
+                  - img [ref=e126]
+                  - generic [ref=e129]: "3"
+              - generic [ref=e130]:
+                - generic [ref=e131]:
+                  - img [ref=e132]
+                  - generic [ref=e136]: "Tipo: producto"
+                - generic [ref=e137]:
+                  - img [ref=e138]
+                  - generic [ref=e140]:
+                    - text: "Precio:"
+                    - generic [ref=e141]: $850000.00
+                - generic [ref=e143]: "Categoría: Hogar y Jardín"
+                - generic [ref=e144]:
+                  - img [ref=e145]
+                  - generic [ref=e148]:
+                    - text: "Vendedor:"
+                    - generic [ref=e149]: Ana Martínez
+              - button "Ver Producto" [ref=e150]:
+                - img [ref=e151]
+                - text: Ver Producto
+            - generic [ref=e154]:
+              - generic [ref=e155]:
+                - generic [ref=e156]: Tipo de Reporte
+                - generic [ref=e157]: ❌ Información Falsa
+              - generic [ref=e158]:
+                - generic [ref=e159]: Motivo
+                - paragraph [ref=e160]: El precio parece demasiado bajo para un iPhone 13 Pro Max
+              - generic [ref=e161]:
+                - generic [ref=e162]: Información Adicional
+                - paragraph [ref=e163]: Debería verificar si es original
+              - generic [ref=e164]:
+                - generic [ref=e165]:
+                  - img [ref=e166]
+                  - generic [ref=e169]:
+                    - text: "Reportado por:"
+                    - generic [ref=e170]: Sofia Ramírez
+                - generic [ref=e172]: comprador
+                - generic [ref=e173]:
+                  - img [ref=e174]
+                  - generic [ref=e177]: 2 dic 2025, 06:23
+              - paragraph [ref=e179]:
+                - text: ⚠️ Este producto tiene
+                - strong [ref=e180]: "2"
+                - text: reportes
+            - generic [ref=e181]:
+              - generic [ref=e182]: Acciones de Moderación
+              - button "Producto Válido" [ref=e183]:
+                - img [ref=e184]
+                - text: Producto Válido
+              - button "Rechazar Producto" [ref=e187]:
+                - img [ref=e188]
+                - text: Rechazar Producto
+              - button "Suspender" [ref=e192]:
+                - img [ref=e193]
+                - text: Suspender
+              - button "Marcar Peligroso" [ref=e195]:
+                - img [ref=e196]
+                - text: Marcar Peligroso
+          - generic [ref=e200]:
+            - generic [ref=e201]:
+              - generic [ref=e202]:
+                - generic [ref=e203]:
+                  - heading "iPhone 13 Pro Max" [level=3] [ref=e204]
+                  - paragraph [ref=e205]: "Código: ELEC001"
+                - generic [ref=e206]: PENDIENTE
+              - generic [ref=e207]:
+                - img "iPhone 13 Pro Max" [ref=e208]
+                - generic [ref=e209]:
+                  - img [ref=e210]
+                  - generic [ref=e213]: "3"
+              - generic [ref=e214]:
+                - generic [ref=e215]:
+                  - img [ref=e216]
+                  - generic [ref=e220]: "Tipo: producto"
+                - generic [ref=e221]:
+                  - img [ref=e222]
+                  - generic [ref=e224]:
+                    - text: "Precio:"
+                    - generic [ref=e225]: $850000.00
+                - generic [ref=e227]: "Categoría: Hogar y Jardín"
+                - generic [ref=e228]:
+                  - img [ref=e229]
+                  - generic [ref=e232]:
+                    - text: "Vendedor:"
+                    - generic [ref=e233]: Ana Martínez
+              - button "Ver Producto" [ref=e234]:
+                - img [ref=e235]
+                - text: Ver Producto
+            - generic [ref=e238]:
+              - generic [ref=e239]:
+                - generic [ref=e240]: Tipo de Reporte
+                - generic [ref=e241]: ⚠️ Contenido Inapropiado
+              - generic [ref=e242]:
+                - generic [ref=e243]: Motivo
+                - paragraph [ref=e244]: Descripción detallada del motivo del reporte. Este producto contiene información que no cumple con las políticas de la plataforma.
+              - generic [ref=e245]:
+                - generic [ref=e246]:
+                  - img [ref=e247]
+                  - generic [ref=e250]:
+                    - text: "Reportado por:"
+                    - generic [ref=e251]: Test Comprador
+                - generic [ref=e253]: comprador
+                - generic [ref=e254]:
+                  - img [ref=e255]
+                  - generic [ref=e258]: 2 dic 2025, 06:39
+              - paragraph [ref=e260]:
+                - text: ⚠️ Este producto tiene
+                - strong [ref=e261]: "2"
+                - text: reportes
+            - generic [ref=e262]:
+              - generic [ref=e263]: Acciones de Moderación
+              - button "Producto Válido" [ref=e264]:
+                - img [ref=e265]
+                - text: Producto Válido
+              - button "Rechazar Producto" [ref=e268]:
+                - img [ref=e269]
+                - text: Rechazar Producto
+              - button "Suspender" [ref=e273]:
+                - img [ref=e274]
+                - text: Suspender
+              - button "Marcar Peligroso" [ref=e276]:
+                - img [ref=e277]
+                - text: Marcar Peligroso
+```

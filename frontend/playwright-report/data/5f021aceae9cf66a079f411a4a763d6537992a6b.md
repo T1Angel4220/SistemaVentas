@@ -1,0 +1,537 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - navigation [ref=e4]:
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - link "Sistema de Ventas" [ref=e8] [cursor=pointer]:
+          - /url: /dashboard
+        - generic [ref=e9]:
+          - link "Dashboard" [ref=e10] [cursor=pointer]:
+            - /url: /dashboard
+          - link "Productos" [ref=e11] [cursor=pointer]:
+            - /url: /products
+          - link "Chat" [ref=e12] [cursor=pointer]:
+            - /url: /chat
+          - link "Moderación" [ref=e14] [cursor=pointer]:
+            - /url: /products/moderation
+            - img [ref=e15]
+            - text: Moderación
+          - link "Reportes" [ref=e17] [cursor=pointer]:
+            - /url: /moderation/reports
+            - img [ref=e18]
+            - text: Reportes
+          - link "Apelaciones" [ref=e20] [cursor=pointer]:
+            - /url: /moderation/appeals
+            - img [ref=e21]
+            - text: Apelaciones
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - paragraph [ref=e26]: Test Moderador
+          - paragraph [ref=e27]: Moderador
+        - link "Mi Perfil" [ref=e28] [cursor=pointer]:
+          - /url: /profile
+          - button [ref=e29]:
+            - img [ref=e30]
+          - generic: Mi Perfil
+        - button "Salir" [ref=e33]:
+          - img [ref=e34]
+          - generic [ref=e37]: Salir
+  - main [ref=e38]:
+    - generic [ref=e39]:
+      - generic [ref=e42]:
+        - generic [ref=e43]:
+          - img [ref=e45]
+          - generic [ref=e47]:
+            - heading "Centro de Moderación" [level=1] [ref=e48]
+            - paragraph [ref=e49]: Revisión y aprobación de contenido
+        - generic [ref=e51]:
+          - generic [ref=e52]: Moderador activo
+          - generic [ref=e53]: Moderador
+      - main [ref=e56]:
+        - generic [ref=e57]:
+          - generic [ref=e60]:
+            - img [ref=e62]
+            - paragraph [ref=e66]: Total
+            - paragraph [ref=e67]: "37"
+          - generic [ref=e70]:
+            - img [ref=e72]
+            - paragraph [ref=e75]: Pendientes
+            - paragraph [ref=e76]: "0"
+          - generic [ref=e79]:
+            - img [ref=e81]
+            - paragraph [ref=e84]: Aprobados
+            - paragraph [ref=e85]: "35"
+          - generic [ref=e88]:
+            - img [ref=e90]
+            - paragraph [ref=e94]: Rechazados
+            - paragraph [ref=e95]: "0"
+          - generic [ref=e98]:
+            - img [ref=e100]
+            - paragraph [ref=e102]: Suspendidos
+            - paragraph [ref=e103]: "0"
+          - generic [ref=e106]:
+            - img [ref=e108]
+            - paragraph [ref=e110]: Peligrosos
+            - paragraph [ref=e111]: "2"
+          - generic [ref=e114]:
+            - img [ref=e116]
+            - paragraph [ref=e119]: Apelaciones
+            - paragraph [ref=e120]: "0"
+        - generic [ref=e121]:
+          - heading "Filtros de Moderación Filtra productos por estado para revisión" [level=3] [ref=e123]:
+            - img [ref=e125]
+            - generic [ref=e127]:
+              - text: Filtros de Moderación
+              - paragraph [ref=e128]: Filtra productos por estado para revisión
+          - generic [ref=e130]:
+            - generic [ref=e131]:
+              - generic [ref=e132]:
+                - generic [ref=e133]: Estado del Producto
+                - combobox [ref=e134]:
+                  - option "📦 Todos (37)"
+                  - option "🕐 Pendientes de Revisión (0)"
+                  - option "✅ Aprobados (35)" [selected]
+                  - option "❌ Rechazados (0)"
+                  - option "⚠️ Suspendidos (0)"
+                  - option "🚫 Peligrosos (2)"
+                  - option "📋 En Apelación (0)"
+              - generic [ref=e136]: Mostrando 12 de 35 productos
+            - generic [ref=e137]:
+              - generic [ref=e138]:
+                - generic [ref=e139]: Buscar por Nombre de Producto
+                - generic [ref=e140]:
+                  - 'textbox "Ej: Laptop, Mueble, Servicio..." [ref=e141]'
+                  - img [ref=e142]
+              - generic [ref=e145]:
+                - generic [ref=e146]: Buscar por Nombre del Vendedor
+                - generic [ref=e147]:
+                  - 'textbox "Ej: Juan, Pérez, María..." [ref=e148]'
+                  - img [ref=e149]
+            - button "Buscar" [ref=e153]:
+              - img [ref=e154]
+              - generic [ref=e157]: Buscar
+        - generic [ref=e158]:
+          - generic [ref=e159]:
+            - generic [ref=e160]:
+              - generic [ref=e162]:
+                - img [ref=e164]
+                - paragraph [ref=e168]: Sin imágenes
+              - generic [ref=e171]: ACTIVO
+              - generic [ref=e174]:
+                - img [ref=e175]
+                - generic [ref=e179]: producto
+            - generic [ref=e180]:
+              - generic [ref=e181]:
+                - generic [ref=e182]:
+                  - heading "iPad Pro 11\"" [level=3] [ref=e183]
+                  - paragraph [ref=e184]: "Código: ELEC004"
+                - paragraph [ref=e185]: iPad Pro 11 pulgadas, 128GB, WiFi, incluye Apple Pencil
+                - generic [ref=e186]:
+                  - generic [ref=e187]: $650,000.00
+                  - generic [ref=e188]: Hogar y Jardín
+                - generic [ref=e189]:
+                  - generic [ref=e190]: "Por: Luis Hernández"
+                  - generic [ref=e191]: 2 dic 2025, 06:23
+              - generic [ref=e192]:
+                - button "Ver Detalles" [ref=e194]:
+                  - img [ref=e195]
+                  - text: Ver Detalles
+                - generic [ref=e198]:
+                  - button "Suspender" [ref=e199]:
+                    - img [ref=e200]
+                    - generic [ref=e202]: Suspender
+                  - button "Peligroso" [ref=e203]:
+                    - img [ref=e204]
+                    - generic [ref=e206]: Peligroso
+          - generic [ref=e207]:
+            - generic [ref=e208]:
+              - generic [ref=e209]:
+                - img "Samsung Galaxy S21" [ref=e210]
+                - generic [ref=e212]: +2 más
+              - generic [ref=e215]: ACTIVO
+              - generic [ref=e218]:
+                - img [ref=e219]
+                - generic [ref=e223]: producto
+            - generic [ref=e224]:
+              - generic [ref=e225]:
+                - generic [ref=e226]:
+                  - heading "Samsung Galaxy S21" [level=3] [ref=e227]
+                  - paragraph [ref=e228]: "Código: ELEC003"
+                - paragraph [ref=e229]: Samsung Galaxy S21 128GB, color negro, con accesorios originales
+                - generic [ref=e230]:
+                  - generic [ref=e231]: $450,000.00
+                  - generic [ref=e232]: Hogar y Jardín
+                - generic [ref=e233]:
+                  - generic [ref=e234]: "Por: Luis Hernández"
+                  - generic [ref=e235]: 2 dic 2025, 06:23
+              - generic [ref=e236]:
+                - button "Ver Detalles" [ref=e238]:
+                  - img [ref=e239]
+                  - text: Ver Detalles
+                - generic [ref=e242]:
+                  - button "Suspender" [ref=e243]:
+                    - img [ref=e244]
+                    - generic [ref=e246]: Suspender
+                  - button "Peligroso" [ref=e247]:
+                    - img [ref=e248]
+                    - generic [ref=e250]: Peligroso
+          - generic [ref=e251]:
+            - generic [ref=e252]:
+              - generic [ref=e253]:
+                - img "iPhone 13 Pro Max" [ref=e254]
+                - generic [ref=e256]: +2 más
+              - generic [ref=e259]: ACTIVO
+              - generic [ref=e262]:
+                - img [ref=e263]
+                - generic [ref=e267]: producto
+            - generic [ref=e268]:
+              - generic [ref=e269]:
+                - generic [ref=e270]:
+                  - heading "iPhone 13 Pro Max" [level=3] [ref=e271]
+                  - paragraph [ref=e272]: "Código: ELEC001"
+                - paragraph [ref=e273]: iPhone 13 Pro Max 256GB en excelente estado, incluye cargador y funda protectora
+                - generic [ref=e274]:
+                  - generic [ref=e275]: $850,000.00
+                  - generic [ref=e276]: Hogar y Jardín
+                - generic [ref=e277]:
+                  - generic [ref=e278]: "Por: Ana Martínez"
+                  - generic [ref=e279]: 2 dic 2025, 06:23
+              - generic [ref=e280]:
+                - button "Ver Detalles" [ref=e282]:
+                  - img [ref=e283]
+                  - text: Ver Detalles
+                - generic [ref=e286]:
+                  - button "Suspender" [ref=e287]:
+                    - img [ref=e288]
+                    - generic [ref=e290]: Suspender
+                  - button "Peligroso" [ref=e291]:
+                    - img [ref=e292]
+                    - generic [ref=e294]: Peligroso
+          - generic [ref=e295]:
+            - generic [ref=e296]:
+              - generic [ref=e297]:
+                - img "MacBook Air M1" [ref=e298]
+                - generic [ref=e300]: +1 más
+              - generic [ref=e303]: ACTIVO
+              - generic [ref=e306]:
+                - img [ref=e307]
+                - generic [ref=e311]: producto
+            - generic [ref=e312]:
+              - generic [ref=e313]:
+                - generic [ref=e314]:
+                  - heading "MacBook Air M1" [level=3] [ref=e315]
+                  - paragraph [ref=e316]: "Código: ELEC002"
+                - paragraph [ref=e317]: MacBook Air con chip M1, 8GB RAM, 256GB SSD, prácticamente nueva
+                - generic [ref=e318]:
+                  - generic [ref=e319]: $1,200,000.00
+                  - generic [ref=e320]: Hogar y Jardín
+                - generic [ref=e321]:
+                  - generic [ref=e322]: "Por: Ana Martínez"
+                  - generic [ref=e323]: 2 dic 2025, 06:23
+              - generic [ref=e324]:
+                - button "Ver Detalles" [ref=e326]:
+                  - img [ref=e327]
+                  - text: Ver Detalles
+                - generic [ref=e330]:
+                  - button "Suspender" [ref=e331]:
+                    - img [ref=e332]
+                    - generic [ref=e334]: Suspender
+                  - button "Peligroso" [ref=e335]:
+                    - img [ref=e336]
+                    - generic [ref=e338]: Peligroso
+          - generic [ref=e339]:
+            - generic [ref=e340]:
+              - generic [ref=e342]:
+                - img [ref=e344]
+                - paragraph [ref=e348]: Sin imágenes
+              - generic [ref=e351]: ACTIVO
+              - generic [ref=e354]:
+                - img [ref=e355]
+                - generic [ref=e359]: producto
+            - generic [ref=e360]:
+              - generic [ref=e361]:
+                - generic [ref=e362]:
+                  - heading "Mesa de comedor" [level=3] [ref=e363]
+                  - paragraph [ref=e364]: "Código: HOG002"
+                - paragraph [ref=e365]: Mesa de comedor para 6 personas, madera de teca
+                - generic [ref=e366]:
+                  - generic [ref=e367]: $120,000.00
+                  - generic [ref=e368]: Muebles
+                - generic [ref=e369]:
+                  - generic [ref=e370]: "Por: Carmen López"
+                  - generic [ref=e371]: 2 dic 2025, 06:23
+              - generic [ref=e372]:
+                - button "Ver Detalles" [ref=e374]:
+                  - img [ref=e375]
+                  - text: Ver Detalles
+                - generic [ref=e378]:
+                  - button "Suspender" [ref=e379]:
+                    - img [ref=e380]
+                    - generic [ref=e382]: Suspender
+                  - button "Peligroso" [ref=e383]:
+                    - img [ref=e384]
+                    - generic [ref=e386]: Peligroso
+          - generic [ref=e387]:
+            - generic [ref=e388]:
+              - generic [ref=e390]:
+                - img [ref=e392]
+                - paragraph [ref=e396]: Sin imágenes
+              - generic [ref=e399]: ACTIVO
+              - generic [ref=e402]:
+                - img [ref=e403]
+                - generic [ref=e407]: producto
+            - generic [ref=e408]:
+              - generic [ref=e409]:
+                - generic [ref=e410]:
+                  - heading "Refrigeradora Samsung" [level=3] [ref=e411]
+                  - paragraph [ref=e412]: "Código: HOG003"
+                - paragraph [ref=e413]: Refrigeradora Samsung 2 puertas, 300L, color plateado
+                - generic [ref=e414]:
+                  - generic [ref=e415]: $350,000.00
+                  - generic [ref=e416]: Muebles
+                - generic [ref=e417]:
+                  - generic [ref=e418]: "Por: Roberto Sánchez"
+                  - generic [ref=e419]: 2 dic 2025, 06:23
+              - generic [ref=e420]:
+                - button "Ver Detalles" [ref=e422]:
+                  - img [ref=e423]
+                  - text: Ver Detalles
+                - generic [ref=e426]:
+                  - button "Suspender" [ref=e427]:
+                    - img [ref=e428]
+                    - generic [ref=e430]: Suspender
+                  - button "Peligroso" [ref=e431]:
+                    - img [ref=e432]
+                    - generic [ref=e434]: Peligroso
+          - generic [ref=e435]:
+            - generic [ref=e436]:
+              - generic [ref=e438]:
+                - img [ref=e440]
+                - paragraph [ref=e444]: Sin imágenes
+              - generic [ref=e447]: ACTIVO
+              - generic [ref=e450]:
+                - img [ref=e451]
+                - generic [ref=e455]: producto
+            - generic [ref=e456]:
+              - generic [ref=e457]:
+                - generic [ref=e458]:
+                  - heading "Sofá de 3 plazas" [level=3] [ref=e459]
+                  - paragraph [ref=e460]: "Código: HOG001"
+                - paragraph [ref=e461]: Sofá moderno de 3 plazas, color gris, excelente estado
+                - generic [ref=e462]:
+                  - generic [ref=e463]: $180,000.00
+                  - generic [ref=e464]: Muebles
+                - generic [ref=e465]:
+                  - generic [ref=e466]: "Por: Carmen López"
+                  - generic [ref=e467]: 2 dic 2025, 06:23
+              - generic [ref=e468]:
+                - button "Ver Detalles" [ref=e470]:
+                  - img [ref=e471]
+                  - text: Ver Detalles
+                - generic [ref=e474]:
+                  - button "Suspender" [ref=e475]:
+                    - img [ref=e476]
+                    - generic [ref=e478]: Suspender
+                  - button "Peligroso" [ref=e479]:
+                    - img [ref=e480]
+                    - generic [ref=e482]: Peligroso
+          - generic [ref=e483]:
+            - generic [ref=e484]:
+              - generic [ref=e486]:
+                - img [ref=e488]
+                - paragraph [ref=e492]: Sin imágenes
+              - generic [ref=e495]: ACTIVO
+              - generic [ref=e498]:
+                - img [ref=e499]
+                - generic [ref=e503]: producto
+            - generic [ref=e504]:
+              - generic [ref=e505]:
+                - generic [ref=e506]:
+                  - heading "Traje de hombre" [level=3] [ref=e507]
+                  - paragraph [ref=e508]: "Código: ROP002"
+                - paragraph [ref=e509]: Traje formal para hombre, talla 40, color azul marino
+                - generic [ref=e510]:
+                  - generic [ref=e511]: $80,000.00
+                  - generic [ref=e512]: Decoración
+                - generic [ref=e513]:
+                  - generic [ref=e514]: "Por: Luis Hernández"
+                  - generic [ref=e515]: 2 dic 2025, 06:23
+              - generic [ref=e516]:
+                - button "Ver Detalles" [ref=e518]:
+                  - img [ref=e519]
+                  - text: Ver Detalles
+                - generic [ref=e522]:
+                  - button "Suspender" [ref=e523]:
+                    - img [ref=e524]
+                    - generic [ref=e526]: Suspender
+                  - button "Peligroso" [ref=e527]:
+                    - img [ref=e528]
+                    - generic [ref=e530]: Peligroso
+          - generic [ref=e531]:
+            - generic [ref=e532]:
+              - generic [ref=e534]:
+                - img [ref=e536]
+                - paragraph [ref=e540]: Sin imágenes
+              - generic [ref=e543]: ACTIVO
+              - generic [ref=e546]:
+                - img [ref=e547]
+                - generic [ref=e551]: producto
+            - generic [ref=e552]:
+              - generic [ref=e553]:
+                - generic [ref=e554]:
+                  - heading "Vestido de noche" [level=3] [ref=e555]
+                  - paragraph [ref=e556]: "Código: ROP001"
+                - paragraph [ref=e557]: Vestido elegante de noche, talla M, color negro
+                - generic [ref=e558]:
+                  - generic [ref=e559]: $45,000.00
+                  - generic [ref=e560]: Decoración
+                - generic [ref=e561]:
+                  - generic [ref=e562]: "Por: Carmen López"
+                  - generic [ref=e563]: 2 dic 2025, 06:23
+              - generic [ref=e564]:
+                - button "Ver Detalles" [ref=e566]:
+                  - img [ref=e567]
+                  - text: Ver Detalles
+                - generic [ref=e570]:
+                  - button "Suspender" [ref=e571]:
+                    - img [ref=e572]
+                    - generic [ref=e574]: Suspender
+                  - button "Peligroso" [ref=e575]:
+                    - img [ref=e576]
+                    - generic [ref=e578]: Peligroso
+          - generic [ref=e579]:
+            - generic [ref=e580]:
+              - generic [ref=e582]:
+                - img [ref=e584]
+                - paragraph [ref=e588]: Sin imágenes
+              - generic [ref=e591]: ACTIVO
+              - generic [ref=e594]:
+                - img [ref=e595]
+                - generic [ref=e599]: producto
+            - generic [ref=e600]:
+              - generic [ref=e601]:
+                - generic [ref=e602]:
+                  - heading "Zapatos deportivos Nike" [level=3] [ref=e603]
+                  - paragraph [ref=e604]: "Código: ROP003"
+                - paragraph [ref=e605]: Zapatos deportivos Nike Air Max, talla 42, color blanco
+                - generic [ref=e606]:
+                  - generic [ref=e607]: $65,000.00
+                  - generic [ref=e608]: Decoración
+                - generic [ref=e609]:
+                  - generic [ref=e610]: "Por: Roberto Sánchez"
+                  - generic [ref=e611]: 2 dic 2025, 06:23
+              - generic [ref=e612]:
+                - button "Ver Detalles" [ref=e614]:
+                  - img [ref=e615]
+                  - text: Ver Detalles
+                - generic [ref=e618]:
+                  - button "Suspender" [ref=e619]:
+                    - img [ref=e620]
+                    - generic [ref=e622]: Suspender
+                  - button "Peligroso" [ref=e623]:
+                    - img [ref=e624]
+                    - generic [ref=e626]: Peligroso
+          - generic [ref=e627]:
+            - generic [ref=e628]:
+              - generic [ref=e630]:
+                - img [ref=e632]
+                - paragraph [ref=e636]: Sin imágenes
+              - generic [ref=e639]: ACTIVO
+              - generic [ref=e642]:
+                - img [ref=e643]
+                - generic [ref=e647]: producto
+            - generic [ref=e648]:
+              - generic [ref=e649]:
+                - generic [ref=e650]:
+                  - heading "Set de pesas" [level=3] [ref=e651]
+                  - paragraph [ref=e652]: "Código: DEP002"
+                - paragraph [ref=e653]: Set completo de pesas para gimnasio casero, hasta 50kg
+                - generic [ref=e654]:
+                  - generic [ref=e655]: $95,000.00
+                  - generic [ref=e656]: Electrodomésticos
+                - generic [ref=e657]:
+                  - generic [ref=e658]: "Por: Luis Hernández"
+                  - generic [ref=e659]: 2 dic 2025, 06:23
+              - generic [ref=e660]:
+                - button "Ver Detalles" [ref=e662]:
+                  - img [ref=e663]
+                  - text: Ver Detalles
+                - generic [ref=e666]:
+                  - button "Suspender" [ref=e667]:
+                    - img [ref=e668]
+                    - generic [ref=e670]: Suspender
+                  - button "Peligroso" [ref=e671]:
+                    - img [ref=e672]
+                    - generic [ref=e674]: Peligroso
+          - generic [ref=e675]:
+            - generic [ref=e676]:
+              - generic [ref=e678]:
+                - img [ref=e680]
+                - paragraph [ref=e684]: Sin imágenes
+              - generic [ref=e687]: ACTIVO
+              - generic [ref=e690]:
+                - img [ref=e691]
+                - generic [ref=e695]: producto
+            - generic [ref=e696]:
+              - generic [ref=e697]:
+                - generic [ref=e698]:
+                  - heading "Bicicleta de montaña" [level=3] [ref=e699]
+                  - paragraph [ref=e700]: "Código: DEP001"
+                - paragraph [ref=e701]: Bicicleta de montaña Trek, 21 velocidades, excelente estado
+                - generic [ref=e702]:
+                  - generic [ref=e703]: $180,000.00
+                  - generic [ref=e704]: Electrodomésticos
+                - generic [ref=e705]:
+                  - generic [ref=e706]: "Por: Ana Martínez"
+                  - generic [ref=e707]: 2 dic 2025, 06:23
+              - generic [ref=e708]:
+                - button "Ver Detalles" [ref=e710]:
+                  - img [ref=e711]
+                  - text: Ver Detalles
+                - generic [ref=e714]:
+                  - button "Suspender" [ref=e715]:
+                    - img [ref=e716]
+                    - generic [ref=e718]: Suspender
+                  - button "Peligroso" [ref=e719]:
+                    - img [ref=e720]
+                    - generic [ref=e722]: Peligroso
+        - generic [ref=e724]:
+          - generic [ref=e725]:
+            - button "Anterior" [disabled]:
+              - generic:
+                - img
+                - text: Anterior
+            - generic [ref=e726]:
+              - button "1" [ref=e727]
+              - button "2" [ref=e728]
+              - button "3" [ref=e729]
+            - button "Siguiente" [ref=e730]:
+              - generic [ref=e731]:
+                - text: Siguiente
+                - img [ref=e732]
+          - paragraph [ref=e735]: Página 1 de 3•35 productos en total
+        - generic [ref=e738]:
+          - heading "Resumen de Moderación" [level=3] [ref=e739]
+          - generic [ref=e740]:
+            - generic [ref=e741]:
+              - paragraph [ref=e742]: "0"
+              - paragraph [ref=e743]: Pendientes
+            - generic [ref=e744]:
+              - paragraph [ref=e745]: "35"
+              - paragraph [ref=e746]: Aprobados
+            - generic [ref=e747]:
+              - paragraph [ref=e748]: "0"
+              - paragraph [ref=e749]: Rechazados
+            - generic [ref=e750]:
+              - paragraph [ref=e751]: "0"
+              - paragraph [ref=e752]: Suspendidos
+            - generic [ref=e753]:
+              - paragraph [ref=e754]: "2"
+              - paragraph [ref=e755]: Peligrosos
+            - generic [ref=e756]:
+              - paragraph [ref=e757]: "0"
+              - paragraph [ref=e758]: En Apelación
+          - paragraph [ref=e759]: "Página 1 de 3 • Total: 35 productos"
+```

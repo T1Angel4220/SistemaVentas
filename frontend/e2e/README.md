@@ -10,15 +10,22 @@ e2e/
 │   ├── auth.ts        # Helper de autenticación
 │   └── test-data.ts   # Datos de prueba centralizados
 ├── pages/             # Page Object Models
-│   ├── LoginPage.ts
-│   ├── RegisterPage.ts
-│   ├── VerifyCodePage.ts
-│   ├── ForgotPasswordPage.ts
-│   ├── ResetPasswordPage.ts
-│   ├── ProfilePage.ts
-│   ├── UserManagementPage.ts
-│   ├── SessionManagementPage.ts
-│   └── RegisterModeratorPage.ts
+    │   ├── LoginPage.ts
+    │   ├── RegisterPage.ts
+    │   ├── VerifyCodePage.ts
+    │   ├── ForgotPasswordPage.ts
+    │   ├── ResetPasswordPage.ts
+    │   ├── ProfilePage.ts
+    │   ├── UserManagementPage.ts
+    │   ├── SessionManagementPage.ts
+    │   ├── RegisterModeratorPage.ts
+    │   ├── CreateProductPage.ts
+    │   ├── MyProductsPage.ts
+    │   ├── ProductCatalogPage.ts
+    │   ├── ProductDetailPage.ts
+    │   ├── ProductModerationPage.ts
+    │   ├── ReportsManagementPage.ts
+    │   └── SavedProductsPage.ts
 └── flows/             # Tests organizados por flujos
     ├── auth/          # Tests de autenticación
     │   ├── login.spec.ts
@@ -27,11 +34,24 @@ e2e/
     │   ├── password-recovery.spec.ts
     │   ├── profile.spec.ts
     │   └── logout.spec.ts
-    └── users/         # Tests de gestión de usuarios
-        ├── user-management.spec.ts
-        ├── session-management.spec.ts
-        ├── register-moderator.spec.ts
-        └── user-suspension-flow.spec.ts
+    ├── users/         # Tests de gestión de usuarios
+    │   ├── user-management.spec.ts
+    │   ├── session-management.spec.ts
+    │   ├── register-moderator.spec.ts
+    │   └── user-suspension-flow.spec.ts
+    ├── products/      # Tests de productos/servicios
+    │   ├── product-creation.spec.ts
+    │   ├── product-edition.spec.ts
+    │   ├── product-deletion.spec.ts
+    │   ├── product-visualization.spec.ts
+    │   ├── product-appeals.spec.ts
+    │   ├── product-reports.spec.ts
+    │   ├── product-saved.spec.ts
+    │   └── product-moderation.spec.ts
+    └── moderation/   # Tests de moderación
+        ├── manage-reports.spec.ts
+        ├── moderate-products.spec.ts
+        └── report-product.spec.ts
 ```
 
 ## Configuración
@@ -122,6 +142,52 @@ npm run test:e2e:report
 - ✅ Cerrar todas las sesiones de un usuario
 - ✅ Registrar nuevos moderadores
 
+### Productos/Servicios
+
+#### Creación (SIS-059 a SIS-064)
+- ✅ Crear producto exitosamente como vendedor
+- ✅ Crear servicio con campos específicos
+- ✅ Redirigir a login si no está autenticado
+- ✅ Denegar acceso a comprador
+- ✅ Validar campos requeridos
+- ✅ Validar código duplicado
+
+#### Edición (SIS-065 a SIS-068)
+- ✅ Editar producto propio exitosamente
+- ✅ Denegar edición de producto de otro vendedor
+- ✅ Bloquear edición de producto peligroso
+- ✅ Bloquear edición de producto suspendido
+
+#### Eliminación (SIS-069 a SIS-071)
+- ✅ Eliminar producto propio exitosamente
+- ✅ Bloquear eliminación de producto peligroso por vendedor
+- ✅ Administrador puede eliminar producto peligroso
+
+#### Visualización (SIS-072 a SIS-074)
+- ✅ Mostrar solo productos activos en catálogo público
+- ✅ Mostrar información completa de producto activo
+- ✅ Ocultar producto peligroso del público
+
+#### Apelaciones (SIS-075 a SIS-077)
+- ✅ Crear apelación para producto rechazado
+- ✅ Crear apelación para producto suspendido
+- ✅ Bloquear apelación de producto peligroso
+
+#### Reportes (SIS-078 a SIS-080)
+- ✅ Comprador puede reportar producto
+- ✅ Producto reportado sigue visible en catálogo
+- ✅ Moderador puede rechazar reporte
+
+#### Productos Guardados (SIS-081 a SIS-083)
+- ✅ Guardar producto en favoritos
+- ✅ Eliminar producto de favoritos
+- ✅ Mostrar lista de productos guardados
+
+#### Moderación (SIS-084, SIS-085)
+- ✅ Moderador puede aprobar producto
+- ✅ Moderador puede rechazar producto
+- ✅ Moderador puede suspender producto activo
+
 ### Flujos Completos
 
 - ✅ Flujo completo de suspensión y reactivación de usuario
@@ -138,9 +204,9 @@ npm run test:e2e:report
 
 ## Próximos Pasos
 
-- [ ] Implementar helpers para obtener códigos de verificación de la BD
-- [ ] Agregar tests de moderación de productos
-- [ ] Agregar tests de apelaciones
+- [x] Implementar helpers para obtener códigos de verificación de la BD
+- [x] Agregar tests de moderación de productos
+- [x] Agregar tests de apelaciones
 - [ ] Agregar tests de búsqueda y filtros
 - [ ] Configurar CI/CD para ejecutar tests automáticamente
 
