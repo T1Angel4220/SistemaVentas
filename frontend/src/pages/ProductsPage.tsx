@@ -275,6 +275,37 @@ export const ProductsPage: React.FC = () => {
     }));
   };
 
+  // Función para validar que solo se ingresen números (con punto decimal opcional)
+  const handlePriceChange = (key: 'precio_min' | 'precio_max', value: string) => {
+    // Permitir solo números, punto decimal y cadena vacía
+    const numericValue = value.replace(/[^0-9.]/g, '');
+    
+    // Evitar múltiples puntos decimales
+    const parts = numericValue.split('.');
+    const formattedValue = parts.length > 2 
+      ? parts[0] + '.' + parts.slice(1).join('')
+      : numericValue;
+    
+    handleFilterChange(key, formattedValue);
+  };
+
+  // Prevenir que se ingresen caracteres no numéricos
+  const handlePriceKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Permitir: backspace, delete, tab, escape, enter, y teclas de dirección
+    if ([8, 9, 27, 13, 46, 37, 38, 39, 40].indexOf(e.keyCode) !== -1 ||
+        // Permitir Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+        (e.keyCode === 65 && e.ctrlKey === true) ||
+        (e.keyCode === 67 && e.ctrlKey === true) ||
+        (e.keyCode === 86 && e.ctrlKey === true) ||
+        (e.keyCode === 88 && e.ctrlKey === true)) {
+      return;
+    }
+    // Asegurar que es un número y evitar el punto decimal duplicado
+    if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105) && e.keyCode !== 190 && e.keyCode !== 110) {
+      e.preventDefault();
+    }
+  };
+
   const handlePageChange = (page: number) => {
     setFilters(prev => ({ ...prev, page }));
   };
@@ -564,10 +595,12 @@ export const ProductsPage: React.FC = () => {
                       Precio mínimo (USD)
                     </label>
                     <Input
-                      type="number"
+                      type="text"
+                      inputMode="decimal"
                       placeholder="Precio mínimo"
                       value={filters.precio_min}
-                      onChange={(e) => handleFilterChange('precio_min', e.target.value)}
+                      onChange={(e) => handlePriceChange('precio_min', e.target.value)}
+                      onKeyDown={handlePriceKeyDown}
                       className="h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 shadow-sm rounded-xl bg-white/80 backdrop-blur-sm"
                     />
                   </div>
@@ -579,10 +612,12 @@ export const ProductsPage: React.FC = () => {
                       Precio máximo (USD)
                     </label>
                     <Input
-                      type="number"
+                      type="text"
+                      inputMode="decimal"
                       placeholder="Precio máximo"
                       value={filters.precio_max}
-                      onChange={(e) => handleFilterChange('precio_max', e.target.value)}
+                      onChange={(e) => handlePriceChange('precio_max', e.target.value)}
+                      onKeyDown={handlePriceKeyDown}
                       className="h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 shadow-sm rounded-xl bg-white/80 backdrop-blur-sm"
                     />
                   </div>
