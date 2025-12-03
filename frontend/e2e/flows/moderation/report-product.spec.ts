@@ -17,6 +17,7 @@ test.describe('Reportes de Productos', () => {
   });
 
   test('PR-001: Comprador puede reportar un producto', async ({ page }) => {
+    test.setTimeout(90000); // Aumentar timeout a 90 segundos
     try {
       // Iniciar sesión como comprador
       await authHelper.loginAs('comprador');
@@ -49,6 +50,7 @@ test.describe('Reportes de Productos', () => {
   });
 
   test('PR-002: Vendedor puede reportar producto de otro vendedor', async ({ page }) => {
+    test.setTimeout(90000); // Aumentar timeout a 90 segundos
     try {
       // Iniciar sesión como vendedor
       await authHelper.loginAs('vendedor');

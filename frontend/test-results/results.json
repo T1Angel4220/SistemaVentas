@@ -99,12 +99,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 59882,
+                      "duration": 43602,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-12-03T15:47:59.974Z",
+                      "startTime": "2025-12-03T16:46:46.896Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -133,12 +133,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 49989,
+                      "duration": 64495,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-12-03T15:49:00.200Z",
+                      "startTime": "2025-12-03T16:47:30.833Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -153,7 +153,7 @@
             },
             {
               "title": "SIS-085 (duplicado): Moderador puede suspender producto activo",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -166,58 +166,18 @@
                     {
                       "workerIndex": 0,
                       "parallelIndex": 0,
-                      "status": "failed",
-                      "duration": 43094,
-                      "error": {
-                        "message": "Error: No se encontró ningún producto visible en la página",
-                        "stack": "Error: No se encontró ningún producto visible en la página\n    at ProductModerationPage.suspendProduct (E:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\e2e\\pages\\ProductModerationPage.ts:301:13)\n    at E:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\e2e\\flows\\products\\08-product-moderation.spec.ts:317:5",
-                        "location": {
-                          "file": "E:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\e2e\\pages\\ProductModerationPage.ts",
-                          "column": 13,
-                          "line": 301
-                        },
-                        "snippet": "\u001b[90m   at \u001b[39mpages\\ProductModerationPage.ts:301\n\n\u001b[0m \u001b[90m 299 |\u001b[39m     \u001b[90m// Si no hay productos, lanzar error\u001b[39m\n \u001b[90m 300 |\u001b[39m     \u001b[36mif\u001b[39m (\u001b[33m!\u001b[39mproductCard) {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 301 |\u001b[39m       \u001b[36mthrow\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mError\u001b[39m(\u001b[32m'No se encontró ningún producto visible en la página'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m             \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 302 |\u001b[39m     }\n \u001b[90m 303 |\u001b[39m     \n \u001b[90m 304 |\u001b[39m     \u001b[90m// Buscar botón \"Suspender\" dentro del Card - usar .first() para evitar strict mode violation\u001b[39m\u001b[0m"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "E:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\e2e\\pages\\ProductModerationPage.ts",
-                            "column": 13,
-                            "line": 301
-                          },
-                          "message": "Error: No se encontró ningún producto visible en la página\n\n\u001b[90m   at \u001b[39mpages\\ProductModerationPage.ts:301\n\n\u001b[0m \u001b[90m 299 |\u001b[39m     \u001b[90m// Si no hay productos, lanzar error\u001b[39m\n \u001b[90m 300 |\u001b[39m     \u001b[36mif\u001b[39m (\u001b[33m!\u001b[39mproductCard) {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 301 |\u001b[39m       \u001b[36mthrow\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mError\u001b[39m(\u001b[32m'No se encontró ningún producto visible en la página'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m             \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 302 |\u001b[39m     }\n \u001b[90m 303 |\u001b[39m     \n \u001b[90m 304 |\u001b[39m     \u001b[90m// Buscar botón \"Suspender\" dentro del Card - usar .first() para evitar strict mode violation\u001b[39m\u001b[0m\n\u001b[2m    at ProductModerationPage.suspendProduct (E:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\e2e\\pages\\ProductModerationPage.ts:301:13)\u001b[22m\n\u001b[2m    at E:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\e2e\\flows\\products\\08-product-moderation.spec.ts:317:5\u001b[22m"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 43809,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-12-03T15:49:50.222Z",
+                      "startTime": "2025-12-03T16:48:35.357Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "E:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\test-results\\flows-products-08-product--d8e81-e-suspender-producto-activo-chromium\\test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "E:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\test-results\\flows-products-08-product--d8e81-e-suspender-producto-activo-chromium\\video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "E:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\test-results\\flows-products-08-product--d8e81-e-suspender-producto-activo-chromium\\error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "E:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\e2e\\pages\\ProductModerationPage.ts",
-                        "column": 13,
-                        "line": 301
-                      }
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "08160d3d014b017cb70d-abf68c21d5693c6071bb",
@@ -232,11 +192,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2025-12-03T15:47:55.720Z",
-    "duration": 158028.37300000002,
-    "expected": 2,
+    "startTime": "2025-12-03T16:46:42.639Z",
+    "duration": 156900.393,
+    "expected": 3,
     "skipped": 0,
-    "unexpected": 1,
+    "unexpected": 0,
     "flaky": 0
   }
 }
