@@ -291,22 +291,88 @@ export class SessionManagementPage {
    * Cerrar todas las sesiones
    */
   async closeAllSessions(motivo?: string) {
-    await this.closeAllSessionsButton.waitFor({ state: 'visible', timeout: 10000 });
-    // await this.page.waitForTimeout(800); // COMENTADO
-    await this.closeAllSessionsButton.click();
-    // await this.page.waitForTimeout(1500); // COMENTADO
+    // Primero asegurar que la página esté completamente cargada
+    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForTimeout(2000);
+    
+    // Verificar que hay sesiones activas antes de buscar el botón
+    const activeCount = await this.getActiveSessionsCount();
+    if (activeCount === 0) {
+      throw new Error('No hay sesiones activas para cerrar. El botón "Cerrar Todas las Sesiones" solo aparece cuando hay sesiones activas.');
+    }
+    
+    // Esperar a que el botón esté visible (solo aparece si hay sesiones activas)
+    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForTimeout(1000);
+    
+    // Buscar el botón con múltiples estrategias
+    const buttonSelectors = [
+      'button:has-text("Cerrar Todas las Sesiones")',
+      'button:has-text("Cerrar Todas")',
+      'button[class*="from-red-600"]:has-text("Cerrar")',
+      'button[class*="red-600"]:has(svg)'
+    ];
+    
+    let buttonFound = false;
+    let closeAllButton = null;
+    
+    for (const selector of buttonSelectors) {
+      try {
+        const button = this.page.locator(selector).first();
+        await button.waitFor({ state: 'visible', timeout: 5000 });
+        closeAllButton = button;
+        buttonFound = true;
+        break;
+      } catch (e) {
+        // Continuar con el siguiente selector
+      }
+    }
+    
+    if (!buttonFound || !closeAllButton) {
+      throw new Error(`No se pudo encontrar el botón "Cerrar Todas las Sesiones". Hay ${activeCount} sesiones activas, pero el botón no está visible.`);
+    }
+    
+    await closeAllButton.scrollIntoViewIfNeeded();
+    await this.page.waitForTimeout(500);
+    await closeAllButton.click();
+    await this.page.waitForTimeout(1500);
     
     if (motivo && await this.modalReasonInput.isVisible({ timeout: 5000 }).catch(() => false)) {
       await this.modalReasonInput.fill(motivo);
-      // await this.page.waitForTimeout(800); // COMENTADO
+      await this.page.waitForTimeout(800);
     }
     
-    // Buscar el botón de confirmar dentro del modal (z-50) con texto "Cerrar Todas"
-    const confirmBtn = this.page.locator('div[class*="z-50"] button:has-text("Cerrar Todas")').first();
-    await confirmBtn.waitFor({ state: 'visible', timeout: 10000 });
-    // await this.page.waitForTimeout(800); // COMENTADO
+    // Buscar el botón de confirmar dentro del modal con múltiples estrategias
+    const confirmSelectors = [
+      'div[class*="z-50"] button:has-text("Cerrar Todas")',
+      'div[class*="z-50"] button:has-text("Cerrar")',
+      '[role="dialog"] button:has-text("Cerrar Todas")',
+      'button[class*="red"]:has-text("Cerrar")'
+    ];
+    
+    let confirmBtn = null;
+    let confirmFound = false;
+    
+    for (const selector of confirmSelectors) {
+      try {
+        const btn = this.page.locator(selector).first();
+        await btn.waitFor({ state: 'visible', timeout: 5000 });
+        confirmBtn = btn;
+        confirmFound = true;
+        break;
+      } catch (e) {
+        // Continuar con el siguiente selector
+      }
+    }
+    
+    if (!confirmFound || !confirmBtn) {
+      throw new Error('No se encontró el botón de confirmar en el modal de cerrar todas las sesiones');
+    }
+    
+    await confirmBtn.scrollIntoViewIfNeeded();
+    await this.page.waitForTimeout(500);
     await confirmBtn.click();
-    // await this.page.waitForTimeout(2000); // COMENTADO
+    await this.page.waitForTimeout(2000);
   }
 
   /**

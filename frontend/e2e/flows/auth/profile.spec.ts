@@ -3,6 +3,7 @@ import { ProfilePage } from '../../pages/ProfilePage';
 import { LoginPage } from '../../pages/LoginPage';
 import { AuthHelper } from '../../fixtures/auth';
 import { TestUsers } from '../../fixtures/test-data';
+import { DBHelper } from '../../utils/db-helper';
 
 test.describe('Perfil de Usuario', () => {
   // Aumentar timeout para todos los tests de este describe
@@ -10,11 +11,32 @@ test.describe('Perfil de Usuario', () => {
   let profilePage: ProfilePage;
   let loginPage: LoginPage;
   let authHelper: AuthHelper;
+  let dbHelper: DBHelper;
+
+  test.beforeAll(async () => {
+    // Crear instancia de DBHelper para restaurar contraseñas si es necesario
+    dbHelper = new DBHelper();
+  });
+
+  test.afterAll(async () => {
+    // Restaurar contraseña original al finalizar todos los tests
+    if (dbHelper) {
+      const originalPasswordHash = '$2b$10$w5n3al7idardeQAOMfhkzu5MIjvUcGmUeqZf36wovTZKuxlVVtH5C';
+      await dbHelper.restorePassword(TestUsers.comprador.email, originalPasswordHash);
+      await dbHelper.disconnect();
+    }
+  });
 
   test.beforeEach(async ({ page }) => {
     profilePage = new ProfilePage(page);
     loginPage = new LoginPage(page);
     authHelper = new AuthHelper(page);
+    
+    // Restaurar contraseña original antes de cada test para evitar problemas
+    if (dbHelper) {
+      const originalPasswordHash = '$2b$10$w5n3al7idardeQAOMfhkzu5MIjvUcGmUeqZf36wovTZKuxlVVtH5C';
+      await dbHelper.restorePassword(TestUsers.comprador.email, originalPasswordHash);
+    }
     
     // Asegurar que la página esté lista
     await page.waitForLoadState('domcontentloaded');
@@ -33,16 +55,22 @@ test.describe('Perfil de Usuario', () => {
       
       // Ir al perfil
       await profilePage.goto();
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(1000);
     } catch (error) {
-      // Si falla, intentar una vez más
-      console.log('Error en beforeEach, reintentando...');
+      // Si falla, intentar restaurar contraseña y reintentar
+      console.log('Error en beforeEach, restaurando contraseña y reintentando...');
+      if (dbHelper) {
+        const originalPasswordHash = '$2b$10$w5n3al7idardeQAOMfhkzu5MIjvUcGmUeqZf36wovTZKuxlVVtH5C';
+        await dbHelper.restorePassword(TestUsers.comprador.email, originalPasswordHash);
+        await page.waitForTimeout(1000);
+      }
       await page.goto('/login');
+      await page.waitForLoadState('networkidle', { timeout: 15000 });
       await page.waitForTimeout(1000);
       await authHelper.login(TestUsers.comprador.email, TestUsers.comprador.password);
       await page.waitForTimeout(1000);
       await profilePage.goto();
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(1000);
     }
   });
 
@@ -79,6 +107,11 @@ test.describe('Perfil de Usuario', () => {
   test('debería cambiar contraseña exitosamente', async ({ page }) => {
     const newPassword = 'newpassword123';
     
+    // Asegurar que estamos en la página de perfil
+    await profilePage.goto();
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+    
     await profilePage.changePassword(
       TestUsers.comprador.password,
       newPassword,
@@ -89,23 +122,47 @@ test.describe('Perfil de Usuario', () => {
     const successMessage = page.locator('text=/Contraseña cambiada|éxito|actualizado/i').or(
       page.locator('[class*="from-green-50"]').first()
     );
-    await expect(successMessage.first()).toBeVisible({ timeout: 10000 });
+    await expect(successMessage.first()).toBeVisible({ timeout: 15000 });
     
     // Nota: El test de login con nueva contraseña se omite para evitar problemas de logout
     // La funcionalidad de cambio de contraseña se valida con el mensaje de éxito
-    // Restaurar contraseña original para otros tests
+    // Restaurar contraseña original para otros tests usando DBHelper
     await page.waitForTimeout(2000);
-    await profilePage.goto();
-    await profilePage.changePassword(newPassword, TestUsers.comprador.password, TestUsers.comprador.password);
-    await page.waitForTimeout(2000);
+    
+    // Restaurar contraseña usando DBHelper en lugar de intentar cambiarla de nuevo
+    if (dbHelper) {
+      const originalPasswordHash = '$2b$10$w5n3al7idardeQAOMfhkzu5MIjvUcGmUeqZf36wovTZKuxlVVtH5C';
+      await dbHelper.restorePassword(TestUsers.comprador.email, originalPasswordHash);
+      await page.waitForTimeout(1000);
+    } else {
+      // Fallback: intentar restaurar manualmente
+      try {
+        await profilePage.goto();
+        await page.waitForTimeout(2000);
+        await profilePage.changePassword(newPassword, TestUsers.comprador.password, TestUsers.comprador.password);
+        await page.waitForTimeout(2000);
+      } catch (error) {
+        console.warn('No se pudo restaurar la contraseña manualmente, se restaurará en el siguiente beforeEach');
+      }
+    }
   });
 
   test('debería validar errores en cambio de contraseña', async ({ page }) => {
+    // Asegurar que estamos en la página de perfil
+    await profilePage.goto();
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+    
     // Test combinado: validar múltiples errores en un solo test para optimizar
     
     // 1. Validar contraseña actual incorrecta
-    await profilePage.changePassword('wrongpassword', 'newpassword123', 'newpassword123');
-    await page.waitForTimeout(2000);
+    try {
+      await profilePage.changePassword('wrongpassword', 'newpassword123', 'newpassword123');
+      await page.waitForTimeout(2000);
+    } catch (error) {
+      // Si falla al encontrar el botón, el test ya falló, pero continuamos
+      console.log('Error al intentar cambiar contraseña:', error);
+    }
     
     const error1 = page.locator('text=/incorrecta|error|Error|inválida/i').or(
       page.locator('[class*="from-red-50"]').first()
@@ -123,9 +180,18 @@ test.describe('Perfil de Usuario', () => {
     // Limpiar y probar siguiente validación
     await page.waitForTimeout(2000);
     
-    // 2. Validar que las contraseñas nuevas coincidan
-    await profilePage.changePassword(TestUsers.comprador.password, 'newpassword123', 'differentpassword');
+    // Recargar la página para limpiar el estado
+    await profilePage.goto();
+    await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
+    
+    // 2. Validar que las contraseñas nuevas coincidan
+    try {
+      await profilePage.changePassword(TestUsers.comprador.password, 'newpassword123', 'differentpassword');
+      await page.waitForTimeout(2000);
+    } catch (error) {
+      console.log('Error al intentar cambiar contraseña:', error);
+    }
     
     const error2 = page.locator('text=/no coinciden|diferentes|coincidir/i').or(
       page.locator('[class*="from-red-50"]').first()

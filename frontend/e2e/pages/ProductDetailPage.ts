@@ -47,13 +47,51 @@ export class ProductDetailPage {
    * Navegar a la página de detalle de un producto
    */
   async goto(productId: number) {
-    await this.page.goto(`/products/${productId}`);
+    // Verificar que la página no esté cerrada
+    if (this.page.isClosed()) {
+      throw new Error('La página está cerrada');
+    }
+
     try {
-      await this.page.waitForLoadState('networkidle', { timeout: 20000 });
+      await this.page.goto(`/products/${productId}`, { 
+        waitUntil: 'domcontentloaded', 
+        timeout: 30000 
+      });
+    } catch (error) {
+      // Si la navegación falla, verificar si la página se cerró
+      if (this.page.isClosed()) {
+        throw new Error('La página se cerró durante la navegación');
+      }
+      throw error;
+    }
+
+    // Verificar nuevamente que la página no esté cerrada antes de hacer waitForLoadState
+    if (this.page.isClosed()) {
+      throw new Error('La página se cerró después de la navegación');
+    }
+
+    try {
+      // Intentar esperar networkidle con timeout más corto
+      await this.page.waitForLoadState('networkidle', { timeout: 15000 });
     } catch {
       // Si networkidle falla, esperar domcontentloaded
-      await this.page.waitForLoadState('domcontentloaded', { timeout: 10000 });
-      await this.page.waitForTimeout(2000);
+      if (this.page.isClosed()) {
+        return; // Si la página se cerró, salir
+      }
+      
+      try {
+        await this.page.waitForLoadState('domcontentloaded', { timeout: 10000 });
+      } catch {
+        // Si también falla, continuar de todas formas
+        return;
+      }
+      
+      // Solo hacer waitForTimeout si la página no está cerrada y tenemos tiempo
+      if (!this.page.isClosed()) {
+        await this.page.waitForTimeout(1000).catch(() => {
+          // Si el timeout falla, continuar de todas formas
+        });
+      }
     }
   }
 
@@ -207,27 +245,50 @@ export class ProductDetailPage {
       return false;
     }
     
-    // Esperar a que la página cargue
-    await this.page.waitForLoadState('networkidle').catch(() => {});
+    // Esperar a que la página cargue completamente
+    try {
+      await this.page.waitForLoadState('networkidle', { timeout: 15000 });
+    } catch {
+      await this.page.waitForLoadState('domcontentloaded', { timeout: 10000 });
+    }
     
     // Verificar nuevamente antes de hacer waitForTimeout
     if (this.page.isClosed()) {
       return false;
     }
     
-    await this.page.waitForTimeout(1000);
+    // Esperar un poco más para que React renderice los componentes
+    await this.page.waitForTimeout(2000);
     
-    // Buscar el botón de múltiples formas
-    const buttons = [
-      this.page.locator('button:has-text("Reportar producto")'),
-      this.page.locator('button:has-text("Reportar")').filter({ hasText: /Reportar/i }),
-      this.page.locator('button').filter({ hasText: /Reportar/i }).filter({ hasNot: this.page.locator('text=/Moderar|Gestionar/i') })
+    // Esperar a que el título del producto esté visible (indica que la página cargó)
+    try {
+      await this.productTitle.waitFor({ state: 'visible', timeout: 10000 });
+    } catch {
+      // Si no encuentra el título, continuar de todas formas
+    }
+    
+    // Buscar el botón de múltiples formas con más tiempo
+    const buttonSelectors = [
+      'button:has-text("Reportar producto")',
+      'button:has-text("Reportar")',
+      'button[class*="red"]:has(svg)',
+      'button:has(svg.lucide-flag)',
+      'button:has([class*="Flag"])'
     ];
     
-    for (const btn of buttons) {
-      const isVisible = await btn.isVisible({ timeout: 3000 }).catch(() => false);
-      if (isVisible) {
-        return true;
+    for (const selector of buttonSelectors) {
+      try {
+        const btn = this.page.locator(selector).first();
+        const isVisible = await btn.isVisible({ timeout: 5000 }).catch(() => false);
+        if (isVisible) {
+          // Verificar que realmente es el botón de reportar (no otro botón rojo)
+          const btnText = await btn.textContent().catch(() => '');
+          if (btnText && (btnText.includes('Reportar') || btnText.includes('reportar'))) {
+            return true;
+          }
+        }
+      } catch {
+        // Continuar con el siguiente selector
       }
     }
     

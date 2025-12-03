@@ -27,7 +27,7 @@ export class ProfilePage {
     this.telefonoInput = page.locator('input[name="telefono"]');
     this.direccionInput = page.locator('input[name="direccion"]');
     this.saveProfileButton = page.locator('button[type="submit"]:has-text("Guardar"), button:has-text("Actualizar")');
-    this.changePasswordButton = page.locator('button:has-text("Cambiar contraseña"), button:has-text("Contraseña")');
+    this.changePasswordButton = page.locator('button:has-text("Cambiar Contraseña"), button:has-text("Cambiar contraseña"), button:has-text("Contraseña")').first();
     this.currentPasswordInput = page.locator('input[name="currentPassword"]');
     this.newPasswordInput = page.locator('input[name="newPassword"]');
     this.confirmPasswordInput = page.locator('input[name="confirmPassword"]');
@@ -78,6 +78,19 @@ export class ProfilePage {
     ).catch(() => {
       // Si falla, continuar de todas formas
     });
+    
+    // Esperar a que los elementos principales estén visibles
+    try {
+      // Esperar a que al menos un input o botón esté visible
+      await this.page.waitForSelector('input[name="nombre"], button:has-text("Editar"), button:has-text("Cambiar")', { 
+        state: 'visible', 
+        timeout: 10000 
+      });
+    } catch (e) {
+      // Si no se encuentra, continuar de todas formas
+      console.log('No se encontraron elementos principales, continuando...');
+    }
+    
     await this.page.waitForTimeout(1000);
   }
 
@@ -126,9 +139,37 @@ export class ProfilePage {
    * Cambiar contraseña
    */
   async changePassword(currentPassword: string, newPassword: string, confirmPassword: string) {
-    await this.changePasswordButton.waitFor({ state: 'visible', timeout: 10000 });
-    await this.page.waitForTimeout(800);
-    await this.changePasswordButton.click();
+    // Asegurar que la página esté completamente cargada
+    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForTimeout(1000);
+    
+    // Buscar el botón de cambiar contraseña con múltiples estrategias
+    const buttonSelectors = [
+      'button:has-text("Cambiar Contraseña")',
+      'button:has-text("Cambiar contraseña")',
+      'button:has-text("Contraseña")',
+      'button:has([class*="Lock"])',
+      'button[class*="purple"]'
+    ];
+    
+    let buttonFound = false;
+    for (const selector of buttonSelectors) {
+      try {
+        const button = this.page.locator(selector).first();
+        await button.waitFor({ state: 'visible', timeout: 5000 });
+        await this.page.waitForTimeout(800);
+        await button.click();
+        buttonFound = true;
+        break;
+      } catch (e) {
+        // Continuar con el siguiente selector
+      }
+    }
+    
+    if (!buttonFound) {
+      throw new Error('No se pudo encontrar el botón de cambiar contraseña');
+    }
+    
     await this.page.waitForTimeout(1000);
     
     await this.currentPasswordInput.waitFor({ state: 'visible', timeout: 10000 });
