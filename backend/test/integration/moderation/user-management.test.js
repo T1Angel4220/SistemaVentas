@@ -52,8 +52,8 @@ describe('D. Gestión de Usuarios (Moderadores y Admin)', () => {
     });
   });
 
-  describe('Caso 24: Admin registra moderador', () => {
-    it('debe permitir al admin crear moderador y permitir login inmediato', async () => {
+  describe('CF0039: Admin registra moderador', () => {
+    it('CF0039: Registro de moderador por administrador', async () => {
       const newModerator = {
         cedula: '999999999',
         nombre: 'Nuevo',
@@ -93,8 +93,8 @@ describe('D. Gestión de Usuarios (Moderadores y Admin)', () => {
     });
   });
 
-  describe('Caso 25: Suspensión de usuarios', () => {
-    it('debe permitir a moderador/admin suspender compradores y vendedores, cerrando sesiones', async () => {
+  describe('CF0040: Suspensión de usuarios', () => {
+    it('CF0040: Suspensión de usuarios por moderador/admin', async () => {
       // Moderador suspende comprador
       const res1 = await request(app)
         .put(`/api/auth/suspend-user/${buyerUser.id}`)
@@ -122,8 +122,8 @@ describe('D. Gestión de Usuarios (Moderadores y Admin)', () => {
     });
   });
 
-  describe('Caso 26-27: Usuario suspendido y reactivación', () => {
-    it('debe rechazar login de suspendido y permitir reactivación con login posterior', async () => {
+  describe('CF0041: Usuario suspendido y reactivación', () => {
+    it('CF0041: Rechazo de login de usuario suspendido y reactivación exitosa', async () => {
       // Suspender
       await request(app)
         .put(`/api/auth/suspend-user/${buyerUser.id}`)
@@ -170,8 +170,8 @@ describe('D. Gestión de Usuarios (Moderadores y Admin)', () => {
     });
   });
 
-  describe('Caso 28: Listar usuarios', () => {
-    it('debe permitir a admin y moderador ver lista con paginación y filtros', async () => {
+  describe('CF0042: Listar usuarios', () => {
+    it('CF0042: Lista de usuarios con paginación y filtros', async () => {
       // Admin ve lista
       const res1 = await request(app)
         .get('/api/auth/users')
@@ -211,8 +211,8 @@ describe('D. Gestión de Usuarios (Moderadores y Admin)', () => {
     });
   });
 
-  describe('Caso 29-30: Auditoría de acciones', () => {
-    it('debe registrar acciones de suspensión y reactivación en auditoría', async () => {
+  describe('CF0043: Auditoría de acciones', () => {
+    it('CF0043: Registro de acciones en auditoría', async () => {
       const actionsBefore = await countModerationActions(moderatorUser.id);
 
       // Suspender
@@ -238,8 +238,8 @@ describe('D. Gestión de Usuarios (Moderadores y Admin)', () => {
     });
   });
 
-  describe('Caso 31-33: Admin puede suspender y reactivar', () => {
-    it('debe permitir al admin suspender y reactivar usuarios', async () => {
+  describe('CF0044: Admin puede suspender y reactivar', () => {
+    it('CF0044: Suspensión y reactivación por administrador', async () => {
       // Admin suspende
       await request(app)
         .put(`/api/auth/suspend-user/${buyerUser.id}`)
@@ -263,8 +263,8 @@ describe('D. Gestión de Usuarios (Moderadores y Admin)', () => {
     });
   });
 
-  describe('Caso 34-35: Usuarios regulares no pueden moderar', () => {
-    it('debe rechazar intentos de comprador y vendedor de suspender usuarios', async () => {
+  describe('CF0045: Usuarios regulares no pueden moderar', () => {
+    it('CF0045: Rechazo de suspensión por usuarios regulares (comprador/vendedor)', async () => {
       // Comprador intenta suspender
       const res1 = await request(app)
         .put(`/api/auth/suspend-user/${sellerUser.id}`)
@@ -286,8 +286,8 @@ describe('D. Gestión de Usuarios (Moderadores y Admin)', () => {
     });
   });
 
-  describe('Caso 36: Moderador no puede suspender admin', () => {
-    it('debe rechazar que moderador suspenda administrador y admin debe seguir activo', async () => {
+  describe('CF0046: Moderador no puede suspender admin', () => {
+    it('CF0046: Rechazo de suspensión de administrador por moderador', async () => {
       const res = await request(app)
         .put(`/api/auth/suspend-user/${adminUser.id}`)
         .set(getAuthHeaders(moderatorUser.token))
@@ -302,8 +302,8 @@ describe('D. Gestión de Usuarios (Moderadores y Admin)', () => {
     });
   });
 
-  describe('Caso 37-38: Acceso denegado para suspendido', () => {
-    it('debe rechazar token inmediatamente después de suspensión en todos los endpoints', async () => {
+  describe('CF0047: Acceso denegado para suspendido', () => {
+    it('CF0047: Acceso denegado para usuario suspendido en todos los endpoints', async () => {
       // Verificar acceso antes de suspender
       await request(app)
         .get('/api/auth/profile')
@@ -330,8 +330,8 @@ describe('D. Gestión de Usuarios (Moderadores y Admin)', () => {
     });
   });
 
-  describe('Caso 39: Gestión de sesiones al suspender/reactivar', () => {
-    it('debe cerrar sesiones al suspender y no reactivarlas automáticamente', async () => {
+  describe('CF0048: Gestión de sesiones al suspender/reactivar', () => {
+    it('CF0048: Cierre de sesiones al suspender y no reactivarlas automáticamente', async () => {
       // Crear sesión adicional
       await createTestSession(buyerUser.id, 'additional-token-123');
       let activeSessions = await countActiveSessions(buyerUser.id);
@@ -372,8 +372,8 @@ describe('D. Gestión de Usuarios (Moderadores y Admin)', () => {
     });
   });
 
-  describe('Caso 40: Permisos de registro de moderador', () => {
-    it('debe rechazar registro de moderador por usuarios sin permisos de admin', async () => {
+  describe('CF0049: Permisos de registro de moderador', () => {
+    it('CF0049: Rechazo de registro de moderador sin permisos de admin', async () => {
       const newModerator = {
         cedula: '777777777',
         nombre: 'Intento',
@@ -411,8 +411,8 @@ describe('D. Gestión de Usuarios (Moderadores y Admin)', () => {
     });
   });
 
-  describe('Caso 41: Validación de campos en lista de usuarios', () => {
-    it('debe retornar usuarios con campos esenciales y respetar filtros combinados', async () => {
+  describe('CF0050: Validación de campos en lista de usuarios', () => {
+    it('CF0050: Validación de campos en lista de usuarios y filtros combinados', async () => {
       const res = await request(app)
         .get('/api/auth/users')
         .set(getAuthHeaders(adminUser.token))

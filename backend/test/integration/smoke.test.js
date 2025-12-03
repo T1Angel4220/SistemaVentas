@@ -9,12 +9,12 @@ const { checkDatabaseConnection } = require('../helpers/db.helpers');
 
 describe('🔥 Smoke Tests - Verificación de Configuración', () => {
   
-  it('debe conectarse exitosamente a la base de datos', async () => {
+  it('CF0001: Verificación de conexión a base de datos', async () => {
     const isConnected = await checkDatabaseConnection();
     expect(isConnected).to.be.true;
   });
 
-  it('debe responder correctamente en las rutas principales', async () => {
+  it('CF0002: Verificación de respuesta en rutas principales', async () => {
     const res = await request(app)
       .get('/')
       .expect(200);
@@ -23,14 +23,14 @@ describe('🔥 Smoke Tests - Verificación de Configuración', () => {
     expect(res.body).to.have.property('message');
   });
 
-  it('debe tener configuradas las variables de entorno esenciales', () => {
+  it('CF0003: Verificación de variables de entorno esenciales', () => {
     expect(process.env.NODE_ENV).to.exist;
     expect(process.env.DB_HOST).to.exist;
     expect(process.env.DB_NAME).to.exist;
     expect(process.env.JWT_SECRET).to.exist;
   });
 
-  it('debe tener disponibles los helpers de prueba', () => {
+  it('CF0004: Verificación de helpers de prueba disponibles', () => {
     const dbHelpers = require('../helpers/db.helpers');
     const authHelpers = require('../helpers/auth.helpers');
     

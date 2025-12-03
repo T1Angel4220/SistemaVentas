@@ -15,8 +15,8 @@ describe('A. Registro y Verificación de Email', () => {
     await cleanAuthTables();
   });
 
-  describe('Caso 1-2: Registro exitoso', () => {
-    it('debe registrar comprador con datos válidos y crear código de verificación', async () => {
+  describe('CF0005-CF0006: Registro exitoso', () => {
+    it('CF0005: Registro exitoso de comprador con código de verificación', async () => {
       const res = await request(app)
         .post('/api/auth/register')
         .send(testUsers.validBuyer)
@@ -36,7 +36,7 @@ describe('A. Registro y Verificación de Email', () => {
       expect(res.body.message.toLowerCase()).to.include('verif');
     });
 
-    it('debe registrar vendedor con datos válidos', async () => {
+    it('CF0006: Registro exitoso de vendedor', async () => {
       const res = await request(app)
         .post('/api/auth/register')
         .send(testUsers.validSeller)
@@ -51,8 +51,8 @@ describe('A. Registro y Verificación de Email', () => {
     });
   });
 
-  describe('Caso 4: Verificación con código válido', () => {
-    it('debe verificar el email con código correcto y activar usuario', async () => {
+  describe('CF0007: Verificación con código válido', () => {
+    it('CF0007: Verificación de email con código válido', async () => {
       await request(app)
         .post('/api/auth/register')
         .send(testUsers.validBuyer)
@@ -76,8 +76,8 @@ describe('A. Registro y Verificación de Email', () => {
     });
   });
 
-  describe('Caso 5: Verificación con código inválido', () => {
-    it('debe rechazar códigos inválidos (inexistente, formato incorrecto, muy corto)', async () => {
+  describe('CF0008: Verificación con código inválido', () => {
+    it('CF0008: Rechazo de códigos de verificación inválidos', async () => {
       const invalidCodes = [
         { code: '000000', desc: 'inexistente' },
         { code: 'ABC123', desc: 'formato incorrecto' },
@@ -95,8 +95,8 @@ describe('A. Registro y Verificación de Email', () => {
     });
   });
 
-  describe('Caso 6: Registro con datos duplicados', () => {
-    it('debe rechazar registro con email duplicado', async () => {
+  describe('CF0009-CF0010: Registro con datos duplicados', () => {
+    it('CF0009: Rechazo de registro con email duplicado', async () => {
       await request(app)
         .post('/api/auth/register')
         .send(testUsers.validBuyer)
@@ -113,7 +113,7 @@ describe('A. Registro y Verificación de Email', () => {
       );
     });
 
-    it('debe rechazar registro con cédula duplicada', async () => {
+    it('CF0010: Rechazo de registro con cédula duplicada', async () => {
       await request(app)
         .post('/api/auth/register')
         .send(testUsers.validBuyer)
@@ -134,8 +134,8 @@ describe('A. Registro y Verificación de Email', () => {
     });
   });
 
-  describe('Caso 7: Validación de correo', () => {
-    it('debe rechazar registro sin correo o con correo inválido', async () => {
+  describe('CF0011: Validación de correo', () => {
+    it('CF0011: Rechazo de registro sin correo o con correo inválido', async () => {
       const withoutEmail = { ...testUsers.validBuyer };
       delete withoutEmail.correo;
 
@@ -160,8 +160,8 @@ describe('A. Registro y Verificación de Email', () => {
     });
   });
 
-  describe('Caso 8: Validación de campos requeridos', () => {
-    it('debe rechazar registro sin campos requeridos (cédula, nombre, contraseña) o contraseña muy corta', async () => {
+  describe('CF0012: Validación de campos requeridos', () => {
+    it('CF0012: Rechazo de registro sin campos requeridos o contraseña muy corta', async () => {
       const requiredFields = ['cedula', 'nombre', 'password'];
       
       for (const field of requiredFields) {
@@ -191,8 +191,8 @@ describe('A. Registro y Verificación de Email', () => {
     });
   });
 
-  describe('Caso 9: Verificación con código ya usado', () => {
-    it('debe rechazar código de verificación que ya fue utilizado', async () => {
+  describe('CF0013: Verificación con código ya usado', () => {
+    it('CF0013: Rechazo de código de verificación ya utilizado', async () => {
       await request(app)
         .post('/api/auth/register')
         .send(testUsers.validBuyer)

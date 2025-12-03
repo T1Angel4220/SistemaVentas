@@ -40,8 +40,8 @@ describe('E. Gestión de Perfil de Usuario', () => {
     await cleanAuthTables();
   });
 
-  describe('Caso 40: Obtener perfil', () => {
-    it('debe obtener perfil del usuario autenticado', async () => {
+  describe('CF0029-CF0030: Obtener perfil', () => {
+    it('CF0029: Obtención de perfil del usuario autenticado', async () => {
       const testUser = await createTestUser(testUserData.comprador);
       const token = testUser.token;
 
@@ -56,7 +56,7 @@ describe('E. Gestión de Perfil de Usuario', () => {
       expect(res.body.data.user).to.have.property('tipo_usuario', testUserData.comprador.tipo_usuario);
     });
 
-    it('debe rechazar acceso sin token o con token inválido', async () => {
+    it('CF0030: Rechazo de acceso sin token o con token inválido', async () => {
       const res1 = await request(app)
         .get('/api/auth/profile')
         .expect(401);
@@ -72,8 +72,8 @@ describe('E. Gestión de Perfil de Usuario', () => {
     });
   });
 
-  describe('Caso 41-42: Actualizar perfil', () => {
-    it('debe actualizar campos individuales y múltiples campos correctamente', async () => {
+  describe('CF0031: Actualizar perfil', () => {
+    it('CF0031: Actualización de campos individuales y múltiples campos', async () => {
       const testUser = await createTestUser(testUserData.comprador);
       const token = testUser.token;
 
@@ -109,8 +109,8 @@ describe('E. Gestión de Perfil de Usuario', () => {
     });
   });
 
-  describe('Caso 43: Validaciones de actualización', () => {
-    it('debe rechazar actualización sin campos o sin autenticación', async () => {
+  describe('CF0032-CF0033: Validaciones de actualización', () => {
+    it('CF0032: Rechazo de actualización sin campos o sin autenticación', async () => {
       const testUser = await createTestUser(testUserData.comprador);
       const token = testUser.token;
 
@@ -131,7 +131,7 @@ describe('E. Gestión de Perfil de Usuario', () => {
       expect(res2.body).to.have.property('success', false);
     });
 
-    it('no debe permitir cambiar campos inmutables (cédula, correo, tipo_usuario)', async () => {
+    it('CF0033: Validación de campos inmutables (cédula, correo, tipo_usuario)', async () => {
       const testUser = await createTestUser(testUserData.comprador);
       const token = testUser.token;
       const cedulaOriginal = testUser.cedula;
@@ -161,8 +161,8 @@ describe('E. Gestión de Perfil de Usuario', () => {
     });
   });
 
-  describe('Caso 44: Cambiar contraseña exitoso', () => {
-    it('debe cambiar contraseña e invalidar la anterior', async () => {
+  describe('CF0034: Cambiar contraseña exitoso', () => {
+    it('CF0034: Cambio de contraseña exitoso e invalidación de anterior', async () => {
       const testUser = await createTestUser(testUserData.comprador);
       const token = testUser.token;
 
@@ -202,8 +202,8 @@ describe('E. Gestión de Perfil de Usuario', () => {
     });
   });
 
-  describe('Caso 45: Validaciones de cambio de contraseña', () => {
-    it('debe rechazar con contraseña actual incorrecta, misma contraseña, muy corta o sin campos', async () => {
+  describe('CF0035: Validaciones de cambio de contraseña', () => {
+    it('CF0035: Validaciones de cambio de contraseña (incorrecta, misma, corta)', async () => {
       const testUser = await createTestUser(testUserData.comprador);
       const token = testUser.token;
 
@@ -256,8 +256,8 @@ describe('E. Gestión de Perfil de Usuario', () => {
     });
   });
 
-  describe('Caso 46: Seguridad de perfil', () => {
-    it('debe permitir a cada usuario ver y actualizar solo su propio perfil', async () => {
+  describe('CF0036: Seguridad de perfil', () => {
+    it('CF0036: Seguridad: usuario solo accede a su propio perfil', async () => {
       const user1 = await createTestUser(testUserData.comprador);
       const user2 = await createTestUser(testUserData.vendedor);
       const token1 = user1.token;
@@ -287,8 +287,8 @@ describe('E. Gestión de Perfil de Usuario', () => {
     });
   });
 
-  describe('Caso 47: Persistencia de datos', () => {
-    it('debe persistir cambios en BD y actualizar fecha_actualizacion', async () => {
+  describe('CF0037: Persistencia de datos', () => {
+    it('CF0037: Persistencia de datos y actualización de fecha_actualizacion', async () => {
       const testUser = await createTestUser(testUserData.comprador);
       const token = testUser.token;
 
@@ -325,8 +325,8 @@ describe('E. Gestión de Perfil de Usuario', () => {
     });
   });
 
-  describe('Caso 48: Validación de género', () => {
-    it('debe aceptar valores válidos de género (masculino, femenino, otro)', async () => {
+  describe('CF0038: Validación de género', () => {
+    it('CF0038: Validación de valores válidos de género', async () => {
       const testUser = await createTestUser(testUserData.comprador);
       const token = testUser.token;
 

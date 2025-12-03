@@ -1,6 +1,6 @@
 /**
  * Pruebas de Integración - CRUD de Productos/Servicios
- * Casos CF-063 a CF-082: Operaciones básicas de creación, lectura, actualización y eliminación
+ * Casos CF-0062 a CF-0081: Operaciones básicas de creación, lectura, actualización y eliminación
  */
 
 const { expect } = require('chai');
@@ -62,9 +62,9 @@ describe('1. CRUD de Productos/Servicios', () => {
     }
   });
 
-  describe('1.1 Crear Producto (CF-063 a CF-068)', () => {
+  describe('1.1 Crear Producto (CF-0062 a CF-0067)', () => {
     
-    it('CF-063: Debe crear producto válido como vendedor', async () => {
+    it('CF-0062: CRUD - Crear Producto - Crear producto válido como vendedor', async () => {
       // Asegurar que la ubicación existe antes de crear el producto
       const testLocation = await getOrCreateTestLocation();
       
@@ -94,7 +94,7 @@ describe('1. CRUD de Productos/Servicios', () => {
       expect(res.body.data.estado).to.equal('pendiente_revision');
     });
 
-    it('CF-064: Debe crear servicio válido como vendedor', async () => {
+    it('CF-0063: CRUD - Crear Servicio - Crear servicio válido como vendedor', async () => {
       // Asegurar que la ubicación existe antes de crear el servicio
       const testLocation = await getOrCreateTestLocation();
       
@@ -124,7 +124,7 @@ describe('1. CRUD de Productos/Servicios', () => {
       expect(res.body.data.tipo).to.equal('servicio');
     });
 
-    it('CF-065: Debe rechazar crear producto como comprador', async () => {
+    it('CF-0064: CRUD - Crear Producto - Intentar crear producto como comprador (debe fallar)', async () => {
       const testLocation = await getOrCreateTestLocation();
       
       const productData = {
@@ -149,7 +149,7 @@ describe('1. CRUD de Productos/Servicios', () => {
       expect(res.body.message).to.include('permisos');
     });
 
-    it('CF-066: Debe rechazar crear producto sin autenticación', async () => {
+    it('CF-0065: CRUD - Crear Producto - Intentar crear producto sin autenticación (debe fallar)', async () => {
       const productData = {
         codigo: 'PROD-003',
         nombre: 'Producto Sin Auth',
@@ -167,7 +167,7 @@ describe('1. CRUD de Productos/Servicios', () => {
       expect(res.body).to.have.property('success', false);
     });
 
-    it('CF-067: Debe rechazar crear producto con datos inválidos', async () => {
+    it('CF-0066: CRUD - Crear Producto - Intentar crear producto con datos inválidos (debe fallar)', async () => {
       const invalidData = {
         codigo: 'PROD-004',
         // Falta nombre, descripcion, precio, etc.
@@ -183,7 +183,7 @@ describe('1. CRUD de Productos/Servicios', () => {
       expect(res.body).to.have.property('success', false);
     });
 
-    it('CF-068: Debe crear producto con contenido peligroso (marcado automáticamente)', async () => {
+    it('CF-0067: CRUD - Crear Producto - Crear producto con contenido peligroso (marcado automáticamente)', async () => {
       // Asegurar que la ubicación existe antes de crear el producto
       const testLocation = await getOrCreateTestLocation();
       
@@ -212,7 +212,7 @@ describe('1. CRUD de Productos/Servicios', () => {
     });
   });
 
-  describe('1.2 Obtener Producto (CF-069 a CF-072)', () => {
+  describe('1.2 Obtener Producto (CF-0068 a CF-0071)', () => {
     
     let testProduct, dangerousProduct;
 
@@ -230,7 +230,7 @@ describe('1. CRUD de Productos/Servicios', () => {
       });
     });
 
-    it('CF-069: Debe obtener producto por ID (público)', async () => {
+    it('CF-0068: Debe obtener producto por ID (público)', async () => {
       const res = await request(app)
         .get(`/api/products/${testProduct.id}`)
         .expect(200);
@@ -240,7 +240,7 @@ describe('1. CRUD de Productos/Servicios', () => {
       expect(res.body.data).to.have.property('nombre');
     });
 
-    it('CF-070: Debe obtener servicio con información adicional', async () => {
+    it('CF-0069: Debe obtener servicio con información adicional', async () => {
       const service = await createTestService({
         vendedor_id: seller.id,
         categoria_id: category.id,
@@ -258,7 +258,7 @@ describe('1. CRUD de Productos/Servicios', () => {
       expect(res.body.data.servicio).to.have.property('horario_atencion');
     });
 
-    it('CF-071: Debe retornar 404 para producto inexistente', async () => {
+    it('CF-0070: Debe retornar 404 para producto inexistente', async () => {
       const res = await request(app)
         .get('/api/products/99999')
         .expect(404);
@@ -267,7 +267,7 @@ describe('1. CRUD de Productos/Servicios', () => {
       expect(res.body.message).to.include('no encontrado');
     });
 
-    it('CF-072: Comprador NO puede ver producto peligroso', async () => {
+    it('CF-0071: Comprador NO puede ver producto peligroso', async () => {
       const res = await request(app)
         .get(`/api/products/view/${dangerousProduct.id}`)
         .set(getAuthHeaders(buyer.token))
@@ -277,7 +277,7 @@ describe('1. CRUD de Productos/Servicios', () => {
     });
   });
 
-  describe('1.3 Actualizar Producto (CF-073 a CF-076)', () => {
+  describe('1.3 Actualizar Producto (CF-0072 a CF-0075)', () => {
     
     let testProduct, otherSellerProduct;
 
@@ -300,7 +300,7 @@ describe('1. CRUD de Productos/Servicios', () => {
       });
     });
 
-    it('CF-073: Debe actualizar producto propio como vendedor', async () => {
+    it('CF-0072: Debe actualizar producto propio como vendedor', async () => {
       const updateData = {
         nombre: 'Producto Actualizado',
         precio: 150.00
@@ -316,7 +316,7 @@ describe('1. CRUD de Productos/Servicios', () => {
       expect(res.body.data.nombre).to.equal(updateData.nombre);
     });
 
-    it('CF-074: Debe rechazar actualizar producto de otro vendedor', async () => {
+    it('CF-0073: Debe rechazar actualizar producto de otro vendedor', async () => {
       const updateData = {
         nombre: 'Intento de modificación'
       };
@@ -330,7 +330,7 @@ describe('1. CRUD de Productos/Servicios', () => {
       expect(res.body).to.have.property('success', false);
     });
 
-    it('CF-075: Debe rechazar actualizar producto peligroso', async () => {
+    it('CF-0074: Debe rechazar actualizar producto peligroso', async () => {
       const dangerousProduct = await createDangerousProduct({
         vendedor_id: seller.id,
         categoria_id: category.id
@@ -350,7 +350,7 @@ describe('1. CRUD de Productos/Servicios', () => {
       expect(res.body.message).to.include('peligroso');
     });
 
-    it('CF-076: Debe detectar contenido inadecuado al actualizar', async () => {
+    it('CF-0075: Debe detectar contenido inadecuado al actualizar', async () => {
       const updateData = {
         nombre: 'Producto con armas',
         descripcion: 'Venta de pistolas y rifles'
@@ -368,7 +368,7 @@ describe('1. CRUD de Productos/Servicios', () => {
     });
   });
 
-  describe('1.4 Eliminar Producto (CF-077 a CF-080)', () => {
+  describe('1.4 Eliminar Producto (CF-0076 a CF-0079)', () => {
     
     let testProduct, otherSellerProduct, dangerousProduct;
 
@@ -395,7 +395,7 @@ describe('1. CRUD de Productos/Servicios', () => {
       });
     });
 
-    it('CF-077: Debe eliminar producto propio como vendedor', async () => {
+    it('CF-0076: Debe eliminar producto propio como vendedor', async () => {
       const res = await request(app)
         .delete(`/api/products/${testProduct.id}`)
         .set(getAuthHeaders(seller.token))
@@ -408,7 +408,7 @@ describe('1. CRUD de Productos/Servicios', () => {
       expect(deletedProduct).to.be.null;
     });
 
-    it('CF-078: Debe rechazar eliminar producto de otro vendedor', async () => {
+    it('CF-0077: Debe rechazar eliminar producto de otro vendedor', async () => {
       const res = await request(app)
         .delete(`/api/products/${otherSellerProduct.id}`)
         .set(getAuthHeaders(seller.token))
@@ -417,7 +417,7 @@ describe('1. CRUD de Productos/Servicios', () => {
       expect(res.body).to.have.property('success', false);
     });
 
-    it('CF-079: Debe rechazar eliminar producto peligroso como vendedor', async () => {
+    it('CF-0078: Debe rechazar eliminar producto peligroso como vendedor', async () => {
       const res = await request(app)
         .delete(`/api/products/${dangerousProduct.id}`)
         .set(getAuthHeaders(seller.token))
@@ -427,7 +427,7 @@ describe('1. CRUD de Productos/Servicios', () => {
       expect(res.body.message).to.include('peligroso');
     });
 
-    it('CF-080: Administrador puede eliminar producto peligroso', async () => {
+    it('CF-0079: Administrador puede eliminar producto peligroso', async () => {
       const res = await request(app)
         .delete(`/api/products/${dangerousProduct.id}`)
         .set(getAuthHeaders(admin.token))
@@ -441,7 +441,7 @@ describe('1. CRUD de Productos/Servicios', () => {
     });
   });
 
-  describe('1.5 Cambiar Disponibilidad (CF-081 a CF-082)', () => {
+  describe('1.5 Cambiar Disponibilidad (CF-0080 a CF-0081)', () => {
     
     let activeProduct, pendingProduct;
 
@@ -461,7 +461,7 @@ describe('1. CRUD de Productos/Servicios', () => {
       });
     });
 
-    it('CF-081: Debe cambiar disponibilidad de producto activo', async () => {
+    it('CF-0080: Debe cambiar disponibilidad de producto activo', async () => {
       const res = await request(app)
         .patch(`/api/products/${activeProduct.id}/availability`)
         .set(getAuthHeaders(seller.token))
@@ -472,7 +472,7 @@ describe('1. CRUD de Productos/Servicios', () => {
       expect(res.body.data.disponibilidad).to.equal(false);
     });
 
-    it('CF-082: Debe rechazar cambiar disponibilidad de producto pendiente', async () => {
+    it('CF-0081: Debe rechazar cambiar disponibilidad de producto pendiente', async () => {
       // Nota: El código actual permite cambiar disponibilidad de productos pendientes
       // Esta prueba verifica el comportamiento actual del sistema
       const res = await request(app)

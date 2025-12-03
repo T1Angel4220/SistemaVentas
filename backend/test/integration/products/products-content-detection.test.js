@@ -1,6 +1,6 @@
 /**
  * Pruebas de Integración - Detección Automática de Contenido
- * Casos CF-091 a CF-094: Detección de contenido inadecuado
+ * Casos CF-0090 a CF-0093: Detección de contenido inadecuado
  */
 
 const { expect } = require('chai');
@@ -35,9 +35,9 @@ describe('3. Detección Automática de Contenido', () => {
     location = await getOrCreateTestLocation();
   });
 
-  describe('3.1 Detección al Crear (CF-091 a CF-093)', () => {
+  describe('3.1 Detección al Crear (CF-0090 a CF-0092)', () => {
     
-    it('CF-091: Debe crear producto con contenido de alto riesgo (marcado como peligroso)', async () => {
+    it('CF-0090: Debe crear producto con contenido de alto riesgo (marcado como peligroso)', async () => {
       // Asegurar que la ubicación existe antes de crear el producto
       const testLocation = await getOrCreateTestLocation();
       
@@ -66,7 +66,7 @@ describe('3. Detección Automática de Contenido', () => {
       expect(res.body.informacion).to.have.property('no_eliminable', true);
     });
 
-    it('CF-092: Debe crear producto con contenido de medio riesgo (pendiente_revision)', async () => {
+    it('CF-0091: Debe crear producto con contenido de medio riesgo (pendiente_revision)', async () => {
       // Asegurar que la ubicación existe antes de crear el producto
       const testLocation = await getOrCreateTestLocation();
       
@@ -98,7 +98,7 @@ describe('3. Detección Automática de Contenido', () => {
       }
     });
 
-    it('CF-093: Debe verificar que producto peligroso tiene motivo_rechazo', async () => {
+    it('CF-0092: Debe verificar que producto peligroso tiene motivo_rechazo', async () => {
       // Asegurar que la ubicación existe antes de crear el producto
       const testLocation = await getOrCreateTestLocation();
       
@@ -128,7 +128,7 @@ describe('3. Detección Automática de Contenido', () => {
     });
   });
 
-  describe('3.2 Detección al Actualizar (CF-094)', () => {
+  describe('3.2 Detección al Actualizar (CF-0093)', () => {
     
     let normalProduct;
 
@@ -145,7 +145,7 @@ describe('3. Detección Automática de Contenido', () => {
       });
     });
 
-    it('CF-094: Debe detectar contenido peligroso al actualizar producto', async () => {
+    it('CF-0093: Debe detectar contenido peligroso al actualizar producto', async () => {
       const updateData = {
         nombre: 'Producto Actualizado con Drogas',
         descripcion: 'Venta de marihuana y cocaína'

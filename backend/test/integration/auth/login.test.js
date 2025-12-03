@@ -24,8 +24,8 @@ describe('B. Login y Sesiones', () => {
     await cleanAuthTables();
   });
 
-  describe('Caso 9: Login exitoso', () => {
-    it('debe permitir login con usuario activo y crear sesión', async () => {
+  describe('CF0014: Login exitoso', () => {
+    it('CF0014: Login exitoso con usuario activo y creación de sesión', async () => {
       const testUser = await createTestUser({
         correo: 'test@login.com',
         password: 'Password123!',
@@ -56,8 +56,8 @@ describe('B. Login y Sesiones', () => {
     });
   });
 
-  describe('Caso 10-11: Login fallido', () => {
-    it('debe rechazar login con contraseña incorrecta', async () => {
+  describe('CF0015-CF0016: Login fallido', () => {
+    it('CF0015: Rechazo de login con contraseña incorrecta', async () => {
       await createTestUser({
         correo: 'test@fail.com',
         password: 'CorrectPassword123!',
@@ -76,7 +76,7 @@ describe('B. Login y Sesiones', () => {
       expect(res.body.message).to.include('Credenciales inválidas');
     });
 
-    it('debe rechazar login con email no registrado', async () => {
+    it('CF0016: Rechazo de login con email no registrado', async () => {
       const res = await request(app)
         .post('/api/auth/login')
         .send({
@@ -89,8 +89,8 @@ describe('B. Login y Sesiones', () => {
     });
   });
 
-  describe('Caso 12: Login bloqueado para usuario suspendido', () => {
-    it('debe rechazar login y no crear sesión para usuario suspendido', async () => {
+  describe('CF0017: Login bloqueado para usuario suspendido', () => {
+    it('CF0017: Bloqueo de login para usuario suspendido', async () => {
       const suspendedUser = await createSuspendedUser({
         correo: 'suspended@test.com',
         password: 'Password123!',
@@ -114,8 +114,8 @@ describe('B. Login y Sesiones', () => {
     });
   });
 
-  describe('Caso 13: Login bloqueado sin verificar email', () => {
-    it('debe rechazar login de usuario sin verificar', async () => {
+  describe('CF0018: Login bloqueado sin verificar email', () => {
+    it('CF0018: Bloqueo de login para usuario sin verificar email', async () => {
       await createUnverifiedUser({
         correo: 'unverified@test.com',
         password: 'Password123!',
@@ -139,8 +139,8 @@ describe('B. Login y Sesiones', () => {
     });
   });
 
-  describe('Caso 14-16: Sesiones y tokens', () => {
-    it('debe permitir múltiples sesiones simultáneas y acceso con token válido', async () => {
+  describe('CF0019: Sesiones y tokens', () => {
+    it('CF0019: Múltiples sesiones simultáneas y acceso con token válido', async () => {
       const testUser = await createTestUser({
         correo: 'multi@session.com',
         password: 'Password123!',
@@ -179,8 +179,8 @@ describe('B. Login y Sesiones', () => {
     });
   });
 
-  describe('Caso 17: Token inválido rechazado', () => {
-    it('debe rechazar token malformado o ausente', async () => {
+  describe('CF0020: Token inválido rechazado', () => {
+    it('CF0020: Rechazo de token malformado o ausente', async () => {
       const res1 = await request(app)
         .get('/api/auth/profile')
         .set('Authorization', 'Bearer invalid-token')
@@ -197,8 +197,8 @@ describe('B. Login y Sesiones', () => {
     });
   });
 
-  describe('Caso 18: Logout', () => {
-    it('debe cerrar sesión y invalidar token', async () => {
+  describe('CF0021: Logout', () => {
+    it('CF0021: Cierre de sesión e invalidación de token', async () => {
       const testUser = await createTestUser({
         correo: 'logout@test.com',
         password: 'Password123!',
@@ -236,8 +236,8 @@ describe('B. Login y Sesiones', () => {
     });
   });
 
-  describe('Caso 19: Login con datos de sesión', () => {
-    it('debe almacenar IP y User-Agent en la sesión creada', async () => {
+  describe('CF0022: Login con datos de sesión', () => {
+    it('CF0022: Almacenamiento de IP y User-Agent en sesión creada', async () => {
       const testUser = await createTestUser({
         correo: 'metadata@test.com',
         password: 'Password123!',

@@ -443,7 +443,18 @@ const resendVerificationCode = async (req, res) => {
  */
 const getUsers = async (req, res) => {
   try {
-    const { search = '', role = 'all', status = 'all' } = req.query;
+    const { 
+      search = '', 
+      role = 'all', 
+      status = 'all',
+      page = '1',
+      limit = '10'
+    } = req.query;
+    
+    // Parsear paginación
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.max(1, Math.min(100, parseInt(limit) || 10)); // Máximo 100 por página
+    const offset = (pageNum - 1) * limitNum;
     
     // Construir query base
     let whereConditions = [];
@@ -464,27 +475,17 @@ const getUsers = async (req, res) => {
       queryParams.push(role);
     }
     
-    // Filtro de estado
-    if (status !== 'all') {
+    // Filtro de estado (también acepta 'estado' como parámetro)
+    const estadoFilter = status !== 'all' ? status : (req.query.estado && req.query.estado !== 'all' ? req.query.estado : 'all');
+    if (estadoFilter !== 'all') {
       paramCount++;
       whereConditions.push(`estado = $${paramCount}`);
-      queryParams.push(status);
+      queryParams.push(estadoFilter);
     }
     
     const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
     
-    // Query para obtener usuarios (sin límite - trae todos)
-    const usersQuery = `
-      SELECT id, cedula, nombre, apellido, correo, telefono, direccion, genero,
-             tipo_usuario, estado, email_verificado, fecha_registro, fecha_ultimo_acceso
-      FROM usuarios 
-      ${whereClause}
-      ORDER BY fecha_registro DESC
-    `;
-    
-    const usersResult = await query(usersQuery, queryParams);
-    
-    // Query para contar total
+    // Query para contar total (antes de aplicar paginación)
     const countQuery = `
       SELECT COUNT(*) as total
       FROM usuarios 
@@ -494,13 +495,34 @@ const getUsers = async (req, res) => {
     const countResult = await query(countQuery, queryParams);
     const total = parseInt(countResult.rows[0].total);
     
+    // Calcular total de páginas
+    const totalPages = Math.ceil(total / limitNum);
+    
+    // Query para obtener usuarios con paginación
+    paramCount++;
+    const usersQuery = `
+      SELECT id, cedula, nombre, apellido, correo, telefono, direccion, genero,
+             tipo_usuario, estado, email_verificado, fecha_registro, fecha_ultimo_acceso
+      FROM usuarios 
+      ${whereClause}
+      ORDER BY fecha_registro DESC
+      LIMIT $${paramCount} OFFSET $${paramCount + 1}
+    `;
+    
+    queryParams.push(limitNum, offset);
+    const usersResult = await query(usersQuery, queryParams);
+    
     res.json({
       success: true,
       data: {
         users: usersResult.rows,
         pagination: {
           total,
-          pages: 1
+          page: pageNum,
+          limit: limitNum,
+          totalPages,
+          hasNext: pageNum < totalPages,
+          hasPrev: pageNum > 1
         }
       }
     });
@@ -972,7 +994,7 @@ const changePassword = async (req, res) => {
     }
 
     // Encriptar la nueva contraseña
-    let saltRounds = config.bcrypt.saltRounds || 10;
+    let saltRounds = (config.bcrypt && config.bcrypt.saltRounds) ? config.bcrypt.saltRounds : 10;
     if (isNaN(saltRounds) || saltRounds <= 0) {
       console.error('❌ Error: BCRYPT_SALT_ROUNDS no está configurado correctamente. Usando valor por defecto: 10');
       saltRounds = 10;
@@ -984,6 +1006,20 @@ const changePassword = async (req, res) => {
       'UPDATE usuarios SET password_hash = $1, fecha_actualizacion = CURRENT_TIMESTAMP WHERE id = $2',
       [newPasswordHash, userId]
     );
+
+    // Eliminar todas las sesiones del usuario (no solo marcarlas como inactivas)
+    // Esto evita conflictos de tokens duplicados al hacer login nuevamente
+    try {
+      await query(
+        'DELETE FROM sesiones_usuario WHERE usuario_id = $1',
+        [userId]
+      );
+      console.log('✅ Sesiones eliminadas para usuario:', userId);
+    } catch (sessionError) {
+      // Si falla la eliminación de sesiones, registrar el error pero no fallar la operación
+      // La contraseña ya fue cambiada exitosamente
+      console.error('⚠️ Advertencia: Error al eliminar sesiones (puede que no existan sesiones):', sessionError.message);
+    }
 
     console.log('✅ Contraseña cambiada exitosamente');
 

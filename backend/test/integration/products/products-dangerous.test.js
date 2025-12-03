@@ -1,6 +1,6 @@
 /**
  * Pruebas de Integración - Productos Peligrosos
- * Casos CF-101 a CF-106: Restricciones y bloqueo automático
+ * Casos CF-0100 a CF-0105: Restricciones y bloqueo automático
  */
 
 const { expect } = require('chai');
@@ -53,7 +53,7 @@ describe('5. Productos Peligrosos', () => {
     location = await getOrCreateTestLocation();
   });
 
-  describe('5.1 Restricciones (CF-101 a CF-104)', () => {
+  describe('5.1 Restricciones (CF-0100 a CF-0103)', () => {
     
     let dangerousProduct, activeProduct;
 
@@ -69,7 +69,7 @@ describe('5. Productos Peligrosos', () => {
       });
     });
 
-    it('CF-101: Producto peligroso NO debe aparecer en listado público', async () => {
+    it('CF-0100: Producto peligroso NO debe aparecer en listado público', async () => {
       const res = await request(app)
         .get('/api/products')
         .query({ estado: 'activo', disponibilidad: true })
@@ -84,7 +84,7 @@ describe('5. Productos Peligrosos', () => {
       expect(productosPeligrosos.length).to.equal(0);
     });
 
-    it('CF-102: Vendedor NO debe poder eliminar producto peligroso', async () => {
+    it('CF-0101: Vendedor NO debe poder eliminar producto peligroso', async () => {
       const res = await request(app)
         .delete(`/api/products/${dangerousProduct.id}`)
         .set(getAuthHeaders(seller.token))
@@ -94,7 +94,7 @@ describe('5. Productos Peligrosos', () => {
       expect(res.body.message).to.include('peligroso');
     });
 
-    it('CF-103: Vendedor NO debe poder editar producto peligroso', async () => {
+    it('CF-0102: Vendedor NO debe poder editar producto peligroso', async () => {
       const updateData = {
         nombre: 'Intento de modificar'
       };
@@ -109,7 +109,7 @@ describe('5. Productos Peligrosos', () => {
       expect(res.body.message).to.include('peligroso');
     });
 
-    it('CF-104: Moderador debe poder ver productos peligrosos', async () => {
+    it('CF-0103: Moderador debe poder ver productos peligrosos', async () => {
       const res = await request(app)
         .get('/api/products/moderation/pending')
         .set(getAuthHeaders(moderator.token))
@@ -125,9 +125,9 @@ describe('5. Productos Peligrosos', () => {
     });
   });
 
-  describe('5.2 Bloqueo Automático (CF-105 a CF-106)', () => {
+  describe('5.2 Bloqueo Automático (CF-0104 a CF-0105)', () => {
     
-    it('CF-105: Vendedor con 3 productos peligrosos debe bloquearse automáticamente', async () => {
+    it('CF-0104: Vendedor con 3 productos peligrosos debe bloquearse automáticamente', async () => {
       // Crear 3 productos peligrosos
       await createDangerousProduct({
         vendedor_id: seller.id,
@@ -174,7 +174,7 @@ describe('5. Productos Peligrosos', () => {
       expect(user.estado).to.equal('suspendido');
     });
 
-    it('CF-106: Debe verificar que cuenta bloqueada tiene estado "suspendido"', async () => {
+    it('CF-0105: Debe verificar que cuenta bloqueada tiene estado "suspendido"', async () => {
       // Crear 3 productos peligrosos para activar bloqueo
       await createDangerousProduct({
         vendedor_id: seller.id,

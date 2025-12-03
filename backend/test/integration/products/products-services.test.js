@@ -1,6 +1,6 @@
 /**
  * Pruebas de Integración - Servicios Específicos y Casos Edge
- * Casos CF-121 a CF-126: Servicios y validaciones
+ * Casos CF-0120 a CF-0125: Servicios y validaciones
  */
 
 const { expect } = require('chai');
@@ -43,9 +43,9 @@ describe('9. Servicios Específicos y Casos Edge', () => {
     location = await getOrCreateTestLocation();
   });
 
-  describe('9.1 Servicios Específicos (CF-121 a CF-122)', () => {
+  describe('9.1 Servicios Específicos (CF-0120 a CF-0121)', () => {
     
-    it('CF-121: Debe crear servicio con información adicional', async () => {
+    it('CF-0120: Debe crear servicio con información adicional', async () => {
       // Asegurar que la ubicación existe antes de crear el servicio
       const testLocation = await getOrCreateTestLocation();
       
@@ -84,7 +84,7 @@ describe('9. Servicios Específicos y Casos Edge', () => {
       expect(serviceInfo.rows[0].duracion_estimada).to.equal(serviceData.duracion_estimada);
     });
 
-    it('CF-122: Debe actualizar información de servicio', async () => {
+    it('CF-0121: Debe actualizar información de servicio', async () => {
       // Crear servicio primero
       const service = await createTestService({
         vendedor_id: seller.id,
@@ -121,9 +121,9 @@ describe('9. Servicios Específicos y Casos Edge', () => {
     });
   });
 
-  describe('9.2 Casos Edge y Validaciones (CF-123 a CF-126)', () => {
+  describe('9.2 Casos Edge y Validaciones (CF-0122 a CF-0125)', () => {
     
-    it('CF-123: Debe rechazar crear producto sin campos requeridos', async () => {
+    it('CF-0122: Debe rechazar crear producto sin campos requeridos', async () => {
       const invalidData = {
         codigo: 'INVALID-001'
         // Faltan: nombre, descripcion, precio, tipo, categoria_id
@@ -138,7 +138,7 @@ describe('9. Servicios Específicos y Casos Edge', () => {
       expect(res.body).to.have.property('success', false);
     });
 
-    it('CF-124: Debe rechazar crear producto con precio negativo', async () => {
+    it('CF-0123: Debe rechazar crear producto con precio negativo', async () => {
       const testLocation = await getOrCreateTestLocation();
       
       const invalidData = {
@@ -162,7 +162,7 @@ describe('9. Servicios Específicos y Casos Edge', () => {
       expect(res.body).to.have.property('success', false);
     });
 
-    it('CF-125: Usuario suspendido NO debe crear productos', async () => {
+    it('CF-0124: Usuario suspendido NO debe crear productos', async () => {
       const testLocation = await getOrCreateTestLocation();
       
       const productData = {
@@ -189,7 +189,7 @@ describe('9. Servicios Específicos y Casos Edge', () => {
       expect(res.body).to.have.property('success', false);
     });
 
-    it('CF-126: Producto en revisión NO debe ser editado por vendedor', async () => {
+    it('CF-0125: Producto en revisión NO debe ser editado por vendedor', async () => {
       // Crear producto en revisión
       const pendingProduct = await createTestProduct({
         vendedor_id: seller.id,

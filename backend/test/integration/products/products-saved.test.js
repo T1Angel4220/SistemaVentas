@@ -1,6 +1,6 @@
 /**
  * Pruebas de Integración - Productos Guardados (Favoritos)
- * Casos CF-112 a CF-115: Guardar, retirar y listar productos guardados
+ * Casos CF-0111 a CF-0114: Guardar, retirar y listar productos guardados
  */
 
 const { expect } = require('chai');
@@ -54,9 +54,9 @@ describe('7. Productos Guardados (Favoritos)', () => {
     });
   });
 
-  describe('7.1 Guardar/Retirar (CF-112 a CF-114)', () => {
+  describe('7.1 Guardar/Retirar (CF-0111 a CF-0113)', () => {
     
-    it('CF-112: Comprador debe guardar producto activo', async () => {
+    it('CF-0111: Comprador debe guardar producto activo', async () => {
       const res = await request(app)
         .post(`/api/products/${activeProduct.id}/save`)
         .set(getAuthHeaders(buyer.token))
@@ -74,7 +74,7 @@ describe('7. Productos Guardados (Favoritos)', () => {
       expect(savedCheck.rows.length).to.equal(1);
     });
 
-    it('CF-113: Debe rechazar guardar producto ya guardado', async () => {
+    it('CF-0112: Debe rechazar guardar producto ya guardado', async () => {
       // Guardar producto primero
       await request(app)
         .post(`/api/products/${activeProduct.id}/save`)
@@ -91,7 +91,7 @@ describe('7. Productos Guardados (Favoritos)', () => {
       expect(res.body.message).to.include('ya está');
     });
 
-    it('CF-114: Comprador debe retirar producto guardado', async () => {
+    it('CF-0113: Comprador debe retirar producto guardado', async () => {
       // Guardar producto primero
       await request(app)
         .post(`/api/products/${activeProduct.id}/save`)
@@ -117,7 +117,7 @@ describe('7. Productos Guardados (Favoritos)', () => {
     });
   });
 
-  describe('7.2 Listar Productos Guardados (CF-115)', () => {
+  describe('7.2 Listar Productos Guardados (CF-0114)', () => {
     
     beforeEach(async () => {
       // Guardar varios productos
@@ -138,7 +138,7 @@ describe('7. Productos Guardados (Favoritos)', () => {
         .expect(201);
     });
 
-    it('CF-115: Debe listar productos guardados del usuario', async () => {
+    it('CF-0114: Debe listar productos guardados del usuario', async () => {
       const res = await request(app)
         .get('/api/products/saved')
         .set(getAuthHeaders(buyer.token))

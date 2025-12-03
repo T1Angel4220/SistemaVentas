@@ -15,8 +15,8 @@ describe('C. Recuperación de Contraseña', () => {
     await cleanAuthTables();
   });
 
-  describe('Caso 19: Solicitar reset con correo válido', () => {
-    it('debe aceptar solicitud, generar código de 6 dígitos y actualizar si se solicita nuevamente', async () => {
+  describe('CF0023: Solicitar reset con correo válido', () => {
+    it('CF0023: Solicitud de reset con correo válido y generación de código', async () => {
       await createTestUser({
         correo: 'reset@test.com',
         password: 'OldPassword123!'
@@ -46,8 +46,8 @@ describe('C. Recuperación de Contraseña', () => {
     });
   });
 
-  describe('Caso 20: Solicitar reset con correo no existente', () => {
-    it('debe responder genéricamente por seguridad sin generar token', async () => {
+  describe('CF0024: Solicitar reset con correo no existente', () => {
+    it('CF0024: Solicitud de reset con correo no existente (respuesta genérica)', async () => {
       const res = await request(app)
         .post('/api/auth/request-password-reset')
         .send({ correo: 'noexiste@test.com' })
@@ -61,8 +61,8 @@ describe('C. Recuperación de Contraseña', () => {
     });
   });
 
-  describe('Caso 21: Reset exitoso con código válido', () => {
-    it('debe cambiar contraseña, limpiar token, permitir login y invalidar sesiones', async function() {
+  describe('CF0025: Reset exitoso con código válido', () => {
+    it('CF0025: Reset exitoso con código válido e invalidación de sesiones', async function() {
       this.timeout(20000); // Aumentar timeout a 20 segundos para este test
       const testUser = await createTestUser({
         correo: 'reset-success@test.com',
@@ -134,7 +134,7 @@ describe('C. Recuperación de Contraseña', () => {
       }
     });
 
-    it('no debe permitir usar misma contraseña', async () => {
+    it('CF0026: Rechazo de reset con misma contraseña', async () => {
       await createTestUser({
         correo: 'reset-same@test.com',
         password: 'SamePassword123!'
@@ -161,8 +161,8 @@ describe('C. Recuperación de Contraseña', () => {
     });
   });
 
-  describe('Caso 22: Reset fallido con código inválido', () => {
-    it('debe rechazar códigos inválidos (inexistente, formato incorrecto) y contraseña muy corta', async () => {
+  describe('CF0027: Reset fallido con código inválido', () => {
+    it('CF0027: Rechazo de códigos inválidos y contraseña muy corta', async () => {
       const invalidCodes = [
         { code: '000000', newPassword: 'NewPassword123!' },
         { code: 'ABC123', newPassword: 'NewPassword123!' }
@@ -203,8 +203,8 @@ describe('C. Recuperación de Contraseña', () => {
     });
   });
 
-  describe('Caso 23: Reset bloqueado para usuario suspendido', () => {
-    it('debe rechazar solicitud y no generar token para usuario suspendido', async () => {
+  describe('CF0028: Reset bloqueado para usuario suspendido', () => {
+    it('CF0028: Bloqueo de reset para usuario suspendido', async () => {
       await createSuspendedUser({
         correo: 'suspended-reset@test.com',
         password: 'Password123!'

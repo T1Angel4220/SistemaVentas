@@ -1,6 +1,6 @@
 /**
  * Pruebas de Integración - Sistema de Apelaciones
- * Casos CF-095 a CF-100: Crear y resolver apelaciones
+ * Casos CF-0094 a CF-0099: Crear y resolver apelaciones
  */
 
 const { expect } = require('chai');
@@ -48,7 +48,7 @@ describe('4. Sistema de Apelaciones', () => {
     location = await getOrCreateTestLocation();
   });
 
-  describe('4.1 Crear Apelación (CF-095 a CF-098)', () => {
+  describe('4.1 Crear Apelación (CF-0094 a CF-0097)', () => {
     
     let rejectedProduct, suspendedProduct, dangerousProduct, activeProduct;
 
@@ -74,7 +74,7 @@ describe('4. Sistema de Apelaciones', () => {
       });
     });
 
-    it('CF-095: Vendedor debe crear apelación para producto rechazado', async () => {
+    it('CF-0094: Vendedor debe crear apelación para producto rechazado', async () => {
       const appealData = {
         motivo_apelacion: 'Este producto fue rechazado incorrectamente. El contenido es apropiado y cumple con todas las políticas.',
         informacion_adicional: 'Información adicional sobre por qué el producto debería ser aprobado'
@@ -95,7 +95,7 @@ describe('4. Sistema de Apelaciones', () => {
       expect(product.estado).to.equal('en_apelacion');
     });
 
-    it('CF-096: Debe rechazar crear apelación para producto peligroso', async () => {
+    it('CF-0095: Apelaciones - Crear - Intentar crear apelación para producto peligroso (debe fallar)', async () => {
       const appealData = {
         motivo_apelacion: 'Intento de apelar producto peligroso',
         informacion_adicional: 'Información adicional'
@@ -111,7 +111,7 @@ describe('4. Sistema de Apelaciones', () => {
       expect(res.body.message).to.include('peligroso');
     });
 
-    it('CF-097: Debe rechazar crear apelación sin ser propietario', async () => {
+    it('CF-0096: Apelaciones - Crear - Intentar crear apelación sin ser propietario (debe fallar)', async () => {
       const otherSeller = await createTestSeller({
         correo: 'otro@vendedor.com'
       });
@@ -130,7 +130,7 @@ describe('4. Sistema de Apelaciones', () => {
       expect(res.body).to.have.property('success', false);
     });
 
-    it('CF-098: Debe verificar que producto cambia a estado "en_apelacion"', async () => {
+    it('CF-0097: Apelaciones - Crear - Verificar que producto cambia a estado "en_apelacion"', async () => {
       const appealData = {
         motivo_apelacion: 'El producto fue suspendido incorrectamente. Solicito revisión.',
         informacion_adicional: 'Información adicional'
@@ -150,7 +150,7 @@ describe('4. Sistema de Apelaciones', () => {
     });
   });
 
-  describe('4.2 Resolver Apelación (CF-099 a CF-100)', () => {
+  describe('4.2 Resolver Apelación (CF-0098 a CF-0099)', () => {
     
     let appealProduct, appealId;
 
@@ -183,7 +183,7 @@ describe('4. Sistema de Apelaciones', () => {
       `, [appealProduct.id]);
     });
 
-    it('CF-099: Moderador debe aprobar apelación (producto pasa a activo)', async () => {
+    it('CF-0098: Apelaciones - Resolver - Moderador aprueba apelación (producto pasa a activo)', async () => {
       const decisionData = {
         decision: 'aprobar',
         decision_apelacion: 'Después de revisar, el producto cumple con las políticas. Se aprueba la apelación.',
@@ -205,7 +205,7 @@ describe('4. Sistema de Apelaciones', () => {
       expect(product.disponibilidad).to.equal(true);
     });
 
-    it('CF-100: Moderador debe rechazar apelación (producto permanece rechazado)', async () => {
+    it('CF-0099: Apelaciones - Resolver - Moderador rechaza apelación (producto permanece rechazado)', async () => {
       const decisionData = {
         decision: 'rechazar',
         decision_apelacion: 'Después de revisar, el producto no cumple con las políticas. Se mantiene el rechazo.',

@@ -126,6 +126,9 @@ describe('Módulo de Moderación y Reportes', () => {
     productos.suspendido = productoSuspendidoResult.rows[0];
   });
 
+  // COMENTADO: Esta prueba no está en la lista CF0001-CF0125
+  // Solo CF0051 (Crear Reporte Moderador) está en la lista, no hay CF para "Comprador reporta producto"
+  /*
   describe('CP-001: Crear Reporte (Comprador)', () => {
     it('debe permitir a un comprador crear un reporte de producto con datos válidos', async () => {
       const res = await request(app)
@@ -155,9 +158,10 @@ describe('Módulo de Moderación y Reportes', () => {
       expect(productoResult.rows[0].estado).to.equal('activo');
     });
   });
+  */
 
-  describe('CP-002: Crear Reporte (Moderador)', () => {
-    it('debe permitir a un moderador crear un reporte de producto', async () => {
+  describe('CF0051: Crear Reporte (Moderador)', () => {
+    it('CF0051: Verificar que un moderador puede crear un reporte de producto', async () => {
       const res = await request(app)
         .post(`/api/products/${productos.activo.id}/report`)
         .set(getAuthHeaders(moderadorUser.token))
@@ -174,8 +178,8 @@ describe('Módulo de Moderación y Reportes', () => {
     });
   });
 
-  describe('CP-003: Validación Reporte Propio', () => {
-    it('debe rechazar que un comprador reporte su propio producto', async () => {
+  describe('CF0052: Validación Reporte Propio', () => {
+    it('CF0052: Verificar que un comprador no puede reportar su propio producto', async () => {
       const res = await request(app)
         .post(`/api/products/${productos.propio.id}/report`)
         .set(getAuthHeaders(compradorUser.token))
@@ -197,8 +201,8 @@ describe('Módulo de Moderación y Reportes', () => {
     });
   });
 
-  describe('CP-004: Validación Reporte Duplicado', () => {
-    it('debe rechazar crear un reporte duplicado del mismo usuario para el mismo producto', async () => {
+  describe('CF0053: Validación Reporte Duplicado', () => {
+    it('CF0053: Verificar que un usuario no puede reportar el mismo producto dos veces', async () => {
       // Crear primer reporte
       await request(app)
         .post(`/api/products/${productos.activo.id}/report`)
@@ -231,8 +235,8 @@ describe('Módulo de Moderación y Reportes', () => {
     });
   });
 
-  describe('CP-005: Listar Reportes Pendientes', () => {
-    it('debe permitir a un moderador ver la lista de reportes pendientes con filtros', async () => {
+  describe('CF0054: Listar Reportes Pendientes', () => {
+    it('CF0054: Verificar que un moderador puede ver la lista de reportes pendientes con filtros', async () => {
       // Crear varios reportes
       await request(app)
         .post(`/api/products/${productos.activo.id}/report`)
@@ -286,8 +290,8 @@ describe('Módulo de Moderación y Reportes', () => {
     });
   });
 
-  describe('CP-006: Resolver Reporte - Aprobar', () => {
-    it('debe permitir a un moderador aprobar un reporte (producto válido)', async () => {
+  describe('CF0055: Resolver Reporte - Aprobar', () => {
+    it('CF0055: Verificar que un moderador puede aprobar un reporte (producto válido)', async () => {
       // Crear reporte
       const reportRes = await request(app)
         .post(`/api/products/${productos.activo.id}/report`)
@@ -325,8 +329,8 @@ describe('Módulo de Moderación y Reportes', () => {
     });
   });
 
-  describe('CP-007: Resolver Reporte - Rechazar', () => {
-    it('debe permitir a un moderador rechazar un producto mediante reporte', async () => {
+  describe('CF0056: Resolver Reporte - Rechazar', () => {
+    it('CF0056: Verificar que un moderador puede rechazar un producto mediante reporte', async () => {
       // Crear nuevo producto para esta prueba
       const categoriaResult = await query('SELECT id FROM categorias LIMIT 1');
       const timestamp = Date.now();
@@ -380,8 +384,8 @@ describe('Módulo de Moderación y Reportes', () => {
     });
   });
 
-  describe('CP-008: Resolver Reporte - Suspender', () => {
-    it('debe permitir a un moderador suspender un producto mediante reporte', async () => {
+  describe('CF0057: Resolver Reporte - Suspender', () => {
+    it('CF0057: Verificar que un moderador puede suspender un producto mediante reporte', async () => {
       // Crear nuevo producto
       const categoriaResult = await query('SELECT id FROM categorias LIMIT 1');
       const timestamp = Date.now();
@@ -434,8 +438,8 @@ describe('Módulo de Moderación y Reportes', () => {
     });
   });
 
-  describe('CP-009: Resolver Reporte - Marcar Peligroso', () => {
-    it('debe permitir a un moderador marcar un producto como peligroso', async () => {
+  describe('CF0058: Resolver Reporte - Marcar Peligroso', () => {
+    it('CF0058: Verificar que un moderador puede marcar un producto como peligroso', async () => {
       // Crear nuevo producto
       const categoriaResult = await query('SELECT id FROM categorias LIMIT 1');
       const timestamp = Date.now();
@@ -489,8 +493,8 @@ describe('Módulo de Moderación y Reportes', () => {
     });
   });
 
-  describe('CP-010: Crear Apelación', () => {
-    it('debe permitir a un vendedor crear una apelación para su producto rechazado', async () => {
+  describe('CF0059: Crear Apelación', () => {
+    it('CF0059: Verificar que un vendedor puede crear una apelación para su producto rechazado', async () => {
       const res = await request(app)
         .post(`/api/products/${productos.rechazado.id}/appeal`)
         .set(getAuthHeaders(vendedorUser.token))
@@ -516,6 +520,9 @@ describe('Módulo de Moderación y Reportes', () => {
       expect(productoResult.rows[0].estado).to.equal('en_apelacion');
     });
 
+    // COMENTADO: Esta prueba no está en la lista CF0001-CF0125
+    // CF0059 solo cubre "Crear Apelación" pero no incluye "Rechazar segunda apelación"
+    /*
     it('debe rechazar crear una segunda apelación para el mismo producto', async () => {
       // Crear primera apelación
       await request(app)
@@ -542,10 +549,11 @@ describe('Módulo de Moderación y Reportes', () => {
         msg.includes('Solo se pueden apelar productos rechazados o suspendidos')
       );
     });
+    */
   });
 
-  describe('CP-011: Resolver Apelación - Aprobar', () => {
-    it('debe permitir a un moderador aprobar una apelación y reactivar el producto', async () => {
+  describe('CF0060: Resolver Apelación - Aprobar', () => {
+    it('CF0060: Verificar que un moderador puede aprobar una apelación y reactivar el producto', async () => {
       // Crear apelación
       const apelacionRes = await request(app)
         .post(`/api/products/${productos.suspendido.id}/appeal`)
@@ -584,8 +592,8 @@ describe('Módulo de Moderación y Reportes', () => {
     });
   });
 
-  describe('CP-012: Resolver Apelación - Rechazar', () => {
-    it('debe permitir a un moderador rechazar una apelación manteniendo el estado del producto', async () => {
+  describe('CF0061: Resolver Apelación - Rechazar', () => {
+    it('CF0061: Verificar que un moderador puede rechazar una apelación manteniendo el estado del producto', async () => {
       // Crear nuevo producto rechazado
       const categoriaResult = await query('SELECT id FROM categorias LIMIT 1');
       const timestamp = Date.now();

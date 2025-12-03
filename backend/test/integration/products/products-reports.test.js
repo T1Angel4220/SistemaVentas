@@ -1,6 +1,6 @@
 /**
  * Pruebas de Integración - Sistema de Reportes
- * Casos CF-107 a CF-111: Crear y resolver reportes
+ * Casos CF-0106 a CF-0110: Crear y resolver reportes
  */
 
 const { expect } = require('chai');
@@ -63,9 +63,9 @@ describe('6. Sistema de Reportes', () => {
     });
   });
 
-  describe('6.1 Crear Reporte (CF-107 a CF-109)', () => {
+  describe('6.1 Crear Reporte (CF-0106 a CF-0108)', () => {
     
-    it('CF-107: Comprador debe reportar producto', async () => {
+    it('CF-0106: Comprador debe reportar producto', async () => {
       const reportData = {
         tipo_reporte: 'contenido_inapropiado',
         motivo_reporte: 'Este producto contiene información falsa y engañosa sobre sus características.',
@@ -83,7 +83,7 @@ describe('6. Sistema de Reportes', () => {
       expect(res.body.data.estado).to.equal('pendiente');
     });
 
-    it('CF-108: Comprador NO debe reportar su propio producto', async () => {
+    it('CF-0107: Comprador NO debe reportar su propio producto', async () => {
       // Nota: El código actual solo rechaza reportes propios si el usuario es comprador
       // Como los compradores no pueden crear productos, esta validación rara vez se activa
       // Esta prueba verifica que un vendedor SÍ puede reportar su propio producto (comportamiento actual)
@@ -109,7 +109,7 @@ describe('6. Sistema de Reportes', () => {
       expect(res.body).to.have.property('success', true);
     });
 
-    it('CF-109: Reporte NO debe desactivar producto automáticamente', async () => {
+    it('CF-0108: Reporte NO debe desactivar producto automáticamente', async () => {
       const reportData = {
         tipo_reporte: 'producto_prohibido',
         motivo_reporte: 'Este producto parece estar prohibido según las políticas de la plataforma.',
@@ -129,7 +129,7 @@ describe('6. Sistema de Reportes', () => {
     });
   });
 
-  describe('6.2 Resolver Reporte (CF-110 a CF-111)', () => {
+  describe('6.2 Resolver Reporte (CF-0109 a CF-0110)', () => {
     
     let reportId;
 
@@ -152,7 +152,7 @@ describe('6. Sistema de Reportes', () => {
       reportId = reportResult.rows[0].id;
     });
 
-    it('CF-110: Moderador debe aprobar reporte (producto OK)', async () => {
+    it('CF-0109: Moderador debe aprobar reporte (producto OK)', async () => {
       const decisionData = {
         accion: 'aprobar',
         decision_final: 'Después de revisar, el producto cumple con las políticas. El reporte era infundado.',
@@ -173,7 +173,7 @@ describe('6. Sistema de Reportes', () => {
       expect(product.estado).to.equal('activo');
     });
 
-    it('CF-111: Moderador debe marcar producto como peligroso por reporte', async () => {
+    it('CF-0110: Moderador debe marcar producto como peligroso por reporte', async () => {
       const decisionData = {
         accion: 'eliminar',
         decision_final: 'El producto viola las políticas. Se marca como peligroso.',

@@ -1,6 +1,6 @@
 /**
  * Pruebas de Integración - Filtros y Visualización de Productos
- * Casos CF-083 a CF-090: Filtros, búsqueda y visualización
+ * Casos CF-0082 a CF-0089: Filtros, búsqueda y visualización
  */
 
 const { expect } = require('chai');
@@ -43,7 +43,7 @@ describe('2. Visualización y Filtros', () => {
     location = await getOrCreateTestLocation();
   });
 
-  describe('2.1 Listar Productos (CF-083 a CF-086)', () => {
+  describe('2.1 Listar Productos (CF-0082 a CF-0085)', () => {
     
     beforeEach(async () => {
       // Crear productos de prueba
@@ -68,7 +68,7 @@ describe('2. Visualización y Filtros', () => {
       });
     });
 
-    it('CF-083: Debe listar productos públicos (sin autenticación)', async () => {
+    it('CF-0082: Debe listar productos públicos (sin autenticación)', async () => {
       const res = await request(app)
         .get('/api/products')
         .query({ estado: 'activo', disponibilidad: true })
@@ -80,7 +80,7 @@ describe('2. Visualización y Filtros', () => {
       expect(res.body.data.length).to.be.greaterThan(0);
     });
 
-    it('CF-084: Debe listar productos con paginación', async () => {
+    it('CF-0083: Debe listar productos con paginación', async () => {
       const res = await request(app)
         .get('/api/products')
         .query({ 
@@ -98,7 +98,7 @@ describe('2. Visualización y Filtros', () => {
       expect(res.body.data.length).to.be.at.most(1);
     });
 
-    it('CF-085: Productos peligrosos NO aparecen en listado público', async () => {
+    it('CF-0084: Productos peligrosos NO aparecen en listado público', async () => {
       const res = await request(app)
         .get('/api/products')
         .query({ estado: 'activo', disponibilidad: true })
@@ -111,7 +111,7 @@ describe('2. Visualización y Filtros', () => {
       expect(productosPeligrosos.length).to.equal(0);
     });
 
-    it('CF-086: Vendedor puede ver sus productos (NO ve peligrosos)', async () => {
+    it('CF-0085: Vendedor puede ver sus productos (NO ve peligrosos)', async () => {
       const res = await request(app)
         .get('/api/products/my/products')
         .set(getAuthHeaders(seller.token))
@@ -127,7 +127,7 @@ describe('2. Visualización y Filtros', () => {
     });
   });
 
-  describe('2.2 Filtros Básicos (CF-087 a CF-090)', () => {
+  describe('2.2 Filtros Básicos (CF-0086 a CF-0089)', () => {
     
     let categoria2;
 
@@ -179,7 +179,7 @@ describe('2. Visualización y Filtros', () => {
       });
     });
 
-    it('CF-087: Debe filtrar productos por categoría', async () => {
+    it('CF-0086: Debe filtrar productos por categoría', async () => {
       const res = await request(app)
         .get('/api/products')
         .query({ 
@@ -199,7 +199,7 @@ describe('2. Visualización y Filtros', () => {
       });
     });
 
-    it('CF-088: Debe filtrar productos por rango de precio', async () => {
+    it('CF-0087: Debe filtrar productos por rango de precio', async () => {
       const res = await request(app)
         .get('/api/products')
         .query({ 
@@ -221,7 +221,7 @@ describe('2. Visualización y Filtros', () => {
       });
     });
 
-    it('CF-089: Debe buscar productos por nombre/descripción', async () => {
+    it('CF-0088: Debe buscar productos por nombre/descripción', async () => {
       const res = await request(app)
         .get('/api/products')
         .query({ 
@@ -242,7 +242,7 @@ describe('2. Visualización y Filtros', () => {
       expect(encontrados.length).to.be.greaterThan(0);
     });
 
-    it('CF-090: Debe filtrar productos y servicios por tipo', async () => {
+    it('CF-0089: Debe filtrar productos y servicios por tipo', async () => {
       // Filtrar solo productos
       const resProductos = await request(app)
         .get('/api/products')

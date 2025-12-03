@@ -1,6 +1,6 @@
 /**
  * Pruebas de Integración - Moderación de Productos
- * Casos CF-116 a CF-120: Aprobar, rechazar, suspender y marcar como peligroso
+ * Casos CF-0115 a CF-0119: Aprobar, rechazar, suspender y marcar como peligroso
  */
 
 const { expect } = require('chai');
@@ -45,7 +45,7 @@ describe('8. Moderación', () => {
     location = await getOrCreateTestLocation();
   });
 
-  describe('8.1 Moderar Producto (CF-116 a CF-120)', () => {
+  describe('8.1 Moderar Producto (CF-0115 a CF-0119)', () => {
     
     let pendingProduct;
 
@@ -58,7 +58,7 @@ describe('8. Moderación', () => {
       });
     });
 
-    it('CF-116: Moderador debe aprobar producto (pasa a activo)', async () => {
+    it('CF-0115: Moderador debe aprobar producto (pasa a activo)', async () => {
       const moderationData = {
         accion: 'aprobar',
         motivo: 'Producto cumple con todas las políticas',
@@ -80,7 +80,7 @@ describe('8. Moderación', () => {
       expect(product.disponibilidad).to.equal(true);
     });
 
-    it('CF-117: Moderador debe rechazar producto (pasa a rechazado)', async () => {
+    it('CF-0116: Moderador debe rechazar producto (pasa a rechazado)', async () => {
       const moderationData = {
         accion: 'rechazar',
         motivo: 'Producto no cumple con las políticas de la plataforma',
@@ -100,7 +100,7 @@ describe('8. Moderación', () => {
       expect(product.estado).to.equal('rechazado');
     });
 
-    it('CF-118: Moderador debe suspender producto', async () => {
+    it('CF-0117: Moderador debe suspender producto', async () => {
       const moderationData = {
         accion: 'suspender',
         motivo: 'Producto suspendido temporalmente para revisión',
@@ -120,7 +120,7 @@ describe('8. Moderación', () => {
       expect(product.estado).to.equal('suspendido');
     });
 
-    it('CF-119: Moderador debe marcar producto como peligroso', async () => {
+    it('CF-0118: Moderador debe marcar producto como peligroso', async () => {
       const moderationData = {
         accion: 'marcar_peligroso',
         motivo: 'Producto contiene contenido peligroso',
@@ -141,7 +141,7 @@ describe('8. Moderación', () => {
       expect(product.es_peligroso).to.equal(true);
     });
 
-    it('CF-120: Comprador NO debe poder moderar', async () => {
+    it('CF-0119: Comprador NO debe poder moderar', async () => {
       const moderationData = {
         accion: 'aprobar',
         motivo: 'Intento de moderar como comprador'
