@@ -71,6 +71,2810 @@
   },
   "suites": [
     {
+      "title": "flows\\auth\\login.spec.ts",
+      "file": "flows/auth/login.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Login - Autenticación",
+          "file": "flows/auth/login.spec.ts",
+          "line": 5,
+          "column": 6,
+          "specs": [
+            {
+              "title": "debería mostrar la página de login correctamente",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4968,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T16:57:03.681Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f66ce13610c29fb03dde-885ad10a2ee3acb4da71",
+              "file": "flows/auth/login.spec.ts",
+              "line": 13,
+              "column": 3
+            },
+            {
+              "title": "debería fallar con credenciales inválidas",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5241,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T16:57:09.611Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f66ce13610c29fb03dde-b702865fcad3d216d1a1",
+              "file": "flows/auth/login.spec.ts",
+              "line": 24,
+              "column": 3
+            },
+            {
+              "title": "debería validar campos requeridos",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4969,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T16:57:14.881Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f66ce13610c29fb03dde-5020eba8967b9a91b82a",
+              "file": "flows/auth/login.spec.ts",
+              "line": 39,
+              "column": 3
+            },
+            {
+              "title": "debería permitir navegar a recuperación de contraseña",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1632,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T16:57:19.875Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f66ce13610c29fb03dde-5229eaea6fb23d31c2fc",
+              "file": "flows/auth/login.spec.ts",
+              "line": 56,
+              "column": 3
+            },
+            {
+              "title": "debería permitir navegar a registro",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1904,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T16:57:21.526Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f66ce13610c29fb03dde-a0a5b3d545d03d80c66f",
+              "file": "flows/auth/login.spec.ts",
+              "line": 61,
+              "column": 3
+            },
+            {
+              "title": "debería hacer login exitoso con credenciales válidas",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4061,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T16:57:23.466Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f66ce13610c29fb03dde-6460aacedd332f7d96ef",
+              "file": "flows/auth/login.spec.ts",
+              "line": 66,
+              "column": 3
+            },
+            {
+              "title": "debería mostrar error con cuenta suspendida",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4877,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T16:57:27.573Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f66ce13610c29fb03dde-d6e71946b63a55dcb08d",
+              "file": "flows/auth/login.spec.ts",
+              "line": 76,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "flows\\auth\\logout.spec.ts",
+      "file": "flows/auth/logout.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Cerrar Sesión",
+          "file": "flows/auth/logout.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "debería cerrar sesión exitosamente",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4110,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T16:57:32.531Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e7a26f4b9242a7b9730f-371181a92ffdfd34b8d3",
+              "file": "flows/auth/logout.spec.ts",
+              "line": 15,
+              "column": 3
+            },
+            {
+              "title": "debería requerir login después de cerrar sesión",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4402,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T16:57:36.687Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e7a26f4b9242a7b9730f-963d90edbc6e9090a16d",
+              "file": "flows/auth/logout.spec.ts",
+              "line": 34,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "flows\\auth\\password-recovery.spec.ts",
+      "file": "flows/auth/password-recovery.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Recuperación de Contraseña",
+          "file": "flows/auth/password-recovery.spec.ts",
+          "line": 8,
+          "column": 6,
+          "specs": [
+            {
+              "title": "debería mostrar la página de recuperación correctamente",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3128,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T16:57:41.324Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5133f7bc13d09dc085e0-0f4f26e3627d49cc6c2d",
+              "file": "flows/auth/password-recovery.spec.ts",
+              "line": 19,
+              "column": 3
+            },
+            {
+              "title": "debería validar formato de email",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7021,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T16:57:44.484Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5133f7bc13d09dc085e0-c93f8fef18ce439e928d",
+              "file": "flows/auth/password-recovery.spec.ts",
+              "line": 25,
+              "column": 3
+            },
+            {
+              "title": "debería solicitar recuperación con email válido",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 9195,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T16:57:51.536Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5133f7bc13d09dc085e0-67f0c46af65a69ebd14d",
+              "file": "flows/auth/password-recovery.spec.ts",
+              "line": 83,
+              "column": 3
+            },
+            {
+              "title": "debería mostrar mensaje genérico por seguridad (incluso con email no registrado)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 11464,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T16:58:00.798Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5133f7bc13d09dc085e0-9ead747b34f8022acc93",
+              "file": "flows/auth/password-recovery.spec.ts",
+              "line": 92,
+              "column": 3
+            },
+            {
+              "title": "debería resetear contraseña con código válido",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 20053,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T16:58:12.280Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5133f7bc13d09dc085e0-bfa99476ba9bc28bb4ac",
+              "file": "flows/auth/password-recovery.spec.ts",
+              "line": 129,
+              "column": 3
+            },
+            {
+              "title": "debería validar que las contraseñas coincidan en reset",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7965,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T16:58:32.349Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "5133f7bc13d09dc085e0-30ae7ac6a5531b18daf3",
+              "file": "flows/auth/password-recovery.spec.ts",
+              "line": 172,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "flows\\auth\\profile.spec.ts",
+      "file": "flows/auth/profile.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Perfil de Usuario",
+          "file": "flows/auth/profile.spec.ts",
+          "line": 8,
+          "column": 6,
+          "specs": [
+            {
+              "title": "debería mostrar la información del perfil correctamente",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 12732,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T16:58:40.359Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "2ddd5219f521a232903e-7502543941a2daafb45a",
+              "file": "flows/auth/profile.spec.ts",
+              "line": 77,
+              "column": 3
+            },
+            {
+              "title": "debería editar información del perfil exitosamente",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 18180,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T16:58:53.130Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "2ddd5219f521a232903e-304029519e22e097fd57",
+              "file": "flows/auth/profile.spec.ts",
+              "line": 91,
+              "column": 3
+            },
+            {
+              "title": "debería cambiar contraseña exitosamente",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 27527,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T16:59:11.327Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "2ddd5219f521a232903e-5e853e0d791b711b82c7",
+              "file": "flows/auth/profile.spec.ts",
+              "line": 107,
+              "column": 3
+            },
+            {
+              "title": "debería validar errores en cambio de contraseña",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 44039,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T16:59:38.874Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "2ddd5219f521a232903e-be123863f1bff01534a6",
+              "file": "flows/auth/profile.spec.ts",
+              "line": 150,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "flows\\auth\\register.spec.ts",
+      "file": "flows/auth/register.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Registro - Creación de Cuenta",
+          "file": "flows/auth/register.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "debería mostrar el formulario de registro correctamente",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1560,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:00:23.068Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "bd9337636bf4b65b9a96-13cc4c8e82fd765ffbe6",
+              "file": "flows/auth/register.spec.ts",
+              "line": 16,
+              "column": 3
+            },
+            {
+              "title": "debería validar campos requeridos",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1438,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:00:24.652Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "bd9337636bf4b65b9a96-fee934c359a72394369f",
+              "file": "flows/auth/register.spec.ts",
+              "line": 24,
+              "column": 3
+            },
+            {
+              "title": "debería validar errores de formulario",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7873,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:00:26.105Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "bd9337636bf4b65b9a96-84d43da71e0fbc87f9de",
+              "file": "flows/auth/register.spec.ts",
+              "line": 31,
+              "column": 3
+            },
+            {
+              "title": "debería registrar un nuevo usuario exitosamente",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7813,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:00:33.993Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "bd9337636bf4b65b9a96-a0bba8131f66c5f374ed",
+              "file": "flows/auth/register.spec.ts",
+              "line": 75,
+              "column": 3
+            },
+            {
+              "title": "debería rechazar registro con datos duplicados",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3821,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:00:41.824Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "bd9337636bf4b65b9a96-62ca6b468dc382c5fd8d",
+              "file": "flows/auth/register.spec.ts",
+              "line": 133,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "flows\\auth\\verification.spec.ts",
+      "file": "flows/auth/verification.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Verificación de Email",
+          "file": "flows/auth/verification.spec.ts",
+          "line": 7,
+          "column": 6,
+          "specs": [
+            {
+              "title": "debería mostrar la página de verificación correctamente",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2872,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:00:45.695Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d901e7a5c46ebbaed32f-7c8999f103270e7da369",
+              "file": "flows/auth/verification.spec.ts",
+              "line": 14,
+              "column": 3
+            },
+            {
+              "title": "debería validar que el código tenga 6 dígitos",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 10542,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:00:48.586Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d901e7a5c46ebbaed32f-b1840d436ec1b5777086",
+              "file": "flows/auth/verification.spec.ts",
+              "line": 20,
+              "column": 3
+            },
+            {
+              "title": "debería rechazar código inválido",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8460,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:00:59.142Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d901e7a5c46ebbaed32f-2ce0a6641bc48ffeffc2",
+              "file": "flows/auth/verification.spec.ts",
+              "line": 43,
+              "column": 3
+            },
+            {
+              "title": "debería permitir reenviar código",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7597,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:01:07.626Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d901e7a5c46ebbaed32f-89b8a6ca1d7c041f3850",
+              "file": "flows/auth/verification.spec.ts",
+              "line": 52,
+              "column": 3
+            },
+            {
+              "title": "debería verificar código válido exitosamente",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 11670,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:01:15.242Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "d901e7a5c46ebbaed32f-91cf3020852d2925b4b6",
+              "file": "flows/auth/verification.spec.ts",
+              "line": 65,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "flows\\moderation\\manage-reports.spec.ts",
+      "file": "flows/moderation/manage-reports.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Gestión de Reportes - Moderadores",
+          "file": "flows/moderation/manage-reports.spec.ts",
+          "line": 5,
+          "column": 6,
+          "specs": [
+            {
+              "title": "PR-006: Moderador puede ver reportes pendientes",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8492,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:01:26.963Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6e5827e76151bff067c6-e4120523bc01e7327f43",
+              "file": "flows/moderation/manage-reports.spec.ts",
+              "line": 18,
+              "column": 3
+            },
+            {
+              "title": "PR-007: Moderador puede filtrar reportes por tipo",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 11449,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:01:35.481Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6e5827e76151bff067c6-713411c6bffeea3d08da",
+              "file": "flows/moderation/manage-reports.spec.ts",
+              "line": 44,
+              "column": 3
+            },
+            {
+              "title": "PR-008: Moderador puede filtrar reportes por estado",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 10217,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:01:46.954Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6e5827e76151bff067c6-7ab83b952be059d1953e",
+              "file": "flows/moderation/manage-reports.spec.ts",
+              "line": 84,
+              "column": 3
+            },
+            {
+              "title": "PR-009: Moderador puede resolver reporte aprobándolo",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 9792,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:01:57.188Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6e5827e76151bff067c6-b76714f8052133657e4e",
+              "file": "flows/moderation/manage-reports.spec.ts",
+              "line": 110,
+              "column": 3
+            },
+            {
+              "title": "PR-010: Moderador puede resolver reporte rechazándolo",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4232,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:02:06.998Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6e5827e76151bff067c6-f79095b8607b3db42b84",
+              "file": "flows/moderation/manage-reports.spec.ts",
+              "line": 145,
+              "column": 3
+            },
+            {
+              "title": "PR-011: Moderador puede resolver reporte suspendiendo producto",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4632,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:02:11.245Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6e5827e76151bff067c6-73e35875871bca894cbb",
+              "file": "flows/moderation/manage-reports.spec.ts",
+              "line": 150,
+              "column": 3
+            },
+            {
+              "title": "PR-012: Moderador puede resolver reporte eliminando producto (marcar peligroso)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 9804,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:02:15.895Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6e5827e76151bff067c6-29d8bdf8acba7073f6e8",
+              "file": "flows/moderation/manage-reports.spec.ts",
+              "line": 155,
+              "column": 3
+            },
+            {
+              "title": "PR-013: Validación al resolver reporte sin explicación",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8888,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:02:25.714Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "6e5827e76151bff067c6-1db4df406200ccf825c8",
+              "file": "flows/moderation/manage-reports.spec.ts",
+              "line": 184,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "flows\\moderation\\moderate-products.spec.ts",
+      "file": "flows/moderation/moderate-products.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Moderación Directa de Productos",
+          "file": "flows/moderation/moderate-products.spec.ts",
+          "line": 5,
+          "column": 6,
+          "specs": [
+            {
+              "title": "PR-014: Moderador puede ver productos pendientes de moderación",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4605,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:02:34.695Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "de2825b8bc91b67b3391-60bf7ed5a973d182c8bc",
+              "file": "flows/moderation/moderate-products.spec.ts",
+              "line": 18,
+              "column": 3
+            },
+            {
+              "title": "PR-015: Moderador puede aprobar producto directamente",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 21828,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "No se pudo aprobar producto: Error: No se encontró ningún producto visible en la página\n    at ProductModerationPage.approveProduct \u001b[90m(file:///E:/Proyecto%20pruebas%20sistema%20integracion/SistemaVentas/frontend/\u001b[39me2e/pages/ProductModerationPage.ts:236:13\u001b[90m)\u001b[39m\n    at \u001b[90mfile:///E:/Proyecto%20pruebas%20sistema%20integracion/SistemaVentas/frontend/\u001b[39me2e/flows/moderation/moderate-products.spec.ts:50:7\n    at \u001b[90mE:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\worker\\workerMain.js:310:9\n    at \u001b[90mE:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\worker\\testInfo.js:305:11\n    at TimeoutManager.withRunnable \u001b[90m(E:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\worker\\timeoutManager.js:67:14\u001b[90m)\u001b[39m\n    at TestInfoImpl._runWithTimeout \u001b[90m(E:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\worker\\testInfo.js:303:7\u001b[90m)\u001b[39m\n    at \u001b[90mE:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\worker\\workerMain.js:308:7\n    at WorkerMain._runTest \u001b[90m(E:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\worker\\workerMain.js:283:5\u001b[90m)\u001b[39m\n    at WorkerMain.runTestGroup \u001b[90m(E:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\worker\\workerMain.js:198:11\u001b[90m)\u001b[39m\n    at process.<anonymous> \u001b[90m(E:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\common\\process.js:65:22\u001b[90m)\u001b[39m\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:02:39.334Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "de2825b8bc91b67b3391-656808c73645a6d41e36",
+              "file": "flows/moderation/moderate-products.spec.ts",
+              "line": 37,
+              "column": 3
+            },
+            {
+              "title": "PR-016: Moderador puede rechazar producto directamente",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 29420,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "No se pudo rechazar producto: Error: No se encontró ningún producto visible en la página después de recargar\n    at ProductModerationPage.rejectProduct \u001b[90m(file:///E:/Proyecto%20pruebas%20sistema%20integracion/SistemaVentas/frontend/\u001b[39me2e/pages/ProductModerationPage.ts:272:13\u001b[90m)\u001b[39m\n    at \u001b[90mfile:///E:/Proyecto%20pruebas%20sistema%20integracion/SistemaVentas/frontend/\u001b[39me2e/flows/moderation/moderate-products.spec.ts:74:7\n    at \u001b[90mE:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\worker\\workerMain.js:310:9\n    at \u001b[90mE:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\worker\\testInfo.js:305:11\n    at TimeoutManager.withRunnable \u001b[90m(E:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\worker\\timeoutManager.js:67:14\u001b[90m)\u001b[39m\n    at TestInfoImpl._runWithTimeout \u001b[90m(E:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\worker\\testInfo.js:303:7\u001b[90m)\u001b[39m\n    at \u001b[90mE:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\worker\\workerMain.js:308:7\n    at WorkerMain._runTest \u001b[90m(E:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\worker\\workerMain.js:283:5\u001b[90m)\u001b[39m\n    at WorkerMain.runTestGroup \u001b[90m(E:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\worker\\workerMain.js:198:11\u001b[90m)\u001b[39m\n    at process.<anonymous> \u001b[90m(E:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\common\\process.js:65:22\u001b[90m)\u001b[39m\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:03:01.198Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "de2825b8bc91b67b3391-66e2afb591897720da9a",
+              "file": "flows/moderation/moderate-products.spec.ts",
+              "line": 62,
+              "column": 3
+            },
+            {
+              "title": "PR-017: Moderador puede suspender producto directamente",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5885,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "No se pudo suspender producto: Error: No se encontró ningún producto visible en la página\n    at ProductModerationPage.suspendProduct \u001b[90m(file:///E:/Proyecto%20pruebas%20sistema%20integracion/SistemaVentas/frontend/\u001b[39me2e/pages/ProductModerationPage.ts:301:13\u001b[90m)\u001b[39m\n    at \u001b[90mfile:///E:/Proyecto%20pruebas%20sistema%20integracion/SistemaVentas/frontend/\u001b[39me2e/flows/moderation/moderate-products.spec.ts:101:7\n    at \u001b[90mE:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\worker\\workerMain.js:310:9\n    at \u001b[90mE:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\worker\\testInfo.js:305:11\n    at TimeoutManager.withRunnable \u001b[90m(E:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\worker\\timeoutManager.js:67:14\u001b[90m)\u001b[39m\n    at TestInfoImpl._runWithTimeout \u001b[90m(E:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\worker\\testInfo.js:303:7\u001b[90m)\u001b[39m\n    at \u001b[90mE:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\worker\\workerMain.js:308:7\n    at WorkerMain._runTest \u001b[90m(E:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\worker\\workerMain.js:283:5\u001b[90m)\u001b[39m\n    at WorkerMain.runTestGroup \u001b[90m(E:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\worker\\workerMain.js:198:11\u001b[90m)\u001b[39m\n    at process.<anonymous> \u001b[90m(E:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\common\\process.js:65:22\u001b[90m)\u001b[39m\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:03:30.627Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "de2825b8bc91b67b3391-50397c0a7442e3b7bc05",
+              "file": "flows/moderation/moderate-products.spec.ts",
+              "line": 89,
+              "column": 3
+            },
+            {
+              "title": "PR-018: Moderador puede marcar producto como peligroso",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 21493,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "No se pudo marcar producto como peligroso: TypeError: Cannot read properties of null (reading 'locator')\n    at ProductModerationPage.markProductAsDangerous \u001b[90m(file:///E:/Proyecto%20pruebas%20sistema%20integracion/SistemaVentas/frontend/\u001b[39me2e/pages/ProductModerationPage.ts:327:35\u001b[90m)\u001b[39m\n    at \u001b[90mfile:///E:/Proyecto%20pruebas%20sistema%20integracion/SistemaVentas/frontend/\u001b[39me2e/flows/moderation/moderate-products.spec.ts:128:7\n    at \u001b[90mE:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\worker\\workerMain.js:310:9\n    at \u001b[90mE:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\worker\\testInfo.js:305:11\n    at TimeoutManager.withRunnable \u001b[90m(E:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\worker\\timeoutManager.js:67:14\u001b[90m)\u001b[39m\n    at TestInfoImpl._runWithTimeout \u001b[90m(E:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\worker\\testInfo.js:303:7\u001b[90m)\u001b[39m\n    at \u001b[90mE:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\worker\\workerMain.js:308:7\n    at WorkerMain._runTest \u001b[90m(E:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\worker\\workerMain.js:283:5\u001b[90m)\u001b[39m\n    at WorkerMain.runTestGroup \u001b[90m(E:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\worker\\workerMain.js:198:11\u001b[90m)\u001b[39m\n    at process.<anonymous> \u001b[90m(E:\\Proyecto pruebas sistema integracion\\SistemaVentas\\frontend\\\u001b[39mnode_modules\\\u001b[4mplaywright\u001b[24m\\lib\\common\\process.js:65:22\u001b[90m)\u001b[39m\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:03:36.524Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "de2825b8bc91b67b3391-fa9ddd2d8bcb09f2794a",
+              "file": "flows/moderation/moderate-products.spec.ts",
+              "line": 116,
+              "column": 3
+            },
+            {
+              "title": "PR-019: Moderador puede filtrar productos por estado",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 12260,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:03:58.030Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "de2825b8bc91b67b3391-9ca94d3f03fbc128fd7b",
+              "file": "flows/moderation/moderate-products.spec.ts",
+              "line": 143,
+              "column": 3
+            },
+            {
+              "title": "PR-020: Moderador puede buscar productos por nombre",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4383,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:04:10.302Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "de2825b8bc91b67b3391-614fa1bbef94d5e6f547",
+              "file": "flows/moderation/moderate-products.spec.ts",
+              "line": 184,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "flows\\moderation\\report-product.spec.ts",
+      "file": "flows/moderation/report-product.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Reportes de Productos",
+          "file": "flows/moderation/report-product.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "PR-001: Comprador puede reportar un producto",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 46289,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:04:14.722Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "333bf834593bde23f59a-c8f13245d0aff5b0738c",
+              "file": "flows/moderation/report-product.spec.ts",
+              "line": 19,
+              "column": 3
+            },
+            {
+              "title": "PR-002: Vendedor puede reportar producto de otro vendedor",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 61618,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:05:01.022Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "333bf834593bde23f59a-9fa5129aaf4f120037ed",
+              "file": "flows/moderation/report-product.spec.ts",
+              "line": 52,
+              "column": 3
+            },
+            {
+              "title": "PR-003: Usuario no puede reportar su propio producto",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 10970,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:06:02.654Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "333bf834593bde23f59a-8cfc945990484be2c239",
+              "file": "flows/moderation/report-product.spec.ts",
+              "line": 82,
+              "column": 3
+            },
+            {
+              "title": "PR-004: Validación de campos requeridos al crear reporte",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 17014,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:06:13.636Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "333bf834593bde23f59a-71e8c3cd433ef2218922",
+              "file": "flows/moderation/report-product.spec.ts",
+              "line": 123,
+              "column": 3
+            },
+            {
+              "title": "PR-005: Usuario puede ver sus propios reportes",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 13856,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:06:30.662Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "333bf834593bde23f59a-9839ac02651d1a122328",
+              "file": "flows/moderation/report-product.spec.ts",
+              "line": 197,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "flows\\products\\01-product-creation.spec.ts",
+      "file": "flows/products/01-product-creation.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Creación de Productos/Servicios",
+          "file": "flows/products/01-product-creation.spec.ts",
+          "line": 11,
+          "column": 15,
+          "specs": [
+            {
+              "title": "SIS-059: Crear producto exitosamente como vendedor",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 44209,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:06:44.551Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "751bd168c3cbab013498-dceb4350376b82669250",
+              "file": "flows/products/01-product-creation.spec.ts",
+              "line": 24,
+              "column": 3
+            },
+            {
+              "title": "SIS-060: Crear servicio exitosamente con campos específicos",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 34043,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:07:28.769Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "751bd168c3cbab013498-6b329217de3b7f7d6afd",
+              "file": "flows/products/01-product-creation.spec.ts",
+              "line": 174,
+              "column": 3
+            },
+            {
+              "title": "SIS-061: Redirigir a login si no está autenticado",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1458,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:08:02.828Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "751bd168c3cbab013498-e4d66ce4b4b7882640e9",
+              "file": "flows/products/01-product-creation.spec.ts",
+              "line": 237,
+              "column": 3
+            },
+            {
+              "title": "SIS-062: Denegar acceso a comprador",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6720,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:08:04.296Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "751bd168c3cbab013498-49ee117d5a0a36394c18",
+              "file": "flows/products/01-product-creation.spec.ts",
+              "line": 250,
+              "column": 3
+            },
+            {
+              "title": "SIS-063: Validar campos requeridos",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 11319,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:08:11.029Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "751bd168c3cbab013498-c8fe6d62f4208ce700a5",
+              "file": "flows/products/01-product-creation.spec.ts",
+              "line": 269,
+              "column": 3
+            },
+            {
+              "title": "SIS-064: Validar código duplicado",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 40238,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:08:22.359Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "751bd168c3cbab013498-0d5ff76234074d6d6355",
+              "file": "flows/products/01-product-creation.spec.ts",
+              "line": 318,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "flows\\products\\02-product-edition.spec.ts",
+      "file": "flows/products/02-product-edition.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Edición de Productos",
+          "file": "flows/products/02-product-edition.spec.ts",
+          "line": 8,
+          "column": 15,
+          "specs": [
+            {
+              "title": "SIS-065: Editar producto propio exitosamente",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3904,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:09:02.640Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "fcdbe89b6ceb9642195d-5588ab81b41a792e437c",
+              "file": "flows/products/02-product-edition.spec.ts",
+              "line": 21,
+              "column": 3
+            },
+            {
+              "title": "SIS-066: Denegar edición de producto de otro vendedor",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7331,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:09:06.555Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "fcdbe89b6ceb9642195d-eb5f93a04a4e68185177",
+              "file": "flows/products/02-product-edition.spec.ts",
+              "line": 65,
+              "column": 3
+            },
+            {
+              "title": "SIS-067: Bloquear edición de producto peligroso",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4228,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:09:13.900Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "fcdbe89b6ceb9642195d-82adc3bc743fb3955a2e",
+              "file": "flows/products/02-product-edition.spec.ts",
+              "line": 94,
+              "column": 3
+            },
+            {
+              "title": "SIS-068: Bloquear edición de producto suspendido",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4337,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:09:18.141Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "fcdbe89b6ceb9642195d-7dba03575562f0149f0d",
+              "file": "flows/products/02-product-edition.spec.ts",
+              "line": 120,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "flows\\products\\03-product-deletion.spec.ts",
+      "file": "flows/products/03-product-deletion.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Eliminación de Productos",
+          "file": "flows/products/03-product-deletion.spec.ts",
+          "line": 7,
+          "column": 15,
+          "specs": [
+            {
+              "title": "SIS-069: Eliminar producto propio exitosamente",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4028,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:09:22.526Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "2acb2c604d320a9da23b-3edfe0f20e045c651d69",
+              "file": "flows/products/03-product-deletion.spec.ts",
+              "line": 18,
+              "column": 3
+            },
+            {
+              "title": "SIS-070: Bloquear eliminación de producto peligroso por vendedor",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4782,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:09:26.575Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "2acb2c604d320a9da23b-8588772d7864f5f2df5f",
+              "file": "flows/products/03-product-deletion.spec.ts",
+              "line": 52,
+              "column": 3
+            },
+            {
+              "title": "SIS-071: Administrador puede eliminar producto peligroso",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4637,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:09:31.372Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "2acb2c604d320a9da23b-3b9c32582927195ad962",
+              "file": "flows/products/03-product-deletion.spec.ts",
+              "line": 77,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "flows\\products\\04-product-visualization.spec.ts",
+      "file": "flows/products/04-product-visualization.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Visualización de Productos",
+          "file": "flows/products/04-product-visualization.spec.ts",
+          "line": 7,
+          "column": 15,
+          "specs": [
+            {
+              "title": "SIS-072: Mostrar solo productos activos en catálogo público",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4225,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:09:36.050Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1aa39ffebd716408e21f-712cf6b9ead0cf00f550",
+              "file": "flows/products/04-product-visualization.spec.ts",
+              "line": 18,
+              "column": 3
+            },
+            {
+              "title": "SIS-073: Mostrar información completa de producto activo",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2078,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:09:40.286Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1aa39ffebd716408e21f-3434f95c69d096b5276d",
+              "file": "flows/products/04-product-visualization.spec.ts",
+              "line": 42,
+              "column": 3
+            },
+            {
+              "title": "SIS-074: Ocultar producto peligroso del público",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1504,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:09:42.373Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1aa39ffebd716408e21f-6ec7183011dbc44ddc5f",
+              "file": "flows/products/04-product-visualization.spec.ts",
+              "line": 67,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "flows\\products\\05-product-appeals.spec.ts",
+      "file": "flows/products/05-product-appeals.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Apelaciones de Productos",
+          "file": "flows/products/05-product-appeals.spec.ts",
+          "line": 6,
+          "column": 15,
+          "specs": [
+            {
+              "title": "SIS-075: Crear apelación para producto rechazado",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4810,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:09:43.912Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e24928350a0acc345d18-92a978606cfd7a4717d9",
+              "file": "flows/products/05-product-appeals.spec.ts",
+              "line": 15,
+              "column": 3
+            },
+            {
+              "title": "SIS-076: Crear apelación para producto suspendido",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3701,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:09:48.732Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e24928350a0acc345d18-d4d3c5bb51c618ff0e1e",
+              "file": "flows/products/05-product-appeals.spec.ts",
+              "line": 70,
+              "column": 3
+            },
+            {
+              "title": "SIS-077: Bloquear apelación de producto peligroso",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4227,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:09:52.447Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e24928350a0acc345d18-2cad00e32a006e803749",
+              "file": "flows/products/05-product-appeals.spec.ts",
+              "line": 118,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "flows\\products\\06-product-reports.spec.ts",
+      "file": "flows/products/06-product-reports.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Reportes de Productos",
+          "file": "flows/products/06-product-reports.spec.ts",
+          "line": 8,
+          "column": 15,
+          "specs": [
+            {
+              "title": "SIS-078: Comprador puede reportar producto",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 37158,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:09:56.713Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "2e368a695aa5dea2fec7-4eb2f51f7ddee6f1dfe3",
+              "file": "flows/products/06-product-reports.spec.ts",
+              "line": 21,
+              "column": 3
+            },
+            {
+              "title": "SIS-079: Producto reportado sigue visible en catálogo",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1875,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:10:33.886Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "2e368a695aa5dea2fec7-90c5eb6e1f5de23330b7",
+              "file": "flows/products/06-product-reports.spec.ts",
+              "line": 146,
+              "column": 3
+            },
+            {
+              "title": "SIS-080: Moderador puede rechazar reporte",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5998,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:10:35.778Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "2e368a695aa5dea2fec7-a05d71e3d5546ae028f7",
+              "file": "flows/products/06-product-reports.spec.ts",
+              "line": 163,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "flows\\products\\07-product-saved.spec.ts",
+      "file": "flows/products/07-product-saved.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Productos Guardados",
+          "file": "flows/products/07-product-saved.spec.ts",
+          "line": 7,
+          "column": 15,
+          "specs": [
+            {
+              "title": "SIS-081: Guardar producto en favoritos",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5596,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:10:41.826Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "cbbe30903e616aaf8b7c-aa773237b6cf051fa120",
+              "file": "flows/products/07-product-saved.spec.ts",
+              "line": 18,
+              "column": 3
+            },
+            {
+              "title": "SIS-082: Eliminar producto de favoritos",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 21550,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:10:47.433Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "cbbe30903e616aaf8b7c-4265fdcf2f73c5a8d4ed",
+              "file": "flows/products/07-product-saved.spec.ts",
+              "line": 57,
+              "column": 3
+            },
+            {
+              "title": "SIS-083: Mostrar lista de productos guardados",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4741,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:11:08.997Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "cbbe30903e616aaf8b7c-83646172a700819f4db1",
+              "file": "flows/products/07-product-saved.spec.ts",
+              "line": 122,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
       "title": "flows\\products\\08-product-moderation.spec.ts",
       "file": "flows/products/08-product-moderation.spec.ts",
       "column": 0,
@@ -99,12 +2903,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 43602,
+                      "duration": 58913,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-12-03T16:46:46.896Z",
+                      "startTime": "2025-12-03T17:11:13.783Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -133,12 +2937,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 64495,
+                      "duration": 50709,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-12-03T16:47:30.833Z",
+                      "startTime": "2025-12-03T17:12:12.714Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -167,12 +2971,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 43809,
+                      "duration": 44440,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-12-03T16:48:35.357Z",
+                      "startTime": "2025-12-03T17:13:03.435Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -188,13 +2992,483 @@
           ]
         }
       ]
+    },
+    {
+      "title": "flows\\products\\products-all.spec.ts",
+      "file": "flows/products/products-all.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Suite Completa de Pruebas de Productos (SIS-059 a SIS-085)",
+          "file": "flows/products/products-all.spec.ts",
+          "line": 16,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Nota: Las pruebas se ejecutan desde los archivos individuales en orden",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 0,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:13:47.909Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "761f4cc328c91e13d2cf-9e7f18ee4cfa07e2d4c6",
+              "file": "flows/products/products-all.spec.ts",
+              "line": 17,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "flows\\users\\register-moderator.spec.ts",
+      "file": "flows/users/register-moderator.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Registro de Moderadores - Admin",
+          "file": "flows/users/register-moderator.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "debería registrar un nuevo moderador exitosamente",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7295,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:13:47.938Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e76bd05726a4731c436e-c5a9a1853c7efefc996c",
+              "file": "flows/users/register-moderator.spec.ts",
+              "line": 22,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "flows\\users\\session-management.spec.ts",
+      "file": "flows/users/session-management.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Gestión de Sesiones",
+          "file": "flows/users/session-management.spec.ts",
+          "line": 7,
+          "column": 6,
+          "specs": [
+            {
+              "title": "debería mostrar las sesiones activas del usuario",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5553,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:13:55.279Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b64f8e05556f8895ac40-e0e49d7cdc0ecd3ed72f",
+              "file": "flows/users/session-management.spec.ts",
+              "line": 21,
+              "column": 3
+            },
+            {
+              "title": "debería cerrar una sesión específica",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 10167,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[DEBUG] Total de sesiones activas encontradas: 2\n"
+                        },
+                        {
+                          "text": "[DEBUG] Total botones con icono X encontrados: 2\n"
+                        },
+                        {
+                          "text": "[DEBUG] Bounding box de sesión 0: { x: \u001b[33m56\u001b[39m, y: \u001b[33m352\u001b[39m, width: \u001b[33m330.9250183105469\u001b[39m, height: \u001b[33m104.80001831054688\u001b[39m }\n"
+                        },
+                        {
+                          "text": "[DEBUG] Botón X 0: visible=true, tieneTexto=true, texto=\"Cerrar Todas las Sesiones\", clasesRojas=false, box= { x: \u001b[33m56\u001b[39m, y: \u001b[33m593.6000366210938\u001b[39m, width: \u001b[33m330.9250183105469\u001b[39m, height: \u001b[33m44\u001b[39m }\n"
+                        },
+                        {
+                          "text": "[DEBUG] Botón X 1: visible=true, tieneTexto=, texto=\"\", clasesRojas=true, box= {\n  x: \u001b[33m1129.5999755859375\u001b[39m,\n  y: \u001b[33m354.38751220703125\u001b[39m,\n  width: \u001b[33m45.60009765625\u001b[39m,\n  height: \u001b[33m36\u001b[39m\n}\n"
+                        },
+                        {
+                          "text": "[DEBUG] Botón X 1 - mismaFila=true, aLaDerecha=true\n"
+                        },
+                        {
+                          "text": "[DEBUG] ✅ Botón correcto encontrado en índice 1 (sin texto, misma fila)\n"
+                        },
+                        {
+                          "text": "[DEBUG] Haciendo clic en el botón de cerrar sesión 0\n"
+                        },
+                        {
+                          "text": "[DEBUG] Modal visible: true\n"
+                        },
+                        {
+                          "text": "[DEBUG] Botón \"Cerrar Sesión\" visible: true\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:14:00.845Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b64f8e05556f8895ac40-98070654ddc827cb350b",
+              "file": "flows/users/session-management.spec.ts",
+              "line": 37,
+              "column": 3
+            },
+            {
+              "title": "debería cerrar todas las sesiones del usuario",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 30644,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "✅ Se cerraron 1 sesión(es). Quedó(n) 1 sesión(es) activa(s) (posiblemente nueva).\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:14:11.023Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b64f8e05556f8895ac40-ece6a251b91b8c379283",
+              "file": "flows/users/session-management.spec.ts",
+              "line": 143,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "flows\\users\\user-management.spec.ts",
+      "file": "flows/users/user-management.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Gestión de Usuarios - Admin",
+          "file": "flows/users/user-management.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "debería mostrar la lista de usuarios correctamente",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4221,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:14:41.698Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "049b996869e0286ad64c-6d4180e4fc394e3218c2",
+              "file": "flows/users/user-management.spec.ts",
+              "line": 19,
+              "column": 3
+            },
+            {
+              "title": "debería buscar usuarios por email",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5098,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:14:45.930Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "049b996869e0286ad64c-79c55c2a45434e41966f",
+              "file": "flows/users/user-management.spec.ts",
+              "line": 24,
+              "column": 3
+            },
+            {
+              "title": "debería suspender un usuario exitosamente",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8504,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:14:51.041Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "049b996869e0286ad64c-a4fc41087dd3acb837dc",
+              "file": "flows/users/user-management.spec.ts",
+              "line": 33,
+              "column": 3
+            },
+            {
+              "title": "debería activar un usuario suspendido exitosamente",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 8644,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:14:59.558Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "049b996869e0286ad64c-a2eeb08d3abd802329ac",
+              "file": "flows/users/user-management.spec.ts",
+              "line": 56,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "flows\\users\\user-suspension-flow.spec.ts",
+      "file": "flows/users/user-suspension-flow.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Flujo Completo: Suspensión y Reactivación de Usuario",
+          "file": "flows/users/user-suspension-flow.spec.ts",
+          "line": 9,
+          "column": 6,
+          "specs": [
+            {
+              "title": "flujo completo: crear usuario, suspender, intentar login, reactivar",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 30576,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "Estado anterior del usuario suspension-test-1764782108408@test.com: pendiente_verificacion\n"
+                        },
+                        {
+                          "text": "Estado nuevo del usuario suspension-test-1764782108408@test.com: activo\n"
+                        },
+                        {
+                          "text": "Verificación final - Estado: activo, Email verificado: true\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-12-03T17:15:08.241Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "38145e1c8eef59082cb8-bfb29593cef8ba7e5151",
+              "file": "flows/users/user-suspension-flow.spec.ts",
+              "line": 17,
+              "column": 3
+            }
+          ]
+        }
+      ]
     }
   ],
   "errors": [],
   "stats": {
-    "startTime": "2025-12-03T16:46:42.639Z",
-    "duration": 156900.393,
-    "expected": 3,
+    "startTime": "2025-12-03T16:57:00.300Z",
+    "duration": 1118959.075,
+    "expected": 87,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0
