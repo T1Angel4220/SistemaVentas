@@ -459,6 +459,27 @@ Deberías ver: `Docker Compose version v2.24.5`
 
 **Nota:** Esta instalación se mantiene mientras el contenedor exista. Si recreas el contenedor, necesitarás reinstalar docker-compose.
 
+### Problema: Pipeline se queda atascado en "Stop Old Containers"
+
+**Síntomas:**
+- El pipeline se queda atascado en la etapa "Stop Old Containers"
+- Verás: `Container sistema-ventas-jenkins  Stopping` y nunca termina
+- El proceso se queda colgado indefinidamente
+
+**Causa:**
+El pipeline está intentando ejecutar `docker-compose down` desde dentro del contenedor de Jenkins, lo que intenta detener el contenedor de Jenkins mismo. Esto causa un deadlock porque Jenkins está intentando detenerse a sí mismo.
+
+**Solución (Ya aplicada en el código):**
+El Jenkinsfile ha sido modificado para:
+1. Detener solo los servicios de la aplicación (backend, frontend, postgres) sin incluir Jenkins
+2. Usar `docker-compose stop` en lugar de `docker-compose down` para servicios específicos
+3. Usar comandos docker directos para eliminar contenedores específicos
+
+**Si el problema persiste:**
+1. Detén manualmente el build en Jenkins (si está corriendo)
+2. Verifica que el Jenkinsfile tenga los cambios más recientes
+3. Ejecuta el pipeline nuevamente
+
 ### Problema: Pipeline falla en "Build Frontend" con errores de TypeScript
 
 **Síntomas:**
