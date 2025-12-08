@@ -126,8 +126,12 @@ pipeline {
                 script {
                     sh '''
                         cd SistemaVentas/DesarrolloAPE
-                        docker-compose down || true
-                        # Limpiar contenedores huérfanos
+                        # Detener solo los servicios de la aplicación (sin Jenkins)
+                        # Usamos stop en lugar de down para no eliminar volúmenes
+                        docker-compose stop backend frontend postgres || true
+                        # Eliminar contenedores detenidos de la aplicación
+                        docker rm -f sistema-ventas-backend sistema-ventas-frontend sistema-ventas-db 2>/dev/null || true
+                        # Limpiar contenedores huérfanos (excluyendo Jenkins)
                         docker container prune -f || true
                     '''
                 }
@@ -142,11 +146,12 @@ pipeline {
                 script {
                     sh '''
                         cd SistemaVentas/DesarrolloAPE
-                        docker-compose up -d --build
+                        # Levantar solo los servicios de la aplicación (sin Jenkins)
+                        docker-compose up -d --build backend frontend postgres
                         # Esperar a que los servicios estén listos
                         sleep 15
-                        # Verificar estado de los contenedores
-                        docker-compose ps
+                        # Verificar estado de los contenedores de la aplicación
+                        docker-compose ps backend frontend postgres
                     '''
                 }
             }
