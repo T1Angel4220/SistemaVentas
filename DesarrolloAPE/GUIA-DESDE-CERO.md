@@ -236,22 +236,28 @@ Si ves el error `docker: Permission denied`, esto significa que Jenkins no tiene
    docker exec -u root sistema-ventas-jenkins sh -c "apt-get update && apt-get install -y docker.io"
    ```
 
-3. **Verificar que Docker está instalado:**
+3. **Instalar docker-compose (necesario para el pipeline):**
    ```powershell
-   docker exec -u root sistema-ventas-jenkins docker --version
+   docker exec -u root sistema-ventas-jenkins sh -c "curl -L https://github.com/docker/compose/releases/download/v2.24.5/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose && chmod +x /usr/local/bin/docker-compose"
    ```
 
-4. **Configurar permisos (si es necesario):**
+4. **Verificar que Docker y docker-compose están instalados:**
+   ```powershell
+   docker exec -u root sistema-ventas-jenkins docker --version
+   docker exec sistema-ventas-jenkins docker-compose --version
+   ```
+
+5. **Configurar permisos (si es necesario):**
    ```powershell
    docker exec -u root sistema-ventas-jenkins sh -c "chmod 666 /var/run/docker.sock || true"
    ```
 
-5. **Reiniciar Jenkins:**
+6. **Reiniciar Jenkins:**
    ```powershell
    docker-compose restart jenkins
    ```
 
-6. **Esperar 30-60 segundos** y luego volver a ejecutar el job de prueba en Jenkins.
+7. **Esperar 30-60 segundos** y luego volver a ejecutar el job de prueba en Jenkins.
 
 **Alternativa: Usar Docker-in-Docker (DinD)**
 
@@ -426,6 +432,32 @@ docker exec sistema-ventas-jenkins docker --version
 # Si no funciona, reiniciar Jenkins
 docker-compose restart jenkins
 ```
+
+### Problema: Pipeline falla en "Deploy" con error "docker-compose: not found"
+
+**Síntomas:**
+- El pipeline falla en la etapa "Deploy"
+- Verás el error: `/script.sh: docker-compose: not found`
+- Exit code: 127
+
+**Causa:**
+El contenedor de Jenkins no tiene `docker-compose` instalado.
+
+**Solución:**
+Instalar docker-compose dentro del contenedor de Jenkins:
+
+```powershell
+docker exec -u root sistema-ventas-jenkins sh -c "curl -L https://github.com/docker/compose/releases/download/v2.24.5/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose && chmod +x /usr/local/bin/docker-compose"
+```
+
+Verificar que está instalado:
+```powershell
+docker exec sistema-ventas-jenkins docker-compose --version
+```
+
+Deberías ver: `Docker Compose version v2.24.5`
+
+**Nota:** Esta instalación se mantiene mientras el contenedor exista. Si recreas el contenedor, necesitarás reinstalar docker-compose.
 
 ### Problema: Pipeline falla en "Build Frontend" con errores de TypeScript
 
