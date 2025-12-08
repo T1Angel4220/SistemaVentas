@@ -6,17 +6,31 @@ Esta es una guía rápida de referencia para completar la APE7.
 
 ## 🚀 Inicio Rápido
 
-### 1. Instalar Herramientas
+### 1. Instalar Herramientas (Windows)
 
-```bash
+```powershell
 # Ver guía completa: 01-INSTALACION.md
 # Docker Desktop: https://www.docker.com/products/docker-desktop
-# Jenkins: https://www.jenkins.io/download/
+# Jenkins se ejecuta en contenedor Docker (NO se instala directamente)
 ```
 
-### 2. Construir y Ejecutar con Docker
+### 2. Iniciar Jenkins en Contenedor
 
-```bash
+```powershell
+cd C:\Users\Johan\Desktop\ape7\SistemaVentas\DesarrolloAPE
+docker-compose up -d jenkins
+```
+
+**Acceder a Jenkins:**
+- Abrir navegador: http://localhost:8080
+- Obtener contraseña inicial:
+  ```powershell
+  docker exec sistema-ventas-jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+  ```
+
+### 3. Construir y Ejecutar Aplicación con Docker
+
+```powershell
 cd DesarrolloAPE
 docker-compose build
 docker-compose up -d
@@ -25,8 +39,9 @@ docker-compose up -d
 **Verificar:**
 - Frontend: http://localhost
 - Backend: http://localhost:3001
+- Jenkins: http://localhost:8080
 
-### 3. Configurar Jenkins
+### 4. Configurar Pipeline en Jenkins
 
 1. Abrir: http://localhost:8080
 2. Crear nuevo job tipo "Pipeline"
@@ -93,7 +108,7 @@ kubectl apply -f frontend-service.yaml
 
 ### Docker
 
-```bash
+```powershell
 # Construir imágenes
 docker-compose build
 
@@ -113,17 +128,23 @@ docker ps
 docker images
 ```
 
-### Jenkins
+### Jenkins en Docker
 
-```bash
+```powershell
+# Iniciar Jenkins
+docker-compose up -d jenkins
+
+# Detener Jenkins
+docker-compose stop jenkins
+
+# Reiniciar Jenkins
+docker-compose restart jenkins
+
+# Ver logs de Jenkins
+docker logs -f sistema-ventas-jenkins
+
 # Acceder a Jenkins
-http://localhost:8080
-
-# Ver logs de Jenkins (Linux)
-sudo tail -f /var/log/jenkins/jenkins.log
-
-# Reiniciar Jenkins (Linux)
-sudo systemctl restart jenkins
+# http://localhost:8080
 ```
 
 ### Kubernetes
@@ -185,9 +206,10 @@ DesarrolloAPE/
 - Verificar que la virtualización está habilitada en BIOS
 
 ### Jenkins no accesible
-- Verificar que el puerto 8080 no está en uso
-- Verificar que Jenkins está corriendo
-- Revisar logs de Jenkins
+- Verificar que el contenedor está corriendo: `docker ps`
+- Verificar que el puerto 8080 no está en uso: `netstat -ano | findstr :8080`
+- Ver logs de Jenkins: `docker logs sistema-ventas-jenkins`
+- Reiniciar Jenkins: `docker-compose restart jenkins`
 
 ### Contenedores no inician
 - Verificar logs: `docker-compose logs`

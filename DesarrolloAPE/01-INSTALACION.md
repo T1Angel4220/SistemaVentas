@@ -1,247 +1,231 @@
-# Guía de Instalación de Herramientas
+# Guía de Instalación de Herramientas - Windows
 
-Esta guía detalla la instalación de todas las herramientas necesarias para completar la APE7.
+Esta guía detalla la instalación de todas las herramientas necesarias para completar la APE7 en **Windows**.
+
+**IMPORTANTE:** Jenkins se ejecutará en un contenedor Docker, NO se instala directamente en Windows.
 
 ---
 
 ## 📋 Requisitos Previos
 
-- Sistema operativo: Windows 10/11, Linux o macOS
+- Sistema operativo: **Windows 10/11** (64-bit)
 - Mínimo 8GB de RAM (recomendado 16GB)
 - 20GB de espacio libre en disco
 - Acceso a internet
+- Virtualización habilitada en BIOS
 
 ---
 
-## 1. Instalación de Docker
+## 1. Instalación de Docker Desktop para Windows
 
-### Windows
+### Paso 1: Verificar Requisitos del Sistema
 
-1. **Descargar Docker Desktop:**
-   - Visitar: https://www.docker.com/products/docker-desktop
-   - Descargar Docker Desktop para Windows
-   - Ejecutar el instalador
-
-2. **Requisitos del Sistema:**
+1. **Verificar versión de Windows:**
    - Windows 10 64-bit: Pro, Enterprise o Education (Build 19041 o superior)
-   - WSL 2 habilitado
-   - Virtualización habilitada en BIOS
+   - Windows 11 (cualquier versión)
 
-3. **Instalación:**
+2. **Habilitar WSL 2:**
    ```powershell
+   # Abrir PowerShell como Administrador
    # Verificar si WSL 2 está instalado
    wsl --version
    
-   # Si no está instalado, instalar WSL 2
+   # Si no está instalado, ejecutar:
    wsl --install
    
-   # Reiniciar el sistema
-   ```
-   
-4. **Verificar Instalación:**
-   ```powershell
-   docker --version
-   docker-compose --version
-   docker run hello-world
+   # Reiniciar el sistema después de la instalación
    ```
 
-### Linux (Ubuntu/Debian)
+3. **Habilitar Virtualización en BIOS:**
+   - Reiniciar el equipo
+   - Entrar a BIOS/UEFI (generalmente presionando F2, F10, F12 o Del durante el arranque)
+   - Buscar opción "Virtualization Technology" o "Intel VT-x" / "AMD-V"
+   - Habilitarla
+   - Guardar y salir
 
-1. **Actualizar el sistema:**
-   ```bash
-   sudo apt-get update
-   sudo apt-get upgrade -y
-   ```
+### Paso 2: Descargar Docker Desktop
 
-2. **Instalar dependencias:**
-   ```bash
-   sudo apt-get install -y \
-       apt-transport-https \
-       ca-certificates \
-       curl \
-       gnupg \
-       lsb-release
-   ```
+1. Visitar: https://www.docker.com/products/docker-desktop
+2. Descargar **Docker Desktop para Windows**
+3. Ejecutar el instalador `Docker Desktop Installer.exe`
 
-3. **Añadir la clave GPG oficial de Docker:**
-   ```bash
-   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-   ```
+### Paso 3: Instalar Docker Desktop
 
-4. **Configurar el repositorio:**
-   ```bash
-   echo \
-     "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
-     $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-   ```
+1. Ejecutar el instalador
+2. Aceptar los términos y condiciones
+3. Marcar las opciones recomendadas:
+   - ✅ Use WSL 2 instead of Hyper-V (recomendado)
+   - ✅ Add shortcut to desktop
+4. Click en **OK** para instalar
+5. Cuando termine, click en **Close and restart**
 
-5. **Instalar Docker:**
-   ```bash
-   sudo apt-get update
-   sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
-   ```
+### Paso 4: Iniciar Docker Desktop
 
-6. **Añadir usuario al grupo docker:**
-   ```bash
-   sudo usermod -aG docker $USER
-   # Cerrar sesión y volver a iniciar
-   ```
+1. Buscar "Docker Desktop" en el menú de inicio
+2. Ejecutar Docker Desktop
+3. Aceptar los términos de servicio
+4. Esperar a que Docker Desktop se inicie completamente (ícono de ballena en la bandeja del sistema)
 
-7. **Verificar Instalación:**
-   ```bash
-   docker --version
-   docker compose version
-   docker run hello-world
-   ```
+### Paso 5: Verificar Instalación
 
-### macOS
+Abrir PowerShell o CMD y ejecutar:
 
-1. **Descargar Docker Desktop:**
-   - Visitar: https://www.docker.com/products/docker-desktop
-   - Descargar Docker Desktop para Mac
-   - Abrir el archivo .dmg y arrastrar Docker a Applications
+```powershell
+# Verificar versión de Docker
+docker --version
 
-2. **Iniciar Docker Desktop:**
-   - Abrir Docker Desktop desde Applications
-   - Esperar a que se inicie completamente
+# Verificar versión de Docker Compose
+docker-compose --version
 
-3. **Verificar Instalación:**
-   ```bash
-   docker --version
-   docker-compose --version
-   docker run hello-world
-   ```
+# Probar Docker con un contenedor de prueba
+docker run hello-world
+```
+
+Si todos los comandos funcionan correctamente, Docker está instalado y funcionando.
 
 ---
 
-## 2. Instalación de Jenkins
+## 2. Configuración de Jenkins en Contenedor Docker
 
-### Windows
+**IMPORTANTE:** Jenkins NO se instala directamente en Windows. Se ejecutará en un contenedor Docker.
 
-1. **Requisitos:**
-   - Java JDK 11 o superior
-   - Git instalado
+### Paso 1: Verificar Docker está Funcionando
 
-2. **Instalar Java JDK:**
-   - Descargar desde: https://adoptium.net/
-   - Instalar JDK 11 o superior
-   - Configurar JAVA_HOME en variables de entorno
+```powershell
+# Verificar que Docker está corriendo
+docker ps
 
-3. **Descargar Jenkins:**
-   - Visitar: https://www.jenkins.io/download/
-   - Descargar Jenkins.war
+# Si muestra una lista (aunque esté vacía), Docker está funcionando
+```
 
-4. **Iniciar Jenkins:**
+### Paso 2: Iniciar Jenkins en Contenedor
+
+1. **Navegar a la carpeta del proyecto:**
    ```powershell
-   # Navegar a la carpeta donde está jenkins.war
-   cd C:\jenkins
-   
-   # Iniciar Jenkins
-   java -jar jenkins.war --httpPort=8080
+   cd C:\Users\Johan\Desktop\ape7\SistemaVentas\DesarrolloAPE
    ```
 
-5. **Configuración Inicial:**
-   - Abrir navegador en: http://localhost:8080
-   - Copiar la contraseña inicial del archivo mostrado
-   - Instalar plugins sugeridos
-   - Crear usuario administrador
-
-### Linux (Ubuntu/Debian)
-
-1. **Instalar Java JDK:**
-   ```bash
-   sudo apt update
-   sudo apt install -y openjdk-11-jdk
+2. **Iniciar Jenkins con Docker Compose:**
+   ```powershell
+   docker-compose up -d jenkins
    ```
 
-2. **Añadir clave del repositorio Jenkins:**
-   ```bash
-   curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo tee \
-     /usr/share/keyrings/jenkins-keyring.asc > /dev/null
+   Este comando:
+   - Descargará la imagen oficial de Jenkins LTS
+   - Creará un contenedor llamado `sistema-ventas-jenkins`
+   - Montará el socket de Docker para que Jenkins pueda construir imágenes
+   - Expondrá Jenkins en el puerto 8080
+
+3. **Verificar que Jenkins está corriendo:**
+   ```powershell
+   docker ps
    ```
 
-3. **Añadir repositorio Jenkins:**
-   ```bash
-   echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] \
-     https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
-     /etc/apt/sources.list.d/jenkins.list > /dev/null
-   ```
+   Deberías ver el contenedor `sistema-ventas-jenkins` en estado "Up".
 
-4. **Instalar Jenkins:**
-   ```bash
-   sudo apt-get update
-   sudo apt-get install -y jenkins
-   ```
+### Paso 3: Acceder a Jenkins
 
-5. **Iniciar Jenkins:**
-   ```bash
-   sudo systemctl start jenkins
-   sudo systemctl enable jenkins
-   sudo systemctl status jenkins
-   ```
+1. Abrir navegador en: **http://localhost:8080**
+2. Esperar a que Jenkins termine de inicializar (puede tardar 1-2 minutos)
+3. Verás una pantalla pidiendo la contraseña inicial
 
-6. **Configuración Inicial:**
-   - Abrir navegador en: http://localhost:8080
-   - Obtener contraseña inicial:
-     ```bash
-     sudo cat /var/lib/jenkins/secrets/initialAdminPassword
-     ```
-   - Instalar plugins sugeridos
-   - Crear usuario administrador
+### Paso 4: Obtener Contraseña Inicial de Jenkins
 
-### macOS
+En PowerShell, ejecutar:
 
-1. **Instalar Homebrew (si no está instalado):**
-   ```bash
-   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-   ```
+```powershell
+# Ver la contraseña inicial de Jenkins
+docker exec sistema-ventas-jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+```
 
-2. **Instalar Java:**
-   ```bash
-   brew install openjdk@11
-   ```
+Copiar la contraseña que aparece y pegarla en la pantalla de Jenkins.
 
-3. **Instalar Jenkins:**
-   ```bash
-   brew install jenkins-lts
-   ```
+### Paso 5: Configuración Inicial de Jenkins
 
-4. **Iniciar Jenkins:**
-   ```bash
-   brew services start jenkins-lts
-   ```
+1. **Instalar plugins:**
+   - Seleccionar **"Install suggested plugins"** (recomendado)
+   - Esperar a que se instalen los plugins (puede tardar varios minutos)
 
-5. **Configuración Inicial:**
-   - Abrir navegador en: http://localhost:8080
-   - Seguir los pasos de configuración inicial
+2. **Crear usuario administrador:**
+   - Username: (elegir un nombre de usuario)
+   - Password: (elegir una contraseña segura)
+   - Confirm password: (repetir la contraseña)
+   - Full name: (tu nombre completo)
+   - E-mail address: (tu email)
+   - Click en **Save and Continue**
+
+3. **Configurar URL de Jenkins:**
+   - Dejar la URL por defecto: `http://localhost:8080/`
+   - Click en **Save and Finish**
+
+4. **Click en "Start using Jenkins"**
+
+### Paso 6: Instalar Plugins Adicionales Necesarios
+
+1. En el Dashboard de Jenkins, click en **Manage Jenkins**
+2. Click en **Manage Plugins**
+3. Ir a la pestaña **Available**
+4. Buscar e instalar los siguientes plugins:
+   - ✅ **Pipeline** - Para usar Jenkinsfile
+   - ✅ **Docker Pipeline** - Integración con Docker
+   - ✅ **Docker** - Para construir imágenes Docker
+   - ✅ **Git** - Integración con Git
+   - ✅ **Blue Ocean** - Interfaz moderna (opcional pero recomendado)
+5. Marcar los plugins y click en **Install without restart**
+6. Esperar a que se instalen
+7. Si se solicita, click en **Restart Jenkins when installation is complete and no jobs are running**
 
 ---
 
-## 3. Kubernetes - NO Necesario
+## 3. Configurar Docker en Jenkins (Docker-in-Docker)
 
-**IMPORTANTE:** Kubernetes NO se instala ni se implementa en esta APE. Solo se investiga teóricamente.
+Para que Jenkins pueda construir imágenes Docker desde dentro del contenedor, necesitamos configurar el acceso a Docker.
 
-Si en el futuro quieres aprender sobre Kubernetes, puedes consultar la documentación oficial, pero NO es necesario para completar esta APE.
+### Verificar Acceso a Docker desde Jenkins
 
-**Kubernetes NO se instala para esta APE.** Solo se investiga teóricamente como parte de los requisitos de la asignatura.
+1. En Jenkins, click en **Manage Jenkins**
+2. Click en **Manage Nodes and Clouds**
+3. Click en **Configure System**
+4. Verificar que Docker está disponible
+
+**Nota:** Como Jenkins está en un contenedor y tiene acceso al socket de Docker del host (configurado en docker-compose.yml), Jenkins puede ejecutar comandos Docker directamente.
+
+### Probar Docker desde Jenkins
+
+1. En Jenkins, click en **New Item**
+2. Nombre: `test-docker`
+3. Tipo: **Freestyle project**
+4. Click en **OK**
+5. En **Build**, agregar paso **Execute shell** (o **Execute Windows batch command**):
+   ```bash
+   docker --version
+   docker ps
+   ```
+6. Click en **Save**
+7. Click en **Build Now**
+8. Verificar que el build es exitoso y muestra la versión de Docker
 
 ---
 
 ## 4. Instalación de Git (si no está instalado)
 
-### Windows
-- Descargar desde: https://git-scm.com/download/win
-- Ejecutar el instalador con opciones por defecto
+### Verificar si Git está Instalado
 
-### Linux
-```bash
-sudo apt-get update
-sudo apt-get install -y git
+```powershell
+git --version
 ```
 
-### macOS
-```bash
-brew install git
+### Instalar Git (si no está instalado)
+
+1. Descargar desde: https://git-scm.com/download/win
+2. Ejecutar el instalador
+3. Usar opciones por defecto (recomendado)
+4. Click en **Next** hasta completar la instalación
+
+### Verificar Instalación
+
+```powershell
+git --version
 ```
 
 ---
@@ -250,58 +234,183 @@ brew install git
 
 Ejecutar los siguientes comandos para verificar que todo está instalado correctamente:
 
-```bash
+```powershell
 # Verificar Docker
 docker --version
 docker-compose --version
 docker ps
 
-# Verificar Jenkins
-java -version
-# Verificar que Jenkins está corriendo en http://localhost:8080
-
-# Kubernetes NO se instala para esta APE
+# Verificar Jenkins (debe estar corriendo en contenedor)
+docker ps | Select-String "jenkins"
 
 # Verificar Git
 git --version
 ```
 
----
+### Verificar Jenkins en Navegador
 
-## 6. Plugins de Jenkins Necesarios
-
-Después de la instalación inicial de Jenkins, instalar los siguientes plugins:
-
-1. **Pipeline Plugin** - Para usar Jenkinsfile
-2. **Docker Pipeline Plugin** - Para integración con Docker
-3. **Kubernetes Plugin** - NO necesario (Kubernetes no se implementa)
-4. **Git Plugin** - Para integración con Git
-5. **Blue Ocean Plugin** - Interfaz moderna (opcional)
-
-**Instalación de Plugins:**
-- Ir a Jenkins > Manage Jenkins > Manage Plugins
-- Buscar cada plugin en la pestaña "Available"
-- Marcar e instalar
-- Reiniciar Jenkins si es necesario
+1. Abrir navegador: **http://localhost:8080**
+2. Deberías ver el Dashboard de Jenkins
+3. Si no aparece, verificar que el contenedor está corriendo:
+   ```powershell
+   docker ps
+   docker logs sistema-ventas-jenkins
+   ```
 
 ---
 
-## 📝 Notas
+## 6. Comandos Útiles para Jenkins en Docker
 
+### Iniciar Jenkins
+
+```powershell
+cd C:\Users\Johan\Desktop\ape7\SistemaVentas\DesarrolloAPE
+docker-compose up -d jenkins
+```
+
+### Detener Jenkins
+
+```powershell
+docker-compose stop jenkins
+```
+
+### Ver Logs de Jenkins
+
+```powershell
+docker logs -f sistema-ventas-jenkins
+```
+
+### Reiniciar Jenkins
+
+```powershell
+docker-compose restart jenkins
+```
+
+### Acceder al Shell de Jenkins
+
+```powershell
+docker exec -it sistema-ventas-jenkins bash
+```
+
+### Ver Contraseña Inicial (si la olvidaste)
+
+```powershell
+docker exec sistema-ventas-jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+```
+
+### Backup de Datos de Jenkins
+
+```powershell
+# Crear backup del volumen de Jenkins
+docker run --rm -v sistema-ventas_jenkins_home:/data -v ${PWD}:/backup alpine tar czf /backup/jenkins-backup.tar.gz /data
+```
+
+### Restaurar Backup de Jenkins
+
+```powershell
+# Detener Jenkins primero
+docker-compose stop jenkins
+
+# Restaurar backup
+docker run --rm -v sistema-ventas_jenkins_home:/data -v ${PWD}:/backup alpine tar xzf /backup/jenkins-backup.tar.gz -C /
+
+# Iniciar Jenkins
+docker-compose start jenkins
+```
+
+---
+
+## 7. Solución de Problemas
+
+### Problema: Docker Desktop no inicia
+
+**Solución:**
+1. Verificar que WSL 2 está instalado: `wsl --version`
+2. Verificar que la virtualización está habilitada en BIOS
+3. Reiniciar Docker Desktop
+4. Si persiste, reinstalar Docker Desktop
+
+### Problema: Jenkins no accesible en http://localhost:8080
+
+**Solución:**
+```powershell
+# Verificar que el contenedor está corriendo
+docker ps
+
+# Ver logs para identificar el problema
+docker logs sistema-ventas-jenkins
+
+# Verificar que el puerto 8080 no está en uso
+netstat -ano | findstr :8080
+
+# Si el puerto está en uso, cambiar el puerto en docker-compose.yml
+```
+
+### Problema: Jenkins no puede ejecutar comandos Docker
+
+**Solución:**
+1. Verificar que el contenedor tiene acceso al socket de Docker:
+   ```powershell
+   docker exec sistema-ventas-jenkins ls -la /var/run/docker.sock
+   ```
+
+2. Si no existe, verificar la configuración en `docker-compose.yml`:
+   ```yaml
+   volumes:
+     - /var/run/docker.sock:/var/run/docker.sock
+   ```
+
+3. Reiniciar el contenedor:
+   ```powershell
+   docker-compose restart jenkins
+   ```
+
+### Problema: Contenedor de Jenkins se detiene inmediatamente
+
+**Solución:**
+```powershell
+# Ver logs del contenedor
+docker logs sistema-ventas-jenkins
+
+# Verificar permisos del volumen
+docker volume inspect sistema-ventas_jenkins_home
+
+# Recrear el contenedor
+docker-compose down jenkins
+docker-compose up -d jenkins
+```
+
+---
+
+## 📝 Notas Importantes
+
+- **Jenkins se ejecuta en contenedor Docker**, NO se instala directamente en Windows
 - **Docker Desktop** requiere WSL 2 en Windows
-- **Jenkins** necesita Java JDK 11 o superior
-- **Kubernetes** NO se instala - Solo investigación teórica
-- Guardar todas las contraseñas y tokens generados en un lugar seguro
+- Los datos de Jenkins se guardan en un volumen Docker llamado `jenkins_home`
+- El contenedor de Jenkins tiene acceso al socket de Docker del host para poder construir imágenes
+- **Kubernetes NO se instala** - Solo investigación teórica
 
 ---
 
 ## 🔗 Enlaces Útiles
 
-- Docker: https://docs.docker.com/get-started/
-- Jenkins: https://www.jenkins.io/doc/
-- Kubernetes: https://kubernetes.io/docs/ (solo para investigación teórica)
+- Docker Desktop: https://docs.docker.com/desktop/install/windows-install/
+- Jenkins en Docker: https://www.jenkins.io/doc/book/installing/docker/
+- WSL 2: https://docs.microsoft.com/en-us/windows/wsl/install
+
+---
+
+## ✅ Checklist de Instalación
+
+- [ ] Docker Desktop instalado y funcionando
+- [ ] WSL 2 instalado y configurado
+- [ ] Jenkins corriendo en contenedor Docker
+- [ ] Jenkins accesible en http://localhost:8080
+- [ ] Configuración inicial de Jenkins completada
+- [ ] Plugins necesarios instalados
+- [ ] Git instalado (si no estaba)
+- [ ] Docker funciona desde Jenkins (verificado con test)
 
 ---
 
 **Próximo Paso:** [Configuración de Docker](./02-DOCKER.md)
-

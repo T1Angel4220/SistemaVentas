@@ -10,18 +10,25 @@ Esta guía detalla el proceso completo de ejecución del pipeline de CI/CD y des
 
 Antes de ejecutar el pipeline, asegurar:
 
-- ✅ Docker instalado y funcionando
-- ✅ Jenkins instalado y corriendo
+- ✅ Docker Desktop instalado y funcionando en Windows
+- ✅ Jenkins corriendo en contenedor Docker
 - ✅ Repositorio Git configurado
 - ✅ Jenkinsfile en la raíz del proyecto
 - ✅ Dockerfiles creados (backend y frontend)
 - ✅ docker-compose.yml configurado
 
-**Verificar:**
-```bash
+**Verificar en PowerShell:**
+```powershell
+# Verificar Docker
 docker --version
+docker-compose --version
 docker ps
-# Verificar Jenkins en http://localhost:8080
+
+# Verificar Jenkins en contenedor
+docker ps | Select-String "jenkins"
+
+# Verificar Jenkins accesible
+# Abrir navegador: http://localhost:8080
 ```
 
 ---
@@ -53,18 +60,34 @@ docker ps
 
 ### 3. Ejecución del Pipeline en Jenkins
 
-#### Paso 1: Acceder a Jenkins
+#### Paso 1: Verificar Jenkins está Corriendo
+
+En PowerShell:
+
+```powershell
+# Verificar contenedor de Jenkins
+docker ps | Select-String "jenkins"
+
+# Si no está corriendo, iniciarlo
+cd C:\Users\Johan\Desktop\ape7\SistemaVentas\DesarrolloAPE
+docker-compose up -d jenkins
+
+# Ver logs si hay problemas
+docker logs sistema-ventas-jenkins
+```
+
+#### Paso 2: Acceder a Jenkins
 
 1. Abrir navegador: `http://localhost:8080`
-2. Iniciar sesión
+2. Iniciar sesión con tus credenciales
 
-#### Paso 2: Crear o Abrir el Job
+#### Paso 3: Crear o Abrir el Job
 
 1. Click en **Dashboard**
 2. Seleccionar el job **Sistema-Ventas-CI-CD**
 3. O crear nuevo job si no existe (ver [03-JENKINS.md](./03-JENKINS.md))
 
-#### Paso 3: Ejecutar Pipeline
+#### Paso 4: Ejecutar Pipeline
 
 **Ejecución Manual:**
 1. Click en **Build Now**
@@ -103,18 +126,26 @@ El pipeline ejecutará las siguientes etapas:
 
 #### Verificar Contenedores
 
-```bash
+En PowerShell:
+
+```powershell
+# Ver todos los contenedores
+docker ps
+
+# O usando docker-compose
+cd C:\Users\Johan\Desktop\ape7\SistemaVentas\DesarrolloAPE
 docker-compose ps
 ```
 
 Deberías ver:
-- `sistema-ventas-postgres` (running)
+- `sistema-ventas-jenkins` (running)
+- `sistema-ventas-db` (running)
 - `sistema-ventas-backend` (running)
 - `sistema-ventas-frontend` (running)
 
 #### Verificar Logs
 
-```bash
+```powershell
 # Logs de todos los servicios
 docker-compose logs
 
@@ -122,6 +153,9 @@ docker-compose logs
 docker-compose logs backend
 docker-compose logs frontend
 docker-compose logs postgres
+
+# Logs de Jenkins
+docker logs sistema-ventas-jenkins
 ```
 
 #### Verificar Aplicación
@@ -242,24 +276,27 @@ kubectl top pods -n sistema-ventas
 
 **Problema**: Error al construir imágenes Docker
 
-**Solución**:
-```bash
+**Solución en PowerShell**:
+```powershell
 # Verificar Docker está corriendo
 docker ps
 
+# Verificar que Jenkins puede acceder a Docker
+docker exec sistema-ventas-jenkins docker --version
+
 # Verificar Dockerfiles existen
-ls -la Dockerfile.*
+Get-ChildItem Dockerfile.*
 
 # Construir manualmente para ver error
-docker build -f Dockerfile.backend .
+docker build -f DesarrolloAPE/Dockerfile.backend .
 ```
 
 #### Pipeline Falla en Deploy
 
 **Problema**: Error al desplegar con docker-compose
 
-**Solución**:
-```bash
+**Solución en PowerShell**:
+```powershell
 # Verificar docker-compose.yml
 docker-compose config
 
@@ -274,8 +311,8 @@ docker-compose up -d
 
 **Problema**: Contenedores se reinician constantemente
 
-**Solución**:
-```bash
+**Solución en PowerShell**:
+```powershell
 # Ver logs del contenedor
 docker-compose logs backend
 
@@ -284,6 +321,22 @@ docker-compose exec backend env
 
 # Verificar salud de base de datos
 docker-compose exec postgres pg_isready
+```
+
+#### Jenkins No Puede Ejecutar Docker
+
+**Problema**: Jenkins no puede construir imágenes Docker
+
+**Solución**:
+```powershell
+# Verificar acceso al socket de Docker
+docker exec sistema-ventas-jenkins ls -la /var/run/docker.sock
+
+# Reiniciar Jenkins
+docker-compose restart jenkins
+
+# Verificar desde dentro del contenedor
+docker exec sistema-ventas-jenkins docker ps
 ```
 
 #### Kubernetes: Pods en CrashLoopBackOff
@@ -309,10 +362,10 @@ kubectl get deployment backend -n sistema-ventas -o yaml
 #### Después de Cambios en el Código
 
 1. Hacer commit de los cambios:
-   ```bash
+   ```powershell
    git add .
    git commit -m "Actualización de código"
-   git push
+   git push origin Jenkins/Johan
    ```
 
 2. Si hay webhook configurado, el pipeline se ejecutará automáticamente
@@ -320,12 +373,14 @@ kubectl get deployment backend -n sistema-ventas -o yaml
 
 #### Forzar Re-construcción
 
-```bash
+En PowerShell:
+
+```powershell
 # Eliminar imágenes antiguas
 docker-compose down
 docker rmi sistema-ventas-backend sistema-ventas-frontend
 
-# Re-ejecutar pipeline
+# Re-ejecutar pipeline desde Jenkins
 # O construir manualmente
 docker-compose build --no-cache
 docker-compose up -d
@@ -337,12 +392,14 @@ docker-compose up -d
 
 #### Ver Estadísticas de Contenedores
 
-```bash
+En PowerShell:
+
+```powershell
 # Estadísticas en tiempo real
 docker stats
 
 # Estadísticas específicas
-docker stats sistema-ventas-backend sistema-ventas-frontend
+docker stats sistema-ventas-backend sistema-ventas-frontend sistema-ventas-jenkins
 ```
 
 #### Kubernetes - NO Aplica
@@ -353,19 +410,19 @@ Kubernetes NO se implementa en esta APE.
 
 ## 📝 Checklist de Ejecución
 
-- [ ] Docker instalado y funcionando
-- [ ] Jenkins instalado y corriendo
-- [ ] Repositorio configurado
-- [ ] Jenkinsfile en la raíz del proyecto
-- [ ] Dockerfiles creados
-- [ ] docker-compose.yml configurado
+- [ ] Docker Desktop instalado y funcionando en Windows
+- [ ] Jenkins corriendo en contenedor Docker
+- [ ] Jenkins accesible en http://localhost:8080
+- [ ] Repositorio configurado en GitHub
+- [ ] Jenkinsfile en DesarrolloAPE/
+- [ ] Dockerfiles creados (backend y frontend)
+- [ ] docker-compose.yml configurado con Jenkins
 - [ ] Job creado en Jenkins
 - [ ] Pipeline ejecutado exitosamente
 - [ ] Contenedores desplegados y funcionando
 - [ ] Aplicación accesible en navegador
 - [ ] Logs verificados
 - [ ] Kubernetes investigado teóricamente (NO se implementa)
-- [ ] (Opcional) Escalabilidad probada
 
 ---
 
@@ -383,20 +440,26 @@ Kubernetes NO se implementa en esta APE.
 
 ---
 
-## 🔗 Comandos de Referencia Rápida
+## 🔗 Comandos de Referencia Rápida (PowerShell)
 
-```bash
+```powershell
 # Docker Compose
 docker-compose up -d          # Iniciar servicios
 docker-compose down           # Detener servicios
 docker-compose logs -f        # Ver logs
 docker-compose ps             # Ver estado
 
-# Kubernetes - NO se usa en esta APE
+# Jenkins en Docker
+docker-compose up -d jenkins  # Iniciar Jenkins
+docker-compose stop jenkins   # Detener Jenkins
+docker-compose restart jenkins # Reiniciar Jenkins
+docker logs -f sistema-ventas-jenkins # Ver logs de Jenkins
 
-# Jenkins
-# Acceder en http://localhost:8080
+# Acceder a Jenkins
+# http://localhost:8080
 # Build Now para ejecutar pipeline
+
+# Kubernetes - NO se usa en esta APE
 ```
 
 ---

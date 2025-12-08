@@ -166,17 +166,23 @@ Kubernetes (K8s) es una plataforma open-source para orquestar contenedores, desa
 
 ## 🛠️ Guías de Implementación
 
-### Instalación de Herramientas
+### Instalación de Herramientas (Windows)
 
 Ver el archivo: [01-INSTALACION.md](./01-INSTALACION.md)
+
+**IMPORTANTE:** 
+- Esta guía está adaptada **solo para Windows**
+- Jenkins se ejecuta en un **contenedor Docker**, NO se instala directamente en Windows
 
 ### Configuración de Docker
 
 Ver el archivo: [02-DOCKER.md](./02-DOCKER.md)
 
-### Configuración de Jenkins
+### Configuración de Jenkins en Contenedor Docker
 
 Ver el archivo: [03-JENKINS.md](./03-JENKINS.md)
+
+**IMPORTANTE:** Jenkins se ejecuta en un contenedor Docker. Ver la guía para detalles de configuración.
 
 ### Investigación sobre Kubernetes (Solo Teórica)
 
@@ -194,7 +200,8 @@ Kubernetes se investiga solo teóricamente. No se implementa en esta APE. Ver se
 
 ### Jenkins
 - `Jenkinsfile` - Pipeline de CI/CD
-- `jenkins/plugins.txt` - Lista de plugins necesarios
+- `docker-compose.yml` - Incluye servicio Jenkins en contenedor
+- Jenkins se ejecuta en contenedor Docker (ver [03-JENKINS.md](./03-JENKINS.md))
 
 ### Kubernetes
 - **NO se implementa** - Solo investigación teórica

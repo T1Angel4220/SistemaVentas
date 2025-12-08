@@ -28,22 +28,31 @@
 ### 2. Instalar las Herramientas Necesarias
 
 #### Docker
-- [ ] Instalar Docker Desktop (ver [01-INSTALACION.md](./01-INSTALACION.md))
+- [ ] Instalar Docker Desktop para Windows (ver [01-INSTALACION.md](./01-INSTALACION.md))
 - [ ] Verificar instalación:
-  ```bash
+  ```powershell
   docker --version
   docker-compose --version
   ```
 
-#### Jenkins
-- [ ] Instalar Jenkins (ver [01-INSTALACION.md](./01-INSTALACION.md))
+#### Jenkins en Docker
+- [ ] Iniciar Jenkins en contenedor (ver [01-INSTALACION.md](./01-INSTALACION.md))
+  ```powershell
+  cd C:\Users\Johan\Desktop\ape7\SistemaVentas\DesarrolloAPE
+  docker-compose up -d jenkins
+  ```
 - [ ] Acceder a http://localhost:8080
+- [ ] Obtener contraseña inicial:
+  ```powershell
+  docker exec sistema-ventas-jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+  ```
 - [ ] Completar configuración inicial
 - [ ] Instalar plugins necesarios:
   - Pipeline
   - Docker Pipeline
   - Docker
   - Git
+  - Blue Ocean (opcional)
 
 ---
 
@@ -51,8 +60,10 @@
 
 Antes de ejecutar el pipeline, prueba que Docker funciona:
 
-```bash
-cd DesarrolloAPE
+En PowerShell:
+
+```powershell
+cd C:\Users\Johan\Desktop\ape7\SistemaVentas\DesarrolloAPE
 docker-compose build
 docker-compose up -d
 ```
@@ -60,9 +71,10 @@ docker-compose up -d
 **Verificar:**
 - Frontend: http://localhost
 - Backend: http://localhost:3001
+- Jenkins: http://localhost:8080
 
 Si funciona, detener:
-```bash
+```powershell
 docker-compose down
 ```
 
@@ -114,6 +126,7 @@ Guarda todas las capturas en la carpeta `DesarrolloAPE/capturas/`:
 
 #### Instalación
 - [ ] Captura de Docker instalado (`docker --version`)
+- [ ] Captura de Jenkins en contenedor (`docker ps`)
 - [ ] Captura de Jenkins funcionando (http://localhost:8080)
 
 #### Docker
@@ -198,21 +211,27 @@ Completar el archivo [07-CONCLUSIONES.md](./07-CONCLUSIONES.md):
 - Verificar que la URL de GitHub es correcta
 - Verificar que la rama `Jenkins/Johan` existe en GitHub
 - Verificar credenciales si el repo es privado
+- Verificar conectividad desde contenedor: `docker exec sistema-ventas-jenkins ping github.com`
 
 ### Pipeline falla en Build
-- Verificar que Docker está corriendo
+- Verificar que Docker está corriendo: `docker ps`
+- Verificar que Jenkins puede usar Docker: `docker exec sistema-ventas-jenkins docker --version`
 - Verificar que los Dockerfiles están correctos
-- Revisar logs del pipeline
+- Revisar logs del pipeline en Jenkins
 
 ### Pipeline falla en Deploy
-- Verificar que no hay contenedores anteriores corriendo
-- Verificar que los puertos no están en uso
-- Revisar logs de docker-compose
+- Verificar que no hay contenedores anteriores corriendo: `docker ps`
+- Verificar que los puertos no están en uso: `netstat -ano | findstr :8080`
+- Revisar logs de docker-compose: `docker-compose logs`
 
 ### Contenedores no inician
 - Verificar logs: `docker-compose logs`
 - Verificar variables de entorno
-- Verificar que la base de datos está saludable
+- Verificar que la base de datos está saludable: `docker-compose exec postgres pg_isready`
+
+### Jenkins no puede ejecutar Docker
+- Verificar acceso al socket: `docker exec sistema-ventas-jenkins ls -la /var/run/docker.sock`
+- Reiniciar Jenkins: `docker-compose restart jenkins`
 
 ---
 

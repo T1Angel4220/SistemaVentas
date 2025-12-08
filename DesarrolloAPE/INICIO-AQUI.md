@@ -6,14 +6,19 @@
 
 ## 📚 ¿Por Dónde Empezar?
 
+### 🚀 ¿Solo Tienes Docker Instalado?
+
+👉 **[GUIA-DESDE-CERO.md](./GUIA-DESDE-CERO.md)** - **¡Empieza aquí!** Guía paso a paso desde cero, asumiendo que solo tienes Docker instalado. Te lleva desde iniciar Jenkins hasta ejecutar el pipeline completo.
+
 ### 1. Lee el README Principal
 👉 **[README.md](./README.md)** - Contiene el índice completo y la estructura de toda la documentación.
 
 ### 2. Sigue las Guías en Orden
 
-1. **[01-INSTALACION.md](./01-INSTALACION.md)**
-   - Instala Docker, Jenkins y Kubernetes
-   - Configura el entorno de trabajo
+1. **[01-INSTALACION.md](./01-INSTALACION.md)** (Solo Windows)
+   - Instala Docker Desktop para Windows
+   - Configura Jenkins en contenedor Docker
+   - **IMPORTANTE:** Jenkins se ejecuta en contenedor, NO se instala directamente
 
 2. **[02-DOCKER.md](./02-DOCKER.md)**
    - Aprende sobre Docker
@@ -21,7 +26,7 @@
    - Configura docker-compose
 
 3. **[03-JENKINS.md](./03-JENKINS.md)**
-   - Configura Jenkins
+   - Configura Jenkins en contenedor Docker
    - Crea el pipeline CI/CD
    - Automatiza el despliegue
 
@@ -86,26 +91,41 @@ GITHUB_REPO_URL = 'https://github.com/T1Angel4220/SistemaVentas.git'
 
 Si necesitas cambiarla, edita el archivo `DesarrolloAPE/Jenkinsfile`.
 
-### 3. Construir y Ejecutar con Docker
+### 3. Iniciar Jenkins en Contenedor (Windows)
 
-```bash
+```powershell
+# Navegar a la carpeta del proyecto
+cd C:\Users\Johan\Desktop\ape7\SistemaVentas\DesarrolloAPE
+
+# Iniciar Jenkins en contenedor
+docker-compose up -d jenkins
+
+# Obtener contraseña inicial
+docker exec sistema-ventas-jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+```
+
+### 4. Construir y Ejecutar Aplicación con Docker (Opcional)
+
+```powershell
 # Construir y ejecutar localmente (opcional, para probar)
-cd DesarrolloAPE
 docker-compose build
 docker-compose up -d
 
 # Verificar que funciona
 # Frontend: http://localhost
 # Backend: http://localhost:3001
+# Jenkins: http://localhost:8080
 ```
 
-### 4. Configurar Jenkins
+### 5. Configurar Pipeline en Jenkins
 
 1. Abrir http://localhost:8080
-2. Crear job tipo **Pipeline**
-3. En Pipeline Definition: **Pipeline script**
-4. Copiar y pegar el contenido de `DesarrolloAPE/Jenkinsfile`
-5. Guardar y ejecutar "Build Now"
+2. Completar configuración inicial (usar contraseña obtenida arriba)
+3. Instalar plugins sugeridos
+4. Crear job tipo **Pipeline**
+5. En Pipeline Definition: **Pipeline script**
+6. Copiar y pegar el contenido de `DesarrolloAPE/Jenkinsfile`
+7. Guardar y ejecutar "Build Now"
 
 ---
 
@@ -119,7 +139,9 @@ No olvides tomar capturas de pantalla durante todo el proceso y guardarlas en:
 ## 📝 Checklist Rápido
 
 - [ ] Leer README.md
-- [ ] Instalar herramientas (Docker, Jenkins)
+- [ ] Instalar Docker Desktop para Windows
+- [ ] Iniciar Jenkins en contenedor Docker
+- [ ] Configurar Jenkins (plugins, credenciales)
 - [ ] Seguir guías en orden
 - [ ] Ejecutar pipeline
 - [ ] Tomar capturas de pantalla
@@ -141,6 +163,10 @@ No olvides tomar capturas de pantalla durante todo el proceso y guardarlas en:
 
 ## ✅ Próximos Pasos
 
+**Si solo tienes Docker instalado:**
+1. **Sigue [GUIA-DESDE-CERO.md](./GUIA-DESDE-CERO.md)** - Guía completa paso a paso desde cero
+
+**Si quieres entender todo el proceso:**
 1. **Lee el [README.md](./README.md)** para entender la estructura completa
 2. **Sigue [01-INSTALACION.md](./01-INSTALACION.md)** para instalar las herramientas
 3. **Continúa con las demás guías en orden**

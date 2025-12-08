@@ -1,6 +1,29 @@
 version: '3.8'
 
 services:
+  # Jenkins CI/CD Server
+  # IMPORTANTE: Jenkins se ejecuta en contenedor Docker
+  # En Windows con Docker Desktop, el socket de Docker está disponible a través de WSL2
+  # La configuración monta el socket de Docker del host para que Jenkins pueda construir imágenes
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: sistema-ventas-jenkins
+    user: root
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      # Montar socket de Docker del host (funciona en Windows con Docker Desktop + WSL2)
+      - /var/run/docker.sock:/var/run/docker.sock
+      # NOTA: No montamos /usr/bin/docker en Windows, lo instalaremos dentro del contenedor
+    networks:
+      - app-network
+    environment:
+      - JENKINS_OPTS=--httpPort=8080
+    restart: unless-stopped
+    privileged: true
+
   # Base de datos PostgreSQL
   postgres:
     image: postgres:15-alpine
@@ -79,6 +102,8 @@ services:
       retries: 3
 
 volumes:
+  jenkins_home:
+    driver: local
   postgres_data:
     driver: local
 
