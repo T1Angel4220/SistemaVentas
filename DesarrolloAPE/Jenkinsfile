@@ -178,12 +178,8 @@ pipeline {
                         echo ""
                         echo "Verificando estado de los contenedores..."
                         
-                        BACKEND_RUNNING=$(docker ps --filter "name=sistema-ventas-backend" --filter "status=running" --format "{{.Names}}" | grep -q sistema-ventas-backend && echo "yes" || echo "no")
-                        FRONTEND_RUNNING=$(docker ps --filter "name=sistema-ventas-frontend" --filter "status=running" --format "{{.Names}}" | grep -q sistema-ventas-frontend && echo "yes" || echo "no")
-                        DB_RUNNING=$(docker ps --filter "name=sistema-ventas-db" --filter "status=running" --format "{{.Names}}" | grep -q sistema-ventas-db && echo "yes" || echo "no")
-                        
                         # Verificar backend
-                        if [ "$BACKEND_RUNNING" = "yes" ]; then
+                        if docker ps --format "{{.Names}}" | grep -q "^sistema-ventas-backend$"; then
                             echo "✅ Backend está corriendo"
                             echo "Verificando respuesta del backend..."
                             docker exec sistema-ventas-backend wget -q --spider --timeout=5 http://localhost:3001/health 2>/dev/null && \
@@ -193,11 +189,13 @@ pipeline {
                                  echo "⚠️ Backend no responde HTTP, pero el contenedor está corriendo")
                         else
                             echo "❌ Backend no está corriendo"
+                            echo "Verificando logs del backend..."
+                            docker logs --tail 20 sistema-ventas-backend 2>&1 || true
                             exit 1
                         fi
                         
                         # Verificar frontend
-                        if [ "$FRONTEND_RUNNING" = "yes" ]; then
+                        if docker ps --format "{{.Names}}" | grep -q "^sistema-ventas-frontend$"; then
                             echo "✅ Frontend está corriendo"
                             echo "Verificando respuesta del frontend..."
                             docker exec sistema-ventas-frontend wget -q --spider --timeout=5 http://localhost/ 2>/dev/null && \
@@ -209,7 +207,7 @@ pipeline {
                         fi
                         
                         # Verificar base de datos
-                        if [ "$DB_RUNNING" = "yes" ]; then
+                        if docker ps --format "{{.Names}}" | grep -q "^sistema-ventas-db$"; then
                             echo "✅ Base de datos está corriendo"
                         else
                             echo "❌ Base de datos no está corriendo"
