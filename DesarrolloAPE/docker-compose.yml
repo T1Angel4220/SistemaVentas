@@ -53,18 +53,29 @@ services:
     container_name: sistema-ventas-backend
     environment:
       NODE_ENV: production
+      # Servidor
+      PORT: 3001
+      HOST: ${HOST:-0.0.0.0}
+      # Base de datos PostgreSQL
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: sistema_ventas
       DB_USER: postgres
       DB_PASSWORD: postgres
+      # JWT
       JWT_SECRET: ${JWT_SECRET:-tu-jwt-secret-muy-seguro-cambiar-en-produccion}
-      PORT: 3001
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1h}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
       # Configuración de email (ajustar según tu proveedor)
       EMAIL_HOST: ${EMAIL_HOST:-smtp.gmail.com}
       EMAIL_PORT: ${EMAIL_PORT:-587}
-      EMAIL_USER: ${EMAIL_USER:-}
-      EMAIL_PASS: ${EMAIL_PASS:-}
+      EMAIL_USER: ${EMAIL_USER:-noreply@example.com}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD:-${EMAIL_PASS:-}}
+      EMAIL_FROM: ${EMAIL_FROM:-Sistema de Ventas <noreply@example.com>}
+      # Seguridad
+      BCRYPT_SALT_ROUNDS: ${BCRYPT_SALT_ROUNDS:-10}
+      # CORS
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
     ports:
       - "3001:3001"
     depends_on:
