@@ -43,9 +43,21 @@
                             docker stop sistema-ventas-db sistema-ventas-backend sistema-ventas-frontend 2>/dev/null || true
                             docker rm sistema-ventas-db sistema-ventas-backend sistema-ventas-frontend 2>/dev/null || true
                             
+                            # Cargar comando de docker-compose
+                            if [ -f ".docker-compose-command" ]; then
+                                source .docker-compose-command
+                            else
+                                # Intentar detectar automáticamente
+                                if docker compose version >/dev/null 2>&1; then
+                                    DOCKER_COMPOSE_CMD="docker compose"
+                                else
+                                    DOCKER_COMPOSE_CMD="docker-compose"
+                                fi
+                            fi
+                            
                             # Intentar docker-compose down si existe el archivo (eliminar volúmenes)
                             if [ -f "docker-compose.yml" ]; then
-                                docker-compose down -v --remove-orphans 2>/dev/null || true
+                                $DOCKER_COMPOSE_CMD down -v --remove-orphans 2>/dev/null || true
                             fi
                             
                             # Eliminar volúmenes específicos que puedan persistir
@@ -81,8 +93,8 @@
                                     git clone https://github.com/T1Angel4220/SistemaVentas.git .
                                 fi
                                 # Cambiar a la rama correcta
-                                git checkout Jankins/Angel || git checkout main || git checkout master
-                                git pull origin Jankins/Angel || git pull origin main || git pull origin master
+                                git checkout Jankins/Jose || git checkout main || git checkout master
+                                git pull origin Jankins/Jose || git pull origin main || git pull origin master
                             '''
                         }
                     }
@@ -96,7 +108,29 @@
                         sh '''
                             echo "Verificando Docker..."
                             docker --version
-                            docker-compose --version
+                            
+                            # Detectar qué versión de Docker Compose está disponible
+                            echo "Verificando Docker Compose..."
+                            if docker compose version >/dev/null 2>&1; then
+                                echo "Usando: docker compose (plugin nativo)"
+                                docker compose version
+                                echo "DOCKER_COMPOSE_CMD=docker compose" > .docker-compose-command
+                            elif docker-compose --version >/dev/null 2>&1; then
+                                echo "Usando: docker-compose (standalone)"
+                                docker-compose --version
+                                echo "DOCKER_COMPOSE_CMD=docker-compose" > .docker-compose-command
+                            else
+                                echo "ERROR: No se encontró Docker Compose. Instalando..."
+                                # Intentar instalar docker-compose plugin
+                                sudo apt-get update && sudo apt-get install -y docker-compose-plugin || {
+                                    echo "No se pudo instalar docker-compose-plugin. Intentando instalación manual..."
+                                    exit 1
+                                }
+                                echo "DOCKER_COMPOSE_CMD=docker compose" > .docker-compose-command
+                            fi
+                            
+                            source .docker-compose-command
+                            echo "Comando Docker Compose configurado: $DOCKER_COMPOSE_CMD"
                             
                             echo "Verificando Node.js (si está disponible)..."
                             node --version || echo "Node.js no instalado en el agente (se usará Docker)"
@@ -195,6 +229,20 @@ FRONTEND_PORT=${env.FRONTEND_PORT}
                             echo "Archivo .env.docker creado"
                             cat .env.docker
                             
+                            # Cargar comando de docker-compose
+                            if [ -f ".docker-compose-command" ]; then
+                                source .docker-compose-command
+                            else
+                                # Intentar detectar automáticamente
+                                if docker compose version >/dev/null 2>&1; then
+                                    DOCKER_COMPOSE_CMD="docker compose"
+                                else
+                                    DOCKER_COMPOSE_CMD="docker-compose"
+                                fi
+                            fi
+                            
+                            echo "Usando comando: $DOCKER_COMPOSE_CMD"
+                            
                             # Verificar que docker-compose.yml existe
                             if [ ! -f "docker-compose.yml" ]; then
                                 echo "ERROR: docker-compose.yml no encontrado"
@@ -203,8 +251,15 @@ FRONTEND_PORT=${env.FRONTEND_PORT}
                             fi
                             
                             # Usar docker-compose para desplegar con rebuild si es necesario
-                            echo "Iniciando contenedores con docker-compose..."
-                            docker-compose --env-file .env.docker up -d --build
+                            echo "Iniciando contenedores con $DOCKER_COMPOSE_CMD..."
+                            # Copiar .env.docker a .env para compatibilidad con docker-compose
+                            cp .env.docker .env
+                            
+                            # Ejecutar docker-compose (ambas versiones soportan --env-file, pero .env es más universal)
+                            $DOCKER_COMPOSE_CMD --env-file .env.docker up -d --build || {
+                                echo "Intentando sin --env-file (usando .env por defecto)..."
+                                $DOCKER_COMPOSE_CMD up -d --build
+                            }
                             
                             # Esperar a que los servicios estén listos
                             echo "Esperando a que los servicios estén listos..."
@@ -212,11 +267,11 @@ FRONTEND_PORT=${env.FRONTEND_PORT}
                             
                             # Verificar estado de los contenedores
                             echo "Estado de contenedores:"
-                            docker-compose ps
+                            $DOCKER_COMPOSE_CMD ps
                             
                             # Verificar logs de inicio
                             echo "Logs de inicio (últimas 20 líneas):"
-                            docker-compose logs --tail=20
+                            $DOCKER_COMPOSE_CMD logs --tail=20
                         '''
                     }
                 }
@@ -262,19 +317,31 @@ FRONTEND_PORT=${env.FRONTEND_PORT}
                     script {
                         echo 'Generando reporte de despliegue...'
                         sh '''
+                            # Cargar comando de docker-compose
+                            if [ -f ".docker-compose-command" ]; then
+                                source .docker-compose-command
+                            else
+                                # Intentar detectar automáticamente
+                                if docker compose version >/dev/null 2>&1; then
+                                    DOCKER_COMPOSE_CMD="docker compose"
+                                else
+                                    DOCKER_COMPOSE_CMD="docker-compose"
+                                fi
+                            fi
+                            
                             echo "=== REPORTE DE DESPLIEGUE ===" > deployment-report.txt
                             echo "Fecha: $(date)" >> deployment-report.txt
                             echo "Build Number: ${BUILD_NUMBER}" >> deployment-report.txt
                             echo "Git Commit: ${GIT_COMMIT}" >> deployment-report.txt
                             echo "" >> deployment-report.txt
                             echo "=== ESTADO DE CONTENEDORES ===" >> deployment-report.txt
-                            docker-compose ps >> deployment-report.txt
+                            $DOCKER_COMPOSE_CMD ps >> deployment-report.txt
                             echo "" >> deployment-report.txt
                             echo "=== IMAGENES DOCKER ===" >> deployment-report.txt
                             docker images | grep -E "sistemaventas|sistema-ventas" >> deployment-report.txt
                             echo "" >> deployment-report.txt
                             echo "=== LOGS RECIENTES ===" >> deployment-report.txt
-                            docker-compose logs --tail=50 >> deployment-report.txt
+                            $DOCKER_COMPOSE_CMD logs --tail=50 >> deployment-report.txt
                         '''
                         archiveArtifacts artifacts: 'deployment-report.txt', fingerprint: true
                     }
@@ -298,8 +365,20 @@ FRONTEND_PORT=${env.FRONTEND_PORT}
                 echo 'ERROR: Pipeline fallo'
                 script {
                     sh '''
+                        # Cargar comando de docker-compose
+                        if [ -f ".docker-compose-command" ]; then
+                            source .docker-compose-command
+                        else
+                            # Intentar detectar automáticamente
+                            if docker compose version >/dev/null 2>&1; then
+                                DOCKER_COMPOSE_CMD="docker compose"
+                            else
+                                DOCKER_COMPOSE_CMD="docker-compose"
+                            fi
+                        fi
+                        
                         echo "=== LOGS DE ERROR ==="
-                        docker-compose logs --tail=100
+                        $DOCKER_COMPOSE_CMD logs --tail=100 2>&1 || echo "No se pudieron obtener logs de docker-compose"
                     '''
                 }
             }

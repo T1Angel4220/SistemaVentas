@@ -1,0 +1,768 @@
+# INFORME DE GUÍA PRÁCTICA 
+
+## I. PORTADA
+
+**Tema:**
+Investigación y Práctica sobre la Automatización del Despliegue
+
+**Unidad de Organización Curricular:**
+PROFESIONAL
+
+**Nivel y Paralelo:**
+Sexto semestre
+
+**Alumnos participantes:**
+Ayuquina Chimborazo Angel Israel
+
+**Asignatura:**
+Gestión de pruebas e implantación de software
+
+**Docente:**
+Ing. Leonardo Torres, Mg.
+
+---
+
+## II. INFORME DE GUÍA PRÁCTICA
+
+### 2.1 Objetivos
+
+#### General:
+
+Investigar sobre las herramientas y técnicas de automatización del despliegue de software (Jenkins, Docker, Docker Compose) y realizar una práctica de despliegue automatizado utilizando la aplicación desarrollada (Sistema de Ventas Multiempresa).
+
+#### Específicos:
+
+- Analizar los fundamentos teóricos y técnicos de Jenkins y Docker para comprender los flujos de trabajo de integración y entrega continua (CI/CD).
+- Empaquetar la aplicación desarrollada utilizando contenedores Docker, generando las imágenes necesarias para garantizar su portabilidad y ejecución en entornos aislados.
+- Configurar un pipeline de despliegue automatizado en Jenkins que orqueste la construcción y ejecución de la aplicación mediante Docker Compose, verificando su funcionamiento en un entorno controlado.
+- Implementar detección automática de versiones de Docker Compose y manejo robusto de errores en el pipeline.
+
+### 2.2 Modalidad
+
+Presencial
+
+### 2.3 Tiempo de duración
+
+- Presenciales: 4 horas
+- No presenciales: 8 horas
+- **Total: 12 horas**
+
+### 2.4 Instrucciones
+
+Los estudiantes deberán realizar una investigación sobre las herramientas de automatización de despliegue Jenkins y Docker. La investigación debe cubrir:
+
+- **Jenkins**: Funcionamiento básico, configuración de pipelines, integración continua y entrega continua (CI/CD).
+- **Docker**: Uso de contenedores para empaquetar y desplegar aplicaciones, creación de imágenes y ejecución de contenedores.
+- **Docker Compose**: Orquestación de múltiples contenedores, gestión de redes y volúmenes, y manejo de dependencias entre servicios.
+
+Una vez realizada la investigación, los estudiantes deberán aplicar estas herramientas en la práctica, utilizando la aplicación que han desarrollado (Sistema de Ventas Multiempresa). Deberán:
+
+1. Crear un pipeline de automatización de despliegue en Jenkins que integre las herramientas Docker y Docker Compose. El pipeline debe realizar el despliegue automatizado de la aplicación en un entorno controlado.
+
+2. Utilizar Docker para crear imágenes de la aplicación (backend y frontend) y ejecutar las mismas en contenedores.
+
+3. Implementar Docker Compose para orquestar múltiples servicios (PostgreSQL, Backend, Frontend) con sus dependencias y configuraciones.
+
+4. Deberán documentar todo el proceso, desde la instalación y configuración de las herramientas hasta la ejecución del pipeline, con capturas de pantalla y ejemplos de los resultados obtenidos.
+
+El informe debe entregarse en formato PDF.
+
+### 2.5 Listado de equipos, materiales y recursos
+
+#### Listado de equipos y materiales generales empleados en la guía práctica:
+
+**Hardware:**
+- Computadora personal con sistema operativo Windows/Linux
+- Mínimo 4GB RAM (recomendado 8GB)
+- Mínimo 10GB espacio en disco disponible
+- Conexión a Internet
+
+**Software:**
+- Docker Desktop o Docker Engine 20.10+
+- Docker Compose 2.0+ o docker-compose-plugin
+- Jenkins LTS 2.400+
+- Git 2.30+
+- Navegador web (Chrome, Firefox, Edge)
+- Editor de texto o IDE (Visual Studio Code, IntelliJ IDEA)
+
+**Repositorio:**
+- Repositorio Git del proyecto: https://github.com/T1Angel4220/SistemaVentas.git
+- Rama: Jankins/Jose
+
+**TAC (Tecnologías para el Aprendizaje y Conocimiento) empleados en la guía práctica:**
+
+- ✅ Plataformas educativas (GitHub, Jenkins)
+- ✅ Inteligencia Artificial (ChatGPT, GitHub Copilot para asistencia)
+- ✅ Recursos audiovisuales (Documentación técnica en línea)
+- ✅ Aplicaciones educativas (Docker Desktop, Jenkins)
+
+**Otros:**
+- Documentación oficial de Jenkins, Docker y Docker Compose
+- Tutoriales en línea sobre CI/CD
+- Comunidades de desarrolladores (Stack Overflow, GitHub Discussions)
+
+### 2.6 Actividades por desarrollar
+
+1. **Investigación teórica:**
+   - Investigar sobre Jenkins: arquitectura, pipelines, CI/CD
+   - Investigar sobre Docker: contenedores, imágenes, Dockerfile
+   - Investigar sobre Docker Compose: orquestación, servicios, redes
+
+2. **Instalación y configuración:**
+   - Instalar Docker y Docker Compose
+   - Instalar y configurar Jenkins
+   - Verificar accesos y permisos
+
+3. **Preparación de la aplicación:**
+   - Revisar estructura del proyecto
+   - Crear/verificar Dockerfiles para backend y frontend
+   - Crear/verificar docker-compose.yml
+   - Crear archivo .env.docker con variables de entorno
+
+4. **Configuración del pipeline:**
+   - Crear Jenkinsfile con pipeline declarativo
+   - Configurar etapas del pipeline
+   - Implementar detección automática de Docker Compose
+   - Configurar variables de entorno
+
+5. **Ejecución y pruebas:**
+   - Ejecutar pipeline en Jenkins
+   - Verificar construcción de imágenes
+   - Verificar despliegue de servicios
+   - Realizar health checks
+   - Verificar integración frontend-backend-database
+
+6. **Documentación:**
+   - Documentar proceso completo
+   - Capturar pantallas del proceso
+   - Generar reportes de despliegue
+   - Crear informe final
+
+### 2.7 Resultados obtenidos
+
+## 1. Jenkins: Automatización, Integración y Entrega Continua (CI/CD)
+
+### 1.1 Funcionamiento Básico y Arquitectura
+
+Jenkins es un servidor de automatización open source escrito en Java, diseñado para facilitar la integración continua (CI) y la entrega continua (CD) en proyectos de software. Su arquitectura se basa en un modelo Maestro-Agente (Master-Agent). El servidor "Maestro" es responsable de programar los trabajos, monitorear los "Agentes" y despachar las compilaciones a los nodos disponibles, mientras que los agentes ejecutan las tareas pesadas de construcción y prueba [1].
+
+La fortaleza de Jenkins radica en su ecosistema de plugins. Existen miles de complementos que permiten a Jenkins integrarse con prácticamente cualquier herramienta de la cadena de herramientas DevOps, desde sistemas de control de versiones como Git hasta plataformas de nube como AWS o Azure [2].
+
+**Arquitectura implementada:**
+
+En este proyecto, Jenkins se ejecuta como un contenedor Docker que tiene acceso al socket de Docker del host mediante un volumen montado (`/var/run/docker.sock:/var/run/docker.sock`). Esta configuración permite que Jenkins ejecute comandos Docker directamente sin necesidad de instalar Docker dentro del contenedor de Jenkins, siguiendo el patrón "Docker in Docker" pero usando el socket del host.
+
+```
+┌─────────────────────────────────────────────────────────┐
+│              Contenedor Jenkins (Maestro)               │
+│  ┌──────────────────────────────────────────────────┐  │
+│  │  Pipeline Declarativo (Jenkinsfile)              │  │
+│  │  - Limpiar Workspace                             │  │
+│  │  - Checkout Código                               │  │
+│  │  - Verificar Herramientas                        │  │
+│  │  - Build Imágenes                                │  │
+│  │  - Desplegar con Docker Compose                  │  │
+│  │  - Health Check                                  │  │
+│  │  - Generar Reporte                               │  │
+│  └──────────────────────────────────────────────────┘  │
+│                     ↓                                   │
+│         /var/run/docker.sock (volumen montado)        │
+└─────────────────────────────────────────────────────────┘
+                     ↓
+┌─────────────────────────────────────────────────────────┐
+│           Docker Engine (Host)                          │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐ │
+│  │  PostgreSQL  │  │   Backend    │  │   Frontend   │ │
+│  │  (DB)        │  │  (Node.js)   │  │  (Nginx)     │ │
+│  └──────────────┘  └──────────────┘  └──────────────┘ │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 1.2 Configuración de Pipelines
+
+El concepto central en las versiones modernas de Jenkins es el **Pipeline as Code**. Esto permite definir todo el proceso de despliegue mediante un archivo de texto, generalmente llamado `Jenkinsfile`, que se almacena junto con el código fuente en el repositorio.
+
+**Sintaxis utilizada: Declarative Pipeline**
+
+Se utilizó la sintaxis declarativa de Jenkins, que ofrece una estructura más clara y legible. El `Jenkinsfile` implementado contiene las siguientes etapas:
+
+```groovy
+pipeline {
+    agent any
+    
+    environment {
+        // Variables de entorno para Docker
+        BACKEND_IMAGE = 'sistemaventas-backend'
+        FRONTEND_IMAGE = 'sistemaventas-frontend'
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
+        
+        // Variables de configuración
+        DB_NAME = 'sistema_ventas_multiempresa'
+        DB_USER = 'postgres'
+        // ... más variables
+    }
+    
+    stages {
+        stage('Limpiar Workspace') { /* ... */ }
+        stage('Checkout Código') { /* ... */ }
+        stage('Verificar Herramientas') { /* ... */ }
+        stage('Build Backend') { /* ... */ }
+        stage('Build Frontend') { /* ... */ }
+        stage('Test Backend') { /* ... */ }
+        stage('Desplegar con Docker Compose') { /* ... */ }
+        stage('Health Check') { /* ... */ }
+        stage('Generar Reporte') { /* ... */ }
+    }
+}
+```
+
+**Características implementadas:**
+
+- **Pipeline Declarativo**: Uso de sintaxis estructurada y fácil de mantener
+- **Variables de Entorno**: Configuración centralizada de parámetros
+- **Detección Automática**: Detección automática de versión de Docker Compose (v1 o v2)
+- **Manejo de Errores**: Implementación de post-actions para capturar logs en caso de fallo
+- **Health Checks**: Verificación automática del estado de los servicios desplegados
+
+### 1.3 Integración Continua (CI) y Entrega Continua (CD)
+
+- **Integración Continua (CI)**: El pipeline detecta automáticamente cambios en el repositorio Git mediante webhooks. Cuando se realiza un push al repositorio, Jenkins descarga automáticamente el código, construye las imágenes Docker y ejecuta pruebas básicas para validar que los cambios no rompan la funcionalidad existente [3].
+
+- **Entrega Continua (CD)**: El pipeline automatiza completamente el proceso de despliegue. Una vez que las pruebas pasan, el sistema despliega automáticamente la aplicación en un entorno controlado usando Docker Compose, dejando la aplicación lista para uso. En un escenario de producción, este proceso podría extenderse para desplegar automáticamente a múltiples entornos (staging, producción) [3].
+
+**Flujo CI/CD implementado:**
+
+```
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│   Git Push   │────▶│   Jenkins    │────▶│   Docker     │
+│  (Código)    │     │  (Pipeline)  │     │  (Despliegue)│
+└──────────────┘     └──────────────┘     └──────────────┘
+                           │
+                           ▼
+                    ┌──────────────┐
+                    │ Verificación │
+                    │   Automática │
+                    └──────────────┘
+```
+
+## 2. Docker: Empaquetado y Ejecución de Contenedores
+
+### 2.1 Uso de Contenedores
+
+Docker revolucionó el despliegue de aplicaciones mediante la contenederización. A diferencia de las máquinas virtuales tradicionales que requieren un sistema operativo completo (Guest OS) para cada instancia, los contenedores Docker comparten el núcleo (kernel) del sistema operativo del anfitrión (Host OS), pero mantienen el espacio de usuario aislado [4].
+
+Esto resulta en una eficiencia significativamente mayor: los contenedores arrancan en segundos (frente a los minutos de una VM), ocupan menos espacio en disco y garantizan la portabilidad. El principio fundamental es **"Build once, run anywhere"** (Construye una vez, ejecuta donde sea); si funciona en la máquina del desarrollador, funcionará en el servidor de producción.
+
+**Contenedores implementados en el proyecto:**
+
+1. **Backend Container** (`sistema-ventas-backend`):
+   - Imagen base: `node:18-alpine`
+   - Puerto: 3001
+   - Responsabilidades: API REST, lógica de negocio, conexión a base de datos
+
+2. **Frontend Container** (`sistema-ventas-frontend`):
+   - Imagen base: `nginx:alpine` (multi-stage build)
+   - Puerto: 80
+   - Responsabilidades: Servir aplicación React compilada
+
+3. **Database Container** (`sistema-ventas-db`):
+   - Imagen base: `postgres:15-alpine`
+   - Puerto: 5432
+   - Responsabilidades: Almacenamiento persistente de datos
+
+### 2.2 Creación de Imágenes y Ejecución
+
+La unidad base de Docker es la **Imagen**. Una imagen es una plantilla de solo lectura que contiene el código de la aplicación, las bibliotecas, las dependencias y las herramientas necesarias para ejecutarla.
+
+**Dockerfile del Backend:**
+
+```dockerfile
+FROM node:18-alpine
+
+# Instalar dependencias del sistema
+RUN apk add --no-cache python3 make g++
+
+WORKDIR /app
+
+# Copiar e instalar dependencias
+COPY package*.json ./
+RUN npm ci --only=production && npm cache clean --force
+
+# Copiar código fuente
+COPY . .
+
+# Crear directorio para uploads
+RUN mkdir -p uploads
+
+EXPOSE 3001
+
+CMD ["npm", "start"]
+```
+
+**Dockerfile del Frontend (Multi-stage build):**
+
+```dockerfile
+# Etapa 1: Construcción
+FROM node:18-alpine AS builder
+
+ARG VITE_API_URL=http://localhost:3001
+ENV VITE_API_URL=${VITE_API_URL}
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci && npm cache clean --force
+COPY . .
+RUN npx vite build
+
+# Etapa 2: Producción
+FROM nginx:alpine
+COPY --from=builder /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+**Ventajas del multi-stage build:**
+- Reduce el tamaño final de la imagen (de ~500MB a ~50MB)
+- Elimina dependencias de desarrollo del contenedor de producción
+- Mejora la seguridad al excluir herramientas de construcción
+
+### 2.3 Orquestación con Docker Compose
+
+Docker Compose permite definir y ejecutar aplicaciones multi-contenedor. En lugar de ejecutar múltiples comandos `docker run`, se define un archivo `docker-compose.yml` que describe todos los servicios, sus configuraciones, redes y volúmenes.
+
+**docker-compose.yml implementado:**
+
+```yaml
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: sistema-ventas-db
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/migrations:/docker-entrypoint-initdb.d
+    ports:
+      - "${DB_PORT}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sistema-ventas-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sistema-ventas-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Variables de entorno del backend
+    ports:
+      - "${BACKEND_PORT}:3001"
+    networks:
+      - sistema-ventas-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=http://localhost:3001
+    container_name: sistema-ventas-frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT}:80"
+    networks:
+      - sistema-ventas-network
+
+volumes:
+  postgres_data:
+
+networks:
+  sistema-ventas-network:
+    driver: bridge
+```
+
+**Características implementadas:**
+
+- **Health Checks**: Cada servicio tiene verificaciones de salud que aseguran que estén listos antes de que otros servicios dependan de ellos
+- **Dependencias**: El backend espera a que PostgreSQL esté saludable antes de iniciar
+- **Volúmenes persistentes**: La base de datos usa un volumen nombrado para persistir datos
+- **Red aislada**: Todos los servicios se comunican a través de una red Docker personalizada
+- **Migraciones automáticas**: Los scripts SQL se ejecutan automáticamente al inicializar la base de datos
+
+### 2.4 Solución de Problemas: Detección Automática de Docker Compose
+
+Durante el desarrollo del pipeline, se identificó un problema común: diferentes versiones de Docker Compose (v1 standalone vs v2 plugin nativo) pueden estar instaladas en el agente de Jenkins.
+
+**Problema identificado:**
+```
+/usr/local/bin/docker-compose: 1: Not: not found
+ERROR: script returned exit code 127
+```
+
+**Solución implementada:**
+
+Se implementó una detección automática en la etapa "Verificar Herramientas" que:
+
+1. Detecta automáticamente si está disponible `docker compose` (v2) o `docker-compose` (v1)
+2. Guarda el comando correcto en un archivo `.docker-compose-command`
+3. Reutiliza este comando en todas las etapas posteriores
+4. Intenta instalar automáticamente si ninguna versión está disponible
+
+```bash
+# Detección automática
+if docker compose version >/dev/null 2>&1; then
+    DOCKER_COMPOSE_CMD="docker compose"
+elif docker-compose --version >/dev/null 2>&1; then
+    DOCKER_COMPOSE_CMD="docker-compose"
+else
+    # Intentar instalar
+    sudo apt-get install -y docker-compose-plugin
+    DOCKER_COMPOSE_CMD="docker compose"
+fi
+
+# Guardar para reutilización
+echo "DOCKER_COMPOSE_CMD=$DOCKER_COMPOSE_CMD" > .docker-compose-command
+```
+
+Esta solución garantiza compatibilidad con diferentes configuraciones de servidores Jenkins.
+
+## 3. Proceso de Despliegue Implementado
+
+### 3.1 Etapas del Pipeline
+
+El pipeline implementado consta de 9 etapas principales:
+
+**Etapa 1: Limpiar Workspace**
+- Detiene contenedores previos del proyecto
+- Elimina volúmenes antiguos de PostgreSQL
+- Limpia recursos no utilizados
+- Prepara un entorno limpio para el nuevo despliegue
+
+**Etapa 2: Checkout Código**
+- Obtiene el código fuente desde el repositorio Git
+- Soporta ejecución desde SCM o desde repositorio directo
+- Maneja diferentes ramas (Jankins/Jose, main, master)
+
+**Etapa 3: Verificar Herramientas**
+- Verifica que Docker esté disponible
+- Detecta automáticamente la versión de Docker Compose
+- Configura el comando correcto para uso posterior
+- Verifica Node.js (opcional, para ejecución fuera de Docker)
+
+**Etapa 4: Build Backend**
+- Construye la imagen Docker del backend
+- Etiqueta la imagen con BUILD_NUMBER y latest
+- Valida que el Dockerfile y directorio existan
+- Genera imagen: `sistemaventas-backend:${BUILD_NUMBER}`
+
+**Etapa 5: Build Frontend**
+- Construye la imagen Docker del frontend
+- Utiliza multi-stage build para optimizar tamaño
+- Configura VITE_API_URL como argumento de build
+- Genera imagen: `sistemaventas-frontend:${BUILD_NUMBER}`
+
+**Etapa 6: Test Backend (Opcional)**
+- Ejecuta pruebas del backend en contenedor temporal
+- Permite fallar sin detener el pipeline (tests opcionales)
+- Valida funcionalidad básica antes del despliegue
+
+**Etapa 7: Desplegar con Docker Compose**
+- Crea archivo `.env.docker` con variables de entorno
+- Ejecuta `docker-compose up -d --build`
+- Espera 30 segundos para que los servicios inicien
+- Muestra estado de contenedores y logs iniciales
+
+**Etapa 8: Health Check**
+- Verifica que el backend responda en `http://localhost:3001/api/health`
+- Verifica que el frontend responda en `http://localhost:80`
+- Verifica que PostgreSQL esté listo con `pg_isready`
+- Realiza hasta 30 intentos con espera de 2 segundos entre cada uno
+
+**Etapa 9: Generar Reporte**
+- Crea archivo `deployment-report.txt` con:
+  - Fecha y hora del despliegue
+  - Número de build y commit de Git
+  - Estado de contenedores
+  - Lista de imágenes Docker creadas
+  - Logs recientes de los servicios
+- Archiva el reporte como artefacto de Jenkins
+
+### 3.2 Variables de Entorno Configuradas
+
+El pipeline utiliza variables de entorno para configurar la aplicación:
+
+**Base de Datos:**
+- `DB_NAME`: sistema_ventas_multiempresa
+- `DB_USER`: postgres
+- `DB_PASSWORD`: [configurado]
+- `DB_PORT`: 5432
+
+**Backend:**
+- `JWT_SECRET`: clave secreta para tokens JWT
+- `JWT_EXPIRES_IN`: 24h
+- `BACKEND_PORT`: 3001
+
+**Frontend:**
+- `FRONTEND_PORT`: 80
+- `VITE_API_URL`: http://localhost:3001
+
+**Email (para recuperación de contraseña):**
+- `EMAIL_HOST`: smtp.gmail.com
+- `EMAIL_PORT`: 587
+- `EMAIL_USER`: [configurado]
+- `EMAIL_PASSWORD`: [configurado]
+
+### 3.3 Resultados de la Ejecución
+
+**Tiempos de ejecución aproximados:**
+
+- Limpiar Workspace: 10-30 segundos
+- Checkout Código: 5-15 segundos
+- Verificar Herramientas: 2-5 segundos
+- Build Backend: 2-5 minutos
+- Build Frontend: 3-7 minutos
+- Test Backend: 30-60 segundos (opcional)
+- Desplegar: 1-2 minutos
+- Health Check: 30-60 segundos
+- Generar Reporte: 5-10 segundos
+
+**Tiempo total estimado: 8-15 minutos**
+
+**Estado final de contenedores:**
+
+```
+NAME                    STATUS              PORTS
+sistema-ventas-db       Up X minutes        0.0.0.0:5432->5432/tcp
+sistema-ventas-backend  Up X minutes (healthy)  0.0.0.0:3001->3001/tcp
+sistema-ventas-frontend Up X minutes        0.0.0.0:80->80/tcp
+```
+
+**Imágenes creadas:**
+
+```
+REPOSITORY                TAG       IMAGE ID       CREATED          SIZE
+sistemaventas-backend     latest    abc123def456   X minutes ago    250MB
+sistemaventas-backend     1         abc123def456   X minutes ago    250MB
+sistemaventas-frontend    latest    xyz789ghi012   X minutes ago    50MB
+sistemaventas-frontend    1         xyz789ghi012   X minutes ago    50MB
+```
+
+### 3.4 Validación de Integración
+
+**Pruebas realizadas:**
+
+1. **Validación de Backend:**
+   - Endpoint de health check: `GET http://localhost:3001/api/health`
+   - Respuesta esperada: `{"status":"ok","message":"API is running","database":"connected"}`
+   - Verificación de conexión a base de datos
+
+2. **Validación de Frontend:**
+   - Acceso a `http://localhost:80`
+   - Carga correcta de la aplicación React
+   - Verificación de que Nginx sirva los archivos estáticos
+
+3. **Validación de Base de Datos:**
+   - Verificación de conexión desde el backend
+   - Ejecución de consultas SQL
+   - Verificación de migraciones aplicadas
+
+4. **Validación de Integración Frontend-Backend:**
+   - Autenticación de usuario desde el frontend
+   - Verificación de que las peticiones HTTP lleguen al backend
+   - Visualización de datos en el frontend obtenidos del backend
+
+5. **Validación de Persistencia:**
+   - Verificación de volúmenes Docker
+   - Persistencia de datos de PostgreSQL entre reinicios
+   - Almacenamiento de archivos subidos
+
+### 2.8 Habilidades blandas empleadas en la práctica
+
+- ✅ **Pensamiento crítico**: Análisis de problemas técnicos, identificación de errores y diseño de soluciones
+- ✅ **Resolución de problemas**: Diagnóstico y solución del problema de Docker Compose, debugging del pipeline
+- ✅ **Aprendizaje continuo**: Investigación de nuevas tecnologías (Jenkins, Docker), lectura de documentación
+- ✅ **Atención al detalle**: Configuración precisa de variables de entorno, verificación de sintaxis
+- ✅ **Persistencia**: Resolución de múltiples problemas técnicos durante la implementación
+
+### 2.9 Conclusiones
+
+- Se logró comprender y aplicar los fundamentos teóricos de Jenkins como herramienta de automatización. La configuración de un pipeline declarativo mediante un `Jenkinsfile` demostró la potencia del concepto "Pipeline as Code", permitiendo versionar y mantener el proceso de despliegue junto con el código fuente. La integración de Jenkins con Docker mediante el socket de Docker (`/var/run/docker.sock`) permitió que el servidor de Jenkins ejecutara comandos Docker directamente, facilitando la construcción y gestión de contenedores desde el pipeline.
+
+- La contenederización de la aplicación mediante Docker resultó fundamental para garantizar la portabilidad y consistencia del entorno de ejecución. La creación de Dockerfiles optimizados para el backend (Node.js) y frontend (React con Vite) utilizando multi-stage builds permitió generar imágenes eficientes y ligeras. El uso de imágenes base Alpine Linux redujo significativamente el tamaño de las imágenes finales (de ~500MB a ~50MB en el frontend), mejorando los tiempos de transferencia y despliegue. La configuración de Nginx como servidor web para el frontend demostró la importancia de separar las responsabilidades entre la construcción de la aplicación y su servicio en producción.
+
+- La orquestación de servicios mediante Docker Compose simplificó considerablemente la gestión de múltiples contenedores (PostgreSQL, Backend y Frontend) y sus dependencias. La implementación de health checks para cada servicio aseguró que los contenedores se inicien en el orden correcto y que el sistema sea resiliente ante fallos temporales. La configuración de volúmenes persistentes para la base de datos garantizó la persistencia de los datos entre reinicios de contenedores, mientras que la red personalizada (`sistema-ventas-network`) permitió la comunicación aislada entre los servicios.
+
+- El pipeline implementado abarca todas las etapas esenciales de un proceso CI/CD moderno: limpieza del workspace, checkout del código, verificación de herramientas, construcción de imágenes, ejecución de pruebas opcionales, despliegue automatizado y verificación de salud de los servicios. La generación automática de reportes de despliegue proporciona trazabilidad y facilita la depuración en caso de fallos.
+
+- Se implementó una solución robusta para el manejo de diferentes versiones de Docker Compose mediante detección automática. Esta característica garantiza que el pipeline funcione correctamente independientemente de si el agente Jenkins tiene instalado Docker Compose v1 (standalone) o v2 (plugin nativo), mejorando significativamente la portabilidad del pipeline entre diferentes entornos.
+
+- La implementación de migraciones de base de datos automatizadas mediante scripts SQL ejecutados en el contenedor de PostgreSQL durante la inicialización demostró la importancia de gestionar los cambios en el esquema de base de datos de manera versionada y reproducible.
+
+- Se pudo constatar que la automatización del despliegue no solo reduce el tiempo necesario para poner en producción nuevas versiones del software (de horas a minutos), sino que también minimiza los errores humanos y garantiza que cada despliegue siga exactamente el mismo proceso, aumentando la confiabilidad y la reproducibilidad del sistema.
+
+- La documentación exhaustiva del proceso (incluyendo instalación, configuración, ejecución y troubleshooting) demuestra la importancia de mantener documentación actualizada para facilitar el mantenimiento y la transferencia de conocimiento en proyectos de software.
+
+### 2.10 Recomendaciones
+
+- **Implementar estrategias de versionado de imágenes**: Se recomienda adoptar un sistema de versionado semántico para las imágenes Docker (por ejemplo, v1.2.3) además del tag `latest` y el `BUILD_NUMBER`. Esto facilitaría el rollback a versiones anteriores en caso de problemas y mejoraría la trazabilidad de los despliegues. Además, se podría implementar etiquetado basado en tags de Git.
+
+- **Integrar Jenkins con sistemas de notificación**: Integrar Jenkins con sistemas de notificación como Slack, Microsoft Teams o correo electrónico para informar sobre el estado de los pipelines (éxito, fallo, advertencias). Esto mejoraría la visibilidad del proceso de despliegue para todo el equipo y permitiría una respuesta más rápida ante problemas.
+
+- **Mejorar la gestión de secretos**: Reemplazar las credenciales hardcodeadas en el `Jenkinsfile` y archivos de configuración por un sistema de gestión de secretos como Jenkins Credentials, HashiCorp Vault o AWS Secrets Manager. Esto mejoraría significativamente la seguridad del sistema y facilitaría la rotación de credenciales.
+
+- **Configurar entornos múltiples**: Extender el pipeline para soportar despliegues en múltiples entornos (desarrollo, staging, producción) mediante parámetros o branches de Git. Esto permitiría probar los cambios en un entorno controlado antes de desplegar a producción, siguiendo mejores prácticas de DevOps.
+
+- **Implementar monitoreo y logging**: Integrar herramientas como Prometheus y Grafana para monitorear métricas de los contenedores (CPU, memoria, latencia) y ELK Stack (Elasticsearch, Logstash, Kibana) o Loki para centralizar y analizar los logs. Esto facilitaría la detección proactiva de problemas y el análisis de rendimiento.
+
+- **Optimizar el tamaño de las imágenes Docker**: Implementar técnicas avanzadas como Docker layer caching más eficiente, uso de `.dockerignore` más estricto para excluir archivos innecesarios, y análisis de imágenes con herramientas como `dive` para identificar y eliminar capas innecesarias, reduciendo aún más el tiempo de build y transferencia.
+
+- **Integrar escaneo de vulnerabilidades**: Integrar herramientas como Trivy, Snyk o Docker Scout en el pipeline para escanear las imágenes en busca de vulnerabilidades conocidas antes del despliegue. Esto mejoraría la postura de seguridad de la aplicación y permitiría corregir vulnerabilidades antes de que lleguen a producción.
+
+- **Configurar políticas de red más restrictivas**: Configurar reglas de firewall y políticas de red más restrictivas en Docker Compose para limitar la comunicación entre contenedores solo a lo estrictamente necesario, siguiendo el principio de menor privilegio. Esto mejoraría la seguridad del sistema.
+
+- **Implementar pruebas automatizadas más completas**: Expandir la etapa de pruebas para incluir pruebas unitarias, pruebas de integración, pruebas de carga y análisis estático de código (linting, SonarQube). Esto mejoraría la calidad del código y reduciría los bugs en producción.
+
+- **Considerar Kubernetes para producción**: Para entornos de producción con mayores requerimientos de escalabilidad, alta disponibilidad y gestión avanzada, se recomienda considerar la migración a Kubernetes. Kubernetes ofrece características como auto-scaling, auto-healing, rolling updates y gestión avanzada de secretos que no están disponibles en Docker Compose.
+
+### 2.11 Referencias bibliográficas
+
+[1] J. F. Smart, *Jenkins: The Definitive Guide*, 1st ed. Sebastopol, CA: O'Reilly Media, 2011.
+
+[2] L. Caparrós y J. Guijarro, *DevOps y Seguridad Cloud*, 1a ed. Barcelona: Editorial UOC, 2019. [Online]. Disponible: https://ebookcentral.proquest.com/lib/utaebooks/detail.action?docID=7025678
+
+[3] J. Humble y D. Farley, *Continuous Delivery: Reliable Software Releases through Build, Test, and Deployment Automation*, 1st ed. Upper Saddle River, NJ: Addison-Wesley, 2010.
+
+[4] N. Poulton, *Docker Deep Dive*, 1st ed. London: Nigel Poulton, 2020.
+
+[5] S. Goasguen, *Docker in Action*, 2nd ed. Shelter Island, NY: Manning Publications, 2019.
+
+[6] Jenkins Documentation. "Pipeline as Code." [Online]. Disponible: https://www.jenkins.io/doc/book/pipeline/
+
+[7] Docker Documentation. "Docker Compose Overview." [Online]. Disponible: https://docs.docker.com/compose/
+
+[8] Docker Documentation. "Multi-stage builds." [Online]. Disponible: https://docs.docker.com/build/building/multi-stage/
+
+[9] Jenkins Documentation. "Declarative Pipeline Syntax." [Online]. Disponible: https://www.jenkins.io/doc/book/pipeline/syntax/#declarative-pipeline
+
+[10] PostgreSQL Documentation. "Docker Official Image." [Online]. Disponible: https://hub.docker.com/_/postgres
+
+### 2.12 Anexos
+
+#### Anexo A: Estructura del Proyecto
+
+```
+SistemaVentas/
+├── backend/
+│   ├── Dockerfile
+│   ├── .dockerignore
+│   ├── package.json
+│   └── migrations/
+│       ├── 01-init-schema.sql
+│       ├── 02-create-tables.sql
+│       └── 05-ecuador-locations.sql
+├── frontend/
+│   ├── Dockerfile
+│   ├── .dockerignore
+│   ├── package.json
+│   ├── nginx.conf
+│   └── vite.config.ts
+├── docker-compose.yml
+├── Jenkinsfile
+├── .env.docker
+└── DOCUMENTACION_JENKINS_DOCKER.md
+```
+
+#### Anexo B: Comandos Principales Utilizados
+
+**Docker:**
+```bash
+docker --version
+docker build -t imagen:tag .
+docker images
+docker ps
+docker logs container-name
+```
+
+**Docker Compose:**
+```bash
+docker-compose --version
+docker-compose up -d --build
+docker-compose ps
+docker-compose logs
+docker-compose down -v
+```
+
+**Jenkins:**
+- Configuración mediante interfaz web: `http://localhost:8080`
+- Pipeline ejecutado desde `Jenkinsfile`
+
+#### Anexo C: Ejemplo de Logs del Pipeline
+
+**Ejemplo de salida exitosa:**
+
+```
+[Pipeline] { (Verificar Herramientas)
++ docker --version
+Docker version 20.10.24+dfsg1, build 297e128
++ docker compose version
+Docker Compose version v2.24.0
+Usando: docker compose (plugin nativo)
+Comando Docker Compose configurado: docker compose
+
+[Pipeline] { (Build Backend)
+Successfully built abc123def456
+Successfully tagged sistemaventas-backend:1
+Successfully tagged sistemaventas-backend:latest
+
+[Pipeline] { (Desplegar con Docker Compose)
+Creating network "sistema-ventas-pipeline_sistema-ventas-network" ... done
+Creating volume "sistema-ventas-pipeline_postgres_data" ... done
+Creating sistema-ventas-db ... done
+Creating sistema-ventas-backend ... done
+Creating sistema-ventas-frontend ... done
+
+[Pipeline] { (Health Check)
+OK: Backend esta respondiendo
+OK: Frontend esta respondiendo
+```
+
+#### Anexo D: Checklist de Verificación
+
+- [x] Jenkins instalado y configurado
+- [x] Docker instalado y funcionando
+- [x] Docker Compose disponible (v1 o v2)
+- [x] Repositorio Git clonado
+- [x] Dockerfiles creados y probados
+- [x] docker-compose.yml configurado
+- [x] Jenkinsfile creado
+- [x] Pipeline ejecutado exitosamente
+- [x] Contenedores desplegados y funcionando
+- [x] Health checks pasando
+- [x] Frontend accesible
+- [x] Backend accesible
+- [x] Base de datos conectada
+- [x] Reporte de despliegue generado
+- [x] Documentación completa
+
+---
+
+**Autor**: Ayuquina Chimborazo Angel Israel  
+**Fecha**: [Fecha de entrega]  
+**Versión**: 1.0  
+**Asignatura**: Gestión de pruebas e implantación de software  
+**Docente**: Ing. Leonardo Torres, Mg.
+

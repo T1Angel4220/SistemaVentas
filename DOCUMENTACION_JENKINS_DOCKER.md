@@ -1109,7 +1109,9 @@ El `Jenkinsfile` define un pipeline declarativo con las siguientes etapas:
 │    └─ Obtener código fuente del repositorio Git        │
 ├─────────────────────────────────────────────────────────┤
 │ 3. Verificar Herramientas                               │
-│    └─ Verificar Docker y Docker Compose                  │
+│    └─ Verificar Docker                                  │
+│    └─ Detectar versión Docker Compose (v1/v2)          │
+│    └─ Configurar comando correcto                       │
 ├─────────────────────────────────────────────────────────┤
 │ 4. Build Backend                                        │
 │    └─ Construir imagen Docker del backend               │
@@ -1160,11 +1162,182 @@ environment {
 
 1. **Limpiar Workspace**: Elimina contenedores y volúmenes previos
 2. **Checkout Código**: Obtiene el código desde Git
-3. **Verificar Herramientas**: Valida Docker
+3. **Verificar Herramientas**: Valida Docker y Docker Compose
 4. **Build Backend/Frontend**: Construye imágenes Docker
 5. **Desplegar**: Usa docker-compose para levantar servicios
 6. **Health Check**: Verifica que todo funcione
 7. **Generar Reporte**: Crea documentación del despliegue
+
+### 7.2.1 Manejo de Docker Compose en el Pipeline
+
+El pipeline implementa una solución robusta para manejar diferentes versiones de Docker Compose que pueden estar instaladas en el agente de Jenkins.
+
+#### Problema Identificado
+
+Durante la ejecución del pipeline, se puede encontrar el siguiente error:
+
+```
+/usr/local/bin/docker-compose: 1: Not: not found
+ERROR: script returned exit code 127
+```
+
+Este error ocurre cuando:
+- El agente de Jenkins tiene Docker instalado pero no tiene `docker-compose` (comando standalone)
+- El agente tiene Docker Compose v2 instalado como plugin nativo (`docker compose` con espacio)
+- El archivo `docker-compose` existe pero está corrupto o no es ejecutable
+
+#### Solución Implementada
+
+El pipeline implementa una **detección automática** de la versión de Docker Compose disponible:
+
+**Etapa: Verificar Herramientas**
+
+```groovy
+stage('Verificar Herramientas') {
+    steps {
+        script {
+            sh '''
+                # Detectar qué versión de Docker Compose está disponible
+                if docker compose version >/dev/null 2>&1; then
+                    echo "Usando: docker compose (plugin nativo)"
+                    docker compose version
+                    echo "DOCKER_COMPOSE_CMD=docker compose" > .docker-compose-command
+                elif docker-compose --version >/dev/null 2>&1; then
+                    echo "Usando: docker-compose (standalone)"
+                    docker-compose --version
+                    echo "DOCKER_COMPOSE_CMD=docker-compose" > .docker-compose-command
+                else
+                    echo "ERROR: No se encontró Docker Compose"
+                    # Intentar instalar
+                    sudo apt-get update && sudo apt-get install -y docker-compose-plugin
+                    echo "DOCKER_COMPOSE_CMD=docker compose" > .docker-compose-command
+                fi
+                
+                source .docker-compose-command
+                echo "Comando Docker Compose configurado: $DOCKER_COMPOSE_CMD"
+            '''
+        }
+    }
+}
+```
+
+**Cómo funciona:**
+
+1. **Detección automática**: El pipeline primero intenta ejecutar `docker compose version` (v2)
+2. **Fallback a v1**: Si no está disponible, intenta `docker-compose --version` (standalone)
+3. **Instalación automática**: Si ninguna versión está disponible, intenta instalar el plugin
+4. **Almacenamiento**: Guarda el comando correcto en `.docker-compose-command`
+5. **Reutilización**: Todas las etapas posteriores cargan este archivo para usar el comando correcto
+
+**Uso en otras etapas:**
+
+El comando detectado se reutiliza en todas las etapas que necesitan docker-compose:
+
+```bash
+# Cargar comando de docker-compose
+if [ -f ".docker-compose-command" ]; then
+    source .docker-compose-command
+else
+    # Fallback: detectar automáticamente
+    if docker compose version >/dev/null 2>&1; then
+        DOCKER_COMPOSE_CMD="docker compose"
+    else
+        DOCKER_COMPOSE_CMD="docker-compose"
+    fi
+fi
+
+# Usar el comando
+$DOCKER_COMPOSE_CMD up -d --build
+$DOCKER_COMPOSE_CMD ps
+$DOCKER_COMPOSE_CMD logs --tail=100
+```
+
+#### Versiones de Docker Compose Soportadas
+
+| Versión | Comando | Estado |
+|---------|---------|--------|
+| Docker Compose v2 (Plugin nativo) | `docker compose` | ✅ Soportado (Preferido) |
+| Docker Compose v1 (Standalone) | `docker-compose` | ✅ Soportado |
+| No instalado | - | ⚠️ Intenta instalar automáticamente |
+
+#### Instalación Manual de Docker Compose (si es necesario)
+
+Si el pipeline no puede instalar Docker Compose automáticamente, puedes instalarlo manualmente en el agente de Jenkins:
+
+**Opción 1: Instalar Docker Compose v2 (Plugin nativo) - Recomendado**
+
+```bash
+# En el agente de Jenkins
+sudo apt-get update
+sudo apt-get install -y docker-compose-plugin
+
+# Verificar instalación
+docker compose version
+```
+
+**Opción 2: Instalar Docker Compose v1 (Standalone)**
+
+Si tu versión de Docker no soporta el plugin, instala la versión standalone:
+
+```bash
+# Descargar e instalar docker-compose standalone
+sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+# Verificar instalación
+docker-compose --version
+```
+
+**Opción 3: Instalar dentro del contenedor de Jenkins**
+
+Si Jenkins está ejecutándose en un contenedor Docker:
+
+```bash
+# Ejecutar como root dentro del contenedor
+docker exec -u root jenkins-ventas sh -c "curl -SL https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose && chmod +x /usr/local/bin/docker-compose"
+
+# Verificar
+docker exec jenkins-ventas docker-compose --version
+```
+
+#### Ventajas de esta Solución
+
+✅ **Compatibilidad**: Funciona con ambas versiones de Docker Compose  
+✅ **Automatización**: No requiere configuración manual en la mayoría de casos  
+✅ **Robustez**: Tiene fallbacks para diferentes escenarios  
+✅ **Mantenibilidad**: El comando se detecta una vez y se reutiliza  
+
+#### Logs de Ejecución
+
+**Ejemplo de detección exitosa:**
+
+```
+[Pipeline] { (Verificar Herramientas)
+[Pipeline] echo
+Verificando herramientas necesarias...
+[Pipeline] sh
++ echo "Verificando Docker..."
+Verificando Docker...
++ docker --version
+Docker version 20.10.24+dfsg1, build 297e128
++ echo "Verificando Docker Compose..."
+Verificando Docker Compose...
++ docker compose version
+Docker Compose version v2.24.0
+Usando: docker compose (plugin nativo)
+Comando Docker Compose configurado: docker compose
+```
+
+**Ejemplo con fallback a v1:**
+
+```
++ docker compose version
+docker: 'compose' is not a docker command.
++ docker-compose --version
+docker-compose version 1.29.2, build 5becea4c
+Usando: docker-compose (standalone)
+Comando Docker Compose configurado: docker-compose
+```
 
 ### 7.3 Configurar Pipeline en Jenkins
 
@@ -1189,7 +1362,7 @@ En la página de configuración:
    - **SCM**: Git
    - **Repository URL**: `https://github.com/T1Angel4220/SistemaVentas.git` (o tu URL)
    - **Credentials**: Seleccionar credenciales si el repo es privado
-   - **Branch Specifier**: `*/Jankins/Angel` o `*/main` (según tu rama)
+   - **Branch Specifier**: `*/Jankins/Jose` o `*/main` (según tu rama)
    - **Script Path**: `Jenkinsfile`
 
 > **📸 Captura de pantalla requerida**: Mostrar la configuración del SCM
@@ -1917,6 +2090,53 @@ docker-compose exec postgres psql -U postgres
 - Verificar logs del build en Jenkins
 - Verificar que Docker esté disponible para Jenkins
 - Verificar permisos de archivos
+
+#### Error: "docker-compose: Not: not found" o "docker-compose: command not found"
+
+Este error ocurre cuando Docker Compose no está disponible en el agente de Jenkins.
+
+**Síntomas:**
+```
+/usr/local/bin/docker-compose: 1: Not: not found
+ERROR: script returned exit code 127
+Stage "Desplegar con Docker Compose" skipped due to earlier failure(s)
+```
+
+**Soluciones:**
+
+1. **Verificar qué versión está disponible:**
+   ```bash
+   # En el agente de Jenkins o contenedor
+   docker compose version   # Para v2
+   docker-compose --version # Para v1
+   ```
+
+2. **Instalar Docker Compose v2 (Recomendado):**
+   ```bash
+   sudo apt-get update
+   sudo apt-get install -y docker-compose-plugin
+   docker compose version
+   ```
+
+3. **Instalar Docker Compose v1 (Standalone):**
+   ```bash
+   sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+   sudo chmod +x /usr/local/bin/docker-compose
+   docker-compose --version
+   ```
+
+4. **Si Jenkins está en Docker, instalar dentro del contenedor:**
+   ```bash
+   docker exec -u root jenkins-ventas sh -c "curl -SL https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose && chmod +x /usr/local/bin/docker-compose"
+   docker exec jenkins-ventas docker-compose --version
+   ```
+
+5. **Verificar que el pipeline detecte correctamente:**
+   - El pipeline tiene detección automática implementada
+   - Revisa los logs de la etapa "Verificar Herramientas"
+   - Deberías ver: "Comando Docker Compose configurado: docker compose" o "docker-compose"
+
+**Nota**: El pipeline implementa detección automática de Docker Compose, por lo que normalmente no se requiere intervención manual. Solo instala Docker Compose si el pipeline falla al detectarlo.
 
 ### 10.2 Limpieza de Recursos
 
